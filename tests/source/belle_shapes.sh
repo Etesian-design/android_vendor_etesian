@@ -19,5 +19,18 @@ grep -q '#FF41413C' $d/bc_square_dial.xml || bad "the dial is not the 701's warm
 grep -q '#FF4791DC' $d/bc_hand_second.xml || bad "the second hand is not #4791DC"
 grep -q 'hand_second' app/src/main/res/layout/bc_analog.xml || bad "the small analog clock has no second hand"
 grep -q 'drawCircle' app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt && grep -A12 'private fun ring' app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt | grep -q drawCircle && bad "the data meter is a disc"
+grep -q 'android:startY="74" android:endX="0" android:endY="46"' $d/bc_toggle_on.xml || bad "the on cap's blue glow is not brightest at the bottom"
+grep -A30 'private fun ring' app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt | grep -q 'squircle(9f \* u, 9f \* u, 62f \* u' || bad "the data meter's inner squircle is not 62 of 80"
+grep -q 'strokeLineCap="round"' $d/bc_glyph_wifi.xml || bad "the Wi-Fi glyph's arcs are not round-ended strokes"
+grep -q 'CAP_ON = 0xFF3C8FE6' app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt || bad "a lit cap glyph is not Belle blue"
+# Regression: the dot was drawn as a near-zero arc, which Android renders as a circle off to the right of the arcs
+python3 - $d/bc_glyph_wifi.xml <<'PY' || bad "the Wi-Fi glyph's dot is not centred under its arcs"
+import re, sys
+s = open(sys.argv[1]).read()
+dot = re.search(r'M([\d.]+),([\d.]+)a([\d.]+),[\d.]+ 0,1 1,0 ([\d.]+)', s)
+assert dot and float(dot.group(1)) == 12 and float(dot.group(4)) > 1, 'dot'
+xs = [float(a) for a, _ in re.findall(r'[MA ]([\d.]+),([\d.]+)A', s)] + [float(x) for x in re.findall(r'1,([\d.]+),[\d.]+(?=M|")', s)]
+assert abs((min(xs) + max(xs)) / 2 - 12) < 0.05, 'arcs'
+PY
 
 [ $fail = 0 ] && echo "PASS Belle shapes follow the 701 art"
