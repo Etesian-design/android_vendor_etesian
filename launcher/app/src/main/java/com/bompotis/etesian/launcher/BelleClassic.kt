@@ -266,8 +266,9 @@ class BelleTogglesWidget : AppWidgetProvider() {
                 val on = s.on(ctx)
                 v.setInt(BGS[i], "setBackgroundResource", if (on) R.drawable.bc_toggle_on else R.drawable.bc_toggle_off)
                 v.setImageViewResource(ICONS[i], s.icon)
-                // Belle: the glyph is lit blue when on, a dim grey when off.
-                v.setInt(ICONS[i], "setColorFilter", if (on) 0xFF4FA6F2.toInt() else 0xFF7A7B80.toInt())
+                // Belle: the glyph sits on the metal cap, white when on, dark grey when off.
+                v.setInt(ICONS[i], "setColorFilter", if (on) 0xFFFFFFFF.toInt() else BelleClassic2.CAP_OFF)
+                BelleClassic2.capGlyph(v, intArrayOf(ICONS[i]), on, 62f)
                 v.setTextViewText(LABELS[i], s.label)
                 v.setContentDescription(CELLS[i], "${s.label} ${if (on) "on" else "off"}")
                 v.setOnClickPendingIntent(CELLS[i], BelleClassic.broadcast(ctx, BelleTogglesWidget::class.java, s.what, 50 + i))

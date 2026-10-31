@@ -92,7 +92,24 @@ object BelleClassic2 {
     class Face(val dayX: Float, val dayY: Float, val dateX: Float, val dateSize: Float, val text: Float)
 
     /** The squircle clocks (belle-ref10.jpg, belle-ref4.jpg). */
-    val SQUIRCLE = Face(0.245f, 0.5f, 0.79f, 0.12f, 0.062f)
+    /** The glyph colour on a Belle toggle cap that is off (BelleCap.vue). */
+    const val CAP_OFF = 0xFF2E343D.toInt()
+
+    /**
+     * Moves a cap's glyph with the cap (bc_toggle_*, bc_sw_*, a 72 × 82 face): the cap sits up when on, so the glyph rises
+     * 6% of the face's [height] (dp); off it sits down in the well and the glyph drops as much.
+     */
+    fun capGlyph(v: RemoteViews, ids: IntArray, on: Boolean, height: Float) {
+        val dip = android.util.TypedValue.COMPLEX_UNIT_DIP
+        val shift = height * 0.12f
+        for (id in ids) {
+            v.setViewLayoutMargin(id, RemoteViews.MARGIN_BOTTOM, if (on) shift else 0f, dip)
+            v.setViewLayoutMargin(id, RemoteViews.MARGIN_TOP, if (on) 0f else shift, dip)
+        }
+    }
+
+    /** The squircle dial: the date window at 3 o'clock is 26 of 126, centred at 92 (the 701's clock art). */
+    val SQUIRCLE = Face(0.245f, 0.5f, 0.73f, 0.206f, 0.09f)
     /** The gear clock (belle-ref11.jpg): the day low on the left, a round date at 3 o'clock. */
     val GEARS = Face(0.30f, 0.71f, 0.86f, 0.11f, 0.058f)
 
@@ -203,13 +220,15 @@ class BelleSwitch1Widget : AppWidgetProvider() {
             if (k.word != null) {
                 v.setViewVisibility(R.id.bc_word, View.VISIBLE); v.setViewVisibility(R.id.bc_glyph, View.GONE)
                 v.setTextViewText(R.id.bc_word, k.word)
-                v.setTextColor(R.id.bc_word, if (on) 0xFF2F7FD6.toInt() else 0xFF6E7075.toInt())
+                v.setTextColor(R.id.bc_word, if (on) 0xFFFFFFFF.toInt() else BelleClassic2.CAP_OFF)
             } else {
                 v.setViewVisibility(R.id.bc_word, View.GONE); v.setViewVisibility(R.id.bc_glyph, View.VISIBLE)
                 v.setImageViewResource(R.id.bc_glyph, k.glyph)
                 // Belle: lit blue when on, embossed grey when off.
-                v.setInt(R.id.bc_glyph, "setColorFilter", if (on) 0xFF2F7FD6.toInt() else 0xFF6E7075.toInt())
+                v.setInt(R.id.bc_glyph, "setColorFilter", if (on) 0xFFFFFFFF.toInt() else BelleClassic2.CAP_OFF)
             }
+            // the glyph rides on the cap: up when on, pressed down when off
+            BelleClassic2.capGlyph(v, intArrayOf(R.id.bc_glyph, R.id.bc_word), on, 82f)
             v.setContentDescription(R.id.bc_root, "${k.label} ${if (on) "on" else "off"}")
             v.setOnClickPendingIntent(R.id.bc_root, BelleClassic.broadcast(ctx, BelleSwitch1Widget::class.java, k.what, 7000 + id))
             awm.updateAppWidget(id, v)
@@ -265,7 +284,7 @@ class BelleDataUsageWidget : AppWidgetProvider() {
                 val v = RemoteViews(ctx.packageName, R.layout.bc_datausage)
                 v.setImageViewBitmap(R.id.bc_ring, ring(ctx, min(1.0, mb / 1000.0).toFloat()))
                 v.setTextViewText(R.id.bc_amount, if (mb < 1000) String.format("%.1f", mb) else String.format("%.1f", mb / 1000))
-                v.setTextViewText(R.id.bc_unit, if (mb < 1000) "MB USED" else "GB USED")
+                v.setTextViewText(R.id.bc_unit, if (mb < 1000) "MB" else "GB")
                 v.setOnClickPendingIntent(R.id.bc_root, BelleWidgets.activity(ctx, 60,
                     Intent(Settings.ACTION_DATA_USAGE_SETTINGS)))
                 AppWidgetManager.getInstance(ctx).updateAppWidget(ids, v)
@@ -281,21 +300,42 @@ class BelleDataUsageWidget : AppWidgetProvider() {
             b.rxBytes + b.txBytes
         }.getOrDefault(0L)
 
+        /** The 701's data meter: a squircle ringed by twelve #27AAE1 segments from 12 o'clock (the used share brighter), round a
+         *  dark squircle that carries the amount. */
         private fun ring(ctx: Context, f: Float): Bitmap {
             val px = ctx.dp(78f); val s = px.toFloat()
             val bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val p = Paint(Paint.ANTI_ALIAS_FLAG)
-            p.shader = LinearGradient(0f, 0f, 0f, s, 0xFF55565A.toInt(), 0xFF1A1A1C.toInt(), Shader.TileMode.CLAMP)
-            c.drawCircle(s / 2, s / 2, s / 2, p)
-            p.shader = null; p.color = 0xFF050506.toInt()
-            c.drawCircle(s / 2, s / 2, s / 2 - s * 0.05f, p)
-            val stroke = s * 0.09f
-            val r = RectF(stroke, stroke, s - stroke, s - stroke)
-            p.style = Paint.Style.STROKE; p.strokeWidth = stroke; p.strokeCap = Paint.Cap.ROUND
-            p.color = 0xFF0F2A47.toInt(); c.drawArc(r, 0f, 360f, false, p)
-            p.color = 0xFF2F8BEA.toInt(); c.drawArc(r, -90f, 360f * f.coerceAtLeast(0.02f), false, p)
+            val m = s * 0.04f
+            val outer = squircle(m, m, s - 2 * m, 2.7)
+            val inner = squircle(s * 0.19f, s * 0.19f, s * 0.62f, 2.7)
+            p.shader = LinearGradient(0f, 0f, 0f, s, 0xFF58595B.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
+            c.drawPath(outer, p); p.shader = null
+            c.save(); c.clipPath(outer)
+            val sweep = RectF(-s, -s, 2 * s, 2 * s)
+            p.color = 0x4D27AAE1; c.drawArc(sweep, -90f, 360f, true, p)
+            p.color = 0xB327AAE1.toInt(); c.drawArc(sweep, -90f, 360f * f.coerceIn(0f, 1f), true, p)
+            p.color = 0x59000000; p.strokeWidth = s * 0.012f; p.style = Paint.Style.STROKE
+            for (k in 0 until 12) { val a = Math.toRadians(k * 30.0); c.drawLine(s / 2, s / 2, s / 2 + s * kotlin.math.sin(a).toFloat(), s / 2 - s * kotlin.math.cos(a).toFloat(), p) }
+            c.restore()
+            p.style = Paint.Style.FILL
+            p.shader = LinearGradient(0f, s * 0.19f, 0f, s * 0.81f, 0xFF58595B.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
+            c.drawPath(inner, p)
             return bmp
+        }
+
+        /** A squircle (|x|^n + |y|^n = 1) filling a size × size box at (x, y). */
+        private fun squircle(x: Float, y: Float, size: Float, n: Double): android.graphics.Path {
+            val path = android.graphics.Path()
+            for (i in 0 until 96) {
+                val t = i / 96.0 * 2 * Math.PI
+                val cx = Math.cos(t); val sy = Math.sin(t)
+                val px = x + size / 2 + size / 2 * (Math.signum(cx) * Math.pow(Math.abs(cx), 2 / n)).toFloat()
+                val py = y + size / 2 + size / 2 * (Math.signum(sy) * Math.pow(Math.abs(sy), 2 / n)).toFloat()
+                if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+            }
+            path.close(); return path
         }
     }
 }

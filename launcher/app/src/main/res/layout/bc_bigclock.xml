@@ -13,6 +13,6 @@
             android:textColor="#FFB4B5B9" android:textSize="15sp" android:fontFamily="etesian-text"/>
         <TextClock android:id="@+id/bc_date" android:layout_width="26dp" android:layout_height="26dp" android:layout_gravity="center_vertical|end"
             android:layout_marginEnd="30dp" android:background="@drawable/bc_date_box" android:format12Hour="d" android:format24Hour="d"
-            android:gravity="center" android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+            android:gravity="center" android:textColor="#FFD6D6D6" android:textSize="15sp" android:fontFamily="etesian-text"/>
     </FrameLayout>
 </FrameLayout>
