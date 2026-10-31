@@ -125,3 +125,14 @@ d=[b-a for a,b in zip(xs,xs[1:])]
 # From the swap of pages (the largest jump) on, only the new page's title moves.
 k=max(range(len(d)),key=lambda i:abs(d[i])) if d else 0
 print(int(sum(d[k+1:])))" "$1"; }
+# The user's Widgets view may be full: widgets_only <Class> keeps their widgets aside and shows just that widget (placed by
+# TestNotifyReceiver); widgets_restore puts theirs back. Call widgets_restore before the test ends.
+widgets_prefs() { sh_ am force-stop $LAUNCHER; sh_ cp $1 /data/data/$LAUNCHER/shared_prefs/widgets.xml
+  local u; u=$(sh_ stat -c %u /data/data/$LAUNCHER); sh_ chown $u:$u /data/data/$LAUNCHER/shared_prefs/widgets.xml
+  sh_ chmod 660 /data/data/$LAUNCHER/shared_prefs/widgets.xml; sh_ restorecon /data/data/$LAUNCHER/shared_prefs/widgets.xml >/dev/null 2>&1; }
+widgets_only() {
+  sh_ "[ -f /data/local/tmp/wbak.xml ] || cp /data/data/$LAUNCHER/shared_prefs/widgets.xml /data/local/tmp/wbak.xml"
+  sh_ "echo \"<?xml version='1.0' encoding='utf-8' standalone='yes' ?><map><string name=\\\"widget_items\\\"></string></map>\" > /data/local/tmp/wempty.xml"
+  widgets_prefs /data/local/tmp/wempty.xml; widgets_pane
+  sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind widget --es cls "$1" >/dev/null; sleep 3; }
+widgets_restore() { widgets_prefs /data/local/tmp/wbak.xml; sh_ rm -f /data/local/tmp/wbak.xml; }
