@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_bodyFontFamily" translatable="false">nokia-pure-text</string>
+    <string name="config_bodyFontFamilyMedium" translatable="false">nokia-pure-text</string>
+    <string name="config_headlineFontFamily" translatable="false">nokia-pure-text</string>
+    <string name="config_headlineFontFamilyMedium" translatable="false">nokia-pure-text</string>
+</resources>

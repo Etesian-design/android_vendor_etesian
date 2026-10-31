@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android extras row (mock 20): bold title, wraps; the N9 switch at the end. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="70dp"
+    android:background="?android:attr/selectableItemBackground" android:gravity="center_vertical"
+    android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp"
+    android:paddingTop="6dp" android:paddingBottom="6dp">
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:orientation="vertical" android:layout_marginEnd="12dp">
+        <TextView android:id="@android:id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#FFFFFFFF" android:textSize="22sp" android:textStyle="bold"/>
+        <TextView android:id="@android:id/summary" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="#FFC8C8C8" android:textSize="16sp" android:visibility="gone"/>
+    </LinearLayout>
+    <LinearLayout android:id="@android:id/widget_frame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical"/>
+</LinearLayout>

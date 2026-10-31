@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle word clock (belle-ref11.jpg): the hour huge in white, minutes in pink, the date. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:gravity="center_vertical" android:orientation="vertical" android:paddingStart="16dp">
+    <TextView android:id="@+id/bc_hour" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false"
+        android:textColor="#FFFFFFFF" android:textSize="72sp" android:fontFamily="etesian-text"/>
+    <TextView android:id="@+id/bc_minute" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false"
+        android:textColor="#FFE0287A" android:textSize="40sp" android:fontFamily="etesian-text"/>
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp"
+        android:format12Hour="dd/MM/yyyy" android:format24Hour="dd/MM/yyyy" android:textColor="#FFFFFFFF" android:textSize="26sp" android:fontFamily="etesian-text"/>
+</LinearLayout>

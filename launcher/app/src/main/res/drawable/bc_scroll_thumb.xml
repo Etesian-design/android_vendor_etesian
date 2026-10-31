@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The thin scrollbar thumb of the Belle list widgets (Mail, RSS, Feeds): always shown, so you see there is more. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#66808085"/>
+    <corners android:radius="2dp"/>
+</shape>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle analog clock: no panel round it (transparent, as on Belle). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/belle_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <AnalogClock
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:dial="@drawable/belle_dial"
+        android:hand_hour="@drawable/belle_hand_hour"
+        android:hand_minute="@drawable/belle_hand_minute" />
+
+    <TextClock
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="etesian-text"
+        android:format12Hour="EEE d MMM"
+        android:format24Hour="EEE d MMM"
+        android:textColor="#FFD0D0D0" android:shadowColor="#99000000" android:shadowDy="1" android:shadowRadius="3"
+        android:textSize="13sp" />
+</LinearLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A feed without its own icon, as in the N9 Feeds list: a grey squircle with the dark feed mark. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp" android:height="64dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FFC9CCD0"
+        android:pathData="M32,2C8,2 2,8 2,32 2,56 8,62 32,62 56,62 62,56 62,32 62,8 56,2 32,2z" />
+    <path android:fillColor="#FF262626"
+        android:pathData="M21,43m-4,0a4,4 0 1 1 8,0a4,4 0 1 1 -8,0" />
+    <path android:fillColor="#FF262626"
+        android:pathData="M17,29a18,18 0 0 1 18,18h-5.5a12.5,12.5 0 0 0 -12.5,-12.5z" />
+    <path android:fillColor="#FF262626"
+        android:pathData="M17,18a29,29 0 0 1 29,29h-5.5a23.5,23.5 0 0 0 -23.5,-23.5z" />
+</vector>

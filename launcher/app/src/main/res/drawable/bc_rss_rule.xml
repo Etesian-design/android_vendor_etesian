@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The RSS list's rule, inset 14 dp on both sides as in the original rows. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:insetLeft="14dp" android:insetRight="14dp">
+    <shape android:shape="rectangle"><solid android:color="#FFDADADD"/><size android:height="1dp"/></shape>
+</inset>

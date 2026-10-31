@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle RSS widget header (belle-ref8.jpg): orange gradient. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:angle="270" android:startColor="#FFF7A13A" android:endColor="#FFE5620F"/>
+    <corners android:topLeftRadius="10dp" android:topRightRadius="10dp"/></shape>

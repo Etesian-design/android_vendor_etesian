@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle square analog clock (the small one in belle-ref4.jpg): the squircle face filling the
+     widget, white hands, the date inside at 3 o'clock. Sized from code (BelleClassic2.fitFace). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:id="@+id/bc_face" android:layout_width="120dp" android:layout_height="120dp" android:layout_gravity="center">
+        <AnalogClock android:layout_width="match_parent" android:layout_height="match_parent"
+            android:dial="@drawable/bc_square_dial" android:hand_hour="@drawable/bc_hand_hour_l" android:hand_minute="@drawable/bc_hand_minute_l"/>
+        <TextClock android:id="@+id/bc_date" android:layout_width="18dp" android:layout_height="18dp" android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="16dp" android:background="@drawable/bc_date_box" android:format12Hour="d" android:format24Hour="d"
+            android:gravity="center" android:textColor="#FFFFFFFF" android:textSize="10sp" android:fontFamily="etesian-text"/>
+    </FrameLayout>
+</FrameLayout>

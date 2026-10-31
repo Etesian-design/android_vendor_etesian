@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Etesian's Open applications replaces Launcher3's Recents. -->
+    <string name="config_recentsComponentName" translatable="false"
+        >com.bompotis.etesian.launcher/com.bompotis.etesian.launcher.HomeActivity</string>
+
+    <!-- The Events view reads notifications; granted with the ROM instead of asking. -->
+    <string name="config_defaultListenerAccessPackages" translatable="false"
+        >com.bompotis.etesian.launcher</string>
+
+    <!-- The N9 toolbar lives in the nav bar window but belongs to the app: reparent it onto
+         the departing task during the swipe so it moves with the window. -->
+    <bool name="config_attachNavBarToAppDuringTransition">true</bool>
+</resources>

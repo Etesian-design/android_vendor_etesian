@@ -1,0 +1,870 @@
+diff --git a/app/Android.bp b/app/Android.bp
+index b24f014..0db5062 100644
+--- a/app/Android.bp
++++ b/app/Android.bp
+@@ -59,6 +59,8 @@ android_app {
+         "Aperture_io.github.zxing-cpp_android",
+         "kotlin-stdlib",
+         "kotlinx_coroutines_guava",
++        // N9: system bottom toolbar
++        "etesian-toolbar",
+     ],
+ 
+     optional_uses_libs: [
+diff --git a/app/src/main/java/org/lineageos/aperture/ApertureApplication.kt b/app/src/main/java/org/lineageos/aperture/ApertureApplication.kt
+index d64c48a..d31ed20 100644
+--- a/app/src/main/java/org/lineageos/aperture/ApertureApplication.kt
++++ b/app/src/main/java/org/lineageos/aperture/ApertureApplication.kt
+@@ -8,7 +8,6 @@ package org.lineageos.aperture
+ import android.annotation.SuppressLint
+ import android.app.Application
+ import androidx.camera.camera2.internal.CameraCompatibilityFilter
+-import com.google.android.material.color.DynamicColors
+ import kotlinx.coroutines.MainScope
+ import org.lineageos.aperture.repositories.CameraRepository
+ import org.lineageos.aperture.repositories.MediaRepository
+@@ -27,8 +26,7 @@ class ApertureApplication : Application() {
+     override fun onCreate() {
+         super.onCreate()
+ 
+-        // Observe dynamic colors changes
+-        DynamicColors.applyToActivitiesIfAvailable(this)
++        // N9: static palette, no dynamic colors
+ 
+         // Set backward compatible camera ids
+         CameraCompatibilityFilter.setBackwardCompatibleCameraIds(
+diff --git a/app/src/main/java/org/lineageos/aperture/CameraActivity.kt b/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
+index edae6e0..e0fada3 100644
+--- a/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
++++ b/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
+@@ -10,6 +10,7 @@ import android.app.KeyguardManager
+ import android.content.ClipData
+ import android.content.Intent
+ import android.content.pm.ActivityInfo
++import android.content.res.Configuration
+ import android.graphics.BitmapFactory
+ import android.graphics.Color
+ import android.graphics.Rect
+@@ -27,6 +28,7 @@ import android.util.Log
+ import android.view.GestureDetector
+ import android.view.KeyEvent
+ import android.view.MotionEvent
++import android.view.View
+ import android.view.ViewGroup
+ import android.view.WindowManager
+ import android.widget.Button
+@@ -55,6 +57,7 @@ import androidx.camera.view.ScreenFlashView
+ import androidx.camera.viewfinder.core.ZoomGestureDetector
+ import androidx.cardview.widget.CardView
+ import androidx.constraintlayout.widget.ConstraintLayout
++import androidx.constraintlayout.widget.ConstraintSet
+ import androidx.core.content.ContextCompat
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.WindowCompat
+@@ -81,6 +84,7 @@ import kotlinx.coroutines.flow.collectLatest
+ import kotlinx.coroutines.guava.await
+ import kotlinx.coroutines.launch
+ import kotlinx.coroutines.withContext
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.aperture.ext.camera2CameraControl
+ import org.lineageos.aperture.ext.flashMode
+ import org.lineageos.aperture.ext.mapToRange
+@@ -184,6 +188,17 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
+     private val viewFinderFocus by lazy { findViewById<ImageView>(R.id.viewFinderFocus) }
+     private val zoomLevel by lazy { findViewById<HorizontalSlider>(R.id.zoomLevel) }
++    private val primaryBarLayout by lazy { findViewById<ConstraintLayout>(R.id.primaryBarLayout) }
++
++    // N9 portrait / landscape arrangements
++    private val portraitMainSet = ConstraintSet()
++    private val portraitPrimarySet = ConstraintSet()
++    private val portraitSecondarySet = ConstraintSet()
++    private val landscapeMainSet = ConstraintSet()
++    private val landscapePrimarySet = ConstraintSet()
++    private val landscapeSecondarySet = ConstraintSet()
++    private var isLandscapeLayout = false
++    private var etesianLayoutApplied = false
+ 
+     // System services
+     private val keyguardManager by lazy { getSystemService(KeyguardManager::class.java) }
+@@ -414,10 +429,37 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { _, windowInsets ->
+             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+ 
+-            cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+-                bottomMargin = insets.bottom
+-                leftMargin = insets.left
+-                rightMargin = insets.right
++            if (isLandscapeLayout) {
++                // N9 landscape: mode switch on top of the right-hand strip
++                cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    topMargin = insets.top
++                    bottomMargin = 0
++                    leftMargin = 0
++                    rightMargin = insets.right
++                }
++                primaryBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    bottomMargin = insets.bottom
++                    rightMargin = insets.right
++                }
++                secondaryBottomBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    topMargin = insets.top
++                    leftMargin = insets.left
++                }
++            } else {
++                cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    topMargin = 0
++                    bottomMargin = insets.bottom
++                    leftMargin = insets.left
++                    rightMargin = insets.right
++                }
++                primaryBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    bottomMargin = 0
++                    rightMargin = 0
++                }
++                secondaryBottomBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
++                    topMargin = 0
++                    leftMargin = 0
++                }
+             }
+ 
+             capturePreviewLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+@@ -429,6 +471,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+             windowInsets
+         }
+ 
++        // N9: landscape-first arrangement (viewfinder + right-hand strip)
++        setupEtesianLayouts()
++        applyEtesianOrientation(resources.configuration)
++
+         // Set secondary top bar button callbacks
+         aspectRatioButton.setOnClickListener { viewModel.cyclePhotoAspectRatio() }
+         videoQualityButton.setOnClickListener { viewModel.cycleVideoQuality() }
+@@ -632,6 +678,140 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         }
+     }
+ 
++    override fun onConfigurationChanged(newConfig: Configuration) {
++        super.onConfigurationChanged(newConfig)
++
++        // The activity handles orientation itself (configChanges), so swap layouts here
++        applyEtesianOrientation(newConfig)
++    }
++
++    private fun setupEtesianLayouts() {
++        val dp = resources.displayMetrics.density
++        val stripWidth = (120 * dp).toInt()
++        val margin = (16 * dp).toInt()
++
++        portraitMainSet.clone(mainLayout)
++        portraitPrimarySet.clone(primaryBarLayout)
++        portraitSecondarySet.clone(secondaryBottomBarLayout)
++
++        landscapeMainSet.clone(mainLayout)
++        landscapeMainSet.apply {
++            // Viewfinder fills everything left of the strip
++            clear(R.id.viewFinder, ConstraintSet.BOTTOM)
++            connect(R.id.viewFinder, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
++            connect(R.id.viewFinder, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
++            connect(R.id.viewFinder, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
++            connect(R.id.viewFinder, ConstraintSet.END, R.id.primaryBarLayout, ConstraintSet.START)
++
++            // Mode switch at the top of the right-hand strip
++            clear(R.id.cameraModeSelectorLayout)
++            constrainWidth(R.id.cameraModeSelectorLayout, ConstraintSet.WRAP_CONTENT)
++            constrainHeight(R.id.cameraModeSelectorLayout, ConstraintSet.WRAP_CONTENT)
++            connect(R.id.cameraModeSelectorLayout, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
++            connect(R.id.cameraModeSelectorLayout, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
++
++            // Vertical strip on the right: shutter centered, gallery at the bottom
++            clear(R.id.primaryBarLayout)
++            constrainWidth(R.id.primaryBarLayout, stripWidth)
++            constrainHeight(R.id.primaryBarLayout, ConstraintSet.MATCH_CONSTRAINT)
++            connect(R.id.primaryBarLayout, ConstraintSet.TOP, R.id.cameraModeSelectorLayout, ConstraintSet.BOTTOM)
++            connect(R.id.primaryBarLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
++            connect(R.id.primaryBarLayout, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
++
++            // Flash / lens / pro: small icons at the top-left over the preview
++            clear(R.id.secondaryBottomBarLayout)
++            constrainWidth(R.id.secondaryBottomBarLayout, ConstraintSet.MATCH_CONSTRAINT)
++            constrainHeight(R.id.secondaryBottomBarLayout, (72 * dp).toInt())
++            connect(R.id.secondaryBottomBarLayout, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
++            connect(R.id.secondaryBottomBarLayout, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
++            connect(R.id.secondaryBottomBarLayout, ConstraintSet.END, R.id.cameraModeSelectorLayout, ConstraintSet.START)
++
++            // Settings popup along the bottom of the viewfinder
++            clear(R.id.secondaryTopBarLayout)
++            constrainWidth(R.id.secondaryTopBarLayout, ConstraintSet.MATCH_CONSTRAINT)
++            constrainHeight(R.id.secondaryTopBarLayout, ConstraintSet.WRAP_CONTENT)
++            connect(R.id.secondaryTopBarLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
++            connect(R.id.secondaryTopBarLayout, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
++            connect(R.id.secondaryTopBarLayout, ConstraintSet.END, R.id.primaryBarLayout, ConstraintSet.START)
++
++            // Sliders stay within the viewfinder
++            connect(R.id.zoomLevel, ConstraintSet.END, R.id.viewFinder, ConstraintSet.END)
++            connect(R.id.exposureLevel, ConstraintSet.END, R.id.viewFinder, ConstraintSet.END)
++        }
++
++        landscapePrimarySet.clone(primaryBarLayout)
++        landscapePrimarySet.apply {
++            // Flip camera at the top, gallery thumbnail at the bottom
++            clear(R.id.flipCameraButton)
++            constrainWidth(R.id.flipCameraButton, (60 * dp).toInt())
++            constrainHeight(R.id.flipCameraButton, (60 * dp).toInt())
++            connect(R.id.flipCameraButton, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP, margin)
++            centerHorizontally(R.id.flipCameraButton, ConstraintSet.PARENT_ID)
++
++            clear(R.id.galleryButtonCardView)
++            constrainWidth(R.id.galleryButtonCardView, (60 * dp).toInt())
++            constrainHeight(R.id.galleryButtonCardView, (60 * dp).toInt())
++            connect(R.id.galleryButtonCardView, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM, margin)
++            centerHorizontally(R.id.galleryButtonCardView, ConstraintSet.PARENT_ID)
++
++            clear(R.id.videoRecordingStateButton)
++            constrainWidth(R.id.videoRecordingStateButton, (32 * dp).toInt())
++            constrainHeight(R.id.videoRecordingStateButton, (32 * dp).toInt())
++            centerVertically(R.id.videoRecordingStateButton, R.id.flipCameraButton)
++            centerHorizontally(R.id.videoRecordingStateButton, R.id.flipCameraButton)
++        }
++
++        landscapeSecondarySet.clone(secondaryBottomBarLayout)
++        landscapeSecondarySet.apply {
++            setVisibility(R.id.secondaryBottomBarDivider, View.GONE)
++
++            // Flash first at the far left, then pro / lens toggle next to it
++            clear(R.id.flashButton, ConstraintSet.END)
++            connect(R.id.flashButton, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, margin)
++            connect(R.id.proButton, ConstraintSet.START, R.id.flashButton, ConstraintSet.END, margin)
++            connect(R.id.googleLensButton, ConstraintSet.START, R.id.flashButton, ConstraintSet.END, margin)
++        }
++    }
++
++    private fun applyEtesianOrientation(config: Configuration) {
++        val landscape = config.orientation == Configuration.ORIENTATION_LANDSCAPE
++        if (landscape == isLandscapeLayout && etesianLayoutApplied) {
++            return
++        }
++        isLandscapeLayout = landscape
++        etesianLayoutApplied = true
++
++        if (landscape) {
++            landscapeMainSet.applyTo(mainLayout)
++            landscapePrimarySet.applyTo(primaryBarLayout)
++            landscapeSecondarySet.applyTo(secondaryBottomBarLayout)
++            secondaryBottomBarLayout.background = null
++            primaryBarLayout.setPadding(0, 0, 0, 0)
++        } else {
++            portraitMainSet.applyTo(mainLayout)
++            portraitPrimarySet.applyTo(primaryBarLayout)
++            portraitSecondarySet.applyTo(secondaryBottomBarLayout)
++            secondaryBottomBarLayout.setBackgroundColor(getColor(R.color.n9_panel))
++            val dp = resources.displayMetrics.density
++            primaryBarLayout.setPadding(0, (16 * dp).toInt(), 0, (8 * dp).toInt())
++        }
++
++        ViewCompat.requestApplyInsets(mainLayout)
++    }
++
++    override fun onResume() {
++        super.onResume()
++
++        // N9: the viewfinder is full screen, no system toolbar items
++        if (EtesianToolbar.isAvailable(this)) {
++            // Black bar with only Back, like the N9 camera's dark chrome.
++            EtesianToolbar.of(this)
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setBack(true)
++                .setItems(listOf()) { }
++        }
++    }
++
+     override fun onDestroy() {
+         // Detach CameraController from ScreenFlashView
+         screenFlashView.setController(null)
+diff --git a/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt b/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt
+index 9198171..dc320b5 100644
+--- a/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt
++++ b/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt
+@@ -66,8 +66,13 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
+ 
+         setSupportActionBar(toolbar)
+         supportActionBar?.apply {
+-            setDisplayHomeAsUpEnabled(true)
+-            setDisplayShowHomeEnabled(true)
++            // N9: back lives in the bottom toolbar
++            setDisplayHomeAsUpEnabled(false)
++            setDisplayShowHomeEnabled(false)
++        }
++
++        findViewById<View>(R.id.n9BackButton).setOnClickListener {
++            onBackPressedDispatcher.onBackPressed()
+         }
+     }
+ 
+diff --git a/app/src/main/res/drawable/ic_shutter_base.xml b/app/src/main/res/drawable/ic_shutter_base.xml
+index f6f3800..89a6c41 100644
+--- a/app/src/main/res/drawable/ic_shutter_base.xml
++++ b/app/src/main/res/drawable/ic_shutter_base.xml
+@@ -10,7 +10,7 @@
+     android:viewportHeight="72">
+     <group android:name="backplate">
+         <path
+-            android:fillColor="@color/gray_10"
++            android:fillColor="@color/n9_panel"
+             android:fillType="evenOdd"
+             android:pathData="M70 36C70 54.7777 54.7777 70 36 70C17.2223 70 2 54.7777 2 36C2 17.2223 17.2223 2 36 2C54.7777 2 70 17.2223 70 36Z"
+             android:strokeWidth="4"
+@@ -36,7 +36,7 @@
+         android:scaleY="1.0">
+         <path
+             android:name="capture_src"
+-            android:fillColor="?attr/colorSecondaryContainer"
++            android:fillColor="@color/n9_shutter_fill"
+             android:fillType="evenOdd"
+             android:pathData="M68 36C68 53.6731 53.6731 68 36 68C18.3269 68 4 53.6731 4 36C4 18.3269 18.3269 4 36 4C53.6731 4 68 18.3269 68 36Z" />
+     </group>
+diff --git a/app/src/main/res/layout/activity_camera.xml b/app/src/main/res/layout/activity_camera.xml
+index d5f291f..0df8179 100644
+--- a/app/src/main/res/layout/activity_camera.xml
++++ b/app/src/main/res/layout/activity_camera.xml
+@@ -122,7 +122,7 @@
+         android:id="@+id/secondaryTopBarLayout"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
+-        android:background="#99000000"
++        android:background="@color/n9_panel"
+         android:fillViewport="true"
+         android:scrollbars="none"
+         android:visibility="gone"
+@@ -211,11 +211,13 @@
+         android:id="@+id/secondaryBottomBarLayout"
+         android:layout_width="0dp"
+         android:layout_height="72dp"
++        android:background="@color/n9_panel"
+         app:layout_constraintBottom_toTopOf="@+id/primaryBarLayout"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent">
+ 
+         <com.google.android.material.divider.MaterialDivider
++            android:id="@+id/secondaryBottomBarDivider"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             app:layout_constraintBottom_toBottomOf="parent"
+@@ -270,7 +272,9 @@
+         android:id="@+id/primaryBarLayout"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_panel"
+         android:paddingTop="16dp"
++        android:paddingBottom="8dp"
+         app:layout_constraintBottom_toTopOf="@+id/cameraModeSelectorLayout"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent">
+@@ -294,9 +298,10 @@
+             android:layout_height="60dp"
+             android:layout_gravity="center"
+             android:layout_marginStart="32dp"
+-            android:backgroundTint="?colorSecondaryContainer"
++            android:backgroundTint="@color/n9_tile"
+             android:scaleType="fitXY"
+-            app:cardCornerRadius="8dp"
++            app:cardCornerRadius="4dp"
++            app:cardElevation="0dp"
+             app:layout_constraintBottom_toBottomOf="parent"
+             app:layout_constraintStart_toStartOf="parent"
+             app:layout_constraintTop_toTopOf="parent">
+@@ -357,6 +362,7 @@
+         android:id="@+id/cameraModeSelectorLayout"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_panel"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent" />
+diff --git a/app/src/main/res/layout/activity_settings.xml b/app/src/main/res/layout/activity_settings.xml
+index 04de566..fb852ce 100644
+--- a/app/src/main/res/layout/activity_settings.xml
++++ b/app/src/main/res/layout/activity_settings.xml
+@@ -9,12 +9,14 @@
+     android:id="@+id/coordinatorLayout"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
++    android:background="@color/n9_black"
+     tools:context=".SettingsActivity">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+         android:id="@+id/appBarLayout"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_black"
+         android:fitsSystemWindows="true"
+         app:liftOnScrollTargetViewId="@+id/settings">
+ 
+@@ -23,7 +25,8 @@
+             android:layout_width="match_parent"
+             android:layout_height="179dp"
+             app:expandedTitleMarginBottom="31dp"
+-            app:expandedTitleMarginStart="24dp"
++            app:contentScrim="@color/n9_black"
++            app:expandedTitleMarginStart="16dp"
+             app:expandedTitleTextAppearance="?attr/textAppearanceDisplaySmall"
+             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
+             app:titleCollapseMode="fade"
+@@ -44,6 +47,29 @@
+         android:id="@+id/settings"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
++        android:layout_marginBottom="@dimen/n9_bottom_bar_height"
+         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+ 
++    <!-- N9 bottom toolbar with a dark squircle back button -->
++    <FrameLayout
++        android:id="@+id/n9BottomBar"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_gravity="bottom"
++        android:background="@color/n9_black"
++        android:fitsSystemWindows="true">
++
++        <ImageButton
++            android:id="@+id/n9BackButton"
++            android:layout_width="56dp"
++            android:layout_height="48dp"
++            android:layout_gravity="start|center_vertical"
++            android:layout_marginStart="12dp"
++            android:layout_marginVertical="8dp"
++            android:background="@drawable/n9_tile_background"
++            android:contentDescription="@android:string/cancel"
++            android:src="@drawable/n9_ic_back" />
++
++    </FrameLayout>
++
+ </androidx.coordinatorlayout.widget.CoordinatorLayout>
+diff --git a/app/src/main/res/layout/camera_mode_button.xml b/app/src/main/res/layout/camera_mode_button.xml
+index ce5f072..0a81ce1 100644
+--- a/app/src/main/res/layout/camera_mode_button.xml
++++ b/app/src/main/res/layout/camera_mode_button.xml
+@@ -9,8 +9,8 @@
+     android:layout_height="wrap_content"
+     android:backgroundTint="@android:color/transparent"
+     android:padding="0dp"
+-    android:textAllCaps="true"
++    android:textAllCaps="false"
+     android:textColor="@color/camera_mode_selector_text"
+     android:textStyle="bold"
+-    android:typeface="monospace"
++    android:fontFamily="etesian-text"
+     app:iconPadding="0dp" />
+diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
+index 7d061a2..f7ea053 100644
+--- a/app/src/main/res/values/themes.xml
++++ b/app/src/main/res/values/themes.xml
+@@ -5,8 +5,16 @@
+ -->
+ <resources xmlns:tools="http://schemas.android.com/tools">
+     <!-- Base application theme. -->
+-    <style name="Theme.Aperture" parent="Theme.Material3.DayNight.NoActionBar">
++    <style name="Theme.Aperture" parent="Theme.Material3.Dark.NoActionBar">
+         <item name="android:navigationBarColor">@android:color/transparent</item>
++        <item name="android:windowBackground">@color/n9_black</item>
++        <item name="android:colorBackground">@color/n9_black</item>
++        <item name="colorSurface">@color/n9_black</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_text</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
+         <item name="dialogCornerRadius">28dp</item>
+         <item name="enableEdgeToEdge">true</item>
+     </style>
+@@ -15,6 +23,12 @@
+     <style name="Theme.Aperture.Camera" parent="Theme.Material3.Dark.NoActionBar">
+         <item name="android:navigationBarColor">@android:color/transparent</item>
+         <item name="android:windowBackground">@android:color/black</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorSecondaryContainer">@color/n9_tile</item>
++        <item name="colorOnSecondaryContainer">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
+         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="O_MR1">
+             shortEdges
+         </item>
+@@ -39,7 +53,10 @@
+         <item name="android:maxLines">3</item>
+         <item name="android:paddingHorizontal">0dp</item>
+         <item name="android:textStyle">bold</item>
+-        <item name="android:typeface">monospace</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:background">@drawable/n9_tile_background</item>
++        <item name="android:layout_margin">4dp</item>
++        <item name="android:paddingVertical">8dp</item>
+     </style>
+ 
+     <!-- Secondary bottom bar icons theme -->
+diff --git a/app/src/main/res/values/themes_settingslib.xml b/app/src/main/res/values/themes_settingslib.xml
+index 3286e8c..0960b2e 100644
+--- a/app/src/main/res/values/themes_settingslib.xml
++++ b/app/src/main/res/values/themes_settingslib.xml
+@@ -5,7 +5,21 @@
+ -->
+ <resources>
+     <!-- Settings activity theme. -->
+-    <style name="Theme.SettingsLib" parent="Theme.Material3.DayNight.NoActionBar">
++    <style name="Theme.SettingsLib" parent="Theme.Material3.Dark.NoActionBar">
++        <!-- N9 camera settings: black pages, blue selection -->
++        <item name="android:windowBackground">@color/n9_black</item>
++        <item name="android:colorBackground">@color/n9_black</item>
++        <item name="colorSurface">@color/n9_black</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_text</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:statusBarColor">@color/n9_black</item>
+         <item name="android:listPreferredItemPaddingLeft">24dp</item>
+         <item name="android:listPreferredItemPaddingStart">24dp</item>
+         <item name="alertDialogTheme">@style/Theme.SettingsLib.AlertDialog</item>
+@@ -15,7 +29,11 @@
+ 
+     <!-- Settings alert dialog theme. -->
+     <style name="Theme.SettingsLib.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+-        <item name="android:colorBackground">?attr/colorSurface</item>
++        <item name="android:colorBackground">@color/n9_black</item>
++        <item name="colorSurface">@color/n9_black</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="alertDialogStyle">@style/Theme.SettingsLib.N9AlertDialogStyle</item>
+         <item name="dialogCornerRadius">16dp</item>
+     </style>
+ 
+@@ -26,15 +44,37 @@
+         <item name="android:listPreferredItemPaddingLeft">32dp</item>
+         <item name="android:listPreferredItemPaddingStart">32dp</item>
+         <item name="android:tint">?attr/colorOnSurface</item>
++        <item name="preferenceStyle">@style/Theme.SettingsLib.N9Preference</item>
++        <item name="preferenceCategoryStyle">@style/Theme.SettingsLib.N9PreferenceCategory</item>
++        <item name="dialogPreferenceStyle">@style/Theme.SettingsLib.N9DialogPreference</item>
+         <item name="switchPreferenceCompatStyle">@style/Theme.SettingsLib.SwitchPreferenceCompat</item>
+         <item name="switchPreferenceStyle">@style/Theme.SettingsLib.SwitchPreference</item>
+     </style>
+ 
++    <!-- Segmented choice box rows for single-choice dialogs -->
++    <style name="Theme.SettingsLib.N9AlertDialogStyle" parent="MaterialAlertDialog.Material3">
++        <item name="singleChoiceItemLayout">@layout/n9_choice_item</item>
++    </style>
++
++    <style name="Theme.SettingsLib.N9Preference" parent="@style/Preference.Material">
++        <item name="android:layout">@layout/n9_preference</item>
++    </style>
++
++    <style name="Theme.SettingsLib.N9DialogPreference" parent="@style/Preference.DialogPreference.Material">
++        <item name="android:layout">@layout/n9_preference</item>
++    </style>
++
++    <style name="Theme.SettingsLib.N9PreferenceCategory" parent="@style/Preference.Category.Material">
++        <item name="android:layout">@layout/n9_preference_category</item>
++    </style>
++
+     <style name="Theme.SettingsLib.SwitchPreference" parent="@style/Preference.SwitchPreference.Material">
++        <item name="android:layout">@layout/n9_preference</item>
+         <item name="widgetLayout">@layout/settingslib_switch</item>
+     </style>
+ 
+     <style name="Theme.SettingsLib.SwitchPreferenceCompat" parent="@style/Preference.SwitchPreferenceCompat.Material">
++        <item name="android:layout">@layout/n9_preference</item>
+         <item name="widgetLayout">@layout/settingslib_switch_compat</item>
+     </style>
+ </resources>
+diff --git a/app/src/main/res/drawable/n9_choice_item_background.xml b/app/src/main/res/drawable/n9_choice_item_background.xml
+new file mode 100644
+index 0000000..5299044
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_choice_item_background.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Segmented choice box row: selected row is solid N9 blue. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++    <item android:state_pressed="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile_pressed" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++</selector>
+diff --git a/app/src/main/res/drawable/n9_ic_back.xml b/app/src/main/res/drawable/n9_ic_back.xml
+new file mode 100644
+index 0000000..e40a0e2
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_back.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="true"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@color/n9_text"
++        android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_icon_squircle_blue.xml b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
+new file mode 100644
+index 0000000..3e80375
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <solid android:color="@color/n9_blue" />
++    <corners android:radius="11dp" />
++</shape>
+diff --git a/app/src/main/res/drawable/n9_tile_background.xml b/app/src/main/res/drawable/n9_tile_background.xml
+new file mode 100644
+index 0000000..f0cc0bb
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tile_background.xml
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 round-squircle icon tile: dark, blue when selected/checked/activated. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_selected="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item android:state_activated="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item android:state_pressed="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile_pressed" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++</selector>
+diff --git a/app/src/main/res/layout/n9_choice_item.xml b/app/src/main/res/layout/n9_choice_item.xml
+new file mode 100644
+index 0000000..9e4d109
+--- /dev/null
++++ b/app/src/main/res/layout/n9_choice_item.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Segmented choice box row (single choice dialogs). -->
++<CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@android:id/text1"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:layout_marginHorizontal="16dp"
++    android:layout_marginVertical="2dp"
++    android:background="@drawable/n9_choice_item_background"
++    android:checkMark="@null"
++    android:fontFamily="etesian-text"
++    android:gravity="center_vertical"
++    android:minHeight="52dp"
++    android:paddingHorizontal="16dp"
++    android:textAlignment="viewStart"
++    android:textColor="@color/n9_text"
++    android:textSize="18sp" />
+diff --git a/app/src/main/res/layout/n9_preference.xml b/app/src/main/res/layout/n9_preference.xml
+new file mode 100644
+index 0000000..866992b
+--- /dev/null
++++ b/app/src/main/res/layout/n9_preference.xml
+@@ -0,0 +1,70 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 list row: blue squircle icon, bold white title, grey value. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:background="?android:attr/selectableItemBackground"
++    android:gravity="center_vertical"
++    android:minHeight="72dp"
++    android:orientation="horizontal"
++    android:paddingStart="16dp"
++    android:paddingEnd="16dp">
++
++    <FrameLayout
++        android:id="@+id/icon_frame"
++        android:layout_width="44dp"
++        android:layout_height="44dp"
++        android:layout_marginEnd="16dp"
++        android:background="@drawable/n9_icon_squircle_blue">
++
++        <ImageView
++            android:id="@android:id/icon"
++            android:layout_width="24dp"
++            android:layout_height="24dp"
++            android:layout_gravity="center"
++            android:tint="@color/n9_text" />
++
++    </FrameLayout>
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:orientation="vertical"
++        android:paddingVertical="12dp">
++
++        <TextView
++            android:id="@android:id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:fontFamily="etesian-text"
++            android:maxLines="2"
++            android:textColor="@color/n9_text"
++            android:textSize="18sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:id="@android:id/summary"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:fontFamily="etesian-text"
++            android:maxLines="4"
++            android:textColor="@color/n9_text_secondary"
++            android:textSize="14sp" />
++
++    </LinearLayout>
++
++    <LinearLayout
++        android:id="@android:id/widget_frame"
++        android:layout_width="wrap_content"
++        android:layout_height="match_parent"
++        android:gravity="center_vertical"
++        android:orientation="vertical"
++        android:paddingStart="16dp" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/layout/n9_preference_category.xml b/app/src/main/res/layout/n9_preference_category.xml
+new file mode 100644
+index 0000000..84e02ec
+--- /dev/null
++++ b/app/src/main/res/layout/n9_preference_category.xml
+@@ -0,0 +1,38 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 group header: grey label followed by a thin line to the right. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:orientation="horizontal"
++    android:paddingStart="16dp"
++    android:paddingTop="20dp"
++    android:paddingEnd="16dp"
++    android:paddingBottom="8dp">
++
++    <TextView
++        android:id="@android:id/title"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:fontFamily="etesian-text"
++        android:textColor="@color/n9_text_secondary"
++        android:textSize="14sp" />
++
++    <View
++        android:layout_width="0dp"
++        android:layout_height="1dp"
++        android:layout_marginStart="12dp"
++        android:layout_weight="1"
++        android:background="@color/n9_separator" />
++
++    <TextView
++        android:id="@android:id/summary"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:visibility="gone" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/values/colors_n9.xml b/app/src/main/res/values/colors_n9.xml
+new file mode 100644
+index 0000000..97058d9
+--- /dev/null
++++ b/app/src/main/res/values/colors_n9.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Nokia N9 (Etesian) camera palette: black UI, dark tiles, blue selection. -->
++<resources>
++    <color name="n9_black">#FF000000</color>
++    <color name="n9_tile">#FF2A2A2A</color>
++    <color name="n9_tile_pressed">#FF3A3A3A</color>
++    <color name="n9_blue">#FF1E88E5</color>
++    <color name="n9_text">#FFFFFFFF</color>
++    <color name="n9_text_secondary">#FF8C8C8C</color>
++    <color name="n9_separator">#FF3C3C3C</color>
++    <!-- Viewfinder overlays: translucent dark panel, white-ring round shutter -->
++    <color name="n9_panel">#99000000</color>
++    <color name="n9_shutter_fill">#FFE6E6E6</color>
++</resources>
+diff --git a/app/src/main/res/values/dimens_n9.xml b/app/src/main/res/values/dimens_n9.xml
+new file mode 100644
+index 0000000..0b38bef
+--- /dev/null
++++ b/app/src/main/res/values/dimens_n9.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <dimen name="n9_bottom_bar_height">64dp</dimen>
++</resources>

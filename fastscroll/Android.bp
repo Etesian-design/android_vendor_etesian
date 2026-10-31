@@ -1,0 +1,9 @@
+// Etesian fast scroller: the N9's letter-jump strip and band for RecyclerView lists.
+android_library {
+    name: "etesian-fastscroll",
+    srcs: ["src/**/*.java"],
+    manifest: "AndroidManifest.xml",
+    static_libs: ["androidx.recyclerview_recyclerview"],
+    sdk_version: "current",
+    min_sdk_version: "31",
+}

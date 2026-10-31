@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The N9 feed icon, drawn: an orange squircle with the white feed mark. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="64dp" android:height="64dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:pathData="M32,2C8,2 2,8 2,32 2,56 8,62 32,62 56,62 62,56 62,32 62,8 56,2 32,2z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="32" android:startY="2"
+                android:endX="32" android:endY="62"
+                android:startColor="#FFFFA21F" android:endColor="#FFE8480C" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M19,45m-5,0a5,5 0 1 1 10,0a5,5 0 1 1 -10,0" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M14,28a22,22 0 0 1 22,22h-6.5a15.5,15.5 0 0 0 -15.5,-15.5z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M14,15a35,35 0 0 1 35,35h-6.5a28.5,28.5 0 0 0 -28.5,-28.5z" />
+</vector>

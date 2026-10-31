@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle squircle analog dial (belle-ref10.jpg, the small one in belle-ref4.jpg): a lit bevel round a
+     dark face, with the hour marks. 400dp so AnalogClock (which only scales down) fills any widget;
+     the hands share the size. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:width="400dp" android:height="400dp"><shape><gradient android:angle="270" android:startColor="#FF6A6B70" android:endColor="#FF1A1A1C"/>
+        <corners android:radius="112dp"/><stroke android:width="5dp" android:color="#FF0A0A0B"/></shape></item>
+    <item android:left="14dp" android:top="14dp" android:right="14dp" android:bottom="14dp"><shape>
+        <gradient android:angle="270" android:startColor="#FF323337" android:endColor="#FF0E0E10"/><corners android:radius="99dp"/></shape></item>
+    <item android:left="14dp" android:top="14dp" android:right="14dp" android:bottom="14dp" android:drawable="@drawable/bc_marks"/>
+</layer-list>

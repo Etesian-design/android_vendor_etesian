@@ -1,0 +1,992 @@
+diff --git a/Android.bp b/Android.bp
+index 7f51f2e7c61..8dfbdf36c2c 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -132,6 +132,10 @@ android_library {
+         // Lineage dependencies
+         "org.lineageos.platform.internal",
+         "LineagePreferenceLib",
++
++        // Etesian (N9) dependencies
++        "etesian-toolbar",
++        "etesian-theme",
+     ],
+ 
+     plugins: [
+diff --git a/res/drawable/ic_homepage_search.xml b/res/drawable/ic_homepage_search.xml
+index 1e8bcdc7e4e..1fef5cab8ad 100644
+--- a/res/drawable/ic_homepage_search.xml
++++ b/res/drawable/ic_homepage_search.xml
+@@ -20,7 +20,7 @@
+         android:height="24dp"
+         android:viewportWidth="24"
+         android:viewportHeight="24"
+-        android:tint="@color/materialColorOnSurfaceVariant">
++        android:tint="@color/n9_text_secondary">
+     <path
+         android:fillColor="#FF000000"
+         android:pathData="M20.49,19l-5.73,-5.73C15.53,12.2 16,10.91 16,9.5C16,5.91 13.09,3 9.5,3S3,5.91 3,9.5C3,13.09 5.91,16 9.5,16c1.41,0 2.7,-0.47 3.77,-1.24L19,20.49L20.49,19zM5,9.5C5,7.01 7.01,5 9.5,5S14,7.01 14,9.5S11.99,14 9.5,14S5,11.99 5,9.5z"/>
+diff --git a/res/drawable/search_bar_selected_background.xml b/res/drawable/search_bar_selected_background.xml
+index a1299c5969b..8bf5cec099f 100644
+--- a/res/drawable/search_bar_selected_background.xml
++++ b/res/drawable/search_bar_selected_background.xml
+@@ -16,5 +16,5 @@
+ 
+ <ripple xmlns:android="http://schemas.android.com/apk/res/android"
+         android:color="?android:attr/colorControlHighlight">
+-    <item android:drawable="@color/settingslib_materialColorSurfaceContainerLowest"/>
++    <item android:drawable="@color/n9_search_bg"/><!-- N9 -->
+ </ripple>
+diff --git a/res/layout/homepage_preference.xml b/res/layout/homepage_preference.xml
+index 3f57592e3e4..7bc8bcb60cc 100644
+--- a/res/layout/homepage_preference.xml
++++ b/res/layout/homepage_preference.xml
+@@ -65,6 +65,10 @@
+             android:textAlignment="viewStart"
+             android:singleLine="true"
+             android:textAppearance="?android:attr/textAppearanceListItem"
++            android:textColor="@color/n9_text_primary"
++            android:fontFamily="etesian-text"
++            android:textSize="@dimen/n9_list_primary_text_size"
++            android:textStyle="bold"
+             android:hyphenationFrequency="normalFast"
+             android:lineBreakWordStyle="phrase"
+             android:ellipsize="marquee"/>
+@@ -78,7 +82,9 @@
+             android:layout_gravity="start"
+             android:textAlignment="viewStart"
+             android:textAppearance="?android:attr/textAppearanceSmall"
+-            android:textColor="@color/materialColorOnSurfaceVariant"
++            android:fontFamily="etesian-text"
++            android:textSize="@dimen/n9_list_secondary_text_size"
++            android:textColor="@color/n9_text_secondary"
+             android:maxLines="4"
+             android:hyphenationFrequency="normalFast"
+             android:lineBreakWordStyle="phrase"
+diff --git a/res/layout/homepage_preference_expressive.xml b/res/layout/homepage_preference_expressive.xml
+index d0798bf6e3d..a63bd52f028 100644
+--- a/res/layout/homepage_preference_expressive.xml
++++ b/res/layout/homepage_preference_expressive.xml
+@@ -63,7 +63,10 @@
+             android:textAlignment="viewStart"
+             android:singleLine="true"
+             android:textAppearance="?android:attr/textAppearanceListItem"
+-            android:textColor="@color/settingslib_text_color_primary"
++            android:fontFamily="etesian-text"
++            android:textSize="@dimen/n9_list_primary_text_size"
++            android:textStyle="bold"
++            android:textColor="@color/n9_text_primary"
+             android:ellipsize="marquee"/>
+ 
+         <TextView
+@@ -75,7 +78,9 @@
+             android:layout_gravity="start"
+             android:textAlignment="viewStart"
+             android:textAppearance="?android:attr/textAppearanceSmall"
+-            android:textColor="@color/settingslib_text_color_secondary"
++            android:fontFamily="etesian-text"
++            android:textSize="@dimen/n9_list_secondary_text_size"
++            android:textColor="@color/n9_text_secondary"
+             android:maxLines="4"
+             style="@style/PreferenceSummaryTextStyle"/>
+     </RelativeLayout>
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+index 386a7630151..c0a306e66e0 100644
+--- a/res/values-night/colors.xml
++++ b/res/values-night/colors.xml
+@@ -18,16 +18,16 @@
+     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
+ 
+     <!-- Dashboard/homepage icon colors -->
+-    <color name="homepage_blue_variant_bg">@color/m3_ref_palette_blue_variant80</color>
+-    <color name="homepage_blue_bg">@color/m3_ref_palette_blue80</color>
+-    <color name="homepage_pink_bg">@color/m3_ref_palette_pink80</color>
+-    <color name="homepage_orange_bg">@color/m3_ref_palette_orange80</color>
+-    <color name="homepage_yellow_bg">@color/m3_ref_palette_yellow80</color>
+-    <color name="homepage_green_bg">@color/m3_ref_palette_green80</color>
+-    <color name="homepage_grey_bg">@color/m3_ref_palette_grey80</color>
+-    <color name="homepage_cyan_bg">@color/m3_ref_palette_cyan80</color>
+-    <color name="homepage_red_bg">@color/m3_ref_palette_red80</color>
+-    <color name="homepage_purple_bg">@color/m3_ref_palette_purple80</color>
++    <color name="homepage_blue_variant_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_blue_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_pink_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_orange_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_yellow_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_green_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_grey_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_cyan_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_red_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_purple_bg">@color/n9_icon_tile_bg</color>
+ 
+     <color name="contextual_card_background">@*android:color/material_grey_900</color>
+     <color name="notification_importance_button_unselected">#5F6368</color>
+diff --git a/res/values-night/themes.xml b/res/values-night/themes.xml
+index fde46aaafce..accf66d0b51 100644
+--- a/res/values-night/themes.xml
++++ b/res/values-night/themes.xml
+@@ -17,13 +17,15 @@
+ 
+ <resources>
+ 
++    <!-- N9 (Etesian): Settings is forced to night mode; N9 black homepage. -->
+     <style name="Theme.Settings.Home" parent="Theme.Settings.HomeBase">
+-        <item name="colorPrimary">@*android:color/primary_device_default_settings</item>
+-        <item name="colorPrimaryDark">@*android:color/primary_dark_device_default_settings</item>
+-        <item name="android:colorBackground">@android:color/system_surface_container_dark</item>
+-        <!-- Homepage should follow device default design, the values is same as device default theme.-->
+-        <item name="android:navigationBarColor">@android:color/black</item>
+-        <item name="android:statusBarColor">?attr/colorPrimaryDark</item>
++        <item name="colorPrimaryDark">@*android:color/primary_dark_device_default_settings_light</item>
++        <item name="android:windowLightStatusBar">false</item>
++        <item name="android:navigationBarDividerColor">@android:color/black</item>
++        <item name="android:navigationBarColor">@color/n9_window_bg</item>
++        <item name="android:statusBarColor">@color/n9_window_bg</item>
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
+     </style>
+ 
+     <style name="Theme.SubSettings" parent="Theme.SubSettings.Base"/>
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 4d076e2b82d..f3f70c8bdd6 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -94,28 +94,28 @@
+     <color name="homepage_accessibility_background">@color/homepage_purple_bg</color>
+     <color name="homepage_support_foreground">@color/homepage_purple_fg</color>
+     <color name="homepage_support_background">@color/homepage_purple_bg</color>
+-    <color name="homepage_generic_icon_background">#1A73E8</color>
+-
+-    <color name="homepage_blue_variant_fg">@color/m3_ref_palette_blue_variant30</color>
+-    <color name="homepage_blue_variant_bg">@color/m3_ref_palette_blue_variant90</color>
+-    <color name="homepage_blue_fg">@color/m3_ref_palette_blue30</color>
+-    <color name="homepage_blue_bg">@color/m3_ref_palette_blue90</color>
+-    <color name="homepage_pink_fg">@color/m3_ref_palette_pink30</color>
+-    <color name="homepage_pink_bg">@color/m3_ref_palette_pink90</color>
+-    <color name="homepage_orange_fg">@color/m3_ref_palette_orange30</color>
+-    <color name="homepage_orange_bg">@color/m3_ref_palette_orange90</color>
+-    <color name="homepage_yellow_fg">@color/m3_ref_palette_yellow30</color>
+-    <color name="homepage_yellow_bg">@color/m3_ref_palette_yellow90</color>
+-    <color name="homepage_green_fg">@color/m3_ref_palette_green30</color>
+-    <color name="homepage_green_bg">@color/m3_ref_palette_green90</color>
+-    <color name="homepage_grey_fg">@color/m3_ref_palette_grey30</color>
+-    <color name="homepage_grey_bg">@color/m3_ref_palette_grey90</color>
+-    <color name="homepage_cyan_fg">@color/m3_ref_palette_cyan30</color>
+-    <color name="homepage_cyan_bg">@color/m3_ref_palette_cyan90</color>
+-    <color name="homepage_red_fg">@color/m3_ref_palette_red30</color>
+-    <color name="homepage_red_bg">@color/m3_ref_palette_red90</color>
+-    <color name="homepage_purple_fg">@color/m3_ref_palette_purple30</color>
+-    <color name="homepage_purple_bg">@color/m3_ref_palette_purple90</color>
++    <color name="homepage_generic_icon_background">@color/n9_icon_tile_bg</color>
++
++    <color name="homepage_blue_variant_fg">@color/n9_icon_tint</color>
++    <color name="homepage_blue_variant_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_blue_fg">@color/n9_icon_tint</color>
++    <color name="homepage_blue_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_pink_fg">@color/n9_icon_tint</color>
++    <color name="homepage_pink_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_orange_fg">@color/n9_icon_tint</color>
++    <color name="homepage_orange_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_yellow_fg">@color/n9_icon_tint</color>
++    <color name="homepage_yellow_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_green_fg">@color/n9_icon_tint</color>
++    <color name="homepage_green_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_grey_fg">@color/n9_icon_tint</color>
++    <color name="homepage_grey_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_cyan_fg">@color/n9_icon_tint</color>
++    <color name="homepage_cyan_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_red_fg">@color/n9_icon_tint</color>
++    <color name="homepage_red_bg">@color/n9_icon_tile_bg</color>
++    <color name="homepage_purple_fg">@color/n9_icon_tint</color>
++    <color name="homepage_purple_bg">@color/n9_icon_tile_bg</color>
+ 
+     <color name="contextual_card_dismissal_background">@*android:color/material_grey_100</color>
+     <color name="contextual_card_background">@*android:color/background_device_default_light</color>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 4f105e95bec..0f144b5e5e1 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -341,7 +341,7 @@
+         <item name="android:layout_gravity">center</item>
+         <item name="android:fontFamily">@*android:string/config_headlineFontFamily</item>
+         <item name="android:textSize">@dimen/search_bar_text_size</item>
+-        <item name="android:textColor">@color/materialColorOnSurfaceVariant</item>
++        <item name="android:textColor">@color/n9_text_secondary</item><!-- N9 -->
+         <item name="android:singleLine">true</item>
+     </style>
+ 
+@@ -584,17 +584,19 @@
+     </style>
+ 
+     <style name="SearchBarStyle">
+-        <item name="android:theme">@style/Theme.MaterialComponents.DayNight</item>
++        <item name="android:theme">@style/Theme.MaterialComponents</item><!-- N9: dark -->
++        <item name="cardBackgroundColor">@color/n9_search_bg</item><!-- N9 -->
+         <item name="cardCornerRadius">@dimen/search_bar_corner_radius</item>
+         <item name="cardElevation">0dp</item>
+     </style>
+ 
+     <style name="SearchBarStyle_v2">
+-        <item name="android:theme">@style/Theme.MaterialComponents.DayNight</item>
++        <item name="android:theme">@style/Theme.MaterialComponents</item><!-- N9: dark -->
++        <item name="cardBackgroundColor">@color/n9_search_bg</item><!-- N9 -->
+         <item name="cardCornerRadius">40dp</item>
+         <item name="cardElevation">0dp</item>
+-        <item name="strokeWidth">1dp</item>
+-        <item name="strokeColor">@color/settingslib_materialColorOutlineVariant</item>
++        <item name="strokeWidth">0dp</item><!-- N9 -->
++        <item name="strokeColor">@color/n9_search_bg</item>
+     </style>
+ 
+     <style name="ConditionCardBorderlessButton"
+@@ -1255,4 +1257,13 @@
+     <style name="SatelliteLandingPageTheme" parent="Theme.SubSettingsBase">
+         <item name="android:forceDarkAllowed">true</item>
+     </style>
++    <!-- N9 (Etesian): light-weight white page title on the static app bar -->
++    <style name="TextAppearance.N9PageTitle" parent="@android:style/TextAppearance.Material.Widget.Toolbar.Title">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="android:textStyle">normal</item>
++        <item name="android:textSize">26sp</item>
++        <item name="android:textColor">@color/n9_text_primary</item>
++    </style>
++
+ </resources>
+diff --git a/res/values/styles_preference.xml b/res/values/styles_preference.xml
+index c7638d32c97..8191fa37813 100644
+--- a/res/values/styles_preference.xml
++++ b/res/values/styles_preference.xml
+@@ -59,7 +59,9 @@
+     </style>
+ 
+     <style name="SettingsPreferenceFragmentStyle" parent="@style/PreferenceFragment.Material">
+-        <item name="android:divider">@*android:drawable/list_divider_material</item>
++        <!-- N9 (Etesian): engraved rules between rows -->
++        <item name="android:divider">@drawable/n9_engraved_divider</item>
++        <item name="android:dividerHeight">2dp</item>
+     </style>
+ 
+     <style name="SetupWizardPreferenceFragmentStyle" parent="PreferenceFragment.Material">
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 7422dbc2572..d29813b2f8f 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -81,6 +81,27 @@
+ 
+         <!-- For AppCompat widgets, e.g. TextInputLayout -->
+         <item name="colorAccent">?android:attr/colorAccent</item>
++
++        <!-- N9 (Etesian) static black palette and typography (no dynamic colour) -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:colorAccent">@color/n9_accent</item>
++        <item name="android:colorPrimary">@color/n9_accent</item>
++        <item name="android:colorControlActivated">@color/n9_accent</item>
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
++        <item name="android:textColorPrimary">@color/n9_text_primary</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:isLightTheme">false</item>
++        <item name="android:colorForeground">@color/n9_text_primary</item>
++        <item name="android:colorControlNormal">@color/n9_text_primary</item>
++        <item name="android:textColorTertiary">@color/n9_text_secondary</item>
++        <item name="android:textColorPrimaryInverse">@android:color/black</item>
++        <item name="android:colorBackgroundFloating">@color/n9_search_bg</item>
++        <item name="colorSurface">@color/n9_window_bg</item>
++        <item name="colorOnSurface">@color/n9_text_primary</item>
++        <item name="android:windowLightStatusBar">false</item>
++        <item name="android:windowLightNavigationBar">false</item>
++        <item name="android:windowElevation">0dp</item>
+     </style>
+ 
+     <!-- Variant of the settings theme with no action bar. -->
+@@ -186,7 +207,7 @@
+ 
+     <style name="Theme.Settings.HomeBase" parent="Theme.Settings.NoActionBar">
+         <item name="colorPrimary">@*android:color/primary_device_default_settings_light</item>
+-        <item name="colorAccent">@*android:color/accent_device_default_light</item>
++        <item name="colorAccent">@color/n9_accent</item>
+         <item name="android:listPreferredItemPaddingStart">16dp</item>
+         <item name="preferenceTheme">@style/SettingsPreferenceTheme</item>
+ 
+@@ -199,12 +220,14 @@
+ 
+     <style name="Theme.Settings.Home" parent="Theme.Settings.HomeBase">
+         <item name="colorPrimaryDark">@*android:color/primary_dark_device_default_settings_light</item>
+-        <item name="android:windowLightStatusBar">true</item>
+-        <item name="android:navigationBarDividerColor">@*android:color/ripple_material_light</item>
++        <item name="android:windowLightStatusBar">false</item>
++        <item name="android:navigationBarDividerColor">@android:color/black</item>
+         <!-- Homepage should follow device default design, the values is same as device default theme.-->
+-        <item name="android:navigationBarColor">@android:color/white</item>
+-        <item name="android:statusBarColor">?attr/colorPrimaryDark</item>
+-        <item name="android:colorBackground">@color/settingslib_materialColorSurfaceContainerLow</item>
++        <item name="android:navigationBarColor">@color/n9_window_bg</item>
++        <item name="android:statusBarColor">@color/n9_window_bg</item>
++        <!-- N9: flat black window background -->
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
+     </style>
+ 
+     <style name="Theme.Settings.Home.NoAnimation">
+diff --git a/res/values/themes_expressive.xml b/res/values/themes_expressive.xml
+index 7d089b1b131..f9173c8ceaa 100644
+--- a/res/values/themes_expressive.xml
++++ b/res/values/themes_expressive.xml
+@@ -73,6 +73,26 @@
+ 
+         <!-- For AppCompat widgets, e.g. TextInputLayout -->
+         <item name="colorAccent">?android:attr/colorAccent</item>
++
++        <!-- N9 (Etesian) static black palette and typography (no dynamic colour) -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:colorAccent">@color/n9_accent</item>
++        <item name="android:colorPrimary">@color/n9_accent</item>
++        <item name="android:colorControlActivated">@color/n9_accent</item>
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
++        <item name="android:textColorPrimary">@color/n9_text_primary</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:isLightTheme">false</item>
++        <item name="android:colorForeground">@color/n9_text_primary</item>
++        <item name="android:colorControlNormal">@color/n9_text_primary</item>
++        <item name="android:textColorTertiary">@color/n9_text_secondary</item>
++        <item name="android:textColorPrimaryInverse">@android:color/black</item>
++        <item name="android:colorBackgroundFloating">@color/n9_search_bg</item>
++        <item name="colorSurface">@color/n9_window_bg</item>
++        <item name="colorOnSurface">@color/n9_text_primary</item>
++        <item name="android:windowLightStatusBar">false</item>
++        <item name="android:windowLightNavigationBar">false</item>
+     </style>
+ 
+     <style name="Theme.Settings.Expressive.NoActionBar">
+@@ -90,7 +110,9 @@
+     </style>
+ 
+     <style name="Theme.Settings.Home.Expressive" parent="Theme.Settings.Expressive.NoActionBar">
+-        <item name="android:colorBackground">@color/settingslib_materialColorSurfaceContainer</item>
++        <!-- N9: flat black homepage -->
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
+     </style>
+ 
+     <style name="Theme.LockSettings.Expressive" parent="Theme.SubSettings.Expressive">
+diff --git a/src/com/android/settings/core/SettingsBaseActivity.java b/src/com/android/settings/core/SettingsBaseActivity.java
+index deed076c199..45b2489fe30 100644
+--- a/src/com/android/settings/core/SettingsBaseActivity.java
++++ b/src/com/android/settings/core/SettingsBaseActivity.java
+@@ -84,6 +84,7 @@ public class SettingsBaseActivity extends FragmentActivity implements CategoryHa
+     protected AppBarLayout mAppBarLayout;
+ 
+     private CollapsingToolbarDelegate mToolbarDelegate;
++    private Toolbar mToolbar;
+ 
+     @Override
+     public CategoryMixin getCategoryMixin() {
+@@ -138,6 +139,7 @@ public class SettingsBaseActivity extends FragmentActivity implements CategoryHa
+                     findViewById(com.android.settingslib.collapsingtoolbar.R.id.collapsing_toolbar);
+             mAppBarLayout = findViewById(R.id.app_bar);
+             getToolbarDelegate().initCollapsingToolbar(mCollapsingToolbarLayout, mAppBarLayout);
++            disableCollapsingTitle();
+         } else {
+             super.setContentView(R.layout.settings_base_layout);
+         }
+@@ -153,6 +155,10 @@ public class SettingsBaseActivity extends FragmentActivity implements CategoryHa
+             return;
+         }
+         setActionBar(toolbar);
++        // N9 (Etesian): the page title is the toolbar's own static title.
++        mToolbar = toolbar;
++        toolbar.setTitleTextAppearance(this, R.style.TextAppearance_N9PageTitle);
++        toolbar.setTitle(getTitle());
+ 
+         getToolbarDelegate().initToolbarButtonsContainer(findViewById(
+                 com.android.settingslib.collapsingtoolbar.R.id.toolbar_buttons_container));
+@@ -233,6 +239,9 @@ public class SettingsBaseActivity extends FragmentActivity implements CategoryHa
+         if (mCollapsingToolbarLayout != null) {
+             mCollapsingToolbarLayout.setTitle(title);
+         }
++        if (mToolbar != null) {
++            mToolbar.setTitle(title);
++        }
+     }
+ 
+     @Override
+@@ -241,6 +250,59 @@ public class SettingsBaseActivity extends FragmentActivity implements CategoryHa
+         if (mCollapsingToolbarLayout != null) {
+             mCollapsingToolbarLayout.setTitle(getText(titleId));
+         }
++        if (mToolbar != null) {
++            mToolbar.setTitle(getText(titleId));
++        }
++    }
++
++    /** N9 (Etesian): pull down at the top of the screen to search. */
++    private EtesianChrome.PullToSearch mPullToSearch;
++
++    @Override
++    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
++        if (mPullToSearch != null) mPullToSearch.onTouch(ev);
++        return super.dispatchTouchEvent(ev);
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // N9 (Etesian): black-screen background (black or dark wallpaper) and the dark
++        // system toolbar with Back, which replaces the action bar's Back arrow.
++        if (!WizardManagerHelper.isAnySetupWizard(getIntent())) {
++            if (EtesianChrome.applyBackground(this)) {
++                EtesianChrome.clearBackgrounds(mAppBarLayout, mCollapsingToolbarLayout);
++            }
++            EtesianChrome.applyToolbar(this, true /* back */, null);
++            mPullToSearch = EtesianChrome.useSystemToolbar(this)
++                    ? new EtesianChrome.PullToSearch(this) : null;
++            if (mToolbar != null) {
++                // Run after SettingsActivity and fragments have set up the action bar.
++                mToolbar.post(() -> {
++                    if (EtesianChrome.useSystemToolbar(this)) {
++                        EtesianChrome.hideBackArrow(this, mToolbar);
++                    }
++                    EtesianChrome.styleTitle(mToolbar);
++                });
++            }
++        }
++    }
++
++    /**
++     * N9 (Etesian): no large collapsing title. The app bar is a fixed one-line bar with the
++     * toolbar's own title (light, ~26sp) and a rule under it.
++     */
++    private void disableCollapsingTitle() {
++        if (mCollapsingToolbarLayout == null) {
++            return;
++        }
++        mCollapsingToolbarLayout.setTitleEnabled(false);
++        final ViewGroup.LayoutParams lp = mCollapsingToolbarLayout.getLayoutParams();
++        if (lp instanceof AppBarLayout.LayoutParams) {
++            ((AppBarLayout.LayoutParams) lp).setScrollFlags(0);
++            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
++            mCollapsingToolbarLayout.setLayoutParams(lp);
++        }
+     }
+ 
+     /**
+diff --git a/src/com/android/settings/homepage/SettingsHomepageActivity.java b/src/com/android/settings/homepage/SettingsHomepageActivity.java
+index 2da5db5f50a..be9164fb9e6 100644
+--- a/src/com/android/settings/homepage/SettingsHomepageActivity.java
++++ b/src/com/android/settings/homepage/SettingsHomepageActivity.java
+@@ -72,6 +72,7 @@ import com.android.settings.activityembedding.ActivityEmbeddingUtils;
+ import com.android.settings.activityembedding.EmbeddedDeepLinkUtils;
+ import com.android.settings.core.CategoryMixin;
+ import com.android.settings.core.FeatureFlags;
++import com.android.settings.core.EtesianChrome;
+ import com.android.settings.flags.Flags;
+ import com.android.settings.homepage.contextualcards.ContextualCardsFragment;
+ import com.android.settings.overlay.FeatureFactory;
+@@ -321,6 +322,36 @@ public class SettingsHomepageActivity extends FragmentActivity implements
+         }
+     }
+ 
++    /** N9 (Etesian): pull down at the top of the screen to search. */
++    private EtesianChrome.PullToSearch mPullToSearch;
++
++    @Override
++    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
++        if (mPullToSearch != null) mPullToSearch.onTouch(ev);
++        return super.dispatchTouchEvent(ev);
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // N9 (Etesian): black-screen background, and no system toolbar on the main page.
++        if (EtesianChrome.applyBackground(this)) {
++            EtesianChrome.clearBackgrounds(findViewById(R.id.app_bar),
++                    findViewById(R.id.app_bar_container));
++        }
++        if (EtesianChrome.useSystemToolbar(this)) {
++            // No search bar at the top of the N9 Settings; Search is on the toolbar.
++            final View appBar = findViewById(R.id.app_bar);
++            if (appBar != null) {
++                appBar.setVisibility(View.GONE);
++                ViewCompat.requestApplyInsets(findViewById(android.R.id.content));
++            }
++            // As on the N9, no toolbar on the main page; search is a pull down from the top.
++            EtesianChrome.hideToolbar(this);
++            mPullToSearch = new EtesianChrome.PullToSearch(this);
++        }
++    }
++
+     @Override
+     protected void onStop() {
+         super.onStop();
+@@ -394,7 +425,12 @@ public class SettingsHomepageActivity extends FragmentActivity implements
+                     Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                             | WindowInsetsCompat.Type.displayCutout());
+                     // Apply the insets paddings to the view.
+-                    v.setPadding(insets.left, 0, insets.right, insets.bottom);
++                    // N9: the search app bar (which normally absorbs the top inset) is
++                    // hidden when the Etesian toolbar is used, so pad the content instead.
++                    final View appBarView = findViewById(R.id.app_bar);
++                    final int contentTop = appBarView != null
++                            && appBarView.getVisibility() == View.GONE ? insets.top : 0;
++                    v.setPadding(insets.left, contentTop, insets.right, insets.bottom);
+ 
+                     // reset the top padding of search bar container to original top padding
+                     // plus insets top.
+diff --git a/src/com/android/settings/homepage/TopLevelSettings.java b/src/com/android/settings/homepage/TopLevelSettings.java
+index 0dbf65dfa38..fd2ca43ca9d 100644
+--- a/src/com/android/settings/homepage/TopLevelSettings.java
++++ b/src/com/android/settings/homepage/TopLevelSettings.java
+@@ -47,7 +47,6 @@ import androidx.window.embedding.ActivityEmbeddingController;
+ import com.android.settings.R;
+ import com.android.settings.activityembedding.ActivityEmbeddingRulesController;
+ import com.android.settings.activityembedding.ActivityEmbeddingUtils;
+-import com.android.settings.core.RoundCornerPreferenceAdapter;
+ import com.android.settings.core.SubSettingLauncher;
+ import com.android.settings.dashboard.DashboardFragment;
+ import com.android.settings.overlay.FeatureFactory;
+@@ -343,7 +342,8 @@ public class TopLevelSettings extends DashboardFragment implements SplitLayoutLi
+             return mHighlightMixin.onCreateAdapter(this, preferenceScreen, mScrollNeeded);
+         }
+ 
+-        return new RoundCornerPreferenceAdapter(preferenceScreen);
++        // N9 (Etesian): flat black rows, no rounded cards.
++        return super.onCreateAdapter(preferenceScreen);
+     }
+ 
+     @Override
+diff --git a/src/com/android/settings/notification/modes/IconUtil.java b/src/com/android/settings/notification/modes/IconUtil.java
+index b589a0bef8e..2d1fe4e0e60 100644
+--- a/src/com/android/settings/notification/modes/IconUtil.java
++++ b/src/com/android/settings/notification/modes/IconUtil.java
+@@ -32,7 +32,6 @@ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.LayerDrawable;
+ import android.graphics.drawable.ShapeDrawable;
+ import android.graphics.drawable.StateListDrawable;
+-import android.graphics.drawable.shapes.OvalShape;
+ import android.util.StateSet;
+ import android.view.Gravity;
+ 
+@@ -184,7 +183,7 @@ class IconUtil {
+         circlePaint.setColor(context.getColor(
+                 com.android.internal.R.color.materialColorTertiaryContainer));
+         circlePaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+-        canvas.drawCircle(diameter / 2f, diameter / 2f, diameter / 2f, circlePaint);
++        canvas.drawPath(n9Squircle(diameter), circlePaint);
+ 
+         Paint textPaint = new Paint();
+         textPaint.setColor(context.getColor(
+@@ -212,7 +211,7 @@ class IconUtil {
+ 
+     private static Drawable composeIconCircle(Resources res, ColorStateList circleColor,
+             @Px int circleDiameterPx, Drawable icon, ColorStateList iconColor, @Px int iconSizePx) {
+-        return composeIcons(res, new ShapeDrawable(new OvalShape()), circleColor, circleDiameterPx,
++        return composeIcons(res, new ShapeDrawable(new android.graphics.drawable.shapes.PathShape(n9Squircle(100f), 100f, 100f)), circleColor, circleDiameterPx,
+                 icon, iconColor, iconSizePx);
+     }
+ 
+@@ -247,4 +246,17 @@ class IconUtil {
+             return drawable.mutate();
+         }
+     }
++
++    /** Etesian: icon tiles and avatars are N9 squircles (superellipse, n = 2.8). */
++    private static android.graphics.Path n9Squircle(float size) {
++        final android.graphics.Path path = new android.graphics.Path();
++        for (int i = 0; i < 96; i++) {
++            final double t = 2 * Math.PI * i / 96, c = Math.cos(t), sn = Math.sin(t);
++            final float x = (float) (size / 2 * (1 + Math.signum(c) * Math.pow(Math.abs(c), 2 / 2.8)));
++            final float y = (float) (size / 2 * (1 + Math.signum(sn) * Math.pow(Math.abs(sn), 2 / 2.8)));
++            if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
++        }
++        path.close();
++        return path;
++    }
+ }
+diff --git a/src/com/android/settings/notification/modes/ZenHelperBackend.java b/src/com/android/settings/notification/modes/ZenHelperBackend.java
+index 3d1a3761f1c..268fcb9a36e 100644
+--- a/src/com/android/settings/notification/modes/ZenHelperBackend.java
++++ b/src/com/android/settings/notification/modes/ZenHelperBackend.java
+@@ -34,8 +34,6 @@ import android.service.notification.ConversationChannelWrapper;
+ import android.util.Log;
+ 
+ import androidx.annotation.NonNull;
+-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
+ 
+ import com.google.common.base.Strings;
+ import com.google.common.collect.ImmutableList;
+@@ -205,11 +203,11 @@ public class ZenHelperBackend {
+         if (contact.photoUri != null) {
+             try (InputStream is = mContext.getContentResolver().openInputStream(contact.photoUri)) {
+                 if (is != null) {
+-                    RoundedBitmapDrawable rbd = RoundedBitmapDrawableFactory.create(
+-                            mContext.getResources(), is);
+-                    if (rbd != null && rbd.getBitmap() != null) {
+-                        rbd.setCircular(true);
+-                        return rbd;
++                    // Etesian: contact photos are N9 squircles, not circles.
++                    final android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeStream(is);
++                    if (b != null) {
++                        return new com.android.settingslib.drawable.CircleFramedDrawable(b,
++                                Math.min(b.getWidth(), b.getHeight()));
+                     }
+                 }
+             } catch (IOException e) {
+diff --git a/res/drawable/n9_engraved_divider.xml b/res/drawable/n9_engraved_divider.xml
+new file mode 100644
+index 00000000000..934c83cd2f5
+--- /dev/null
++++ b/res/drawable/n9_engraved_divider.xml
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<!-- N9 (Etesian) engraved rule: a dark groove over a faint highlight, inset from the edges. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="16dp" android:right="16dp" android:bottom="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_rule_dark"/>
++            <size android:height="1dp"/>
++        </shape>
++    </item>
++    <item android:left="16dp" android:right="16dp" android:top="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_rule_light"/>
++            <size android:height="1dp"/>
++        </shape>
++    </item>
++</layer-list>
+diff --git a/res/values/n9_colors.xml b/res/values/n9_colors.xml
+new file mode 100644
+index 00000000000..2a180f7bbb2
+--- /dev/null
++++ b/res/values/n9_colors.xml
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<!-- Nokia N9 (Etesian) black palette. Settings is forced to night mode
++     (SettingsApplication), so these apply in both configurations. -->
++<resources>
++    <color name="n9_window_bg">#000000</color>
++    <color name="n9_list_bg">#000000</color>
++    <color name="n9_search_bg">#1A1A1A</color>
++    <color name="n9_text_primary">#FFFFFF</color>
++    <color name="n9_text_secondary">#A0A0A0</color>
++    <color name="n9_separator">#4A4A4A</color>
++    <color name="n9_accent">#2A86D8</color>
++    <color name="n9_accent_dark">#1E5F99</color>
++    <!-- N9: plain monochrome icons, no tile behind them -->
++    <color name="n9_icon_tile_bg">#00000000</color>
++    <color name="n9_icon_tint">#FFFFFF</color>
++    <color name="n9_switch_track_off">#3A3A3A</color>
++    <!-- Engraved rule: groove and highlight -->
++    <color name="n9_rule_dark">#0F0F0F</color>
++    <color name="n9_rule_light">#333333</color>
++    <color name="n9_positive">#62AE2E</color>
++    <color name="n9_negative">#E5534F</color>
++</resources>
+diff --git a/res/values/n9_dimens.xml b/res/values/n9_dimens.xml
+new file mode 100644
+index 00000000000..8701dcb49e6
+--- /dev/null
++++ b/res/values/n9_dimens.xml
+@@ -0,0 +1,24 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<resources>
++    <!-- N9 squircle icon tile on the homepage: 40dp, radius ~28% -->
++    <dimen name="n9_icon_tile_size">40dp</dimen>
++    <dimen name="n9_icon_tile_radius">11dp</dimen>
++    <dimen name="n9_icon_tile_padding">8dp</dimen>
++    <dimen name="n9_list_primary_text_size">20sp</dimen>
++    <dimen name="n9_list_secondary_text_size">14sp</dimen>
++</resources>
+diff --git a/src/com/android/settings/core/EtesianChrome.java b/src/com/android/settings/core/EtesianChrome.java
+new file mode 100644
+index 00000000000..5dec69fb096
+--- /dev/null
++++ b/src/com/android/settings/core/EtesianChrome.java
+@@ -0,0 +1,239 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.core;
++
++import android.app.ActionBar;
++import android.app.Activity;
++import android.graphics.Color;
++import android.graphics.Typeface;
++import android.util.TypedValue;
++import android.view.View;
++import android.widget.TextView;
++import android.widget.Toolbar;
++
++import com.android.settings.R;
++
++import com.bompotis.etesian.theme.EtesianBackground;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
++import java.util.ArrayList;
++import java.util.List;
++
++/**
++ * Nokia N9 (Etesian) chrome for Settings: the black-screen background (black or the user's
++ * dark wallpaper, Settings.Secure {@code etesian_dark_bg}) and the system bottom toolbar.
++ */
++public final class EtesianChrome {
++
++    private EtesianChrome() {}
++
++    /** Whether the system toolbar is showing, so Settings' own Back arrows should be hidden. */
++    public static boolean useSystemToolbar(Activity activity) {
++        return EtesianToolbar.isAvailable(activity);
++    }
++
++    /**
++     * Applies the N9 black-screen background to [activity]'s window. Returns whether it is the
++     * wallpaper, in which case the caller should make its opaque bars transparent.
++     */
++    public static boolean applyBackground(Activity activity) {
++        final EtesianBackground.Style style = EtesianBackground.blackScreen(activity);
++        EtesianBackground.applyBlackScreen(activity, style);
++        return style == EtesianBackground.Style.WALLPAPER;
++    }
++
++    /** Makes [views] transparent (null entries are skipped), for the wallpaper background. */
++    public static void clearBackgrounds(View... views) {
++        for (View v : views) {
++            if (v != null) v.setBackgroundColor(Color.TRANSPARENT);
++        }
++    }
++
++    /**
++     * Puts the dark N9 toolbar on [activity]: Back on sub-pages, none on the main page, plus
++     * [items]. Hides the action bar's own Back arrow while the system toolbar shows.
++     */
++    public static void applyToolbar(Activity activity, boolean back,
++            EtesianToolbar.Listener listener, EtesianToolbar.Item... items) {
++        if (!EtesianToolbar.isAvailable(activity)) {
++            return;
++        }
++        hideBackArrow(activity, null);
++        final List<EtesianToolbar.Item> list = new ArrayList<>();
++        for (EtesianToolbar.Item i : items) list.add(i);
++        EtesianToolbar.of(activity)
++                .setBack(back)
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setItems(list, listener != null ? listener : id -> {});
++    }
++
++    /** Hides the action bar's Back arrow (the system toolbar has Back). */
++    public static void hideBackArrow(Activity activity, Toolbar toolbar) {
++        final ActionBar actionBar = activity.getActionBar();
++        if (actionBar != null) {
++            actionBar.setDisplayHomeAsUpEnabled(false);
++            actionBar.setHomeButtonEnabled(false);
++        }
++        if (toolbar != null) {
++            toolbar.setNavigationIcon(null);
++        }
++    }
++
++    /** N9 page title: Nokia Pure Light (300), 26sp, whatever the toolbar style says. */
++    public static void styleTitle(Toolbar toolbar) {
++        final Typeface light = Typeface.create(
++                Typeface.create("etesian-text", Typeface.NORMAL), 300, false);
++        for (int i = 0; i < toolbar.getChildCount(); i++) {
++            final View child = toolbar.getChildAt(i);
++            if (child instanceof TextView) {
++                final TextView title = (TextView) child;
++                title.setTypeface(light);
++                title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
++            }
++        }
++    }
++
++    /**
++     * Hides the system toolbar on this activity, as on the N9's main Settings page (sub pages
++     * have one, usually with only Back).
++     */
++    public static void hideToolbar(Activity activity) {
++        if (!EtesianToolbar.isAvailable(activity)) {
++            return;
++        }
++        EtesianToolbar.of(activity)
++                .setBack(false)
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setHidden(true)
++                .setItems(new ArrayList<>(), id -> {});
++    }
++
++    /**
++     * Search by pulling down at the top of any Settings screen (the N9 had no search; this
++     * keeps it without a button). Feed it every touch from the activity's dispatchTouchEvent.
++     */
++    public static final class PullToSearch {
++        private static final float TRIGGER_DP = 110f;
++        private final Activity mActivity;
++        private final float mDensity;
++        private float mDownX;
++        private float mDownY;
++        private boolean mTracking;
++        private boolean mPulling;
++        private TextView mHint;
++
++        public PullToSearch(Activity activity) {
++            mActivity = activity;
++            mDensity = activity.getResources().getDisplayMetrics().density;
++        }
++
++        public void onTouch(android.view.MotionEvent ev) {
++            switch (ev.getActionMasked()) {
++                case android.view.MotionEvent.ACTION_DOWN:
++                    mDownX = ev.getRawX();
++                    mDownY = ev.getRawY();
++                    // Only from a list that is already at its top.
++                    mTracking = atTop(mActivity.findViewById(android.R.id.content), ev.getRawX(),
++                            ev.getRawY());
++                    mPulling = false;
++                    break;
++                case android.view.MotionEvent.ACTION_MOVE: {
++                    if (!mTracking) break;
++                    final float dy = ev.getRawY() - mDownY;
++                    final float dx = Math.abs(ev.getRawX() - mDownX);
++                    if (!mPulling && (dy < 0 || dx > Math.abs(dy))) {
++                        if (Math.abs(dy) > 12 * mDensity || dx > 12 * mDensity) mTracking = false;
++                        break;
++                    }
++                    if (dy > 16 * mDensity) mPulling = true;
++                    if (mPulling) showHint(dy / (TRIGGER_DP * mDensity));
++                    break;
++                }
++                case android.view.MotionEvent.ACTION_UP:
++                    if (mPulling && ev.getRawY() - mDownY >= TRIGGER_DP * mDensity) openSearch();
++                    // fall through
++                case android.view.MotionEvent.ACTION_CANCEL:
++                    mTracking = false;
++                    mPulling = false;
++                    hideHint();
++                    break;
++            }
++        }
++
++        /** True when the scrolling view under (x, y), if any, cannot scroll further up. */
++        private static boolean atTop(View v, float x, float y) {
++            if (v == null || v.getVisibility() != View.VISIBLE) return true;
++            final int[] at = new int[2];
++            v.getLocationOnScreen(at);
++            if (x < at[0] || y < at[1] || x > at[0] + v.getWidth() || y > at[1] + v.getHeight()) {
++                return true;
++            }
++            if (v.canScrollVertically(-1)) return false;
++            if (v instanceof android.view.ViewGroup) {
++                final android.view.ViewGroup g = (android.view.ViewGroup) v;
++                for (int i = 0; i < g.getChildCount(); i++) {
++                    if (!atTop(g.getChildAt(i), x, y)) return false;
++                }
++            }
++            return true;
++        }
++
++        private void showHint(float progress) {
++            if (mHint == null) {
++                mHint = new TextView(mActivity);
++                mHint.setTextColor(Color.WHITE);
++                mHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++                mHint.setGravity(android.view.Gravity.CENTER);
++                final int pad = (int) (12 * mDensity);
++                mHint.setPadding(pad, pad, pad, pad);
++                mHint.setBackgroundColor(0xE0101010);
++                final android.widget.FrameLayout.LayoutParams lp =
++                        new android.widget.FrameLayout.LayoutParams(
++                                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
++                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
++                                android.view.Gravity.TOP);
++                ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).addView(mHint, lp);
++                mHint.setOnApplyWindowInsetsListener((view, insets) -> {
++                    view.setPadding(pad, pad + insets.getInsets(
++                            android.view.WindowInsets.Type.statusBars()).top, pad, pad);
++                    return insets;
++                });
++                mHint.requestApplyInsets();
++            }
++            final float p = Math.min(1f, progress);
++            mHint.setText(progress >= 1f ? "Release to search" : "Pull down to search");
++            mHint.setAlpha(p);
++            mHint.setTranslationY(-(1f - p) * mHint.getHeight());
++        }
++
++        private void hideHint() {
++            if (mHint == null) return;
++            ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).removeView(mHint);
++            mHint = null;
++        }
++
++        private void openSearch() {
++            try {
++                mActivity.startActivity(new android.content.Intent(
++                        "com.android.settings.action.SETTINGS_SEARCH")
++                        .setPackage(mActivity.getString(R.string.config_settingsintelligence_package_name)));
++            } catch (RuntimeException e) {
++                // No search app.
++            }
++        }
++    }
++}

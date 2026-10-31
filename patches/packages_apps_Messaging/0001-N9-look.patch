@@ -1,0 +1,3331 @@
+diff --git a/Android.bp b/Android.bp
+index 703f949..4386704 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -77,6 +77,8 @@ android_app {
+         "com.android.vcard",
+         "com.google.android.material_material",
+         "guava",
++        "etesian-theme",
++        "etesian-toolbar",
+         "libchips",
+         "libphonenumber",
+         "libphotoviewer",
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index c6ba856..248bff6 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -92,6 +92,7 @@
+         <activity
+             android:name=".ui.conversationlist.ConversationListActivity"
+             android:configChanges="orientation|screenSize|keyboardHidden"
++            android:windowSoftInputMode="stateAlwaysHidden"
+             android:exported="true"
+             android:screenOrientation="user"
+             android:theme="@style/LaunchTheme">
+@@ -144,7 +145,7 @@
+         <!-- Displays the contents of a single conversation -->
+         <activity
+             android:name=".ui.conversation.ConversationActivity"
+-            android:configChanges="orientation|screenSize|keyboardHidden"
++            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
+             android:parentActivityName="com.android.messaging.ui.conversationlist.ConversationListActivity"
+             android:screenOrientation="user"
+             android:theme="@style/BugleTheme.ConversationActivity"
+diff --git a/res/color/tab_text_color.xml b/res/color/tab_text_color.xml
+index 498d1e4..b67c27b 100644
+--- a/res/color/tab_text_color.xml
++++ b/res/color/tab_text_color.xml
+@@ -16,8 +16,8 @@
+ -->
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+     <item
+-        android:color="@android:color/system_accent1_50"
++        android:color="#FF1C6BC8"
+         android:state_selected="true"/>
+     <item
+-        android:color="@color/translucent_white" />
++        android:color="#FF6E6E73" />
+ </selector>
+\ No newline at end of file
+diff --git a/res/drawable/ic_archive_small_dark.xml b/res/drawable/ic_archive_small_dark.xml
+index b083778..f96cbad 100644
+--- a/res/drawable/ic_archive_small_dark.xml
++++ b/res/drawable/ic_archive_small_dark.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_archive_undo_small_dark.xml b/res/drawable/ic_archive_undo_small_dark.xml
+index 2397e7b..98719bb 100644
+--- a/res/drawable/ic_archive_undo_small_dark.xml
++++ b/res/drawable/ic_archive_undo_small_dark.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_cancel_small_light.xml b/res/drawable/ic_cancel_small_light.xml
+index 49ade58..7ccde9a 100644
+--- a/res/drawable/ic_cancel_small_light.xml
++++ b/res/drawable/ic_cancel_small_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_checkmark_light.xml b/res/drawable/ic_checkmark_light.xml
+index 58b6f60..03ecd6e 100644
+--- a/res/drawable/ic_checkmark_light.xml
++++ b/res/drawable/ic_checkmark_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/ic_content_copy_light.xml b/res/drawable/ic_content_copy_light.xml
+index b43eb4a..5e2be15 100644
+--- a/res/drawable/ic_content_copy_light.xml
++++ b/res/drawable/ic_content_copy_light.xml
+@@ -19,7 +19,7 @@
+         android:height="24dp"
+         android:viewportWidth="24.0"
+         android:viewportHeight="24.0"
+-        android:tint="?attr/colorControlNormal">
++        android:tint="@color/action_bar_icon_color">
+     <path
+         android:fillColor="@android:color/white"
+         android:pathData="M16,1L4,1c-1.1,0 -2,0.9 -2,2v14h2L4,3h12L16,1zM19,5L8,5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2L21,7c0,-1.1 -0.9,-2 -2,-2zM19,21L8,21L8,7h11v14z"/>
+diff --git a/res/drawable/ic_delete_small_dark.xml b/res/drawable/ic_delete_small_dark.xml
+index 46234e2..d63c43f 100644
+--- a/res/drawable/ic_delete_small_dark.xml
++++ b/res/drawable/ic_delete_small_dark.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_dnd_on_light.xml b/res/drawable/ic_dnd_on_light.xml
+index b9481ce..d4257d8 100644
+--- a/res/drawable/ic_dnd_on_light.xml
++++ b/res/drawable/ic_dnd_on_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_file_download_light.xml b/res/drawable/ic_file_download_light.xml
+index 544e237..d423808 100644
+--- a/res/drawable/ic_file_download_light.xml
++++ b/res/drawable/ic_file_download_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="24"
+diff --git a/res/drawable/ic_forward_light.xml b/res/drawable/ic_forward_light.xml
+index ecd8df4..fb03b06 100644
+--- a/res/drawable/ic_forward_light.xml
++++ b/res/drawable/ic_forward_light.xml
+@@ -18,7 +18,7 @@
+         android:height="24dp"
+         android:viewportWidth="24.0"
+         android:viewportHeight="24.0"
+-        android:tint="?attr/colorControlNormal">
++        android:tint="@color/action_bar_icon_color">
+     <path
+         android:fillColor="@android:color/white"
+         android:pathData="M12,8V4l8,8 -8,8v-4H4V8z"/>
+diff --git a/res/drawable/ic_info_light.xml b/res/drawable/ic_info_light.xml
+index 0f4e976..a6755d5 100644
+--- a/res/drawable/ic_info_light.xml
++++ b/res/drawable/ic_info_light.xml
+@@ -14,7 +14,8 @@
+      limitations under the License.
+ -->
+ 
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+         android:width="24dp"
+         android:height="24dp"
+         android:viewportWidth="24"
+diff --git a/res/drawable/ic_people_add_light.xml b/res/drawable/ic_people_add_light.xml
+index 2da579a..4172240 100644
+--- a/res/drawable/ic_people_add_light.xml
++++ b/res/drawable/ic_people_add_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/ic_person_add_light.xml b/res/drawable/ic_person_add_light.xml
+index 92bac9b..1eaf667 100644
+--- a/res/drawable/ic_person_add_light.xml
++++ b/res/drawable/ic_person_add_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/ic_phone_small_light.xml b/res/drawable/ic_phone_small_light.xml
+index 1b6da69..ec4f68f 100644
+--- a/res/drawable/ic_phone_small_light.xml
++++ b/res/drawable/ic_phone_small_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/ic_save_light.xml b/res/drawable/ic_save_light.xml
+index fd842ff..ae84c54 100644
+--- a/res/drawable/ic_save_light.xml
++++ b/res/drawable/ic_save_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/ic_share_light.xml b/res/drawable/ic_share_light.xml
+index 1bc5d4e..883a829 100644
+--- a/res/drawable/ic_share_light.xml
++++ b/res/drawable/ic_share_light.xml
+@@ -3,7 +3,8 @@
+      SPDX-FileCopyrightText: Material Design Authors / Google LLC
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
++<vector
++    android:tint="@color/action_bar_icon_color" xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+     android:viewportWidth="960"
+diff --git a/res/drawable/message_bubble_incoming_no_arrow.xml b/res/drawable/message_bubble_incoming_no_arrow.xml
+index 050da48..3ea90ca 100644
+--- a/res/drawable/message_bubble_incoming_no_arrow.xml
++++ b/res/drawable/message_bubble_incoming_no_arrow.xml
+@@ -16,5 +16,5 @@
+ -->
+ <shape xmlns:android="http://schemas.android.com/apk/res/android">
+     <solid android:color="@color/color_filter_base_color" />
+-    <corners android:radius="28dp" />
++    <corners android:radius="14dp" />
+ </shape>
+diff --git a/res/drawable/message_bubble_outgoing_no_arrow.xml b/res/drawable/message_bubble_outgoing_no_arrow.xml
+index 050da48..3ea90ca 100644
+--- a/res/drawable/message_bubble_outgoing_no_arrow.xml
++++ b/res/drawable/message_bubble_outgoing_no_arrow.xml
+@@ -16,5 +16,5 @@
+ -->
+ <shape xmlns:android="http://schemas.android.com/apk/res/android">
+     <solid android:color="@color/color_filter_base_color" />
+-    <corners android:radius="28dp" />
++    <corners android:radius="14dp" />
+ </shape>
+diff --git a/res/drawable/msg_bubble_input_rounded.xml b/res/drawable/msg_bubble_input_rounded.xml
+index e66d863..04b6027 100644
+--- a/res/drawable/msg_bubble_input_rounded.xml
++++ b/res/drawable/msg_bubble_input_rounded.xml
+@@ -1,13 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <!--
+-     SPDX-FileCopyrightText: 2023 The LineageOS Project
+-     SPDX-License-Identifier: Apache-2.0
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
+ -->
+-
++<!-- N9 look: the composer is a plain white strip; the text field has no border. -->
+ <shape
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+-
+-    <solid android:color="@color/compose_send_text_background_color" />
+-    <corners android:radius="28dp" />
++    <solid android:color="@android:color/transparent" />
+ </shape>
+diff --git a/res/drawable/send_arrow_background.xml b/res/drawable/send_arrow_background.xml
+index 4434997..c979726 100644
+--- a/res/drawable/send_arrow_background.xml
++++ b/res/drawable/send_arrow_background.xml
+@@ -19,14 +19,19 @@
+     <item
+         android:state_pressed="true">
+         <shape
+-            android:shape="oval" >
+-            <solid android:color="@color/compose_message_send_color_pressed" />
++            android:shape="rectangle" >
++            <corners android:radius="8dp" />
++            <solid android:color="#FF444444" />
+         </shape>
+      </item>
+     <item>
+         <shape
+-            android:shape="oval" >
+-            <solid android:color="@color/compose_message_send_color" />
++            android:shape="rectangle" >
++            <corners android:radius="8dp" />
++            <gradient
++                android:angle="270"
++                android:startColor="#FF2A2A2A"
++                android:endColor="#FF000000" />
+         </shape>
+     </item>
+ </selector>
+\ No newline at end of file
+diff --git a/res/layout/attachment_chooser_image.xml b/res/layout/attachment_chooser_image.xml
+index 099d69f..093fc27 100644
+--- a/res/layout/attachment_chooser_image.xml
++++ b/res/layout/attachment_chooser_image.xml
+@@ -24,4 +24,5 @@
+     android:minHeight="@dimen/single_attachment_min_dimen"
+     android:scaleType="centerCrop"
+     android:adjustViewBounds="true"
+-    app:cornerRadius="@dimen/attachment_rounded_corner_radius"/>
++    app:cornerRadius="@dimen/attachment_rounded_corner_radius"
++    app:n9Squircle="true"/>
+diff --git a/res/layout/attachment_multiple_image.xml b/res/layout/attachment_multiple_image.xml
+index 7d911ac..c553d8a 100644
+--- a/res/layout/attachment_multiple_image.xml
++++ b/res/layout/attachment_multiple_image.xml
+@@ -26,4 +26,5 @@
+     android:adjustViewBounds="true"
+     app:fadeIn="false"
+     app:cornerRadius="@dimen/attachment_rounded_corner_radius"
++    app:n9Squircle="true"
+     app:placeholderDrawable="@drawable/attachment_image_placeholder_background" />
+diff --git a/res/layout/compose_message_view.xml b/res/layout/compose_message_view.xml
+index 4ebb7fe..525f95c 100644
+--- a/res/layout/compose_message_view.xml
++++ b/res/layout/compose_message_view.xml
+@@ -84,105 +84,131 @@
+ 
+         </RelativeLayout>
+ 
+-        <!-- Holds all views that create the actual compose box -->
++        <!-- N9 look: the composer is only the service icon and the text field. -->
+         <LinearLayout
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
++            android:background="@drawable/n9_compose_strip"
++            android:paddingTop="4dp"
++            android:paddingBottom="4dp"
+             android:orientation="horizontal"
+             android:baselineAligned="false">
+ 
+-            <!-- Contains compose message bubble and character counter for SMS or attachments size
+-                 for MMS which should be left aligned -->
+-            <LinearLayout
++            <!-- N9 look: the service (SMS) icon, a small green squircle. -->
++            <ImageView
++                android:id="@+id/n9_service_icon"
++                android:layout_width="22dp"
++                android:layout_height="22dp"
++                android:layout_gravity="center_vertical"
++                android:layout_marginStart="12dp"
++                android:src="@drawable/n9_service_sms"
++                android:importantForAccessibility="no" />
++
++            <com.android.messaging.ui.PlainTextEditText
++                android:id="@+id/compose_message_text"
++                style="@style/ConversationComposeSendText"
++                android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:layout_weight="1"
+-                android:layout_height="wrap_content"
+-                android:orientation="vertical">
+-
+-                <!-- Contains media button and compose message bubble whose centers should be
+-                vertically aligned -->
+-                <LinearLayout
+-                    android:layout_width="match_parent"
+-                    android:layout_height="wrap_content"
+-                    android:orientation="horizontal">
+-
+-                    <ImageButton
+-                        android:id="@+id/attach_media_button"
+-                        style="@style/ComposeMessageViewAttachMediaButtonStyle"
+-                        android:layout_width="wrap_content"
+-                        android:layout_height="wrap_content"
+-                        android:layout_gravity="center_vertical"
+-                        android:src="@drawable/ic_attachment_dark"
+-                        android:minHeight="48dp"
+-                        android:minWidth="48dp"
+-                        android:paddingTop="@dimen/compose_message_attachment_padding_topBottom"
+-                        android:paddingBottom="@dimen/compose_message_attachment_padding_topBottom"
+-                        android:contentDescription="@string/attachMediaButtonContentDescription" />
+-
+-                    <com.android.messaging.ui.PlainTextEditText
+-                        android:id="@+id/compose_message_text"
+-                        style="@style/ConversationComposeSendText"
+-                        android:layout_height="wrap_content"
+-                        android:layout_width="0dp"
+-                        android:layout_weight="1"
+-                        android:layout_gravity="center"
+-                        android:background="@drawable/msg_bubble_input_rounded"
+-                        android:hint="@string/compose_message_view_hint_text"
+-                        android:imeOptions="actionSend|flagNoEnterAction|flagNoExtractUi" />
+-
+-                </LinearLayout>
+-
+-                <TextView
+-                    android:id="@+id/message_body_size"
+-                    style="@style/ComposeMessageViewMessageBodySizeStyle"
+-                    android:layout_width="wrap_content"
+-                    android:layout_height="wrap_content"
+-                    android:singleLine="true"
+-                    android:maxLines="1"
+-                    android:visibility="invisible" />
+-            </LinearLayout>
+-
+-            <LinearLayout
+-                android:orientation="vertical"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content">
+-
+-                <FrameLayout
+-                    android:layout_width="wrap_content"
+-                    android:layout_height="wrap_content"
+-                    style="@style/ComposeMessageViewFrameLayoutStyle"
+-                    android:layout_gravity="top" >
+-                    <com.android.messaging.ui.conversation.SimIconView
+-                        android:id="@+id/self_send_icon"
+-                        android:layout_width="@dimen/conversation_message_contact_icon_size"
+-                        android:layout_height="@dimen/conversation_message_contact_icon_size"
+-                        android:importantForAccessibility="no"
+-                        app:contactIconSize="normal"
+-                        app:reveal="true"
+-                        android:clickable="true" />
+-                    <ImageButton
+-                        android:id="@+id/send_message_button"
+-                        android:layout_width="@dimen/conversation_message_contact_icon_size"
+-                        android:layout_height="@dimen/conversation_message_contact_icon_size"
+-                        android:src="@drawable/ic_send_light"
+-                        android:background="@drawable/send_arrow_background"
+-                        android:contentDescription="@string/sendButtonContentDescription"
+-                        android:visibility="gone" />
+-                </FrameLayout>
+-
+-                <TextView
+-                    android:id="@+id/mms_indicator"
+-                    style="@style/MmsIndicatorStyle"
+-                    android:layout_width="wrap_content"
+-                    android:layout_height="wrap_content"
+-                    android:singleLine="true"
+-                    android:maxLines="1"
+-                    android:visibility="invisible"
+-                    android:text="@string/mms_text" />
+-            </LinearLayout>
++                android:layout_gravity="center"
++                android:background="@drawable/msg_bubble_input_rounded"
++                android:hint="@string/n9_compose_hint"
++                android:imeOptions="actionSend|flagNoEnterAction|flagNoExtractUi"
++                android:privateImeOptions="etesian.strip=attach,emoticon" />
+         </LinearLayout>
+     </LinearLayout>
+ 
++    <!-- N9 look: white strip that sits on top of the keyboard while it is up: attach and
++         emoticon squircles on the left, "155(1)" counter and black Send on the right. -->
++    <LinearLayout
++        android:id="@+id/n9_ime_strip"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_weight="0"
++        android:minHeight="52dp"
++        android:background="#FFFFFFFF"
++        android:paddingStart="8dp"
++        android:paddingEnd="8dp"
++        android:gravity="center_vertical"
++        android:orientation="horizontal"
++        android:visibility="gone">
++
++        <ImageButton
++            android:id="@+id/attach_media_button"
++            android:layout_width="40dp"
++            android:layout_height="40dp"
++            android:background="?android:attr/selectableItemBackgroundBorderless"
++            android:scaleType="center"
++            android:src="@drawable/n9_attach_squircle"
++            android:contentDescription="@string/attachMediaButtonContentDescription" />
++
++        <ImageView
++            android:id="@+id/n9_emoticon"
++            android:layout_width="40dp"
++            android:layout_height="40dp"
++            android:layout_marginStart="4dp"
++            android:scaleType="center"
++            android:src="@drawable/n9_emoticon"
++            android:background="?android:attr/selectableItemBackgroundBorderless"
++            android:clickable="true"
++            android:contentDescription="@string/n9_emoticon" />
++
++        <View
++            android:layout_width="0dp"
++            android:layout_height="1dp"
++            android:layout_weight="1" />
++
++        <!-- "155(1)" small and bold, centred with Send. -->
++        <TextView
++            android:id="@+id/message_body_size"
++            style="@style/ComposeMessageViewMessageBodySizeStyle"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_vertical"
++            android:paddingEnd="8dp"
++            android:textSize="12sp"
++            android:textStyle="bold"
++            android:singleLine="true"
++            android:maxLines="1"
++            android:visibility="invisible" />
++
++        <TextView
++            android:id="@+id/mms_indicator"
++            style="@style/MmsIndicatorStyle"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_vertical"
++            android:paddingEnd="8dp"
++            android:singleLine="true"
++            android:maxLines="1"
++            android:visibility="gone"
++            android:text="@string/mms_text" />
++
++        <FrameLayout
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_vertical">
++            <com.android.messaging.ui.conversation.SimIconView
++                android:id="@+id/self_send_icon"
++                android:layout_gravity="center"
++                android:layout_width="@dimen/conversation_message_contact_icon_size"
++                android:layout_height="@dimen/conversation_message_contact_icon_size"
++                android:importantForAccessibility="no"
++                app:contactIconSize="normal"
++                app:reveal="true"
++                android:clickable="true" />
++            <ImageButton
++                android:id="@+id/send_message_button"
++                android:layout_gravity="center"
++                android:layout_width="64dp"
++                android:layout_height="36dp"
++                android:src="@drawable/ic_send_light"
++                android:background="@drawable/send_arrow_background"
++                android:contentDescription="@string/sendButtonContentDescription"
++                android:visibility="gone" />
++        </FrameLayout>
++    </LinearLayout>
++
+     <FrameLayout
+         android:id="@+id/mediapicker_container"
+         android:layout_width="match_parent"
+diff --git a/res/layout/contact_picker_fragment.xml b/res/layout/contact_picker_fragment.xml
+index ce32a64..554d648 100644
+--- a/res/layout/contact_picker_fragment.xml
++++ b/res/layout/contact_picker_fragment.xml
+@@ -21,13 +21,65 @@
+     android:layout_height="match_parent"
+     android:orientation="vertical">
+ 
++    <!-- N9 look: a grey sheet header, lit Cancel left, the title right. -->
++    <LinearLayout
++        android:id="@+id/n9_sheet"
++        android:layout_width="match_parent"
++        android:layout_height="52dp"
++        android:background="@drawable/n9_sheet_header"
++        android:gravity="center_vertical"
++        android:orientation="horizontal"
++        android:paddingStart="12dp"
++        android:paddingEnd="12dp">
++        <TextView
++            android:id="@+id/n9_cancel"
++            android:clickable="true"
++            android:focusable="true"
++            android:gravity="center"
++            android:letterSpacing="0"
++            android:layout_width="117dp"
++            android:layout_height="34dp"
++            android:background="@drawable/n9_cancel_button"
++            android:minHeight="0dp"
++            android:minWidth="0dp"
++            android:padding="0dp"
++            android:text="@android:string/cancel"
++            android:textAllCaps="false"
++            android:textColor="#FF111111"
++            android:textSize="15sp"
++            android:textStyle="bold" />
++        <TextView
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:ellipsize="end"
++            android:fontFamily="etesian-text"
++            android:textFontWeight="300"
++            android:gravity="end"
++            android:maxLines="1"
++            android:text="@string/n9_new_text_message"
++            android:textColor="#FF333333"
++            android:textSize="18sp" />
++    </LinearLayout>
++
+     <androidx.appcompat.widget.Toolbar
+         android:id="@+id/toolbar"
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+-        android:minHeight="?attr/actionBarSize"
+-        android:background="@color/action_bar_background_color"
+-        app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
++        android:minHeight="46dp"
++        android:background="#FFD9DFE5"
++        app:contentInsetStart="12dp"
++        app:theme="@style/ThemeOverlay.AppCompat.Light">
++
++        <TextView
++            android:id="@+id/n9_to_label"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center_vertical"
++            android:layout_marginEnd="8dp"
++            android:text="@string/n9_to_label"
++            android:textColor="#FF666666"
++            android:textSize="16sp" />
+ 
+         <com.android.messaging.ui.MaxHeightScrollView
+             android:layout_width="match_parent"
+diff --git a/res/layout/conversation_fragment.xml b/res/layout/conversation_fragment.xml
+index 75b9763..2b88d49 100644
+--- a/res/layout/conversation_fragment.xml
++++ b/res/layout/conversation_fragment.xml
+@@ -32,7 +32,8 @@
+         <FrameLayout
+             android:layout_width="match_parent"
+             android:layout_height="0dp"
+-            android:layout_weight="1" >
++            android:layout_weight="1"
++            android:background="@drawable/n9_conversation_background" >
+             <!-- Message list -->
+             <androidx.recyclerview.widget.RecyclerView
+                 android:id="@android:id/list"
+diff --git a/res/layout/conversation_list_fragment.xml b/res/layout/conversation_list_fragment.xml
+index d26b55b..68716e0 100644
+--- a/res/layout/conversation_list_fragment.xml
++++ b/res/layout/conversation_list_fragment.xml
+@@ -37,6 +37,8 @@
+         android:visibility="gone"
+         android:layout_marginBottom="@dimen/conversation_list_empty_text_bottom_margin" />
+ 
++    <include layout="@layout/n9_conversation_list_empty" />
++
+     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay"
+         android:id="@+id/start_new_conversation_button"
+diff --git a/res/layout/conversation_list_item_view.xml b/res/layout/conversation_list_item_view.xml
+index 382796a..f2d771f 100644
+--- a/res/layout/conversation_list_item_view.xml
++++ b/res/layout/conversation_list_item_view.xml
+@@ -29,7 +29,7 @@
+         android:layout_height="match_parent"
+         android:gravity="center_vertical|start"
+         android:baselineAligned="false"
+-        android:background="@color/window_background"
++        android:background="@color/n9_list_row_background"
+         android:visibility="gone"
+         android:padding="@dimen/conversation_list_item_view_padding">
+         <ImageView
+@@ -102,6 +102,15 @@
+                     android:importantForAccessibility="no"
+                     android:contentDescription="@null"
+                     android:background="@android:color/transparent" />
++                <!-- N9-style green unread badge -->
++                <View
++                    android:id="@+id/conversation_unread_badge"
++                    android:layout_width="16dp"
++                    android:layout_height="16dp"
++                    android:layout_gravity="top|end"
++                    android:background="@drawable/n9_unread_badge"
++                    android:visibility="gone"
++                    android:importantForAccessibility="no" />
+             </FrameLayout>
+ 
+             <!-- The conversation name, message preview, etc -->
+@@ -132,6 +141,16 @@
+                             android:layout_gravity="center_vertical"
+                             android:paddingBottom="2dp" />
+                     </LinearLayout>
++                    <!-- N9 look: small grey time on the right of the name -->
++                    <TextView
++                            android:id="@+id/conversation_timestamp"
++                            style="@style/ConversationListItemViewTextStyle"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:layout_gravity="center_vertical"
++                            android:layout_marginStart="8dp"
++                            android:singleLine="true"
++                            android:textSize="12sp" />
+                     <ImageView
+                             android:id="@+id/work_profile_icon"
+                             android:layout_width="wrap_content"
+@@ -158,11 +177,6 @@
+                     android:layout_height="wrap_content"
+                     android:paddingBottom="3dp"
+                     android:ellipsize="end" />
+-                <TextView
+-                    android:id="@+id/conversation_timestamp"
+-                    style="@style/ConversationListItemViewTextStyle"
+-                    android:layout_width="wrap_content"
+-                    android:layout_height="wrap_content" />
+             </LinearLayout>
+ 
+             <!-- The attachment preview on the right side of the view -->
+@@ -175,6 +189,7 @@
+                     android:id="@+id/conversation_image_preview"
+                     style="@style/ConversationListItemViewPaddingStyle"
+                     app:cornerRadius="@dimen/conversation_list_image_preview_corner_radius"
++    app:n9Squircle="true"
+                     android:layout_width="@dimen/conversation_list_image_preview_size"
+                     android:layout_height="@dimen/conversation_list_image_preview_size"
+                     android:visibility="gone"
+@@ -191,4 +206,12 @@
+             </FrameLayout>
+         </LinearLayout>
+     </FrameLayout>
++
++    <!-- N9-style engraved row separator -->
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="2dp"
++        android:layout_gravity="bottom"
++        android:background="@drawable/n9_list_rule"
++        android:importantForAccessibility="no" />
+ </com.android.messaging.ui.conversationlist.ConversationListItemView>
+diff --git a/res/layout/preference_material_switch.xml b/res/layout/preference_material_switch.xml
+index 517f83d..32536a9 100644
+--- a/res/layout/preference_material_switch.xml
++++ b/res/layout/preference_material_switch.xml
+@@ -7,7 +7,7 @@
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     android:id="@+id/switchWidget"
+     android:forceDarkAllowed="false"
+-    android:theme="@style/Theme.Material3.DynamicColors.DayNight"
++    android:theme="@style/Theme.Material3.Light"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:background="@null"
+diff --git a/res/menu/conversation_fragment_select_menu.xml b/res/menu/conversation_fragment_select_menu.xml
+index 2fbccd6..40c55fa 100644
+--- a/res/menu/conversation_fragment_select_menu.xml
++++ b/res/menu/conversation_fragment_select_menu.xml
+@@ -50,6 +50,8 @@
+     <item
+         android:id="@+id/action_send"
+         android:icon="@drawable/ic_send_light"
++        android:iconTint="@color/action_bar_icon_color"
++        app:iconTint="@color/action_bar_icon_color"
+         android:title="@string/action_send"
+         appcompat:showAsAction="collapseActionView|always"/>
+     <item
+@@ -61,7 +63,7 @@
+         android:id="@+id/action_delete_message"
+         android:icon="@drawable/ic_delete_small_dark"
+         android:title="@string/action_delete_message"
+-        android:iconTint="@android:color/white"
+-        app:iconTint="@android:color/white"
++        android:iconTint="@color/action_bar_icon_color"
++        app:iconTint="@color/action_bar_icon_color"
+         appcompat:showAsAction="collapseActionView|always"/>
+ </menu>
+diff --git a/res/menu/conversation_list_fragment_select_menu.xml b/res/menu/conversation_list_fragment_select_menu.xml
+index 495a7d8..839795e 100644
+--- a/res/menu/conversation_list_fragment_select_menu.xml
++++ b/res/menu/conversation_list_fragment_select_menu.xml
+@@ -25,24 +25,24 @@
+         android:icon="@drawable/ic_archive_small_dark"
+         android:orderInCategory="50"
+         android:title="@string/action_archive"
+-        android:iconTint="@android:color/white"
+-        app:iconTint="@android:color/white"
++        android:iconTint="@color/action_bar_icon_color"
++        app:iconTint="@color/action_bar_icon_color"
+         appcompat:showAsAction="collapseActionView|always"/>
+     <item
+         android:id="@+id/action_unarchive"
+         android:icon="@drawable/ic_archive_undo_small_dark"
+         android:orderInCategory="50"
+         android:title="@string/action_unarchive"
+-        android:iconTint="@android:color/white"
+-        app:iconTint="@android:color/white"
++        android:iconTint="@color/action_bar_icon_color"
++        app:iconTint="@color/action_bar_icon_color"
+         appcompat:showAsAction="collapseActionView|always"/>
+     <item
+         android:id="@+id/action_delete"
+         android:icon="@drawable/ic_delete_small_dark"
+         android:orderInCategory="60"
+         android:title="@string/action_delete"
+-        android:iconTint="@android:color/white"
+-        app:iconTint="@android:color/white"
++        android:iconTint="@color/action_bar_icon_color"
++        app:iconTint="@color/action_bar_icon_color"
+         appcompat:showAsAction="collapseActionView|always"/>
+     <item
+         android:id="@+id/action_add_contact"
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+index 7056b13..ec2aa08 100644
+--- a/res/values-night/colors.xml
++++ b/res/values-night/colors.xml
+@@ -1,4 +1,23 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="chips_dropdown_background_pressed">@android:color/system_neutral1_800</color>
++    <!-- N9 look: night resources are only used when the user picks a dark Etesian background
++         (black, dark grey or wallpaper); the system dark theme never applies. -->
++    <color name="chips_dropdown_background_pressed">#ededed</color>
++
++    <color name="action_bar_title_text_color">#FFFFFF</color>
++    <color name="action_bar_background_color">#00000000</color>
++    <color name="action_bar_background_color_dark">#00000000</color>
++    <color name="action_bar_icon_color">#FFFFFF</color>
++    <color name="contextual_action_bar_background_color">#333333</color>
++
++    <color name="conversation_list_item_read">#B0B0B0</color>
++    <color name="conversation_list_item_unread">#FFFFFF</color>
++    <color name="conversation_list_name">#FFFFFF</color>
++    <color name="conversation_list_details">#B0B0B0</color>
++    <color name="list_empty_text">#B0B0B0</color>
++
++    <color name="n9_separator">#000000</color>
++    <color name="n9_separator_highlight">#26FFFFFF</color>
++    <color name="n9_list_row_background">#00000000</color>
++    <color name="n9_compose_bar">#33000000</color>
+ </resources>
+diff --git a/res/values-night/lineage_bools.xml b/res/values-night/lineage_bools.xml
+index 0116948..e0f54ff 100644
+--- a/res/values-night/lineage_bools.xml
++++ b/res/values-night/lineage_bools.xml
+@@ -16,4 +16,5 @@
+ -->
+ <resources>
+     <bool name="light_navigation_bar">false</bool>
++    <bool name="light_status_bar">false</bool>
+ </resources>
+diff --git a/res/values-night/lineage_colors.xml b/res/values-night/lineage_colors.xml
+index 1958fb2..ac3b006 100644
+--- a/res/values-night/lineage_colors.xml
++++ b/res/values-night/lineage_colors.xml
+@@ -16,14 +16,14 @@
+     limitations under the License.
+ -->
+ <resources>
+-    <color name="lineage_accent">@android:color/system_accent1_100</color>
++    <color name="lineage_accent">#00A5E5</color>
+ 
+-    <color name="window_background">@android:color/system_neutral1_900</color>
++    <color name="window_background">#000000</color>
+ 
+-    <color name="compose_send_text_background_color">@android:color/system_neutral1_600</color>
++    <color name="compose_send_text_background_color">#FFFFFF</color>
+ 
+-    <color name="fab_fg_color">@android:color/black</color>
++    <color name="fab_fg_color">#FFFFFF</color>
+ 
+-    <color name="attachment_bg_color">@android:color/system_neutral1_800</color>
+-    <color name="subject_editor_bubble">@android:color/system_accent1_800</color>
++    <color name="attachment_bg_color">#FFFFFF</color>
++    <color name="subject_editor_bubble">#FFFFFF</color>
+ </resources>
+diff --git a/res/values/attrs.xml b/res/values/attrs.xml
+index 84d84ae..2dda2e7 100644
+--- a/res/values/attrs.xml
++++ b/res/values/attrs.xml
+@@ -33,6 +33,8 @@
+         <attr name="placeholderDrawable" format="reference" />
+         <attr name="cornerRadius" format="dimension|reference" />
+         <attr name="reveal" format="boolean" />
++        <!-- N9 look: clip to the Etesian squircle (thumb-sized images) -->
++        <attr name="n9Squircle" format="boolean" />
+     </declare-styleable>
+     <declare-styleable name="VideoThumbnailView">
+         <attr name="mode" format="integer">
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 1b48f34..d6929ab 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -16,33 +16,33 @@
+     limitations under the License.
+ -->
+ <resources>
+-    <color name="primary_color">@android:color/system_accent1_600</color>
++    <color name="primary_color">#00A5E5</color>
+     <color name="permission_check_activity_background">@color/primary_color</color>
+ 
+     <!--  Action bar -->
+-    <color name="action_bar_title_text_color">@android:color/system_neutral1_0</color>
+-    <color name="action_bar_background_color">@android:color/system_accent1_600</color>
+-    <color name="action_bar_background_color_dark">@android:color/system_accent1_700</color>
+-    <color name="contextual_action_bar_background_color">@android:color/system_accent1_600</color>
+-    <color name="archived_conversation_action_bar_background_color">@android:color/system_accent1_700</color>
+-    <color name="archived_conversation_action_bar_background_color_dark">@android:color/system_accent1_600</color>
++    <color name="action_bar_title_text_color">#191919</color>
++    <color name="action_bar_background_color">#F4F4F4</color>
++    <color name="action_bar_background_color_dark">#F4F4F4</color>
++    <color name="contextual_action_bar_background_color">#E9E9E9</color>
++    <color name="archived_conversation_action_bar_background_color">#E9E9E9</color>
++    <color name="archived_conversation_action_bar_background_color_dark">#E9E9E9</color>
+ 
+     <!-- Conversation list -->
+-    <color name="conversation_list_item_read">#636363</color>
+-    <color name="conversation_list_item_unread">#323232</color>
++    <color name="conversation_list_item_read">#8C8C8C</color>
++    <color name="conversation_list_item_unread">#191919</color>
+     <color name="conversation_list_error">#F05A24</color>
+-    <color name="conversation_list_name">#DE000000</color>
+-    <color name="conversation_list_details">#8A000000</color>
++    <color name="conversation_list_name">#191919</color>
++    <color name="conversation_list_details">#8C8C8C</color>
+ 
+     <color name="conversation_compose_divider_start">#44000000</color>
+ 
+     <color name="message_text">#000000</color>
+-    <color name="timestamp_text_outgoing">#99323232</color>
+-    <color name="timestamp_text_incoming">#99ffffff</color>
++    <color name="timestamp_text_outgoing">#BFFFFFFF</color>
++    <color name="timestamp_text_incoming">#8A8A8E</color>
+     <color name="timestamp_text_failed">#99ff0000</color>
+     <color name="compose_send_text_color">#000000</color>
+ 
+-    <color name="message_title_text">#ff323232</color>
++    <color name="message_title_text">#191919</color>
+     <color name="message_download_failed_status_text">#000000</color>
+     <color name="message_info_text">#99ffffff</color>
+     <color name="message_info_text_incoming_download_failed">#6a6a6a</color>
+@@ -55,17 +55,17 @@
+     <color name="background_item_pressed">#6733b5e5</color>
+ 
+     <color name="subject_editor_bubble">#ffffffff</color>
+-    <color name="message_text_color_incoming">#ffffffff</color>
++    <color name="message_text_color_incoming">#191919</color>
+     <color name="message_text_color_incoming_download_failed">#6a6a6a</color>
+-    <color name="message_text_color_outgoing">#ff323232</color>
+-    <color name="conversation_background">@color/window_background</color>
++    <color name="message_text_color_outgoing">#FFFFFF</color>
++    <color name="conversation_background">#E8EBEE</color>
+     <color name="conversation_edge_effect">#9d9d9d</color>
+-    <color name="compose_message_send_color">@color/lineage_accent</color>
+-    <color name="compose_message_send_color_pressed">#999999</color>
+-    <color name="message_bubble_color_outgoing">#ffffffff</color>
++    <color name="compose_message_send_color">#55A32A</color>
++    <color name="compose_message_send_color_pressed">#3E7F1C</color>
++    <color name="message_bubble_color_outgoing">#FFFFFF</color>
+     <color name="message_error_bubble_color_incoming">#e2e2e2</color>
+-    <color name="message_audio_button_color_incoming">#ffffffff</color>
+-    <color name="message_bubble_color_selected">@android:color/system_accent3_300</color>
++    <color name="message_audio_button_color_incoming">#6E6E6E</color>
++    <color name="message_bubble_color_selected">#7FD4F0</color>
+     <color name="message_image_selected_tint">#7f040000</color>
+ 
+     <!-- Base color used for color filtering. -->
+@@ -75,16 +75,16 @@
+     <color name="contact_list_text_primary">#4d4d4d</color>
+     <color name="contact_list_text_secondary">#999999</color>
+ 
+-    <color name="compose_contact_text">@android:color/white</color>
+-    <color name="compose_contact_faint_text">#a0ffffff</color>
++    <color name="compose_contact_text">#FF111111</color>
++    <color name="compose_contact_faint_text">#FF9A9A9E</color>
+     <color name="compose_contact_divider">#44000000</color>
+     <color name="contact_picker_tab_pressed">#ddffffff</color>
+-    <color name="contact_picker_tab_underline">@android:color/white</color>
+-    <color name="contact_list_alphabet_header">@color/lineage_accent</color>
++    <color name="contact_picker_tab_underline">#1C6BC8</color>
++    <color name="contact_list_alphabet_header">#00A5E5</color>
+     <color name="contact_picker_background">#ffffff</color>
+     <color name="chips_dropdown_background_activated">#4285f4</color>
+     <color name="chips_dropdown_background_pressed">#ededed</color>
+-    <color name="chips_background_color">#33000000</color>
++    <color name="chips_background_color">#1C6BC8</color>
+     <color name="chips_text_color">@android:color/white</color>
+ 
+     <color name="translucent_white">#80ffffff</color>
+@@ -92,18 +92,18 @@
+     <color name="attachment_preview_more_items_text_background">#44000000</color>
+ 
+     <array name="letter_tile_colors">
+-        <item>@android:color/system_accent1_300</item>
+-        <item>@android:color/system_accent2_300</item>
+-        <item>@android:color/system_accent3_300</item>
+-        <item>@android:color/system_accent1_400</item>
+-        <item>@android:color/system_accent2_400</item>
+-        <item>@android:color/system_accent3_400</item>
+-        <item>@android:color/system_accent1_500</item>
+-        <item>@android:color/system_accent2_500</item>
+-        <item>@android:color/system_accent3_500</item>
+-        <item>@android:color/system_accent1_600</item>
+-        <item>@android:color/system_accent2_600</item>
+-        <item>@android:color/system_accent3_600</item>
++        <item>#00A5E5</item>
++        <item>#62AE2E</item>
++        <item>#E08B1E</item>
++        <item>#A65FB8</item>
++        <item>#D42D2A</item>
++        <item>#2E8FA8</item>
++        <item>#7A9A2E</item>
++        <item>#C06090</item>
++        <item>#5B7DC4</item>
++        <item>#8C6E4C</item>
++        <item>#3DB6DA</item>
++        <item>#55A32A</item>
+     </array>
+ 
+     <color name="letter_tile_font_color">#ffffff</color>
+@@ -113,7 +113,7 @@
+     <color name="audio_picker_hint_text_color">#40000000</color>
+     <color name="audio_picker_timer_text_color">#323232</color>
+     <color name="audio_attachment_timer_text_color">#323232</color>
+-    <color name="audio_progress_bar_color">@color/lineage_accent</color>
++    <color name="audio_progress_bar_color">#00A5E5</color>
+ 
+     <color name="contact_picker_hint_text_color">#40000000</color>
+ 
+@@ -127,23 +127,23 @@
+ 
+     <color name="participant_list_text_primary">#4d4d4d</color>
+     <color name="people_and_options_header_text">#6d6d6d</color>
+-    <color name="people_and_options_list_divider">#cccccc</color>
++    <color name="people_and_options_list_divider">#D6D6D6</color>
+ 
+-    <color name="fab_color">@color/lineage_accent</color>
++    <color name="fab_color">#00A5E5</color>
+ 
+     <color name="message_body_size_text_color">#555555</color>
+     <color name="mms_indicator_color">#681faf</color>
+     <color name="list_empty_text">#6d6d6d</color>
+-    <color name="unblock_item_text_color">@color/lineage_accent</color>
++    <color name="unblock_item_text_color">#00A5E5</color>
+     <color name="open_conversation_animation_background_shadow">#40000000</color>
+-    <color name="compose_notification_bar_background">@color/primary_color</color>
++    <color name="compose_notification_bar_background">#00A5E5</color>
+ 
+     <color name="sim_selector_text_primary">#4d4d4d</color>
+     <color name="sim_selector_text_secondary">#999999</color>
+     <color name="sim_selector_background_end">#cceeeeee</color>
+     <color name="sim_selector_background_start">#ffeeeeee</color>
+ 
+-    <color name="text_highlight_color">@android:color/system_accent1_100</color>
++    <color name="text_highlight_color">#9900A5E5</color>
+     <color name="search_view_text_cursor">#b0dddddd</color>
+ 
+     <color name="settings_list_text_primary">#4d4d4d</color>
+@@ -162,4 +162,22 @@
+     <color name="fastscroll_track_color">#1e000000</color>
+     <color name="fastscroll_thumb_color">#42000000</color>
+     <color name="fastscroll_preview_text_color">#ffffff</color>
++
++    <!-- N9 (Etesian blanco) palette -->
++    <color name="action_bar_icon_color">#191919</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_bubble_out_top">#24AADD</color>
++    <color name="n9_bubble_out_bottom">#1A92C2</color>
++    <color name="n9_bubble_out_border">#A9BCCF</color>
++    <color name="n9_bubble_light_top">#FFFFFF</color>
++    <color name="n9_bubble_light_bottom">#EEEEF0</color>
++    <color name="n9_bubble_border">#C8C8C8</color>
++    <color name="n9_separator">#D0D0D0</color>
++    <color name="n9_separator_highlight">#FFFFFF</color>
++    <color name="n9_list_row_background">@color/window_background</color>
++    <color name="n9_send_top">#7BBF45</color>
++    <color name="n9_search_hint">#8C8C8C</color>
++    <color name="n9_compose_bar">#E9E9E9</color>
++    <color name="n9_green_top">#7BBF45</color>
++    <color name="n9_green_bottom">#55A32A</color>
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index 72c1c86..e6394b6 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -17,8 +17,8 @@
+ -->
+ <resources>
+ 
+-    <dimen name="action_bar_height">56dp</dimen>
+-    <dimen name="action_bar_text_size">20sp</dimen>
++    <dimen name="action_bar_height">64dp</dimen>
++    <dimen name="action_bar_text_size">28sp</dimen>
+     <dimen name="conversation_message_text_size">16sp</dimen>
+     <dimen name="conversation_status_text_size">12sp</dimen>
+     <dimen name="conversation_title_text_size">12sp</dimen>
+diff --git a/res/values/lineage_bools.xml b/res/values/lineage_bools.xml
+index d10d221..3b6ec0e 100644
+--- a/res/values/lineage_bools.xml
++++ b/res/values/lineage_bools.xml
+@@ -16,4 +16,5 @@
+ -->
+ <resources>
+     <bool name="light_navigation_bar">true</bool>
++    <bool name="light_status_bar">true</bool>
+ </resources>
+diff --git a/res/values/lineage_colors.xml b/res/values/lineage_colors.xml
+index 77ee55a..523d476 100644
+--- a/res/values/lineage_colors.xml
++++ b/res/values/lineage_colors.xml
+@@ -16,15 +16,15 @@
+     limitations under the License.
+ -->
+ <resources>
+-    <color name="lineage_accent">@android:color/system_accent1_600</color>
++    <color name="lineage_accent">#00A5E5</color>
+ 
+-    <color name="window_background">@android:color/system_neutral1_50</color>
++    <color name="window_background">#F4F4F4</color>
+ 
+     <color name="navigation_bar_bg">@color/window_background</color>
+ 
+-    <color name="compose_send_text_background_color">@android:color/white</color>
++    <color name="compose_send_text_background_color">#FFFFFF</color>
+ 
+-    <color name="fab_fg_color">@android:color/white</color>
++    <color name="fab_fg_color">#FFFFFF</color>
+ 
+-    <color name="attachment_bg_color">@android:color/system_neutral1_0</color>
++    <color name="attachment_bg_color">#FFFFFF</color>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 4dee609..4b29d69 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -753,4 +753,13 @@
+ 
+     <!-- When making a call to emergency numbers, show this toast -->
+     <string name="disallow_emergency_call">Can\'t make a voice call to emergency services here.</string>
++    <!-- N9 look: the new message sheet and first-run page. -->
++    <string name="n9_compose_hint">Write your message here</string>
++    <string name="n9_new_text_message">New text message</string>
++    <string name="n9_to_label">To:</string>
++    <string name="n9_empty_text">Send texts or chat via your favourite online services</string>
++    <string name="n9_send_a_text">Send a text</string>
++    <string name="n9_add_chat_account">Add chat account</string>
++    <string name="n9_emoticon">Emoticon</string>
++    <string name="n9_send">Send</string>
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index cb035b9..9dd2113 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -20,7 +20,13 @@
+         Base application theme
+     -->
+     <style name="BugleBaseTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+-        <item name="android:forceDarkAllowed">true</item>
++        <item name="android:forceDarkAllowed">false</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:windowLightStatusBar">@bool/light_status_bar</item>
++        <item name="android:statusBarColor">@color/action_bar_background_color</item>
++        <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Light</item>
++        <item name="colorControlNormal">@color/action_bar_icon_color</item>
+         <item name="android:navigationBarColor">@color/navigation_bar_bg</item>
+         <item name="android:windowLightNavigationBar">@bool/light_navigation_bar</item>
+         <item name="android:elegantTextHeight">true</item>
+@@ -39,7 +45,9 @@
+         <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
+     </style>
+ 
+-    <style name="LaunchTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
++    <style name="LaunchTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
++         <item name="android:windowBackground">@color/window_background</item>
++         <item name="android:windowLightStatusBar">true</item>
+          <item name="colorPrimary">@color/action_bar_background_color</item>
+          <item name="colorPrimaryDark">@color/action_bar_background_color_dark</item>
+          <item name="android:elegantTextHeight">true</item>
+@@ -58,7 +66,8 @@
+         <item name="android:fastScrollPreviewBackgroundRight">@drawable/contacts_fastscroll_label_right</item>
+     </style>
+ 
+-    <style name="BugleTheme.DialogActivity" parent="@style/Theme.MaterialComponents.DayNight.Dialog">
++    <style name="BugleTheme.DialogActivity" parent="@style/Theme.MaterialComponents.Light.Dialog">
++        <item name="android:fontFamily">etesian-text</item>
+         <item name="android:windowNoTitle">false</item>
+         <item name="android:background">@color/window_background</item>
+         <item name="android:dialogCornerRadius">28dp</item>
+@@ -92,6 +101,8 @@
+         <item name="height">@dimen/action_bar_height</item>
+         <item name="displayOptions">showTitle</item>
+         <item name="titleTextStyle">@style/BugleActionBarTitleTextStyle</item>
++        <item name="background">@color/action_bar_background_color</item>
++        <item name="elevation">0dp</item>
+     </style>
+ 
+     <style name="BugleActionBarTitleTextStyle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
+@@ -99,6 +110,10 @@
+       <item name="android:textSize">@dimen/action_bar_text_size</item>
+       <item name="android:lines">1</item>
+       <item name="android:textAlignment">viewStart</item>
++      <!-- N9 look: page titles are light, never bold. -->
++      <item name="android:fontFamily">etesian-text</item>
++      <item name="android:textStyle">normal</item>
++      <item name="android:textFontWeight">300</item>
+     </style>
+ 
+     <style name="ConversationActionBarTitleTextStyle" parent="BugleActionBarTitleTextStyle">
+@@ -286,7 +301,7 @@
+     </style>
+ 
+     <style name="ConversationListItemViewConversationNameStyle" parent="ConversationListItemViewTextStyle">
+-        <item name="android:textSize">16sp</item>
++        <item name="android:textSize">18sp</item>
+         <item name="android:textColor">@color/conversation_list_name</item>
+     </style>
+ 
+@@ -597,7 +612,7 @@
+ 
+     <style name="ShapeAppearanceOverlay" parent="">
+         <item name="cornerFamily">rounded</item>
+-        <item name="cornerSize">16dp</item>
++        <item name="cornerSize">28%</item>
+     </style>
+ 
+ </resources>
+diff --git a/src/com/android/messaging/ui/AsyncImageView.java b/src/com/android/messaging/ui/AsyncImageView.java
+index db721b7..fefc2ef 100644
+--- a/src/com/android/messaging/ui/AsyncImageView.java
++++ b/src/com/android/messaging/ui/AsyncImageView.java
+@@ -77,6 +77,8 @@ public class AsyncImageView extends AppCompatImageView implements
+     // The corner radius for drawing rounded corners around bitmap. The default value is zero
+     // (no rounded corners)
+     private final int mCornerRadius;
++    // N9 look: clip to the Etesian squircle instead of the rounded-corner rect.
++    private final boolean mN9Squircle;
+     private final Path mRoundedCornerClipPath;
+     private int mClipPathWidth;
+     private int mClipPathHeight;
+@@ -110,6 +112,7 @@ public class AsyncImageView extends AppCompatImageView implements
+         mPlaceholderDrawable = attr.getDrawable(R.styleable.AsyncImageView_placeholderDrawable);
+         mCornerRadius = attr.getDimensionPixelSize(R.styleable.AsyncImageView_cornerRadius, 0);
+         mRoundedCornerClipPath = new Path();
++        mN9Squircle = attr.getBoolean(R.styleable.AsyncImageView_n9Squircle, false);
+ 
+         attr.recycle();
+     }
+@@ -372,14 +375,19 @@ public class AsyncImageView extends AppCompatImageView implements
+ 
+     @Override
+     protected void onDraw(final Canvas canvas) {
+-        if (mCornerRadius > 0) {
++        if (mCornerRadius > 0 || mN9Squircle) {
+             final int currentWidth = this.getWidth();
+             final int currentHeight = this.getHeight();
+             if (mClipPathWidth != currentWidth || mClipPathHeight != currentHeight) {
+                 final RectF rect = new RectF(0, 0, currentWidth, currentHeight);
+                 mRoundedCornerClipPath.reset();
+-                mRoundedCornerClipPath.addRoundRect(rect, mCornerRadius, mCornerRadius,
+-                        Path.Direction.CW);
++                if (mN9Squircle) {
++                    com.android.messaging.util.N9Squircle.path(0, 0, currentWidth,
++                            currentHeight, mRoundedCornerClipPath);
++                } else {
++                    mRoundedCornerClipPath.addRoundRect(rect, mCornerRadius, mCornerRadius,
++                            Path.Direction.CW);
++                }
+                 mClipPathWidth = currentWidth;
+                 mClipPathHeight = currentHeight;
+             }
+diff --git a/src/com/android/messaging/ui/BugleActionBarActivity.java b/src/com/android/messaging/ui/BugleActionBarActivity.java
+index 98d1ad5..5421168 100644
+--- a/src/com/android/messaging/ui/BugleActionBarActivity.java
++++ b/src/com/android/messaging/ui/BugleActionBarActivity.java
+@@ -17,6 +17,7 @@
+ 
+ package com.android.messaging.ui;
+ 
++import android.content.Context;
+ import android.graphics.drawable.ColorDrawable;
+ import android.os.Bundle;
+ import android.view.ActionMode;
+@@ -28,6 +29,7 @@ import android.view.View;
+ import androidx.annotation.NonNull;
+ import androidx.appcompat.app.ActionBar;
+ import androidx.appcompat.app.AppCompatActivity;
++import androidx.appcompat.app.AppCompatDelegate;
+ 
+ import com.android.messaging.R;
+ import com.android.messaging.util.BugleActivityUtil;
+@@ -38,6 +40,8 @@ import com.android.messaging.util.UiUtils;
+ import java.util.HashSet;
+ import java.util.Set;
+ 
++import com.bompotis.etesian.theme.EtesianBackground;
++
+ /**
+  * Base class for app activities that use an action bar. Responsible for logging/telemetry/other
+  * needs that will be common for all activities.  We can break out the common code if/when we need
+@@ -61,6 +65,28 @@ public class BugleActionBarActivity extends AppCompatActivity implements ImeUtil
+     // device
+     private int mLastScreenHeight;
+ 
++    // The Etesian background read at creation; null when this activity keeps the N9 light look.
++    private EtesianBackground.Style mEtesianStyle;
++
++    /**
++     * Whether this activity follows the user's Etesian background for apps that are light on
++     * the N9 (N9 light, black, dark grey or wallpaper). Other screens stay N9 light.
++     */
++    protected boolean followsEtesianBackground() {
++        return false;
++    }
++
++    @Override
++    protected void attachBaseContext(final Context newBase) {
++        // Night resources hold the palette for dark Etesian backgrounds; force the mode both
++        // ways so the system dark theme never changes the light N9 look.
++        mEtesianStyle = followsEtesianBackground()
++                ? EtesianBackground.content(newBase) : null;
++        getDelegate().setLocalNightMode(mEtesianStyle != null && mEtesianStyle.dark
++                ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
++        super.attachBaseContext(newBase);
++    }
++
+     @Override
+     protected void onCreate(final Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+@@ -68,6 +94,10 @@ public class BugleActionBarActivity extends AppCompatActivity implements ImeUtil
+             return;
+         }
+ 
++        if (mEtesianStyle != null && mEtesianStyle.dark) {
++            EtesianBackground.apply(this, mEtesianStyle);
++        }
++
+         mLastScreenHeight = getResources().getDisplayMetrics().heightPixels;
+         LogUtil.v(LogUtil.BUGLE_TAG, this.getLocalClassName() + ".onCreate");
+ 
+@@ -92,6 +122,11 @@ public class BugleActionBarActivity extends AppCompatActivity implements ImeUtil
+         super.onResume();
+         LogUtil.v(LogUtil.BUGLE_TAG, this.getLocalClassName() + ".onResume");
+         BugleActivityUtil.onActivityResume(this, BugleActionBarActivity.this);
++
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != null && mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
+     }
+ 
+     @Override
+diff --git a/src/com/android/messaging/ui/ConversationDrawables.java b/src/com/android/messaging/ui/ConversationDrawables.java
+index a9f30c4..7bd0280 100644
+--- a/src/com/android/messaging/ui/ConversationDrawables.java
++++ b/src/com/android/messaging/ui/ConversationDrawables.java
+@@ -48,6 +48,8 @@ public class ConversationDrawables {
+     private Drawable mFastScrollPreviewDrawableLeft;
+     private Drawable mFastScrollPreviewDrawableRight;
+     private final Context mContext;
++    private Drawable mIncomingBubbleN9Drawable;
++    private Drawable mOutgoingBubbleN9Drawable;
+     private int mOutgoingBubbleColor;
+     private int mIncomingErrorBubbleColor;
+     private int mIncomingAudioButtonColor;
+@@ -98,6 +100,8 @@ public class ConversationDrawables {
+                 R.drawable.fastscroll_preview_left, theme);
+         mFastScrollPreviewDrawableRight = ResourcesCompat.getDrawable(resources,
+                 R.drawable.fastscroll_preview_right, theme);
++        mIncomingBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_incoming, theme);
++        mOutgoingBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_outgoing, theme);
+         mOutgoingBubbleColor = resources.getColor(R.color.message_bubble_color_outgoing, theme);
+         mIncomingErrorBubbleColor =
+                 resources.getColor(R.color.message_error_bubble_color_incoming, theme);
+@@ -117,6 +121,12 @@ public class ConversationDrawables {
+             protoDrawable = mOutgoingBubbleNoArrowDrawable;
+         }
+ 
++        // N9 look: unselected, non-error bubbles use the gradient XML shapes untinted.
++        if (!selected && !(incoming && isError)) {
++            final Drawable n9 = incoming ? mIncomingBubbleN9Drawable : mOutgoingBubbleN9Drawable;
++            return n9.getConstantState().newDrawable(mContext.getResources()).mutate();
++        }
++
+         int color;
+         if (selected) {
+             color = mSelectedBubbleColor;
+diff --git a/src/com/android/messaging/ui/PlainTextEditText.java b/src/com/android/messaging/ui/PlainTextEditText.java
+index 8d6e784..2b02df2 100644
+--- a/src/com/android/messaging/ui/PlainTextEditText.java
++++ b/src/com/android/messaging/ui/PlainTextEditText.java
+@@ -34,6 +34,26 @@ public class PlainTextEditText extends EditText {
+         super(context, attrs);
+     }
+ 
++    /** Etesian: commands from the keyboard's N9 strip ("etesian.attach", ...). */
++    public interface PrivateImeCommandListener {
++        boolean onPrivateImeCommand(String action, android.os.Bundle data);
++    }
++
++    private PrivateImeCommandListener mPrivateImeCommandListener;
++
++    public void setPrivateImeCommandListener(final PrivateImeCommandListener listener) {
++        mPrivateImeCommandListener = listener;
++    }
++
++    @Override
++    public boolean onPrivateIMECommand(final String action, final android.os.Bundle data) {
++        if (mPrivateImeCommandListener != null
++                && mPrivateImeCommandListener.onPrivateImeCommand(action, data)) {
++            return true;
++        }
++        return super.onPrivateIMECommand(action, data);
++    }
++
+     // Intercept and modify the paste event. Let everything else through unchanged.
+     @Override
+     public boolean onTextContextMenuItem(final int id) {
+diff --git a/src/com/android/messaging/ui/contact/ContactPickerFragment.java b/src/com/android/messaging/ui/contact/ContactPickerFragment.java
+index 66162bf..b7a28f0 100644
+--- a/src/com/android/messaging/ui/contact/ContactPickerFragment.java
++++ b/src/com/android/messaging/ui/contact/ContactPickerFragment.java
+@@ -182,11 +182,15 @@ public class ContactPickerFragment extends Fragment implements ContactPickerData
+         mCustomHeaderViewPager.setCurrentItem(0);
+ 
+         mToolbar = view.findViewById(R.id.toolbar);
+-        mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_light);
+-        mToolbar.setNavigationContentDescription(R.string.back);
+-        mToolbar.setNavigationOnClickListener(v -> mHost.onBackButtonPressed());
++        // N9 look: Cancel on the sheet header instead of the back arrow.
++        view.findViewById(R.id.n9_cancel).setOnClickListener(v -> mHost.onBackButtonPressed());
+ 
+         mToolbar.inflateMenu(R.menu.compose_menu);
++        // N9 look: dark icons on the light To: band.
++        for (int i = 0; i < mToolbar.getMenu().size(); i++) {
++            final android.graphics.drawable.Drawable icon = mToolbar.getMenu().getItem(i).getIcon();
++            if (icon != null) icon.mutate().setTint(0xFF555555);
++        }
+         mToolbar.setOnMenuItemClickListener(this);
+ 
+         mComposeDivider = view.findViewById(R.id.compose_contact_divider);
+diff --git a/src/com/android/messaging/ui/conversation/ComposeMessageView.java b/src/com/android/messaging/ui/conversation/ComposeMessageView.java
+index 9204fa0..d35dd6e 100644
+--- a/src/com/android/messaging/ui/conversation/ComposeMessageView.java
++++ b/src/com/android/messaging/ui/conversation/ComposeMessageView.java
+@@ -287,6 +287,41 @@ public class ComposeMessageView extends LinearLayout
+             // Showing the media picker is treated as starting to compose the message.
+             mInputManager.showHideMediaPicker(true /* show */, true /* animate */);
+         });
++        // N9 look: attach, emoticon, counter and Send live in a white strip that is only shown
++        // while the keyboard is up, directly on top of it.
++        mImeStrip = findViewById(R.id.n9_ime_strip);
++        getViewTreeObserver().addOnGlobalLayoutListener(this::updateImeStrip);
++        getViewTreeObserver().addOnGlobalFocusChangeListener((o, n) -> updateImeStrip());
++
++        // N9 look: the emoticon squircle puts a smiley at the cursor.
++        findViewById(R.id.n9_emoticon).setOnClickListener(v -> insertEmoticon());
++        // Etesian keyboard: it hosts this strip (one line above the keys) and sends its
++        // attach/emoticon taps back here; the counter goes to it with sendAppPrivateCommand.
++        ((com.android.messaging.ui.PlainTextEditText) mComposeEditText)
++                .setPrivateImeCommandListener((action, data) -> {
++                    switch (action) {
++                        case "etesian.strip_hosted":
++                            mImeHostsStrip = true;
++                            sendCounterToIme();
++                            updateImeStrip();
++                            return true;
++                        case "etesian.strip_released":
++                            mImeHostsStrip = false;
++                            updateImeStrip();
++                            return true;
++                        case "etesian.attach":
++                            mInputManager.showHideMediaPicker(true /* show */, true /* animate */);
++                            return true;
++                        case "etesian.emoticon":
++                            insertEmoticon();
++                            return true;
++                        default:
++                            return false;
++                    }
++                });
++        // N9 look: Send is a small black rounded button with the word.
++        mSendButton.setImageDrawable(new N9SendLabel(getResources().getString(R.string.n9_send),
++                getResources().getDisplayMetrics().scaledDensity));
+ 
+         mAttachmentPreview = findViewById(R.id.attachment_draft_view);
+         mAttachmentPreview.setComposeMessageView(this);
+@@ -307,6 +342,82 @@ public class ComposeMessageView extends LinearLayout
+         }
+     }
+ 
++    private View mImeStrip;
++    /** The Etesian keyboard shows attach, emoticon, counter and Send itself. */
++    private boolean mImeHostsStrip;
++
++    private void insertEmoticon() {
++        final int at = Math.max(0, mComposeEditText.getSelectionStart());
++        mComposeEditText.getText().insert(at, ":)");
++    }
++
++    private void sendCounterToIme() {
++        if (!mImeHostsStrip || mMessageBodySize == null) {
++            return;
++        }
++        final android.os.Bundle b = new android.os.Bundle();
++        b.putCharSequence("text", mMessageBodySize.getVisibility() == VISIBLE
++                ? mMessageBodySize.getText() : "");
++        final android.view.inputmethod.InputMethodManager imm =
++                getContext().getSystemService(android.view.inputmethod.InputMethodManager.class);
++        if (imm != null) {
++            imm.sendAppPrivateCommand(mComposeEditText, "etesian.counter", b);
++        }
++    }
++
++    /** N9 look: shows the IME strip exactly while the soft keyboard is visible. */
++    private void updateImeStrip() {
++        final android.view.WindowInsets insets = getRootWindowInsets();
++        final boolean ime = insets != null
++                && insets.isVisible(android.view.WindowInsets.Type.ime());
++        // Pro1-X slide-out keyboard: no on-screen keyboard, so the strip stands alone at the
++        // bottom while the composer has focus (debug.etesian.messaging_hwkbd simulates it).
++        final boolean hw = (isHardKeyboardOpen() || debugHardKeyboard())
++                && mComposeEditText != null && mComposeEditText.hasFocus();
++        // The Etesian keyboard hosts the strip while it is up: one line, not two.
++        final int want = (ime && !mImeHostsStrip) || hw ? VISIBLE : GONE;
++        // N9: Send replaces the SIM icon outright (the reveal animation can strand it behind).
++        if (mSendButton != null && mSelfSendIcon != null
++                && mSendButton.getVisibility() == VISIBLE
++                && mSelfSendIcon.getVisibility() != GONE) {
++            mSelfSendIcon.animate().cancel();
++            mSelfSendIcon.setVisibility(GONE);
++        }
++        if (mImeStrip != null && mImeStrip.getVisibility() != want) {
++            mImeStrip.setVisibility(want);
++        }
++    }
++
++    private boolean isHardKeyboardOpen() {
++        final android.content.res.Configuration c = getResources().getConfiguration();
++        return c.keyboard == android.content.res.Configuration.KEYBOARD_QWERTY
++                && c.hardKeyboardHidden
++                        == android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO;
++    }
++
++    private static boolean debugHardKeyboard() {
++        try {
++            return (Boolean) Class.forName("android.os.SystemProperties")
++                    .getMethod("getBoolean", String.class, boolean.class)
++                    .invoke(null, "debug.etesian.messaging_hwkbd", false);
++        } catch (final Exception e) {
++            return false;
++        }
++    }
++
++    @Override
++    protected void onConfigurationChanged(final android.content.res.Configuration newConfig) {
++        super.onConfigurationChanged(newConfig);
++        // Sliding the keyboard open/closed: the activity handles keyboardHidden itself, so the
++        // draft stays; only the strip follows.
++        updateImeStrip();
++    }
++
++    /** Opens the attachment picker (N9 look: from the Etesian system toolbar). */
++    public void showMediaPicker() {
++        mInputManager.showHideMediaPicker(true /* show */, true /* animate */);
++    }
++
+     public void setInputManager(final ConversationInputManager inputManager) {
+         mInputManager = inputManager;
+     }
+@@ -675,7 +786,12 @@ public class ComposeMessageView extends LinearLayout
+                     draftMessageData.getCodePointsRemainingInCurrentMessage();
+             // Show the counter only if we are going to send more than one message OR we are getting
+             // close.
+-            if (messageCount > 1
++            // N9 look: "155(1)", always shown.
++            if (true) {
++                mMessageBodySize.setText(codePointsRemaining + "(" + Math.max(1, messageCount) + ")");
++                mMessageBodySize.setVisibility(View.VISIBLE);
++                sendCounterToIme();
++            } else if (messageCount > 1
+                     || codePointsRemaining <= CODEPOINTS_REMAINING_BEFORE_COUNTER_SHOWN) {
+                 // Update the remaining characters and number of messages required.
+                 final String counterText =
+@@ -703,7 +819,7 @@ public class ComposeMessageView extends LinearLayout
+                     // the send button.
+                     UiUtils.revealOrHideViewWithAnimation(mSelfSendIcon, GONE, null);
+                 }
+-                mMmsIndicator.setVisibility(draftMessageData.getIsMms() ? VISIBLE : INVISIBLE);
++                mMmsIndicator.setVisibility(draftMessageData.getIsMms() ? VISIBLE : GONE);
+                 sendWidgetMode = SEND_WIDGET_MODE_SEND_BUTTON;
+             } else {
+                 mSelfSendIcon.setImageResourceUri(selfSendButtonUri);
+@@ -711,7 +827,7 @@ public class ComposeMessageView extends LinearLayout
+                     UiUtils.revealOrHideViewWithAnimation(mSelfSendIcon, VISIBLE, null);
+                 }
+                 UiUtils.revealOrHideViewWithAnimation(mSendButton, GONE, null);
+-                mMmsIndicator.setVisibility(INVISIBLE);
++                mMmsIndicator.setVisibility(GONE); // N9: no gap under Send
+                 if (shouldShowSimSelector(mConversationDataModel.getData())) {
+                     sendWidgetMode = SEND_WIDGET_MODE_SIM_SELECTOR;
+                 }
+@@ -732,7 +848,7 @@ public class ComposeMessageView extends LinearLayout
+                     mConversationDataModel.getData().getSubscriptionEntryForSelfParticipant(
+                             mBinding.getData().getSelfId(), false /* excludeDefault */);
+             if (subscriptionListEntry == null) {
+-                mComposeEditText.setHint(R.string.compose_message_view_hint_text);
++                mComposeEditText.setHint(R.string.n9_compose_hint);
+             } else {
+                 mComposeEditText.setHint(Html.fromHtml(getResources().getString(
+                         R.string.compose_message_view_hint_text_multi_sim,
+@@ -982,4 +1098,33 @@ public class ComposeMessageView extends LinearLayout
+             mAttachMediaButton.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+         }
+     }
++
++    /** The word "Send" in white, drawn as the send button's image. */
++    private static final class N9SendLabel extends android.graphics.drawable.Drawable {
++        private final String mText;
++        private final android.graphics.Paint mPaint =
++                new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
++
++        N9SendLabel(final String text, final float sp) {
++            mText = text;
++            mPaint.setColor(0xFFFFFFFF);
++            mPaint.setTextSize(15 * sp);
++            mPaint.setTypeface(android.graphics.Typeface.create("etesian-text",
++                    android.graphics.Typeface.BOLD));
++            mPaint.setTextAlign(android.graphics.Paint.Align.CENTER);
++        }
++
++        @Override
++        public void draw(final android.graphics.Canvas c) {
++            final android.graphics.Rect b = getBounds();
++            c.drawText(mText, b.exactCenterX(),
++                    b.exactCenterY() - (mPaint.ascent() + mPaint.descent()) / 2, mPaint);
++        }
++
++        @Override public int getIntrinsicWidth() { return (int) mPaint.measureText(mText); }
++        @Override public int getIntrinsicHeight() { return (int) (mPaint.getTextSize() * 1.3f); }
++        @Override public void setAlpha(final int alpha) { mPaint.setAlpha(alpha); }
++        @Override public void setColorFilter(final android.graphics.ColorFilter cf) { mPaint.setColorFilter(cf); }
++        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
++    }
+ }
+diff --git a/src/com/android/messaging/ui/conversation/ConversationActivity.java b/src/com/android/messaging/ui/conversation/ConversationActivity.java
+index 3bf75ad..fa0c7ca 100644
+--- a/src/com/android/messaging/ui/conversation/ConversationActivity.java
++++ b/src/com/android/messaging/ui/conversation/ConversationActivity.java
+@@ -61,6 +61,11 @@ public class ConversationActivity extends BugleActionBarActivity
+     // Tracks whether onPause is called.
+     private boolean mIsPaused;
+ 
++    @Override
++    protected boolean followsEtesianBackground() {
++        return true;
++    }
++
+     @Override
+     protected void onCreate(final Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+diff --git a/src/com/android/messaging/ui/conversation/ConversationFragment.java b/src/com/android/messaging/ui/conversation/ConversationFragment.java
+index 68fbb21..cd0c5d7 100644
+--- a/src/com/android/messaging/ui/conversation/ConversationFragment.java
++++ b/src/com/android/messaging/ui/conversation/ConversationFragment.java
+@@ -89,6 +89,7 @@ import com.android.messaging.datamodel.data.SubscriptionListData.SubscriptionLis
+ import com.android.messaging.ui.AttachmentPreview;
+ import com.android.messaging.ui.BugleActionBarActivity;
+ import com.android.messaging.ui.ConversationDrawables;
++import com.android.messaging.ui.EtesianUi;
+ import com.android.messaging.ui.SnackBar;
+ import com.android.messaging.ui.UIIntents;
+ import com.android.messaging.ui.animation.PopupTransitionAnimation;
+@@ -115,6 +116,8 @@ import java.util.List;
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+ 
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
+ /**
+  * Shows a list of messages/parts comprising a conversation.
+  */
+@@ -721,6 +724,49 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(
+                 mConversationSelfIdChangeReceiver,
+                 new IntentFilter(UIIntents.CONVERSATION_SELF_ID_CHANGE_BROADCAST_ACTION));
++
++        updateEtesianToolbar();
++    }
++
++    /** N9 look: Back, call, attach and the view menu on the Etesian system toolbar. */
++    private void updateEtesianToolbar() {
++        final Activity activity = getActivity();
++        if (!EtesianUi.isToolbarAvailable(activity) || !mBinding.isBound()) {
++            return;
++        }
++        final List<EtesianToolbar.Item> items = new ArrayList<>();
++        if (canCall()) {
++            items.add(EtesianToolbar.Item.action(EtesianUi.ITEM_CALL,
++                    R.drawable.ic_n9_toolbar_call, getString(R.string.action_call)));
++        }
++        items.add(EtesianToolbar.Item.action(EtesianUi.ITEM_ATTACH,
++                R.drawable.ic_n9_toolbar_attach,
++                getString(R.string.attachMediaButtonContentDescription)));
++        items.add(EtesianUi.menuItem(activity));
++        EtesianToolbar.of(activity).setBack(true).setItems(items, id -> {
++            if (!isAdded() || !mBinding.isBound()) {
++                return;
++            }
++            if (EtesianUi.ITEM_CALL.equals(id)) {
++                if (canCall()) {
++                    placeCall();
++                }
++            } else if (EtesianUi.ITEM_ATTACH.equals(id)) {
++                mComposeMessageView.showMediaPicker();
++            } else if (EtesianUi.ITEM_MENU.equals(id)) {
++                EtesianUi.showMenu(getActivity(), R.menu.conversation_menu, menu -> {
++                    prepareConversationMenu(menu);
++                    // Call is on the toolbar itself.
++                    menu.findItem(R.id.action_call).setVisible(false);
++                }, this::onOptionsItemSelected);
++            }
++        });
++    }
++
++    /** Whether the conversation can be called (voice capable, one participant number). */
++    private boolean canCall() {
++        return PhoneUtils.getDefault().isVoiceCapable()
++                && mBinding.getData().getParticipantPhoneNumber() != null;
+     }
+ 
+     void setConversationFocus() {
+@@ -736,8 +782,18 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+             return;
+         }
+ 
++        if (EtesianUi.isToolbarAvailable(getActivity())) {
++            // N9 look: the view menu opens from the system toolbar instead of an overflow.
++            // Menu updates also refresh the toolbar (e.g. once the participants load).
++            updateEtesianToolbar();
++            return;
++        }
++
+         inflater.inflate(R.menu.conversation_menu, menu);
++        prepareConversationMenu(menu);
++    }
+ 
++    private void prepareConversationMenu(final Menu menu) {
+         final ConversationData data = mBinding.getData();
+ 
+         // Disable the "people & options" item if we haven't loaded participants yet.
+@@ -755,9 +811,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+         menu.findItem(R.id.action_unarchive).setVisible(isArchived);
+ 
+         // Conditionally enable the phone call button.
+-        final boolean supportCallAction = (PhoneUtils.getDefault().isVoiceCapable() &&
+-                data.getParticipantPhoneNumber() != null);
+-        menu.findItem(R.id.action_call).setVisible(supportCallAction);
++        menu.findItem(R.id.action_call).setVisible(canCall());
+     }
+ 
+     @Override
+@@ -768,29 +822,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+             UIIntents.get().launchPeopleAndOptionsActivity(getActivity(), mConversationId);
+             return true;
+         } else if (itemId == R.id.action_call) {
+-            final String phoneNumber = mBinding.getData().getParticipantPhoneNumber();
+-            Assert.notNull(phoneNumber);
+-            // Can't make a call to emergency numbers using ACTION_CALL.
+-            if (PhoneNumberUtils.isEmergencyNumber(phoneNumber)) {
+-                UiUtils.showToast(R.string.disallow_emergency_call);
+-            } else {
+-                final View targetView = getActivity().findViewById(R.id.action_call);
+-                Point centerPoint;
+-                if (targetView != null) {
+-                    final int[] screenLocation = new int[2];
+-                    targetView.getLocationOnScreen(screenLocation);
+-                    final int centerX = screenLocation[0] + targetView.getWidth() / 2;
+-                    final int centerY = screenLocation[1] + targetView.getHeight() / 2;
+-                    centerPoint = new Point(centerX, centerY);
+-                } else {
+-                    // In the overflow menu, just use the center of the screen.
+-                    final Display display =
+-                            getActivity().getWindowManager().getDefaultDisplay();
+-                    centerPoint = new Point(display.getWidth() / 2, display.getHeight() / 2);
+-                }
+-                UIIntents.get()
+-                        .launchPhoneCallActivity(getActivity(), phoneNumber, centerPoint);
+-            }
++            placeCall();
+             return true;
+         } else if (itemId == R.id.action_archive) {
+             mBinding.getData().archiveConversation(mBinding);
+@@ -1355,6 +1387,32 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+         }
+     }
+ 
++    private void placeCall() {
++        final String phoneNumber = mBinding.getData().getParticipantPhoneNumber();
++        Assert.notNull(phoneNumber);
++        // Can't make a call to emergency numbers using ACTION_CALL.
++        if (PhoneNumberUtils.isEmergencyNumber(phoneNumber)) {
++            UiUtils.showToast(R.string.disallow_emergency_call);
++        } else {
++            final View targetView = getActivity().findViewById(R.id.action_call);
++            Point centerPoint;
++            if (targetView != null) {
++                final int[] screenLocation = new int[2];
++                targetView.getLocationOnScreen(screenLocation);
++                final int centerX = screenLocation[0] + targetView.getWidth() / 2;
++                final int centerY = screenLocation[1] + targetView.getHeight() / 2;
++                centerPoint = new Point(centerX, centerY);
++            } else {
++                // In the overflow menu or on the toolbar, just use the center of the screen.
++                final Display display =
++                        getActivity().getWindowManager().getDefaultDisplay();
++                centerPoint = new Point(display.getWidth() / 2, display.getHeight() / 2);
++            }
++            UIIntents.get()
++                    .launchPhoneCallActivity(getActivity(), phoneNumber, centerPoint);
++        }
++    }
++
+     private void invalidateOptionsMenu() {
+         final Activity activity = getActivity();
+         // TODO: Add the supportInvalidateOptionsMenu call to the host activity.
+@@ -1467,8 +1525,11 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
+     }
+ 
+     private void updateActionAndStatusBarColor(final ActionBar actionBar) {
+-        final int themeColor = ConversationDrawables.get().getConversationThemeColor();
+-        actionBar.setBackgroundDrawable(new ColorDrawable(themeColor));
++        // N9 look: flat light action bar instead of the conversation theme colour.
++        final int themeColor = getResources().getColor(R.color.action_bar_background_color,
++                getActivity().getTheme());
++        actionBar.setBackgroundDrawable(getResources().getDrawable(
++                R.drawable.n9_action_bar_background, getActivity().getTheme()));
+         UiUtils.setStatusBarColor(getActivity(), themeColor);
+     }
+ 
+diff --git a/src/com/android/messaging/ui/conversation/ConversationMessageView.java b/src/com/android/messaging/ui/conversation/ConversationMessageView.java
+index c58dd0e..9ecfe7a 100644
+--- a/src/com/android/messaging/ui/conversation/ConversationMessageView.java
++++ b/src/com/android/messaging/ui/conversation/ConversationMessageView.java
+@@ -276,6 +276,13 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+      * Returns whether we should show simplified visual style for the message view (i.e. hide the
+      * avatar and bubble arrow, reduce padding).
+      */
++    /** N9 look: "25/10/26 | 5:39 PM" (12 or 24 hour, as the phone is set). */
++    private String n9TimeStamp(final long time) {
++        final String t = android.text.format.DateFormat.is24HourFormat(getContext()) ? "H:mm" : "h:mm a";
++        return android.text.format.DateFormat.format("dd/MM/yy", time) + " | "
++                + new java.text.SimpleDateFormat(t, java.util.Locale.getDefault()).format(new java.util.Date(time));
++    }
++
+     private boolean shouldShowSimplifiedVisualStyle() {
+         return mData.getCanClusterWithPreviousMessage();
+     }
+@@ -370,7 +377,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+             case MessageData.BUGLE_STATUS_INCOMING_COMPLETE:
+             default:
+                 if (!mData.getCanClusterWithNextMessage()) {
+-                    statusText = mData.getFormattedReceivedTimeStamp();
++                    // N9 look: "dd/mm/yy | h:mm PM" inside the bubble.
++                    statusText = n9TimeStamp(mData.getReceivedTimeStamp());
+                 }
+                 break;
+         }
+diff --git a/src/com/android/messaging/ui/conversation/SimIconView.java b/src/com/android/messaging/ui/conversation/SimIconView.java
+index de75b9e..8ec28e5 100644
+--- a/src/com/android/messaging/ui/conversation/SimIconView.java
++++ b/src/com/android/messaging/ui/conversation/SimIconView.java
+@@ -34,7 +34,9 @@ public class SimIconView extends ContactIconView {
+         setOutlineProvider(new ViewOutlineProvider() {
+             @Override
+             public void getOutline(View v, Outline outline) {
+-                outline.setOval(0, 0, v.getWidth(), v.getHeight());
++                // N9 look: Etesian squircle instead of a circle
++                outline.setPath(com.android.messaging.util.N9Squircle.path(
++                        0, 0, v.getWidth(), v.getHeight()));
+             }
+         });
+     }
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListActivity.java b/src/com/android/messaging/ui/conversationlist/ConversationListActivity.java
+index d20173c..10392ad 100644
+--- a/src/com/android/messaging/ui/conversationlist/ConversationListActivity.java
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListActivity.java
+@@ -26,11 +26,19 @@ import androidx.annotation.NonNull;
+ import androidx.appcompat.app.ActionBar;
+ 
+ import com.android.messaging.R;
++import com.android.messaging.ui.EtesianUi;
+ import com.android.messaging.ui.UIIntents;
+ import com.android.messaging.util.Trace;
+ 
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
+ public class ConversationListActivity extends AbstractConversationListActivity {
+ 
++    @Override
++    protected boolean followsEtesianBackground() {
++        return true;
++    }
++
+     @Override
+     protected void onCreate(final Bundle savedInstanceState) {
+         Trace.beginSection("ConversationListActivity.onCreate");
+@@ -47,12 +55,13 @@ public class ConversationListActivity extends AbstractConversationListActivity {
+ 
+     @Override
+     protected void updateActionBar(final ActionBar actionBar) {
+-        actionBar.setTitle(getString(R.string.app_name));
++        actionBar.setTitle(getString(R.string.n9_messages_title));
+         actionBar.setDisplayShowTitleEnabled(true);
+         actionBar.setDisplayHomeAsUpEnabled(false);
+         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+-        actionBar.setBackgroundDrawable(new ColorDrawable(
+-                getResources().getColor(R.color.action_bar_background_color)));
++        // N9 look: page title over an engraved rule.
++        actionBar.setBackgroundDrawable(getResources().getDrawable(
++                R.drawable.n9_action_bar_background, getTheme()));
+         actionBar.show();
+         super.updateActionBar(actionBar);
+     }
+@@ -64,6 +73,32 @@ public class ConversationListActivity extends AbstractConversationListActivity {
+         // while not in the app (e.g. Talkback enabled/disable affects new conversation
+         // button)
+         supportInvalidateOptionsMenu();
++        updateEtesianToolbar();
++    }
++
++    /** N9 look: new message and the view menu on the system toolbar; no Back on the main page. */
++    private void updateEtesianToolbar() {
++        if (!EtesianUi.isToolbarAvailable(this)) {
++            return;
++        }
++        EtesianToolbar.of(this).setBack(false).setItems(id -> {
++            if (EtesianUi.ITEM_NEW.equals(id)) {
++                onActionBarStartNewConversation();
++            } else if (EtesianUi.ITEM_MENU.equals(id)) {
++                showEtesianMenu();
++            }
++        }, EtesianToolbar.Item.action(EtesianUi.ITEM_NEW, R.drawable.ic_n9_toolbar_add,
++                        getString(R.string.start_new_conversation)),
++                EtesianUi.menuItem(this));
++    }
++
++    private void showEtesianMenu() {
++        EtesianUi.showMenu(this, R.menu.conversation_list_fragment_menu, menu -> {
++            menu.findItem(R.id.action_start_new_conversation).setVisible(false);
++            menu.findItem(R.id.action_show_blocked_contacts).setVisible(
++                    mConversationListFragment != null
++                            && mConversationListFragment.isBlockedAvailable());
++        }, this::onOptionsItemSelected);
+     }
+ 
+     @Override
+@@ -80,6 +115,10 @@ public class ConversationListActivity extends AbstractConversationListActivity {
+         if (super.onCreateOptionsMenu(menu)) {
+             return true;
+         }
++        if (EtesianUi.isToolbarAvailable(this)) {
++            // N9 look: the view menu opens from the system toolbar instead of an overflow.
++            return true;
++        }
+         getMenuInflater().inflate(R.menu.conversation_list_fragment_menu, menu);
+         return true;
+     }
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListFragment.java b/src/com/android/messaging/ui/conversationlist/ConversationListFragment.java
+index bfafae0..d69a184 100644
+--- a/src/com/android/messaging/ui/conversationlist/ConversationListFragment.java
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListFragment.java
+@@ -23,6 +23,7 @@ import android.graphics.Rect;
+ import android.net.Uri;
+ import android.os.Bundle;
+ import android.os.Parcelable;
++import android.text.TextUtils;
+ import android.view.LayoutInflater;
+ import android.view.Menu;
+ import android.view.MenuInflater;
+@@ -38,6 +39,7 @@ import androidx.annotation.NonNull;
+ import androidx.core.view.ViewGroupCompat;
+ import androidx.fragment.app.Fragment;
+ import androidx.loader.app.LoaderManager;
++import androidx.recyclerview.widget.ConcatAdapter;
+ import androidx.recyclerview.widget.LinearLayoutManager;
+ import androidx.recyclerview.widget.RecyclerView;
+ 
+@@ -48,6 +50,7 @@ import com.android.messaging.datamodel.binding.BindingBase;
+ import com.android.messaging.datamodel.data.ConversationListData;
+ import com.android.messaging.datamodel.data.ConversationListData.ConversationListDataListener;
+ import com.android.messaging.datamodel.data.ConversationListItemData;
++import com.android.messaging.ui.EtesianUi;
+ import com.android.messaging.ui.ListEmptyView;
+ import com.android.messaging.ui.SnackBarInteraction;
+ import com.android.messaging.ui.UIIntents;
+@@ -90,6 +93,10 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+     private ExtendedFloatingActionButton mStartNewConversationButton;
+     private ListEmptyView mEmptyListMessageView;
+     private ConversationListAdapter mAdapter;
++    // N9 look: pull-down search pill above the conversations, and the live filter it drives.
++    private ConversationListSearchAdapter mSearchAdapter;
++    private Cursor mUnfilteredCursor;
++    private String mSearchText = "";
+ 
+     // Saved Instance State Data - only for temporal data which is nice to maintain but not
+     // critical for correctness.
+@@ -149,7 +156,13 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+     private boolean isScrolledToFirstConversation() {
+         int firstItemPosition = ((LinearLayoutManager) mRecyclerView.getLayoutManager())
+                 .findFirstCompletelyVisibleItemPosition();
+-        return firstItemPosition == 0;
++        return firstItemPosition != RecyclerView.NO_POSITION
++                && firstItemPosition <= getHeaderCount();
++    }
++
++    /** Number of rows above the conversations (the search pill on the main list). */
++    private int getHeaderCount() {
++        return mSearchAdapter != null ? 1 : 0;
+     }
+ 
+     /**
+@@ -187,7 +200,15 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+         };
+         mRecyclerView.setLayoutManager(manager);
+         mRecyclerView.setHasFixedSize(true);
+-        mRecyclerView.setAdapter(mAdapter);
++        if (!mArchiveMode && !mForwardMessageMode) {
++            mSearchAdapter = new ConversationListSearchAdapter(this::onSearchTextChanged);
++            final ConcatAdapter.Config config = new ConcatAdapter.Config.Builder()
++                    .setStableIdMode(ConcatAdapter.Config.StableIdMode.ISOLATED_STABLE_IDS)
++                    .build();
++            mRecyclerView.setAdapter(new ConcatAdapter(config, mSearchAdapter, mAdapter));
++        } else {
++            mRecyclerView.setAdapter(mAdapter);
++        }
+         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+             int mCurrentState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+ 
+@@ -220,7 +241,9 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+         }
+ 
+         mStartNewConversationButton = rootView.findViewById(R.id.start_new_conversation_button);
+-        if (mArchiveMode || mForwardMessageMode) {
++        // N9 look: "new message" lives on the Etesian system toolbar when it is shown.
++        if (mArchiveMode || mForwardMessageMode
++                || EtesianUi.isToolbarAvailable(getActivity())) {
+             mStartNewConversationButton.setVisibility(View.GONE);
+         } else {
+             mStartNewConversationButton.setVisibility(View.VISIBLE);
+@@ -270,10 +293,31 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+     public void onConversationListCursorUpdated(final ConversationListData data,
+             final Cursor cursor) {
+         mListBinding.ensureBound(data);
+-        final Cursor oldCursor = mAdapter.swapCursor(cursor);
++        final boolean firstLoad = mUnfilteredCursor == null;
++        mUnfilteredCursor = cursor;
++        applySearchFilter();
+         updateEmptyListUi(cursor == null || cursor.getCount() == 0);
+-        if (mListState != null && cursor != null && oldCursor == null) {
++        if (mListState != null && cursor != null && firstLoad) {
+             mRecyclerView.getLayoutManager().onRestoreInstanceState(mListState);
++        } else if (cursor != null && firstLoad && mSearchAdapter != null) {
++            // N9 look: start with the search pill scrolled just off the top.
++            ((LinearLayoutManager) mRecyclerView.getLayoutManager())
++                    .scrollToPositionWithOffset(1, 0);
++        }
++    }
++
++    private void onSearchTextChanged(final String text) {
++        mSearchText = text;
++        applySearchFilter();
++    }
++
++    /** Shows the conversations matching the search text (all of them when it is empty). */
++    private void applySearchFilter() {
++        final Cursor cursor = mUnfilteredCursor;
++        if (cursor == null || TextUtils.isEmpty(mSearchText.trim())) {
++            mAdapter.swapCursor(cursor);
++        } else {
++            mAdapter.swapCursor(new FilteredConversationCursor(cursor, mSearchText.trim()));
+         }
+     }
+ 
+@@ -285,6 +329,11 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+         }
+     }
+ 
++    /** Whether the "blocked contacts" menu item should be shown. */
++    public boolean isBlockedAvailable() {
++        return mBlockedAvailable;
++    }
++
+     public void updateUi() {
+         mAdapter.notifyDataSetChanged();
+     }
+@@ -349,6 +398,16 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+ 
+     // Show and hide empty list UI as needed with appropriate text based on view specifics
+     private void updateEmptyListUi(final boolean isEmpty) {
++        // N9 look: the first-run page once nothing is left to sync (debug.etesian.messaging_empty
++        // forces it for tests).
++        final boolean n9Empty = !mArchiveMode && !mForwardMessageMode
++                && ((isEmpty && mListBinding.getData().getHasFirstSyncCompleted())
++                        || forcedEmpty());
++        showN9Empty(n9Empty);
++        if (n9Empty) {
++            mEmptyListMessageView.setVisibility(View.GONE);
++            return;
++        }
+         if (isEmpty) {
+             int emptyListText;
+             if (!mListBinding.getData().getHasFirstSyncCompleted()) {
+@@ -367,6 +426,36 @@ public class ConversationListFragment extends Fragment implements ConversationLi
+         }
+     }
+ 
++    private static boolean forcedEmpty() {
++        try {
++            return (Boolean) Class.forName("android.os.SystemProperties")
++                    .getMethod("getBoolean", String.class, boolean.class)
++                    .invoke(null, "debug.etesian.messaging_empty", false);
++        } catch (ReflectiveOperationException e) {
++            return false;
++        }
++    }
++
++    private void showN9Empty(final boolean show) {
++        final View v = getView() != null ? getView().findViewById(R.id.n9_empty) : null;
++        if (v == null || (v.getVisibility() == View.VISIBLE) == show) return;
++        v.setVisibility(show ? View.VISIBLE : View.GONE);
++        v.findViewById(R.id.n9_send_text).setOnClickListener(b -> mHost.onCreateConversationClick());
++        v.findViewById(R.id.n9_add_account).setOnClickListener(b -> {
++            final android.content.Intent i = new android.content.Intent(android.provider.Settings.ACTION_ADD_ACCOUNT);
++            try { startActivity(i); } catch (android.content.ActivityNotFoundException e) { }
++        });
++        // No header or toolbar on the first-run page.
++        if (EtesianUi.isToolbarAvailable(getActivity())) {
++            com.bompotis.etesian.toolbar.EtesianToolbar.of(getActivity()).setHidden(show);
++        }
++        if (getActivity() instanceof androidx.appcompat.app.AppCompatActivity) {
++            final androidx.appcompat.app.ActionBar bar =
++                    ((androidx.appcompat.app.AppCompatActivity) getActivity()).getSupportActionBar();
++            if (bar != null) { if (show) bar.hide(); else bar.show(); }
++        }
++    }
++
+     @Override
+     public List<SnackBarInteraction> getSnackBarInteractions() {
+         final List<SnackBarInteraction> interactions = new ArrayList<>(1);
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListItemView.java b/src/com/android/messaging/ui/conversationlist/ConversationListItemView.java
+index e36f782..642eafc 100644
+--- a/src/com/android/messaging/ui/conversationlist/ConversationListItemView.java
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListItemView.java
+@@ -70,8 +70,9 @@ import java.util.List;
+  */
+ public class ConversationListItemView extends FrameLayout implements OnClickListener,
+         OnLongClickListener, OnLayoutChangeListener {
+-    static final int UNREAD_SNIPPET_LINE_COUNT = 3;
+-    static final int NO_UNREAD_SNIPPET_LINE_COUNT = 1;
++    // N9 look: two lines of grey preview text for every row.
++    static final int UNREAD_SNIPPET_LINE_COUNT = 2;
++    static final int NO_UNREAD_SNIPPET_LINE_COUNT = 2;
+     private int mListItemReadColor;
+     private int mListItemUnreadColor;
+     private Typeface mListItemReadTypeface;
+@@ -127,6 +128,7 @@ public class ConversationListItemView extends FrameLayout implements OnClickList
+     private TextView mSubjectTextView;
+     private TextView mTimestampTextView;
+     private ContactIconView mContactIconView;
++    private View mUnreadBadgeView;
+     private ImageView mContactCheckmarkView;
+     private ImageView mFailedStatusIconView;
+     private ImageView mCrossSwipeArchiveLeftImageView;
+@@ -153,6 +155,7 @@ public class ConversationListItemView extends FrameLayout implements OnClickList
+         mWorkProfileIconView = findViewById(R.id.work_profile_icon);
+         mTimestampTextView = findViewById(R.id.conversation_timestamp);
+         mContactIconView = findViewById(R.id.conversation_icon);
++        mUnreadBadgeView = findViewById(R.id.conversation_unread_badge);
+         mContactCheckmarkView = findViewById(R.id.conversation_checkmark);
+         mFailedStatusIconView = findViewById(R.id.conversation_failed_status_icon);
+         mCrossSwipeArchiveLeftImageView = findViewById(R.id.crossSwipeArchiveIconLeft);
+@@ -191,9 +194,12 @@ public class ConversationListItemView extends FrameLayout implements OnClickList
+     }
+ 
+     private void setConversationName() {
+-        if (mData.getIsRead() || mData.getShowDraft()) {
+-            mConversationNameView.setTextColor(mListItemReadColor);
+-            mConversationNameView.setTypeface(mListItemReadTypeface);
++        final boolean n9Unread = !(mData.getIsRead() || mData.getShowDraft());
++        mUnreadBadgeView.setVisibility(n9Unread ? View.VISIBLE : View.GONE);
++        if (!n9Unread) {
++            // N9 look: contact names stay dark and bold even when read.
++            mConversationNameView.setTextColor(mListItemUnreadColor);
++            mConversationNameView.setTypeface(mListItemUnreadTypeface);
+         } else {
+             mConversationNameView.setTextColor(mListItemUnreadColor);
+             mConversationNameView.setTypeface(mListItemUnreadTypeface);
+@@ -539,7 +545,7 @@ public class ConversationListItemView extends FrameLayout implements OnClickList
+                 mCrossSwipeArchiveLeftImageView.setVisibility(GONE);
+                 mCrossSwipeArchiveRightImageView.setVisibility(VISIBLE);
+             }
+-            mSwipeableContainer.setBackgroundResource(R.color.window_background);
++            mSwipeableContainer.setBackgroundResource(R.color.n9_list_row_background);
+         }
+     }
+ 
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
+index 54889a4..6c8b8a9 100644
+--- a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
+@@ -104,9 +104,11 @@ public class ConversationListSwipeHelper implements OnItemTouchListener {
+                     mInitialY = event.getY();
+ 
+                     final View viewAtPoint = mRecyclerView.findChildViewUnder(mInitialX, mInitialY);
+-                    final ConversationListItemView child = (ConversationListItemView) viewAtPoint;
+-                    if (viewAtPoint instanceof ConversationListItemView &&
+-                            child != null && child.isSwipeAnimatable()) {
++                    // N9 look: the search pill row is not a ConversationListItemView.
++                    final ConversationListItemView child =
++                            viewAtPoint instanceof ConversationListItemView
++                                    ? (ConversationListItemView) viewAtPoint : null;
++                    if (child != null && child.isSwipeAnimatable()) {
+                         // Begin detecting swipe on the target for the rest of the gesture.
+                         mListItemView = child;
+                         if (mListItemView.isAnimating()) {
+diff --git a/src/com/android/messaging/util/ImageUtils.java b/src/com/android/messaging/util/ImageUtils.java
+index 278bad9..0c2e524 100644
+--- a/src/com/android/messaging/util/ImageUtils.java
++++ b/src/com/android/messaging/util/ImageUtils.java
+@@ -26,6 +26,7 @@ import android.graphics.BitmapShader;
+ import android.graphics.Canvas;
+ import android.graphics.Matrix;
+ import android.graphics.Paint;
++import android.graphics.Path;
+ import android.graphics.PorterDuff;
+ import android.graphics.Rect;
+ import android.graphics.RectF;
+@@ -146,13 +147,15 @@ public class ImageUtils {
+         }
+ 
+         bitmapPaint.setAntiAlias(true);
++        // N9 look: Etesian squircle avatars instead of circles.
++        final Path n9Squircle = N9Squircle.path(dest.left, dest.top, dest.right, dest.bottom);
+         if (fillBackground) {
+             bitmapPaint.setColor(backgroundColor);
+-            canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
++            canvas.drawPath(n9Squircle, bitmapPaint);
+         }
+ 
+         bitmapPaint.setShader(shader);
+-        canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
++        canvas.drawPath(n9Squircle, bitmapPaint);
+         bitmapPaint.setShader(null);
+ 
+         if (strokeColor != 0) {
+@@ -162,10 +165,11 @@ public class ImageUtils {
+             stroke.setStyle(Paint.Style.STROKE);
+             final float strokeWidth = 6f;
+             stroke.setStrokeWidth(strokeWidth);
+-            canvas.drawCircle(dest.centerX(),
+-                    dest.centerX(),
+-                    dest.width() / 2f - stroke.getStrokeWidth() / 2f,
+-                    stroke);
++            final float inset = stroke.getStrokeWidth() / 2f;
++            final RectF strokeRect = new RectF(dest.left + inset, dest.top + inset,
++                    dest.right - inset, dest.bottom - inset);
++            canvas.drawPath(N9Squircle.path(strokeRect.left, strokeRect.top, strokeRect.right,
++                    strokeRect.bottom), stroke);
+         }
+     }
+ 
+diff --git a/src/com/android/messaging/util/Typefaces.java b/src/com/android/messaging/util/Typefaces.java
+index eb8562c..0f902bf 100644
+--- a/src/com/android/messaging/util/Typefaces.java
++++ b/src/com/android/messaging/util/Typefaces.java
+@@ -30,7 +30,7 @@ public class Typefaces {
+     public static Typeface getRobotoBold() {
+         Assert.isMainThread();
+         if (sRobotoBold == null) {
+-            sRobotoBold = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
++            sRobotoBold = Typeface.create("etesian-text", Typeface.BOLD);
+         }
+         return sRobotoBold;
+     }
+@@ -38,7 +38,7 @@ public class Typefaces {
+     public static Typeface getRobotoNormal() {
+         Assert.isMainThread();
+         if (sRobotoNormal == null) {
+-            sRobotoNormal = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
++            sRobotoNormal = Typeface.create("etesian-text", Typeface.NORMAL);
+         }
+         return sRobotoNormal;
+     }
+diff --git a/res/drawable-nodpi/n9_stripes_tile.png b/res/drawable-nodpi/n9_stripes_tile.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..23eb45356aa02c4b21ba22b09f3c43ccbd35ed8d
+GIT binary patch
+literal 147
+zcmeAS@N?(olHy`uVBq!ia0vp^0wB!61SBU+%rFB|QJyZ2Ar*6`o;Tz>pupoCI9+gE
+z<CWj?eP?t$G8H8z|E!Iy%&PrpxtXo%rPuQqn}99)9aSv5*e0wqS+>0Y)|!n8S927v
+v+)h~jxZ#DugDSqhU*a0Km;?JAt}|GzIbu-2z4F>Spe+oZu6{1-oD!M<aBnu4
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable/ic_n9_search.xml b/res/drawable/ic_n9_search.xml
+new file mode 100644
+index 0000000..955a3c2
+--- /dev/null
++++ b/res/drawable/ic_n9_search.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style magnifier for the search pill. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="22dp"
++    android:height="22dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF8C8C8C"
++        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_add.xml b/res/drawable/ic_n9_toolbar_add.xml
+new file mode 100644
+index 0000000..fa18f81
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_add.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: new message (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M4,4h16v12H7.2L4,19.2V4zM11,6.5v2.75H8.25v1.5H11v2.75h1.5v-2.75h2.75v-1.5H12.5V6.5H11z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_attach.xml b/res/drawable/ic_n9_toolbar_attach.xml
+new file mode 100644
+index 0000000..072a898
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_attach.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: attach (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_call.xml b/res/drawable/ic_n9_toolbar_call.xml
+new file mode 100644
+index 0000000..b2b24ff
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_call.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: call (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_menu.xml b/res/drawable/ic_n9_toolbar_menu.xml
+new file mode 100644
+index 0000000..2a8613c
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_menu.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: view menu (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M4,7h16v2H4zM4,11h16v2H4zM4,15h16v2H4z" />
++</vector>
+diff --git a/res/drawable/n9_action_bar_background.xml b/res/drawable/n9_action_bar_background.xml
+new file mode 100644
+index 0000000..79ed566
+--- /dev/null
++++ b/res/drawable/n9_action_bar_background.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 page header: flat page colour with an engraved rule under the title. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item>
++        <color android:color="@color/action_bar_background_color" />
++    </item>
++    <item
++        android:gravity="bottom|fill_horizontal"
++        android:height="2dp"
++        android:left="16dp"
++        android:right="16dp"
++        android:drawable="@drawable/n9_list_rule" />
++</layer-list>
+diff --git a/res/drawable/n9_attach_squircle.xml b/res/drawable/n9_attach_squircle.xml
+new file mode 100644
+index 0000000..d0c7380
+--- /dev/null
++++ b/res/drawable/n9_attach_squircle.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Attach button in the IME strip: grey n=2.8 squircle with a paperclip. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FFE4E4E8"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <group android:translateX="4" android:translateY="4" android:scaleX="0.58" android:scaleY="0.58">
++        <path android:fillColor="#FF6E6E73"
++            android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
++    </group>
++</vector>
+diff --git a/res/drawable/n9_bubble_incoming.xml b/res/drawable/n9_bubble_incoming.xml
+new file mode 100644
+index 0000000..0ad9d53
+--- /dev/null
++++ b/res/drawable/n9_bubble_incoming.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style received bubble (a guess): light gradient, square top-left corner with a tail out to the left. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
++            <corners android:topLeftRadius="0dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="top|left" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_light_top" android:pathData="M0,0H8V8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_bubble_outgoing.xml b/res/drawable/n9_bubble_outgoing.xml
+new file mode 100644
+index 0000000..d526dc2
+--- /dev/null
++++ b/res/drawable/n9_bubble_outgoing.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style sent bubble: cyan gradient, square top-right corner with a tail out to the right. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:right="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:endColor="@color/n9_bubble_out_bottom" />
++            <corners android:topLeftRadius="10dp" android:topRightRadius="0dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="top|right" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_out_top" android:pathData="M0,0H8L0,8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_cancel_button.xml b/res/drawable/n9_cancel_button.xml
+new file mode 100644
+index 0000000..8dee048
+--- /dev/null
++++ b/res/drawable/n9_cancel_button.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 lit sheet button (Cancel): white to light grey, grey rim. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <shape><corners android:radius="8dp" /><stroke android:width="1dp" android:color="#FFB5B4B8" />
++            <gradient android:angle="270" android:startColor="#FFD5D5D8" android:endColor="#FFC4C4C8" /></shape>
++    </item>
++    <item>
++        <shape><corners android:radius="8dp" /><stroke android:width="1dp" android:color="#FFB5B4B8" />
++            <gradient android:angle="270" android:startColor="#FFFFFFFF" android:centerColor="#FFECECEE" android:endColor="#FFDDDDE0" /></shape>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_compose_strip.xml b/res/drawable/n9_compose_strip.xml
+new file mode 100644
+index 0000000..4e6f60c
+--- /dev/null
++++ b/res/drawable/n9_compose_strip.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 composer: white strip with a light rule on top. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item><shape><solid android:color="#FFD0D3D6" /></shape></item>
++    <item android:top="1dp"><shape><solid android:color="#FFFFFFFF" /></shape></item>
++</layer-list>
+diff --git a/res/drawable/n9_conversation_background.xml b/res/drawable/n9_conversation_background.xml
+new file mode 100644
+index 0000000..aeaf58d
+--- /dev/null
++++ b/res/drawable/n9_conversation_background.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 conversation: blue-grey at the top fading to light grey. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <gradient android:angle="270" android:startColor="#FF93A9BE" android:centerColor="#FFE8EBEE" android:centerY="0.7" android:endColor="#FFE8EBEE" />
++</shape>
+diff --git a/res/drawable/n9_dark_button.xml b/res/drawable/n9_dark_button.xml
+new file mode 100644
+index 0000000..ff169e5
+--- /dev/null
++++ b/res/drawable/n9_dark_button.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 dark lit button (empty state actions). -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <shape><corners android:radius="10dp" /><stroke android:width="1dp" android:color="#FF4A4A4E" />
++            <gradient android:angle="270" android:startColor="#FF1C1C1E" android:endColor="#FF2E2E31" /></shape>
++    </item>
++    <item>
++        <shape><corners android:radius="10dp" /><stroke android:width="1dp" android:color="#FF4A4A4E" />
++            <gradient android:angle="270" android:startColor="#FF3A3A3D" android:centerColor="#FF242426" android:endColor="#FF141416" /></shape>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_emoticon.xml b/res/drawable/n9_emoticon.xml
+new file mode 100644
+index 0000000..7cf5743
+--- /dev/null
++++ b/res/drawable/n9_emoticon.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Emoticon button: grey n=2.8 squircle with a smiley. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FFE4E4E8"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <path android:fillColor="#FF6E6E73"
++        android:pathData="M11,4.5a6.5,6.5 0,1 0,0.01 0zM11,5.8a5.2,5.2 0,1 1,-0.01 0z" />
++    <path android:fillColor="#FF6E6E73"
++        android:pathData="M8.6,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M13.4,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M7.9,12.2h1.2a2,2 0,0 0,3.8 0h1.2a3.2,3.2 0,0 1,-6.2 0z" />
++</vector>
+diff --git a/res/drawable/n9_list_rule.xml b/res/drawable/n9_list_rule.xml
+new file mode 100644
+index 0000000..91498fc
+--- /dev/null
++++ b/res/drawable/n9_list_rule.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 "engraved" rule: a dark line over a light one. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:bottom="1dp">
++        <color android:color="@color/n9_separator" />
++    </item>
++    <item android:top="1dp">
++        <color android:color="@color/n9_separator_highlight" />
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_search_pill.xml b/res/drawable/n9_search_pill.xml
+new file mode 100644
+index 0000000..91b1ca2
+--- /dev/null
++++ b/res/drawable/n9_search_pill.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style light grey rounded search field. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:startColor="#E6E6E6"
++        android:endColor="#D0D0D0" />
++    <stroke
++        android:width="1dp"
++        android:color="#BDBDBD" />
++    <corners android:radius="22dp" />
++</shape>
+diff --git a/res/drawable/n9_service_sms.xml b/res/drawable/n9_service_sms.xml
+new file mode 100644
+index 0000000..d2f279e
+--- /dev/null
++++ b/res/drawable/n9_service_sms.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- SMS service icon: green n=2.8 squircle with a white speech bubble. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="22dp" android:height="22dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FF62B700"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M5.5,6.5h11v7h-6.5l-3,2.5v-2.5h-1.5z" />
++</vector>
+diff --git a/res/drawable/n9_sheet_header.xml b/res/drawable/n9_sheet_header.xml
+new file mode 100644
+index 0000000..ab59bdd
+--- /dev/null
++++ b/res/drawable/n9_sheet_header.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 sheet header: light grey gradient with a rule at the bottom. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item><shape><solid android:color="#FFC8C6CA" /></shape></item>
++    <item android:bottom="1dp"><shape><gradient android:angle="270" android:startColor="#FFEEEDEF" android:endColor="#FFE2E0E4" /></shape></item>
++</layer-list>
+diff --git a/res/drawable/n9_stripes.xml b/res/drawable/n9_stripes.xml
+new file mode 100644
+index 0000000..6b09d0c
+--- /dev/null
++++ b/res/drawable/n9_stripes.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 empty state background: charcoal with faint diagonal stripes. -->
++<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
++    android:src="@drawable/n9_stripes_tile" android:tileMode="repeat" />
+diff --git a/res/drawable/n9_unread_badge.xml b/res/drawable/n9_unread_badge.xml
+new file mode 100644
+index 0000000..9d9d67e
+--- /dev/null
++++ b/res/drawable/n9_unread_badge.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style green rounded unread badge. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:startColor="@color/n9_green_top"
++        android:endColor="@color/n9_green_bottom" />
++    <stroke
++        android:width="2dp"
++        android:color="#FFFFFF" />
++    <corners android:radius="5dp" />
++</shape>
+diff --git a/res/layout/conversation_list_search_pill.xml b/res/layout/conversation_list_search_pill.xml
+new file mode 100644
+index 0000000..5de5b54
+--- /dev/null
++++ b/res/layout/conversation_list_search_pill.xml
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: pull-down "Search" pill at the top of the conversation list. -->
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:paddingStart="16dp"
++    android:paddingEnd="16dp"
++    android:paddingTop="8dp"
++    android:paddingBottom="8dp">
++
++    <EditText
++        android:id="@+id/conversation_list_search_field"
++        android:layout_width="match_parent"
++        android:layout_height="44dp"
++        android:background="@drawable/n9_search_pill"
++        android:drawableEnd="@drawable/ic_n9_search"
++        android:paddingStart="18dp"
++        android:paddingEnd="14dp"
++        android:hint="@string/n9_search_hint"
++        android:textColorHint="@color/n9_search_hint"
++        android:textColor="#191919"
++        android:textSize="16sp"
++        android:singleLine="true"
++        android:inputType="text"
++        android:imeOptions="actionSearch|flagNoExtractUi"
++        android:importantForAutofill="no" />
++</FrameLayout>
+diff --git a/res/layout/n9_conversation_list_empty.xml b/res/layout/n9_conversation_list_empty.xml
+new file mode 100644
+index 0000000..eadb4c9
+--- /dev/null
++++ b/res/layout/n9_conversation_list_empty.xml
+@@ -0,0 +1,63 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 first run (n9-messaging-empty.png): striped charcoal, a huge light grey sentence, stacked dark buttons. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/n9_empty"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@drawable/n9_stripes"
++    android:clickable="true"
++    android:orientation="vertical"
++    android:visibility="gone">
++    <TextView
++        android:id="@+id/n9_empty_text"
++        android:layout_width="match_parent"
++        android:layout_height="0dp"
++        android:layout_weight="1"
++        android:fontFamily="etesian-text"
++        android:textFontWeight="200"
++        android:gravity="center"
++        android:lineSpacingMultiplier="0.95"
++        android:paddingStart="6dp"
++        android:paddingEnd="6dp"
++        android:text="@string/n9_empty_text"
++        android:textColor="#FF8E8E92"
++        android:textSize="44sp" />
++    <TextView
++        android:id="@+id/n9_send_text"
++        android:clickable="true"
++        android:focusable="true"
++        android:gravity="center"
++        android:letterSpacing="0"
++        android:layout_width="match_parent"
++        android:layout_height="50dp"
++        android:layout_marginStart="54dp"
++        android:layout_marginEnd="54dp"
++        android:background="@drawable/n9_dark_button"
++        android:text="@string/n9_send_a_text"
++        android:textAllCaps="false"
++        android:textColor="#FFFFFFFF"
++        android:textSize="18sp"
++        android:textStyle="bold" />
++    <TextView
++        android:id="@+id/n9_add_account"
++        android:clickable="true"
++        android:focusable="true"
++        android:gravity="center"
++        android:letterSpacing="0"
++        android:layout_width="match_parent"
++        android:layout_height="50dp"
++        android:layout_marginStart="54dp"
++        android:layout_marginEnd="54dp"
++        android:layout_marginTop="14dp"
++        android:layout_marginBottom="80dp"
++        android:background="@drawable/n9_dark_button"
++        android:text="@string/n9_add_chat_account"
++        android:textAllCaps="false"
++        android:textColor="#FFFFFFFF"
++        android:textSize="18sp"
++        android:textStyle="bold" />
++</LinearLayout>
+diff --git a/res/values/n9_strings.xml b/res/values/n9_strings.xml
+new file mode 100644
+index 0000000..bdf0e0b
+--- /dev/null
++++ b/res/values/n9_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<resources>
++    <!-- N9 look: title of the conversation list page. -->
++    <string name="n9_messages_title">Messages</string>
++    <!-- Etesian toolbar: opens the screen's menu. -->
++    <string name="n9_toolbar_menu">Menu</string>
++    <!-- N9 look: hint of the pull-down search field on the conversation list. -->
++    <string name="n9_search_hint">Search</string>
++</resources>
+diff --git a/src/com/android/messaging/ui/EtesianUi.java b/src/com/android/messaging/ui/EtesianUi.java
+new file mode 100644
+index 0000000..50e7e81
+--- /dev/null
++++ b/src/com/android/messaging/ui/EtesianUi.java
+@@ -0,0 +1,60 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.messaging.ui;
++
++import android.app.Activity;
++import android.view.Gravity;
++import android.view.Menu;
++import android.view.View;
++import android.widget.PopupMenu;
++
++import com.android.messaging.R;
++
++import com.bompotis.etesian.toolbar.EtesianMenu;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
++/**
++ * Helpers for the N9 (Etesian) look: the system toolbar and the view menu that drops down
++ * from the top of the page, in place of the action bar overflow.
++ */
++public final class EtesianUi {
++
++    /** Toolbar item ids. */
++    public static final String ITEM_NEW = "new";
++    public static final String ITEM_CALL = "call";
++    public static final String ITEM_ATTACH = "attach";
++    public static final String ITEM_MENU = "menu";
++
++    /** Hides or shows items of a menu before it is shown. */
++    public interface MenuPreparer {
++        void prepare(Menu menu);
++    }
++
++    private EtesianUi() {
++    }
++
++    /** Whether the system toolbar replaces the FAB and the action bar overflow. */
++    public static boolean isToolbarAvailable(final Activity activity) {
++        return activity != null && EtesianToolbar.isAvailable(activity);
++    }
++
++    /** The "menu" toolbar item. */
++    public static EtesianToolbar.Item menuItem(final Activity activity) {
++        return EtesianToolbar.Item.action(ITEM_MENU, R.drawable.ic_n9_toolbar_menu,
++                activity.getString(R.string.n9_toolbar_menu));
++    }
++
++    /**
++     * Shows [menuRes] as the N9 toolbar menu: a card rising from the bottom over the toolbar.
++     * Taps go to [listener].
++     */
++    public static void showMenu(final Activity activity, final int menuRes,
++            final MenuPreparer preparer, final PopupMenu.OnMenuItemClickListener listener) {
++        EtesianMenu.show(activity, menuRes,
++                preparer == null ? null : preparer::prepare,
++                listener == null ? null : listener::onMenuItemClick);
++    }
++}
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListSearchAdapter.java b/src/com/android/messaging/ui/conversationlist/ConversationListSearchAdapter.java
+new file mode 100644
+index 0000000..8899514
+--- /dev/null
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListSearchAdapter.java
+@@ -0,0 +1,94 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.messaging.ui.conversationlist;
++
++import android.text.Editable;
++import android.text.TextWatcher;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.EditText;
++
++import androidx.annotation.NonNull;
++import androidx.recyclerview.widget.RecyclerView;
++
++import com.android.messaging.R;
++
++/**
++ * N9 look: the "Search" pill shown as the first row of the conversation list, just above the
++ * top so it is revealed by pulling the list down.
++ */
++class ConversationListSearchAdapter
++        extends RecyclerView.Adapter<ConversationListSearchAdapter.SearchViewHolder> {
++
++    /** Receives the search text as it is typed. */
++    interface Listener {
++        void onSearchTextChanged(String text);
++    }
++
++    private final Listener mListener;
++    private String mText = "";
++
++    ConversationListSearchAdapter(final Listener listener) {
++        mListener = listener;
++        setHasStableIds(true);
++    }
++
++    @Override
++    public int getItemCount() {
++        return 1;
++    }
++
++    @Override
++    public long getItemId(final int position) {
++        return 0;
++    }
++
++    @NonNull
++    @Override
++    public SearchViewHolder onCreateViewHolder(@NonNull final ViewGroup parent,
++            final int viewType) {
++        final View view = LayoutInflater.from(parent.getContext())
++                .inflate(R.layout.conversation_list_search_pill, parent, false);
++        return new SearchViewHolder(view);
++    }
++
++    @Override
++    public void onBindViewHolder(@NonNull final SearchViewHolder holder, final int position) {
++        if (!mText.equals(holder.mField.getText().toString())) {
++            holder.mField.setText(mText);
++        }
++    }
++
++    class SearchViewHolder extends RecyclerView.ViewHolder {
++        final EditText mField;
++
++        SearchViewHolder(final View itemView) {
++            super(itemView);
++            mField = itemView.findViewById(R.id.conversation_list_search_field);
++            mField.addTextChangedListener(new TextWatcher() {
++                @Override
++                public void beforeTextChanged(final CharSequence s, final int start,
++                        final int count, final int after) {
++                }
++
++                @Override
++                public void onTextChanged(final CharSequence s, final int start,
++                        final int before, final int count) {
++                }
++
++                @Override
++                public void afterTextChanged(final Editable s) {
++                    final String text = s.toString();
++                    if (!text.equals(mText)) {
++                        mText = text;
++                        mListener.onSearchTextChanged(text);
++                    }
++                }
++            });
++        }
++    }
++}
+diff --git a/src/com/android/messaging/ui/conversationlist/FilteredConversationCursor.java b/src/com/android/messaging/ui/conversationlist/FilteredConversationCursor.java
+new file mode 100644
+index 0000000..35e41a1
+--- /dev/null
++++ b/src/com/android/messaging/ui/conversationlist/FilteredConversationCursor.java
+@@ -0,0 +1,114 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.messaging.ui.conversationlist;
++
++import android.database.Cursor;
++import android.database.CursorWrapper;
++
++import com.android.messaging.datamodel.data.ConversationListItemData;
++
++import java.util.Locale;
++
++/**
++ * N9 look: the conversation list cursor narrowed to the rows whose name or snippet contains the
++ * search text typed in the pull-down search pill.
++ */
++class FilteredConversationCursor extends CursorWrapper {
++    private final int[] mRows;
++    private int mPosition = -1;
++
++    FilteredConversationCursor(final Cursor cursor, final String query) {
++        super(cursor);
++        final String needle = query.toLowerCase(Locale.getDefault());
++        final int[] rows = new int[cursor.getCount()];
++        int count = 0;
++        final ConversationListItemData data = new ConversationListItemData();
++        for (int i = 0; i < rows.length; i++) {
++            if (!cursor.moveToPosition(i)) {
++                break;
++            }
++            data.bind(cursor);
++            if (contains(data.getName(), needle) || contains(data.getSnippetText(), needle)) {
++                rows[count++] = i;
++            }
++        }
++        mRows = new int[count];
++        System.arraycopy(rows, 0, mRows, 0, count);
++    }
++
++    private static boolean contains(final String text, final String needle) {
++        return text != null && text.toLowerCase(Locale.getDefault()).contains(needle);
++    }
++
++    @Override
++    public int getCount() {
++        return mRows.length;
++    }
++
++    @Override
++    public int getPosition() {
++        return mPosition;
++    }
++
++    @Override
++    public boolean moveToPosition(final int position) {
++        if (position < 0) {
++            mPosition = -1;
++            return false;
++        }
++        if (position >= mRows.length) {
++            mPosition = mRows.length;
++            return false;
++        }
++        mPosition = position;
++        return super.moveToPosition(mRows[position]);
++    }
++
++    @Override
++    public boolean move(final int offset) {
++        return moveToPosition(mPosition + offset);
++    }
++
++    @Override
++    public boolean moveToFirst() {
++        return moveToPosition(0);
++    }
++
++    @Override
++    public boolean moveToLast() {
++        return moveToPosition(mRows.length - 1);
++    }
++
++    @Override
++    public boolean moveToNext() {
++        return moveToPosition(mPosition + 1);
++    }
++
++    @Override
++    public boolean moveToPrevious() {
++        return moveToPosition(mPosition - 1);
++    }
++
++    @Override
++    public boolean isFirst() {
++        return mRows.length > 0 && mPosition == 0;
++    }
++
++    @Override
++    public boolean isLast() {
++        return mRows.length > 0 && mPosition == mRows.length - 1;
++    }
++
++    @Override
++    public boolean isBeforeFirst() {
++        return mRows.length == 0 || mPosition == -1;
++    }
++
++    @Override
++    public boolean isAfterLast() {
++        return mRows.length == 0 || mPosition == mRows.length;
++    }
++}
+diff --git a/src/com/android/messaging/util/N9Squircle.java b/src/com/android/messaging/util/N9Squircle.java
+new file mode 100644
+index 0000000..09efaea
+--- /dev/null
++++ b/src/com/android/messaging/util/N9Squircle.java
+@@ -0,0 +1,185 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.messaging.util;
++
++import android.graphics.Bitmap;
++import android.graphics.BitmapShader;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.Matrix;
++import android.graphics.Outline;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.Shader;
++import android.graphics.drawable.Drawable;
++import android.view.View;
++import android.view.ViewOutlineProvider;
++
++/**
++ * N9 look: every thumb-sized image (avatars, icons, thumbnails) is a Etesian squircle, never a
++ * circle or a rounded rectangle. Shape is the AOSP squircle on a 100x100 box.
++ */
++public final class N9Squircle {
++    // "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++    private static final Path UNIT = new Path();
++    static {
++        // Superellipse |x|^n + |y|^n = 1 with n = 2.8: the N9 icon shape, measured from the
++        // N9's own icons. (n = 4 or more reads as a rounded square.)
++        final double n = 2.8;
++        final int steps = 96;
++        for (int i = 0; i < steps; i++) {
++            final double t = 2 * Math.PI * i / steps;
++            final double c = Math.cos(t), s = Math.sin(t);
++            final float x = (float) (50 + 50 * Math.signum(c) * Math.pow(Math.abs(c), 2 / n));
++            final float y = (float) (50 + 50 * Math.signum(s) * Math.pow(Math.abs(s), 2 / n));
++            if (i == 0) UNIT.moveTo(x, y); else UNIT.lineTo(x, y);
++        }
++        UNIT.close();
++    }
++
++    private N9Squircle() {}
++
++    /** Writes the squircle filling the given box into {@code out}. */
++    public static Path path(float left, float top, float right, float bottom, Path out) {
++        final Matrix m = new Matrix();
++        m.setScale((right - left) / 100f, (bottom - top) / 100f);
++        m.postTranslate(left, top);
++        out.reset();
++        UNIT.transform(m, out);
++        return out;
++    }
++
++    /** The squircle filling the given box. */
++    public static Path path(float left, float top, float right, float bottom) {
++        return path(left, top, right, bottom, new Path());
++    }
++
++    /** The largest squircle centred in {@code bounds}. */
++    public static Path centered(Rect bounds) {
++        final float half = Math.min(bounds.width(), bounds.height()) / 2f;
++        return path(bounds.exactCenterX() - half, bounds.exactCenterY() - half,
++                bounds.exactCenterX() + half, bounds.exactCenterY() + half);
++    }
++
++    /** Draws a squircle centred in {@code bounds} with {@code paint}. */
++    public static void draw(Canvas canvas, Rect bounds, Paint paint) {
++        canvas.drawPath(centered(bounds), paint);
++    }
++
++    /** Outline provider that clips a view to a squircle filling its bounds. */
++    public static final ViewOutlineProvider OUTLINE = new ViewOutlineProvider() {
++        @Override
++        public void getOutline(View view, Outline outline) {
++            final int w = view.getWidth(), h = view.getHeight();
++            if (w <= 0 || h <= 0) {
++                return;
++            }
++            outline.setPath(path(0, 0, w, h));
++        }
++    };
++
++    /** Clips {@code view} (and its content) to a squircle. */
++    public static void clip(View view) {
++        view.setOutlineProvider(OUTLINE);
++        view.setClipToOutline(true);
++    }
++
++    /** Returns {@code src} center-cropped to a {@code w}x{@code h} squircle bitmap. */
++    public static Bitmap bitmap(Bitmap src, int w, int h) {
++        if (src == null) {
++            return null;
++        }
++        final Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
++        final Drawable d = new BitmapDrawable(src);
++        d.setBounds(0, 0, w, h);
++        d.draw(new Canvas(out));
++        return out;
++    }
++
++    /** A bitmap drawable, center-cropped and clipped to a squircle (replaces circular ones). */
++    public static final class BitmapDrawable extends Drawable {
++        private final Bitmap mBitmap;
++        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
++        private final Matrix mMatrix = new Matrix();
++        private Path mPath = new Path();
++
++        public BitmapDrawable(Bitmap bitmap) {
++            mBitmap = bitmap;
++            mPaint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP,
++                    Shader.TileMode.CLAMP));
++        }
++
++        public Bitmap getBitmap() {
++            return mBitmap;
++        }
++
++        @Override
++        protected void onBoundsChange(Rect bounds) {
++            mPath = centered(bounds);
++            final float side = Math.min(bounds.width(), bounds.height());
++            final float scale = side / Math.min(mBitmap.getWidth(), mBitmap.getHeight());
++            mMatrix.setScale(scale, scale);
++            mMatrix.postTranslate(bounds.exactCenterX() - mBitmap.getWidth() * scale / 2f,
++                    bounds.exactCenterY() - mBitmap.getHeight() * scale / 2f);
++            mPaint.getShader().setLocalMatrix(mMatrix);
++        }
++
++        @Override
++        public void draw(Canvas canvas) {
++            canvas.drawPath(mPath, mPaint);
++        }
++
++        @Override
++        public void getOutline(Outline outline) {
++            outline.setPath(mPath);
++        }
++
++        @Override
++        public int getIntrinsicWidth() {
++            return mBitmap.getWidth();
++        }
++
++        @Override
++        public int getIntrinsicHeight() {
++            return mBitmap.getHeight();
++        }
++
++        @Override
++        public void setAlpha(int alpha) {
++            mPaint.setAlpha(alpha);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getAlpha() {
++            return mPaint.getAlpha();
++        }
++
++        @Override
++        public void setColorFilter(ColorFilter cf) {
++            mPaint.setColorFilter(cf);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getOpacity() {
++            return PixelFormat.TRANSLUCENT;
++        }
++    }
++}

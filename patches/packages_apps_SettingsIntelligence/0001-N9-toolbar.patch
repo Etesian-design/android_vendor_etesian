@@ -1,0 +1,125 @@
+diff --git a/Android.bp b/Android.bp
+index c60fe5c..fba1256 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -34,6 +34,8 @@ android_library {
+         "androidx.recyclerview_recyclerview",
+         "androidx.legacy_legacy-preference-v14",
+         "com.google.android.material_material",
++        // Etesian (N9): the dark system toolbar, as on the Settings pages.
++        "etesian-toolbar",
+         "SettingsLibActivityEmbedding",
+         "dynamiccolors",
+     ],
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 1bd33d1..de27a68 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -27,5 +27,9 @@
+         <item name="android:windowActionBar">false</item>
+         <item name="android:windowNoTitle">true</item>
+         <item name="android:windowSoftInputMode">adjustPan</item>
++        <!-- N9 (Etesian): search drops in over the Settings page it searches, not a new screen. -->
++        <item name="android:windowIsTranslucent">true</item>
++        <item name="android:windowBackground">@android:color/transparent</item>
++        <item name="android:windowAnimationStyle">@null</item>
+     </style>
+ </resources>
+\ No newline at end of file
+diff --git a/src/com/android/settings/intelligence/search/SearchActivity.java b/src/com/android/settings/intelligence/search/SearchActivity.java
+index 5dec0e9..4ac1c16 100644
+--- a/src/com/android/settings/intelligence/search/SearchActivity.java
++++ b/src/com/android/settings/intelligence/search/SearchActivity.java
+@@ -31,6 +31,10 @@ import androidx.fragment.app.FragmentManager;
+ 
+ import com.android.settings.intelligence.R;
+ 
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
++import java.util.ArrayList;
++
+ public class SearchActivity extends FragmentActivity {
+ 
+     @Override
+@@ -38,6 +42,9 @@ public class SearchActivity extends FragmentActivity {
+         super.onCreate(savedInstanceState);
+ 
+         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
++        // N9 (Etesian): no screen change; the field appears over the page, and leaves the same way.
++        overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0);
++        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0);
+         setContentView(R.layout.search_main);
+ 
+         final View root = findViewById(R.id.main_content);
+@@ -63,4 +70,18 @@ public class SearchActivity extends FragmentActivity {
+         finish();
+         return true;
+     }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // N9 (Etesian): search sits over the page as a field only (it has its own back arrow),
++        // so no toolbar comes up under it.
++        if (EtesianToolbar.isAvailable(this)) {
++            EtesianToolbar.of(this)
++                    .setBack(false)
++                    .setStyle(EtesianToolbar.STYLE_DARK)
++                    .setHidden(true)
++                    .setItems(new ArrayList<>(), id -> {});
++        }
++    }
+ }
+diff --git a/src/com/android/settings/intelligence/search/SearchFragment.java b/src/com/android/settings/intelligence/search/SearchFragment.java
+index 085c64f..c9c0c23 100644
+--- a/src/com/android/settings/intelligence/search/SearchFragment.java
++++ b/src/com/android/settings/intelligence/search/SearchFragment.java
+@@ -22,6 +22,7 @@ import static com.android.settings.intelligence.nano.SettingsIntelligenceLogProt
+ 
+ import android.app.Activity;
+ import android.content.Context;
++import android.graphics.Color;
+ import android.os.Bundle;
+ import androidx.annotation.VisibleForTesting;
+ import androidx.core.graphics.Insets;
+@@ -88,6 +89,15 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
+ 
+     @VisibleForTesting
+     RecyclerView mResultsRecyclerView;
++    private View mResultsLayout;
++
++    /** N9: results cover the Settings page only while there is a query. */
++    private void showResults(boolean show) {
++        if (mResultsLayout == null) return;
++        mResultsLayout.setBackgroundColor(show ? Color.BLACK : Color.TRANSPARENT);
++        mResultsRecyclerView.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
++        if (!show) mNoResultsView.setVisibility(View.GONE);
++    }
+     @VisibleForTesting
+     SearchView mSearchView;
+     @VisibleForTesting
+@@ -162,6 +172,16 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
+ 
+         mNoResultsView = view.findViewById(R.id.no_results_layout);
+ 
++        // N9 (Etesian): only the search field is solid until something is typed; the Settings
++        // options stay visible under it, and tapping them closes search.
++        view.setBackground(null);
++        view.findViewById(R.id.search_bar_container).setBackgroundColor(Color.BLACK);
++        mResultsLayout = view.findViewById(R.id.layout_results);
++        mResultsLayout.setOnClickListener(v -> {
++            if (TextUtils.isEmpty(mQuery)) activity.finish();
++        });
++        showResults(!TextUtils.isEmpty(mQuery));
++
+         final Toolbar toolbar = view.findViewById(R.id.search_toolbar);
+         activity.setActionBar(toolbar);
+         activity.getActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back);
+@@ -235,6 +255,7 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
+             return true;
+         }
+ 
++        showResults(!isEmptyQuery);
+         if (isEmptyQuery) {
+             final LoaderManager loaderManager = getLoaderManager();
+             loaderManager.destroyLoader(SearchCommon.SearchLoaderId.SEARCH_RESULT);

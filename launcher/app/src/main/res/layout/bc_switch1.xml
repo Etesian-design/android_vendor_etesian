@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle 1×1 switch (belle-ref7/9): brushed squircle; a glyph or embossed text ("VPN", "3G"). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:id="@+id/bc_face" android:layout_width="76dp" android:layout_height="80dp" android:layout_gravity="center"
+        android:background="@drawable/bc_sw_off">
+        <ImageView android:id="@+id/bc_glyph" android:layout_width="34dp" android:layout_height="34dp" android:layout_gravity="center"
+            android:layout_marginBottom="3dp"/>
+        <TextView android:id="@+id/bc_word" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center"
+            android:layout_marginBottom="3dp" android:shadowColor="#FFE6E7EA" android:shadowDy="1.5" android:shadowRadius="0.5"
+            android:textColor="#FF6E7075" android:textSize="24sp" android:textStyle="bold" android:fontFamily="etesian-text" android:visibility="gone"/>
+    </FrameLayout>
+</FrameLayout>

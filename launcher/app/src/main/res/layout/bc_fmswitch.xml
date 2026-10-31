@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle FM Radio switch (the email/calendar reference): a dark pill, the power squircle and the
+     frequency ("88.40 MHz") in grey, white while playing. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:layout_gravity="center" android:background="@drawable/bc_pill" android:gravity="center_vertical"
+    android:orientation="horizontal" android:padding="5dp">
+    <FrameLayout android:id="@+id/bc_power" android:layout_width="56dp" android:layout_height="56dp" android:background="@drawable/bc_power_off">
+        <ImageView android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:src="@drawable/bc_glyph_power"/>
+    </FrameLayout>
+    <TextView android:id="@+id/bc_freq" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="#FF8E8F94" android:textSize="17sp"
+        android:fontFamily="etesian-text"/>
+</LinearLayout>

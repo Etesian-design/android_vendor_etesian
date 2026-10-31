@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Toolbar icon: drawn monochrome in the bar's colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M10.6,3h2.8v8.8h3.4L12,17l-4.8,-5.2h3.4zM4,18.6h16V21H4z"/>
+</vector>

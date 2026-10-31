@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The small metal pin each side of the hinge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"><corners android:radius="2dp"/>
+    <gradient android:angle="0" android:startColor="#FF5A5B60" android:centerColor="#FFC8C9CE" android:endColor="#FF5A5B60"/></shape>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The N9's touch and keyboard sounds (from the user's own N9) for Android's sound effects. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bompotis.etesian.overlay.sounds">
+    <overlay
+        android:targetPackage="android"
+        android:isStatic="true"
+        android:priority="10" />
+    <application android:hasCode="false" />
+</manifest>

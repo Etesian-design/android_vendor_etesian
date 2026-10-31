@@ -1,0 +1,2243 @@
+diff --git a/Android.bp b/Android.bp
+index b0a2a11d0..3fa29bf85 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -105,7 +105,8 @@ java_defaults {
+     },
+ 
+     sdk_version: "system_current",
+-    min_sdk_version: "30",
++    // N9 (Etesian): the Etesian libraries need API 34.
++    min_sdk_version: "34",
+ }
+ 
+ platform_compat_config {
+@@ -137,7 +138,13 @@ genrule {
+ android_library {
+     name: "DocumentsUI-lib",
+     defaults: ["documentsui_defaults"],
+-    static_libs: ["docsui-flags-aconfig-java-lib"],
++    static_libs: [
++        "docsui-flags-aconfig-java-lib",
++        // N9 (Etesian): system toolbar, background choice and letter fast scroller.
++        "etesian-toolbar",
++        "etesian-theme",
++        "etesian-fastscroll",
++    ],
+     flags_packages: ["docsui-flags-aconfig"],
+ 
+     manifest: "AndroidManifestLib.xml",
+@@ -161,7 +168,7 @@ android_library {
+ 
+     sdk_version: "system_current",
+     target_sdk_version: "33",
+-    min_sdk_version: "30",
++    min_sdk_version: "34",
+     lint: {
+         baseline_filename: "lint-baseline.xml",
+     },
+@@ -179,7 +186,7 @@ android_library {
+ 
+     sdk_version: "system_current",
+     target_sdk_version: "33",
+-    min_sdk_version: "30",
++    min_sdk_version: "34",
+ }
+ 
+ android_app {
+@@ -202,9 +209,7 @@ android_app {
+ 
+     required: ["privapp_whitelist_com.android.documentsui"],
+ 
+-    min_sdk_version: select(release_flag("RELEASE_DEPRECATE_MAINLINE_R_SUPPORT"), {
+-        true: "31",
+-        default: "30",
+-    }),
+-    updatable: true,
++    // N9 (Etesian): built into the ROM only (not a Mainline update), on API 34+ for the
++    // Etesian libraries.
++    min_sdk_version: "34",
+ }
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index b2d04ef31..afacaf0c4 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -20,7 +20,7 @@
+         xmlns:tools="http://schemas.android.com/tools"
+         package="com.android.documentsui">
+ 
+-    <uses-sdk android:minSdkVersion="30"/>
++    <uses-sdk android:minSdkVersion="34"/>
+ 
+     <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
+     <uses-permission android:name="android.permission.REMOVE_TASKS" />
+diff --git a/AndroidManifestLib.xml b/AndroidManifestLib.xml
+index b7e54192b..1fdbaf7ed 100644
+--- a/AndroidManifestLib.xml
++++ b/AndroidManifestLib.xml
+@@ -18,7 +18,7 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+         package="com.android.documentsui">
+ 
+-    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
++    <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="30" />
+ 
+     <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
+     <uses-permission android:name="android.permission.REMOVE_TASKS" />
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/color/item_root_primary_text_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/color/item_root_primary_text_m3.xml
+index f835f8347..1eec13ebc 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/color/item_root_primary_text_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/color/item_root_primary_text_m3.xml
+@@ -19,5 +19,6 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto">
+     <item app:state_error="true" android:color="?attr/colorOnErrorContainer" />
+     <item android:state_activated="true" android:color="?attr/colorOnSecondaryContainer" />
+-    <item android:color="?attr/colorOnSurfaceVariant" />
++    <!-- N9: dark root names -->
++    <item android:color="?attr/colorOnSurface" />
+ </selector>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_background_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_background_m3.xml
+index 2dd2470fc..6bcb8ff83 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_background_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_background_m3.xml
+@@ -36,7 +36,7 @@
+                         android:right="@dimen/focus_ring_gap"
+                         android:top="@dimen/focus_ring_gap">
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="?attr/colorPrimaryContainer" />
+                         </shape>
+                     </item>
+@@ -46,13 +46,13 @@
+                         android:right="@dimen/focus_ring_gap"
+                         android:top="@dimen/focus_ring_gap">
+                         <shape android:tint="?attr/colorOnPrimaryContainer">
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="@color/overlay_hover_color_percentage" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <stroke
+                                 android:width="@dimen/focus_ring_width"
+                                 android:color="?attr/colorSecondary" />
+@@ -64,13 +64,13 @@
+                 <layer-list>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="?attr/colorPrimaryContainer" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape android:tint="?attr/colorOnPrimaryContainer">
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="@color/overlay_hover_color_percentage" />
+                         </shape>
+                     </item>
+@@ -80,13 +80,13 @@
+                 <layer-list>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="?attr/colorPrimaryContainer" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape android:tint="?attr/colorOnPrimaryContainer">
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="@color/overlay_hover_color_percentage" />
+                         </shape>
+                     </item>
+@@ -103,13 +103,13 @@
+                         android:right="@dimen/focus_ring_gap"
+                         android:top="@dimen/focus_ring_gap">
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="?attr/colorPrimaryContainer" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <stroke
+                                 android:width="@dimen/focus_ring_width"
+                                 android:color="?attr/colorSecondary" />
+@@ -121,13 +121,13 @@
+                 <layer-list>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="?attr/colorPrimaryContainer" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape android:tint="?attr/colorOnPrimaryContainer">
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="@color/overlay_hover_color_percentage" />
+                         </shape>
+                     </item>
+@@ -135,7 +135,7 @@
+             </item>
+             <item android:state_selected="true">
+                 <shape>
+-                    <corners android:radius="@dimen/list_item_height_m3" />
++                    <corners android:radius="0dp" />
+                     <solid android:color="?attr/colorPrimaryContainer" />
+                 </shape>
+             </item>
+@@ -152,13 +152,13 @@
+                         android:right="@dimen/focus_ring_gap"
+                         android:top="@dimen/focus_ring_gap">
+                         <shape android:tint="?attr/colorOnSurface">
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <solid android:color="@color/overlay_hover_color_percentage" />
+                         </shape>
+                     </item>
+                     <item>
+                         <shape>
+-                            <corners android:radius="@dimen/list_item_height_m3" />
++                            <corners android:radius="0dp" />
+                             <stroke
+                                 android:width="@dimen/focus_ring_width"
+                                 android:color="?attr/colorSecondary" />
+@@ -168,19 +168,19 @@
+             </item>
+             <item android:state_drag_hovered="true">
+                 <shape android:tint="?attr/colorOnSurface">
+-                    <corners android:radius="@dimen/list_item_height_m3" />
++                    <corners android:radius="0dp" />
+                     <solid android:color="@color/overlay_hover_color_percentage" />
+                 </shape>
+             </item>
+             <item android:state_pressed="true">
+                 <shape android:tint="?attr/colorOnSurface">
+-                    <corners android:radius="@dimen/list_item_height_m3" />
++                    <corners android:radius="0dp" />
+                     <solid android:color="@color/overlay_hover_color_percentage" />
+                 </shape>
+             </item>
+             <item android:state_focused="true" android:state_window_focused="true">
+                 <shape>
+-                    <corners android:radius="@dimen/list_item_height_m3" />
++                    <corners android:radius="0dp" />
+                     <stroke
+                         android:width="@dimen/focus_ring_width"
+                         android:color="?attr/colorSecondary" />
+@@ -188,14 +188,19 @@
+             </item>
+             <item android:state_hovered="true">
+                 <shape android:tint="?attr/colorOnSurface">
+-                    <corners android:radius="@dimen/list_item_height_m3" />
++                    <corners android:radius="0dp" />
+                     <solid android:color="@color/overlay_hover_color_percentage" />
+                 </shape>
+             </item>
+ 
+             <!-- Default: use the container background. -->
+             <item>
+-                <color android:color="@android:color/transparent"/>
++                <!-- N9: flat full-width row with a 1dp separator at the bottom -->
++                <layer-list>
++                    <item android:gravity="bottom" android:height="1dp">
++                        <color android:color="@color/n9_separator"/>
++                    </item>
++                </layer-list>
+             </item>
+         </selector>
+     </item>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_mask.xml b/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_mask.xml
+index 59ded3e3d..17ffaf98e 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_mask.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/drawable/list_item_mask.xml
+@@ -15,7 +15,7 @@
+ -->
+ 
+ <shape xmlns:android="http://schemas.android.com/apk/res/android">
+-    <corners android:radius="@dimen/list_item_height_m3" />
++    <corners android:radius="0dp" />
+     <!-- The color here doesn't matter, it's just being used as a mask. -->
+     <solid android:color="@android:color/white" />
+ </shape>
+\ No newline at end of file
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/layout/directory_app_bar_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/layout/directory_app_bar_m3.xml
+index 83cc5b8e1..61afa6496 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/layout/directory_app_bar_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/layout/directory_app_bar_m3.xml
+@@ -71,13 +71,19 @@
+                 android:tooltipText="@string/read_only_explanation"
+                 android:visibility="gone" />
+ 
++            <!-- N9: rounded grey search pill -->
+             <com.google.android.material.textview.MaterialTextView
+                 android:id="@+id/searchbar_title"
+                 android:layout_width="match_parent"
+-                android:layout_height="?android:attr/actionBarSize"
++                android:layout_height="@dimen/n9_search_pill_height"
++                android:layout_marginEnd="16dp"
++                android:background="@drawable/n9_search_pill"
+                 android:gravity="center_vertical"
++                android:paddingHorizontal="16dp"
+                 android:text="@string/search_bar_hint"
+-                android:textAppearance="@style/AppBarTitle" />
++                android:textAppearance="@style/AppBarTitle"
++                android:textSize="16sp"
++                android:textColor="?attr/colorOnSurfaceVariant" />
+ 
+         </com.google.android.material.appbar.MaterialToolbar>
+ 
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values-night-v31/colors_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values-night-v31/colors_m3.xml
+deleted file mode 100644
+index 7e5d87af8..000000000
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values-night-v31/colors_m3.xml
++++ /dev/null
+@@ -1,43 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2024 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
+-<resources>
+-  <!-- ?attr/colorSurfaceContainer -->
+-  <color name="app_background_color_m3">@color/m3_ref_palette_dynamic_neutral_variant12</color>
+-  <!-- ?attr/colorPrimary -->
+-  <color name="primary_m3">@android:color/system_accent1_200</color>
+-  <!-- ?attr/colorSurfaceContainerHigh -->
+-  <color name="color_surface_header_m3">@color/m3_ref_palette_dynamic_neutral_variant17</color>
+-
+-  <!-- All drag drop badge colors, we can only use system color tokens because there's no theme
+-       context inside the view.
+-  -->
+-  <!-- ?attr/colorTertiary -->
+-  <color name="drag_file_counter_background">@android:color/system_accent3_200</color>
+-  <!-- ?attr/colorOnTertiary -->
+-  <color name="drag_file_counter_text_color">@android:color/system_accent3_800</color>
+-  <!-- ?attr/colorSurfaceDim -->
+-  <color name="item_drag_shadow_background_m3">@color/m3_ref_palette_dynamic_neutral_variant6</color>
+-  <!-- ?attr/colorSurfaceContainerLowest -->
+-  <color name="drag_mime_icon_wrapper_background">
+-    @color/m3_ref_palette_dynamic_neutral_variant4
+-  </color>
+-  <!-- ?attr/colorOnSurface -->
+-  <color name="drag_content_text_color">@android:color/system_neutral1_100</color>
+-  <!-- ?attr/colorOnError -->
+-  <color name="drop_icon_reject_symbol_color">@color/m3_ref_palette_error20</color>
+-  <!-- ?attr/colorError -->
+-  <color name="drop_icon_reject_container_background">@color/m3_ref_palette_error80</color>
+-</resources>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values-night/colors_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values-night/colors_m3.xml
+index 412ec9655..43d1ef0d6 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values-night/colors_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values-night/colors_m3.xml
+@@ -13,38 +13,16 @@
+      See the License for the specific language governing permissions and
+      limitations under the License.
+ -->
++<!-- N9 palette on a dark Etesian background (see res/values-night/colors.xml). -->
+ <resources>
+-    <!-- ?attr/colorSurfaceContainer -->
+-    <color name="app_background_color_m3">#211F26</color>
+-
+-    <!-- ?attr/colorPrimary -->
+-    <color name="primary_m3">#D0BCFF</color>
+-
+-    <color name="success">#3CBA5A</color>
+-    <color name="on_success">#002110</color>
+-
+-    <color name="warning">#E69010</color>
+-
+-    <!-- ?attr/colorTertiary -->
+-    <color name="drag_file_counter_background">#EFB8C8</color>
+-    <!-- ?attr/colorOnTertiary -->
+-    <color name="drag_file_counter_text_color">#492532</color>
+-    <!-- ?attr/colorSurfaceDim -->
+-    <color name="item_drag_shadow_background_m3">#141218</color>
+-    <!-- ?attr/colorSurfaceContainerLowest -->
+-    <color name="drag_mime_icon_wrapper_background">#0F0D13</color>
+-    <!-- ?attr/colorOnSurface -->
+-    <color name="drag_content_text_color">#E6E0E9</color>
+-    <!-- ?attr/colorOnError -->
+-    <color name="drop_icon_reject_symbol_color">#601410</color>
+-    <!-- ?attr/colorError -->
+-    <color name="drop_icon_reject_container_background">#F2B8B5</color>
+-
+-    <color name="error_image_color_m3">@android:color/white</color>
+-
+-    <!-- ?attr/colorSurfaceContainerHigh -->
+-    <color name="color_surface_header_m3">#2B2930</color>
+-
+-    <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+-    <color name="search_chip_text_selected_color_m3">@android:color/black</color>
++  <!-- Pages and the pinned header are transparent so the window background shows. -->
++  <color name="app_background_color_m3">#00000000</color>
++  <color name="color_surface_header_m3">#00000000</color>
++  <color name="background_floating_m3">#1E1E1E</color>
++  <color name="nav_bar_translucent_m3">#52000000</color>
++  <color name="hairline_m3">#33FFFFFF</color>
++  <color name="list_divider_color_m3">#33FFFFFF</color>
++  <color name="item_drag_shadow_background_m3">#2A2A2A</color>
++  <color name="drag_mime_icon_wrapper_background">#1E1E1E</color>
++  <color name="drag_content_text_color">#FFFFFF</color>
+ </resources>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values-night/themes_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values-night/themes_m3.xml
+deleted file mode 100644
+index 57baf9d56..000000000
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values-night/themes_m3.xml
++++ /dev/null
+@@ -1,30 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2024 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
+-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+-    <style name="DocumentsThemeM3" parent="@android:style/Theme.DeviceDefault.DocumentsUI">
+-
+-        <!-- these system bar colors are required for SDK 30 -->
+-        <item name="android:statusBarColor">@color/app_background_color_m3</item>
+-        <item name="android:navigationBarColor">@color/app_background_color_m3</item>
+-
+-        <item name="android:windowLightStatusBar">false</item>
+-        <item name="android:windowLightNavigationBar">false</item>
+-        <item name="android:windowNoTitle">true</item>
+-        <item name="android:windowSoftInputMode">stateUnspecified|adjustUnspecified</item>
+-
+-    </style>
+-</resources>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values-v31/colors_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values-v31/colors_m3.xml
+index 649d1703c..d16c4c2c7 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values-v31/colors_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values-v31/colors_m3.xml
+@@ -15,27 +15,27 @@
+ 
+ <resources>
+   <!-- ?attr/colorSurfaceContainer -->
+-  <color name="app_background_color_m3">@color/m3_ref_palette_dynamic_neutral_variant94</color>
++  <color name="app_background_color_m3">#E9E9E9</color>
+   <!-- ?attr/colorPrimary -->
+-  <color name="primary_m3">@android:color/system_accent1_600</color>
++  <color name="primary_m3">#00A5E5</color>
+   <!-- ?attr/colorSurfaceContainerHigh -->
+-  <color name="color_surface_header_m3">@color/m3_ref_palette_dynamic_neutral_variant92</color>
++  <color name="color_surface_header_m3">#E9E9E9</color>
+ 
+   <!-- All drag drop badge colors, we can only use system color tokens because there's no theme
+        context inside the view.
+   -->
+   <!-- ?attr/colorTertiary -->
+-  <color name="drag_file_counter_background">@android:color/system_accent3_600</color>
++  <color name="drag_file_counter_background">#00A5E5</color>
+   <!-- ?attr/colorOnTertiary -->
+-  <color name="drag_file_counter_text_color">@android:color/system_accent3_0</color>
++  <color name="drag_file_counter_text_color">@android:color/white</color>
+   <!-- ?attr/colorSurfaceDim -->
+-  <color name="item_drag_shadow_background_m3">@color/m3_ref_palette_dynamic_neutral_variant87</color>
++  <color name="item_drag_shadow_background_m3">#F4F4F4</color>
+   <!-- ?attr/colorSurfaceContainerLowest -->
+-  <color name="drag_mime_icon_wrapper_background">@android:color/system_neutral2_0</color>
++  <color name="drag_mime_icon_wrapper_background">@android:color/white</color>
+   <!-- ?attr/colorOnSurface -->
+-  <color name="drag_content_text_color">@android:color/system_neutral1_900</color>
++  <color name="drag_content_text_color">#191919</color>
+   <!-- ?attr/colorOnError -->
+   <color name="drop_icon_reject_symbol_color">@android:color/white</color>
+   <!-- ?attr/colorError -->
+-  <color name="drop_icon_reject_container_background">@color/m3_ref_palette_error40</color>
++  <color name="drop_icon_reject_container_background">#D42D2A</color>
+ </resources>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values-w900dp-h600dp/dimens_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values-w900dp-h600dp/dimens_m3.xml
+index ca3b074e9..126c5af21 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values-w900dp-h600dp/dimens_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values-w900dp-h600dp/dimens_m3.xml
+@@ -20,7 +20,7 @@
+ 
+     <dimen name="list_container_padding_m3">@dimen/space_extra_small_6</dimen>
+     <dimen name="list_header_inner_padding">4dp</dimen>
+-    <dimen name="list_item_height_m3">48dp</dimen>
++    <dimen name="list_item_height_m3">64dp</dimen>
+     <dimen name="list_item_padding_start">20dp</dimen>
+     <dimen name="list_item_padding_end">0dp</dimen>
+     <dimen name="briefcase_icon_margin_m3">@dimen/space_extra_small_4</dimen>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values/colors_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values/colors_m3.xml
+index 078211c26..8ff5ccdad 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values/colors_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values/colors_m3.xml
+@@ -18,18 +18,18 @@
+        else that needs to manually declare a background matching the "default"
+        app background (e.g. the drawer overlay). -->
+   <!-- ?attr/colorSurfaceContainer -->
+-  <color name="app_background_color_m3">#F3EDF7</color>
++  <color name="app_background_color_m3">#E9E9E9</color>
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+-  <color name="background_floating_m3">@android:color/white</color>
++  <color name="background_floating_m3">#F4F4F4</color>
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+   <color name="nav_bar_translucent_m3">#99FFFFFF</color>
+ 
+   <!-- ?attr/colorPrimary -->
+-  <color name="primary_m3">#6750A4</color>
++  <color name="primary_m3">#00A5E5</color> <!-- N9 blue -->
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+-  <color name="secondary_m3">#E3F2FD</color> <!-- Blue 50 -->
++  <color name="secondary_m3">#CCEDFA</color> <!-- Blue 50 -->
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+-  <color name="hairline_m3">#E0E0E0</color> <!-- Gray 300 -->
++  <color name="hairline_m3">#D6D6D6</color> <!-- Gray 300 -->
+ 
+   <color name="success">#187231</color>
+   <color name="on_success">@android:color/white</color>
+@@ -50,15 +50,15 @@
+   <!-- static -->
+   <color name="item_drag_shadow_container_background_m3">@android:color/transparent</color>
+   <!-- ?attr/colorTertiary -->
+-  <color name="drag_file_counter_background">#7D5260</color>
++  <color name="drag_file_counter_background">#00A5E5</color>
+   <!-- ?attr/colorOnTertiary -->
+   <color name="drag_file_counter_text_color">@android:color/white</color>
+   <!-- ?attr/colorSurfaceDim -->
+-  <color name="item_drag_shadow_background_m3">#DED8E1</color>
++  <color name="item_drag_shadow_background_m3">#F4F4F4</color>
+   <!-- ?attr/colorSurfaceContainerLowest -->
+   <color name="drag_mime_icon_wrapper_background">@android:color/white</color>
+   <!-- ?attr/colorOnSurface -->
+-  <color name="drag_content_text_color">#1C1B1F</color>
++  <color name="drag_content_text_color">#191919</color>
+   <!-- ?attr/colorOnError -->
+   <color name="drop_icon_reject_symbol_color">@android:color/white</color>
+   <!-- ?attr/colorError -->
+@@ -85,7 +85,7 @@
+   <color name="error_image_color_m3">?attr/colorPrimary</color>
+ 
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+-  <color name="list_divider_color_m3">#1f000000</color>
++  <color name="list_divider_color_m3">#D6D6D6</color>
+ 
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+   <color name="list_item_selected_background_color_m3">?attr/colorPrimaryContainer</color>
+@@ -96,7 +96,7 @@
+        both here and dark mode.
+   -->
+   <!-- ?attr/colorSurfaceContainerHigh -->
+-  <color name="color_surface_header_m3">#ECE6F0</color>
++  <color name="color_surface_header_m3">#E9E9E9</color>
+ 
+   <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+   <color name="search_chip_text_selected_color_m3">@android:color/white</color>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values/dimens_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values/dimens_m3.xml
+index 4b99bf612..71d0a421c 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values/dimens_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values/dimens_m3.xml
+@@ -52,7 +52,7 @@
+     <dimen name="selection_circle_offset">7dp</dimen>
+     <dimen name="selection_stroke_size">2dp</dimen>
+     <dimen name="list_item_thumbnail_size_m3">40dp</dimen>
+-    <dimen name="list_item_thumbnail_corner_radius">8dp</dimen>
++    <dimen name="list_item_thumbnail_corner_radius">12dp</dimen> <!-- N9 squircle ~28% -->
+     <dimen name="grid_item_icon_size_m3">30dp</dimen>
+     <!-- TODO(b/379776735): remove this after use_material3 flag is launched. -->
+     <dimen name="progress_bar_height_m3">4dp</dimen>
+@@ -72,14 +72,14 @@
+     <dimen name="list_header_inner_padding">16dp</dimen>
+     <dimen name="list_header_outer_margin">12dp</dimen>
+     <dimen name="list_item_inner_padding">4dp</dimen>
+-    <dimen name="list_item_height_m3">56dp</dimen>
++    <dimen name="list_item_height_m3">72dp</dimen>
+     <dimen name="list_item_padding_start">16dp</dimen>
+     <dimen name="list_item_padding_end">8dp</dimen>
+-    <dimen name="list_item_padding_vertical">4dp</dimen>
++    <dimen name="list_item_padding_vertical">8dp</dimen>
+     <dimen name="list_item_icon_margin_end">@dimen/space_extra_small_4</dimen>
+-    <dimen name="list_item_icon_wrapper_margin_end">12dp</dimen>
+-    <dimen name="list_item_icon_wrapper_size">35dp</dimen>
+-    <dimen name="list_item_icon_size">32dp</dimen>
++    <dimen name="list_item_icon_wrapper_margin_end">16dp</dimen>
++    <dimen name="list_item_icon_wrapper_size">48dp</dimen>
++    <dimen name="list_item_icon_size">44dp</dimen>
+     <dimen name="list_item_preview_icon_size">48dp</dimen>
+     <!-- TODO(b/379776735): remove this block after use_material3 flag is launched. -->
+     <dimen name="list_item_width_m3">72dp</dimen>
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values/styles_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values/styles_m3.xml
+index 408ef159a..f22374413 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values/styles_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values/styles_m3.xml
+@@ -64,6 +64,9 @@
+ 
+     <style name="ListThumbnailCardViewStyle" parent="@style/ThumbnailCardViewStyle">
+         <item name="cardCornerRadius">@dimen/list_item_thumbnail_corner_radius</item>
++        <!-- N9: white squircle icon tile with a hairline edge -->
++        <item name="strokeColor">@color/n9_separator</item>
++        <item name="strokeWidth">1dp</item>
+     </style>
+ 
+     <style name="GridThumbnailCardViewStyle" parent="@style/ThumbnailCardViewStyle" />
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values/styles_text_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values/styles_text_m3.xml
+index bed37ae09..5b59d33fc 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values/styles_text_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values/styles_text_m3.xml
+@@ -80,6 +80,9 @@
+     <!-- This is used for both the app bar title and the search bar title. -->
+     <style name="AppBarTitle" parent="@style/TextAppearance.DocumentsUI.TitleLarge">
+         <item name="android:textColor">?attr/colorOnSurface</item>
++        <!-- N9: large light-weight title -->
++        <item name="android:textSize">28sp</item>
++        <item name="android:textFontWeight">300</item>
+     </style>
+ 
+     <style name="SearchChipTextM3" parent="@style/TextAppearance.DocumentsUI.LabelLarge" />
+@@ -120,10 +123,16 @@
+ 
+     <style name="DrawerMenuPrimaryM3" parent="@style/TextAppearance.DocumentsUI.LabelLarge">
+         <item name="android:textColor">@color/item_root_primary_text_m3</item>
++        <!-- N9: roots read like list rows: bold dark name, grey line under it -->
++        <item name="android:textSize">18sp</item>
++        <item name="android:textFontWeight">700</item>
++        <item name="android:letterSpacing">0</item>
+     </style>
+ 
+     <style name="DrawerMenuSecondaryM3" parent="@style/TextAppearance.DocumentsUI.BodySmall">
+         <item name="android:textColor">@color/item_root_secondary_text_m3</item>
++        <item name="android:textSize">14sp</item>
++        <item name="android:letterSpacing">0</item>
+     </style>
+ 
+     <!-- TODO(b/377770698): peek -->
+@@ -155,10 +164,17 @@
+ 
+     <style name="FileItemLabelText" parent="@style/TextAppearance.DocumentsUI.TitleSmall">
+         <item name="android:textColor">@color/doc_list_item_label_color</item>
++        <item name="android:textSize">18sp</item>
++        <!-- N9: bold dark name over a grey "size | date" line -->
++        <item name="android:textFontWeight">700</item>
++        <item name="android:letterSpacing">0</item>
+     </style>
+ 
+     <style name="ItemCaptionTextM3" parent="@style/TextAppearance.DocumentsUI.LabelSmall">
+         <item name="android:textColor">@color/doc_list_item_subtitle_color_m3</item>
++        <item name="android:textSize">14sp</item>
++        <item name="android:textFontWeight">400</item>
++        <item name="android:letterSpacing">0</item>
+     </style>
+ 
+     <style name="MenuItemTextAppearanceM3" parent="@style/TextAppearance.DocumentsUI.LabelLarge">
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/values/themes_m3.xml b/res/flag(com.android.documentsui.flags.use_material3)/values/themes_m3.xml
+index 657ce3114..e39a6a771 100644
+--- a/res/flag(com.android.documentsui.flags.use_material3)/values/themes_m3.xml
++++ b/res/flag(com.android.documentsui.flags.use_material3)/values/themes_m3.xml
+@@ -25,6 +25,16 @@
+         <item name="android:statusBarColor">@color/app_background_color_m3</item>
+         <item name="android:navigationBarColor">@color/app_background_color_m3</item>
+ 
++        <!-- N9: pin platform colours (DeviceDefault would follow dynamic colour) -->
++        <item name="android:colorAccent">@color/primary_m3</item>
++        <item name="android:colorPrimary">@color/primary_m3</item>
++        <item name="android:colorControlActivated">@color/primary_m3</item>
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="android:colorBackgroundFloating">@color/n9_list_bg</item>
++        <item name="android:textColorPrimary">@color/n9_text_primary</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:windowBackground">@color/n9_window_bg</item>
++
+         <item name="android:windowLightStatusBar">true</item>
+         <item name="android:windowLightNavigationBar">true</item>
+         <item name="android:windowSoftInputMode">stateUnspecified|adjustUnspecified</item>
+@@ -34,15 +44,50 @@
+ 
+     </style>
+ 
+-    <style name="DocumentsDefaultThemeM3" parent="@style/Theme.Material3Expressive.DayNight.NoActionBar">
++    <style name="DocumentsDefaultThemeM3" parent="@style/Theme.Material3Expressive.Light.NoActionBar">
+ 
+         <!-- This only used by support lib, not allow to overlay -->
+         <item name="windowActionBar">false</item>
+         <item name="windowActionModeOverlay">true</item>
+ 
+         <!-- For material design widget, chips, buttons, not support attr-->
+-        <item name="colorPrimary">@color/primary_m3</item>
+         <item name="colorAccent">@color/primary_m3</item>
++        <!-- N9 (Etesian) static palette: no Material You / dynamic colour, light in night mode too -->
++        <item name="colorPrimary">@color/primary_m3</item>
++        <item name="colorOnPrimary">@android:color/white</item>
++        <item name="colorPrimaryContainer">@color/n9_accent_container</item>
++        <item name="colorOnPrimaryContainer">@color/n9_on_accent_container</item>
++        <item name="colorPrimaryInverse">@color/n9_accent_container</item>
++        <item name="colorSecondary">@color/n9_accent</item>
++        <item name="colorOnSecondary">@android:color/white</item>
++        <item name="colorSecondaryContainer">@color/n9_accent_container</item>
++        <item name="colorOnSecondaryContainer">@color/n9_on_accent_container</item>
++        <item name="colorTertiary">@color/n9_accent</item>
++        <item name="colorOnTertiary">@android:color/white</item>
++        <item name="colorTertiaryContainer">@color/n9_accent_container</item>
++        <item name="colorOnTertiaryContainer">@color/n9_on_accent_container</item>
++        <item name="android:colorBackground">@color/n9_window_bg</item>
++        <item name="colorOnBackground">@color/n9_text_primary</item>
++        <item name="colorSurface">@color/n9_list_bg</item>
++        <item name="colorOnSurface">@color/n9_text_primary</item>
++        <item name="colorSurfaceVariant">@color/n9_window_bg</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="colorSurfaceDim">#DCDCDC</item>
++        <item name="colorSurfaceBright">@color/n9_list_bg</item>
++        <item name="colorSurfaceContainerLowest">@android:color/white</item>
++        <item name="colorSurfaceContainerLow">@color/n9_list_bg</item>
++        <item name="colorSurfaceContainer">@color/n9_window_bg</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_window_bg</item>
++        <item name="colorSurfaceContainerHighest">#E0E0E0</item>
++        <item name="colorSurfaceInverse">@color/n9_text_primary</item>
++        <item name="colorOnSurfaceInverse">@color/n9_list_bg</item>
++        <item name="colorOutline">#B4B4B4</item>
++        <item name="colorOutlineVariant">@color/n9_separator</item>
++        <item name="android:textColorPrimary">@color/n9_text_primary</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">@string/config_fontFamily</item>
++        <item name="fontFamily">@string/config_fontFamily</item>
++
+ 
+         <!-- TODO need to solve the error handle in GridItemThumbnail -->
+         <item name="gridItemTint">@color/item_doc_grid_tint_m3</item>
+@@ -87,7 +132,7 @@
+         </item>
+     </style>
+ 
+-    <style name="PeekMetadataSheetDialogTheme" parent="Theme.Material3.DayNight.SideSheetDialog">
++    <style name="PeekMetadataSheetDialogTheme" parent="Theme.Material3.Light.SideSheetDialog">
+         <item name="sideSheetModalStyle">@style/PeekMetadataModalSheetTheme</item>
+     </style>
+ 
+diff --git a/res/layout/item_doc_list.xml b/res/layout/item_doc_list.xml
+index 77494a29c..2a47fbefc 100644
+--- a/res/layout/item_doc_list.xml
++++ b/res/layout/item_doc_list.xml
+@@ -46,7 +46,10 @@
+         <com.google.android.material.card.MaterialCardView
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+-            app:cardBackgroundColor="@android:color/transparent"
++            app:cardBackgroundColor="@color/n9_icon_tile"
++            app:cardCornerRadius="@dimen/n9_icon_tile_radius"
++            app:strokeColor="@color/n9_separator"
++            app:strokeWidth="1dp"
+             app:cardElevation="0dp">
+ 
+           <ImageView
+@@ -108,7 +111,9 @@
+               android:ellipsize="end"
+               android:singleLine="true"
+               android:textAlignment="viewStart"
+-              android:textAppearance="?android:attr/textAppearanceListItem" />
++              android:textAppearance="?android:attr/textAppearanceListItem"
++              android:textSize="18sp"
++              android:textColor="@color/n9_text_primary" />
+ 
+         </LinearLayout>
+ 
+diff --git a/res/values-night-v31/colors.xml b/res/values-night-v31/colors.xml
+deleted file mode 100644
+index c5e4f6d90..000000000
+--- a/res/values-night-v31/colors.xml
++++ /dev/null
+@@ -1,50 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2013 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
+-<resources>
+-  <color name="tab_selected_text_color">@android:color/black</color>
+-  <color name="work_profile_button_stroke_color">
+-    @*android:color/system_accent1_200
+-  </color> <!-- accent 200 -->
+-  <color name="empty_state_text_color">@*android:color/system_neutral1_100
+-  </color>
+-  <!-- neutral 100 -->
+-  <color name="empty_state_message_text_color">
+-    @*android:color/system_neutral2_200
+-  </color>
+-  <!-- neutral variant 200 -->
+-  <color name="tab_unselected_text_color">@*android:color/system_neutral2_200
+-  </color>
+-  <!-- neutral variant 200 -->
+-  <color name="profile_tab_default_color">@*android:color/system_neutral1_800
+-  </color>
+-  <!-- neutral 800 -->
+-  <color name="profile_tab_selected_color">@*android:color/system_neutral2_100
+-  </color>
+-  <!-- neutral variant 100 -->
+-  <color name="fragment_pick_inactive_button_color">
+-    @*android:color/system_neutral1_800
+-  </color>
+-  <!-- neutral 100 -->
+-  <color name="fragment_pick_inactive_text_color">
+-    @*android:color/system_neutral1_600
+-  </color>
+-  <!-- neutral 600 -->
+-  <color name="fragment_pick_active_button_color">
+-    @*android:color/system_neutral2_100
+-  </color>
+-  <!-- neutral variant 100 -->
+-  <color name="fragment_pick_active_text_color">@android:color/black</color>
+-</resources>
+diff --git a/res/values-night-v31/styles.xml b/res/values-night-v31/styles.xml
+deleted file mode 100644
+index 0bbda8997..000000000
+--- a/res/values-night-v31/styles.xml
++++ /dev/null
+@@ -1,37 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-  ~ Copyright (C) 2021 The Android Open Source Project
+-  ~
+-  ~ Licensed under the Apache License, Version 2.0 (the "License");
+-  ~ you may not use this file except in compliance with the License.
+-  ~ You may obtain a copy of the License at
+-  ~
+-  ~      http://www.apache.org/licenses/LICENSE-2.0
+-  ~
+-  ~ Unless required by applicable law or agreed to in writing, software
+-  ~ distributed under the License is distributed on an "AS IS" BASIS,
+-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-  ~ See the License for the specific language governing permissions and
+-  ~ limitations under the License.
+-  -->
+-
+-<resources>
+-    <!--
+-    <style name="ActionBarTheme" parent="@style/ActionBarThemeCommon">
+-        <item name="android:actionMenuTextColor">@*android:color/accent_device_default_dark</item>
+-    </style>
+-    -->
+-
+-    <style name="TabTextAppearance" parent="@android:style/TextAppearance.Material.Medium">
+-        <item name="android:textSize">14sp</item>
+-        <item name="fontFamily">@string/config_fontFamilyMedium</item>
+-        <item name="android:textColor">?android:attr/colorAccent</item>
+-    </style>
+-
+-    <style name="EmptyStateButton" parent="@style/Widget.MaterialComponents.Button.OutlinedButton">
+-        <item name="android:backgroundTint">@android:color/transparent</item>
+-        <item name="android:textColor">@*android:color/system_neutral1_100</item>
+-        <item name="android:textAllCaps">false</item>
+-        <item name="android:textAppearance">@style/EmptyStateButtonTextAppearance</item>
+-    </style>
+-</resources>
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+index 9874d8a4c..8df9a5e1a 100644
+--- a/res/values-night/colors.xml
++++ b/res/values-night/colors.xml
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2018 The Android Open Source Project
++<!-- Copyright (C) 2015 The Android Open Source Project
+ 
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+@@ -13,28 +13,29 @@
+      See the License for the specific language governing permissions and
+      limitations under the License.
+ -->
++<!-- N9 palette on a dark Etesian background (black, dark grey or wallpaper). Files forces night
++     mode only for those backgrounds (BaseActivity), so the light N9 look never comes from here. -->
+ <resources>
+-    <color name="app_background_color">#202124</color>
+-    <color name="background_floating">#3C4043</color>
+-    <color name="nav_bar_translucent">#52000000</color>
+-
+-    <color name="primary">#8AB4F8</color>
+-    <color name="secondary">#3D8AB4F8</color>
+-    <color name="hairline">#5F6368</color>
+-
+-    <color name="empty_state_text_color">@android:color/white</color>
+-    <color name="error_image_color">@android:color/white</color>
+-
++    <!-- Theme surfaces stay opaque: dialogs, popups and the drawer draw on them. -->
++    <color name="n9_window_bg">#161616</color>
++    <color name="n9_list_bg">#1E1E1E</color>
++    <color name="n9_text_primary">#FFFFFF</color>
++    <color name="n9_text_secondary">#B0B0B0</color>
++    <color name="n9_separator">#33FFFFFF</color>
++    <color name="n9_accent_container">#0B3A4C</color>
++    <color name="n9_on_accent_container">#CCEDFA</color>
++    <color name="n9_icon_tile">#2A2A2A</color>
++    <color name="n9_rule_highlight">#00000000</color>
++    <color name="n9_section_letter">#B0B0B0</color>
++    <color name="n9_search_pill">#26FFFFFF</color>
++
++    <!-- Pages are transparent so the window background (colour or wallpaper) shows. -->
++    <color name="app_background_color">#00000000</color>
++    <color name="background_floating">#1E1E1E</color>
++    <color name="hairline">#33FFFFFF</color>
++    <color name="list_divider_color">#33FFFFFF</color>
++    <color name="empty_state_text_color">#FFFFFF</color>
++    <color name="doc_list_item_subtitle_enabled">#B0B0B0</color>
++    <color name="doc_list_item_subtitle_disabled">#61FFFFFF</color>
+     <color name="edge_effect">@android:color/white</color>
+-
+-    <!-- AppCompat.textColorSecondary -->
+-    <color name="doc_list_item_subtitle_enabled">#b3ffffff</color>
+-    <color name="doc_list_item_subtitle_disabled">#36ffffff</color>
+-
+-    <color name="list_divider_color">#9aa0a6</color>
+-    <color name="list_item_selected_background_color">?android:colorSecondary</color>
+-
+-    <color name="fragment_pick_active_text_color">#202124</color> <!-- Grey 900 -->
+-
+-    <color name="search_chip_text_selected_color">@android:color/black</color>
+ </resources>
+diff --git a/res/values-night/themes.xml b/res/values-night/themes.xml
+deleted file mode 100644
+index 566cd18dd..000000000
+--- a/res/values-night/themes.xml
++++ /dev/null
+@@ -1,48 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2013 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
+-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+-    <style name="LauncherTheme" parent="DocumentsTheme">
+-        <item name="android:windowBackground">@drawable/launcher_screen_night</item>
+-        <item name="colorSearchBarBackground">@color/search_bar_background_dark</item>
+-    </style>
+-    <style name="DocumentsTheme" parent="@android:style/Theme.DeviceDefault.DocumentsUI">
+-
+-        <!-- Toolbar -->
+-        <item name="android:actionModeBackground">?android:attr/colorBackground</item>
+-        <item name="android:actionBarSize">@dimen/action_bar_size</item>
+-
+-        <!-- Color section -->
+-        <item name="android:colorAccent">@color/primary</item>
+-        <item name="android:colorBackground">@color/app_background_color</item>
+-        <item name="android:colorBackgroundFloating">@color/background_floating</item>
+-        <item name="android:colorControlHighlight">@color/ripple_material_dark</item>
+-        <item name="android:colorControlActivated">@color/primary</item>
+-        <item name="android:colorPrimary">@color/primary</item>
+-        <item name="android:colorSecondary">@color/secondary</item>
+-        <item name="android:strokeColor">@color/hairline</item>
+-
+-        <!-- System | Widget section -->
+-        <item name="android:listDivider">@drawable/list_divider</item>
+-        <item name="android:statusBarColor">?android:attr/colorBackground</item>
+-        <item name="android:windowBackground">?android:attr/colorBackground</item>
+-        <item name="android:windowLightStatusBar">false</item>
+-        <item name="android:windowLightNavigationBar">false</item>
+-        <item name="android:windowNoTitle">true</item>
+-        <item name="android:windowSoftInputMode">stateUnspecified|adjustUnspecified</item>
+-
+-    </style>
+-</resources>
+diff --git a/res/values-v31/colors.xml b/res/values-v31/colors.xml
+index 72de6e574..ebea1d08b 100644
+--- a/res/values-v31/colors.xml
++++ b/res/values-v31/colors.xml
+@@ -14,38 +14,24 @@
+ -->
+ 
+ <resources>
+-  <color name="tab_selected_text_color">@*android:color/system_neutral1_900
+-  </color>
++  <color name="tab_selected_text_color">@color/n9_accent</color>
+   <!-- neutral 900 -->
+-  <color name="tab_unselected_text_color">@*android:color/system_neutral2_700
+-  </color>
++  <color name="tab_unselected_text_color">@color/n9_text_secondary</color>
+   <!-- neutral variant 700-->
+-  <color name="work_profile_button_stroke_color">
+-    @*android:color/system_accent1_600
+-  </color> <!-- primary 600 -->
+-  <color name="empty_state_text_color">@*android:color/system_neutral1_900
+-  </color>
++  <color name="work_profile_button_stroke_color">@color/n9_accent</color> <!-- primary 600 -->
++  <color name="empty_state_text_color">@color/n9_text_primary</color>
+   <!-- neutral 900 -->
+-  <color name="empty_state_message_text_color">
+-    @*android:color/system_neutral2_700
+-  </color>
++  <color name="empty_state_message_text_color">@color/n9_text_secondary</color>
+   <!-- neutral variant 700 -->
+-  <color name="profile_tab_selected_color">@*android:color/system_accent1_100
+-  </color>
++  <color name="profile_tab_selected_color">@color/n9_accent_container</color>
+   <!-- accent 100 -->
+-  <color name="profile_tab_default_color">@*android:color/system_neutral1_10
+-  </color>
++  <color name="profile_tab_default_color">@color/n9_list_bg</color>
+   <!-- neutral 10 -->
+-  <color name="fragment_pick_inactive_button_color">
+-    @*android:color/system_neutral1_100
+-  </color>
++  <color name="fragment_pick_inactive_button_color">@color/n9_separator</color>
+   <!-- neutral 100 -->
+-  <color name="fragment_pick_inactive_text_color">
+-    @*android:color/system_neutral1_400
+-  </color>
++  <color name="fragment_pick_inactive_text_color">@color/n9_text_secondary</color>
+   <!-- neutral 400 -->
+-  <color name="fragment_pick_active_button_color">@*android:color/system_accent1_600
+-  </color>
++  <color name="fragment_pick_active_button_color">@color/n9_accent</color>
+   <!-- accent 600 -->
+   <color name="fragment_pick_active_text_color">@android:color/white</color>
+ </resources>
+diff --git a/res/values-v31/styles.xml b/res/values-v31/styles.xml
+index c82ff5814..4478dc2e3 100644
+--- a/res/values-v31/styles.xml
++++ b/res/values-v31/styles.xml
+@@ -45,7 +45,7 @@
+ 
+   <style name="EmptyStateButton" parent="@style/Widget.MaterialComponents.Button.OutlinedButton">
+     <item name="android:backgroundTint">@android:color/transparent</item>
+-    <item name="android:textColor">@*android:color/system_neutral1_900</item>
++    <item name="android:textColor">@color/n9_text_primary</item>
+     <item name="android:textAllCaps">false</item>
+     <item name="android:textAppearance">@style/EmptyStateButtonTextAppearance
+     </item>
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 7c87372dc..e339eaf99 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -18,13 +18,13 @@
+        else that needs to manually declare a background matching the "default"
+        app background (e.g. the drawer overlay). -->
+ 
+-  <color name="app_background_color">@android:color/white</color>
+-  <color name="background_floating">@android:color/white</color>
++  <color name="app_background_color">#E9E9E9</color>
++  <color name="background_floating">#F4F4F4</color>
+   <color name="nav_bar_translucent">#99FFFFFF</color>
+ 
+-  <color name="primary">#1E88E5</color> <!-- Blue 600 -->
+-  <color name="secondary">#E3F2FD</color> <!-- Blue 50 -->
+-  <color name="hairline">#E0E0E0</color> <!-- Gray 300 -->
++  <color name="primary">#00A5E5</color> <!-- N9 blue -->
++  <color name="secondary">#CCEDFA</color>
++  <color name="hairline">#D6D6D6</color>
+ 
+   <color name="chip_background_disable_color">#fff1f3f4</color>
+   <color name="menu_search_background">@android:color/transparent</color>
+@@ -46,16 +46,16 @@
+   <color name="shortcut_foreground">#ff3367d6</color>
+   <color name="shortcut_background">#fff5f5f5</color>
+ 
+-  <color name="empty_state_text_color">#202124</color>
++  <color name="empty_state_text_color">#191919</color>
+   <color name="error_image_color">#757575</color>
+ 
+   <color name="edge_effect">@android:color/black</color>
+ 
+-  <color name="doc_list_item_subtitle_enabled">#5F6368</color> <!-- Gray 700 -->
++  <color name="doc_list_item_subtitle_enabled">#8C8C8C</color>
+   <color name="doc_list_item_subtitle_disabled">#613c4043
+   </color> <!-- 38% Grey800 -->
+ 
+-  <color name="list_divider_color">#1f000000</color>
++  <color name="list_divider_color">#D6D6D6</color>
+   <color name="list_item_selected_background_color">?android:colorSecondary
+   </color>
+   <color name="color_surface_header">@color/app_background_color</color>
+@@ -72,4 +72,18 @@
+   <color name="fragment_pick_active_text_color">@android:color/white</color>
+ 
+   <color name="search_chip_text_selected_color">@android:color/white</color>
++  <!-- N9 (Etesian) static palette -->
++  <color name="n9_window_bg">#E9E9E9</color>
++  <color name="n9_list_bg">#F4F4F4</color>
++  <color name="n9_text_primary">#191919</color>
++  <color name="n9_text_secondary">#8C8C8C</color>
++  <color name="n9_separator">#D6D6D6</color>
++  <color name="n9_accent">#00A5E5</color>
++  <color name="n9_accent_container">#CCEDFA</color>
++  <color name="n9_on_accent_container">#003B52</color>
++  <color name="n9_icon_tile">#FFFFFF</color>
++  <!-- Engraved rule under list rows (grey line + white line) and its section letters -->
++  <color name="n9_rule_highlight">#FFFFFF</color>
++  <color name="n9_section_letter">#8C8C8C</color>
++  <color name="n9_search_pill">#D2D5D8</color>
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index a2ec6e4af..ed2e9f01c 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -133,4 +133,9 @@
+     <dimen name="cross_profile_button_corner_radius">0dp</dimen>
+     <dimen name="cross_profile_button_stroke_width">0dp</dimen>
+     <dimen name="cross_profile_button_message_margin_top">4dp</dimen>
++    <!-- N9 squircle icon tile: radius ~28% of the tile side -->
++    <dimen name="n9_icon_tile_radius">11dp</dimen>
++    <!-- N9 search pill -->
++    <dimen name="n9_search_pill_height">40dp</dimen>
++    <dimen name="n9_search_pill_radius">20dp</dimen>
+ </resources>
+diff --git a/res/values/strings_font.xml b/res/values/strings_font.xml
+index 0c3fbc0b4..6540cf77e 100644
+--- a/res/values/strings_font.xml
++++ b/res/values/strings_font.xml
+@@ -17,9 +17,9 @@
+ <resources>
+ 
+     <!-- Name of the body font family. If empty, falls back to platform default -->
+-    <string name="config_fontFamily" translatable="false">sans-serif</string>
++    <string name="config_fontFamily" translatable="false">etesian-text</string>
+     <!-- Name of the body font family medium. -->
+-    <string name="config_fontFamilyMedium" translatable="false">sans-serif-medium</string>
++    <string name="config_fontFamilyMedium" translatable="false">etesian-text</string>
+     <!-- Name of the header font family. If empty, falls back to platform default -->
+     <string name="config_headerFontFamily" translatable="false">@string/config_fontFamily</string>
+     <!-- Name of the header font family medium. -->
+diff --git a/res/values/styles_text.xml b/res/values/styles_text.xml
+index 0149ef725..bad0f74ac 100644
+--- a/res/values/styles_text.xml
++++ b/res/values/styles_text.xml
+@@ -68,7 +68,11 @@
+     </style>
+ 
+     <style name="ToolbarTitle" parent="@android:style/TextAppearance.Material.Title">
+-        <item name="fontFamily">@string/config_fontFamilyMedium</item>
++        <item name="fontFamily">@string/config_headerFontFamily</item>
++        <!-- N9: large, light-weight page title -->
++        <item name="android:textSize">26sp</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="android:textColor">@color/n9_text_primary</item>
+     </style>
+ 
+     <style name="DrawerMenuTitle" parent="@android:style/TextAppearance.Material.Title">
+@@ -134,6 +138,7 @@
+ 
+     <style name="ItemCaptionText" parent="@android:style/TextAppearance.Material.Caption">
+         <item name="android:textColor">@color/doc_list_item_subtitle_color</item>
++        <item name="android:textSize">14sp</item>
+         <item name="fontFamily">@string/config_fontFamily</item>
+     </style>
+ 
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 91b36526d..fd38e6af0 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -27,7 +27,10 @@
+ 
+         <!-- Color section -->
+         <item name="android:colorAccent">@color/primary</item>
+-        <item name="android:colorBackground">@android:color/white</item>
++        <item name="android:colorBackground">@color/app_background_color</item>
++        <item name="android:textColorPrimary">@color/n9_text_primary</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">@string/config_fontFamily</item>
+         <item name="android:colorBackgroundFloating">@color/background_floating</item>
+         <item name="android:colorControlHighlight">@color/ripple_material_light</item>
+         <item name="android:colorControlActivated">@color/primary</item>
+@@ -49,7 +52,7 @@
+ 
+     </style>
+ 
+-    <style name="DocumentsDefaultTheme" parent="@style/Theme.MaterialComponents.DayNight.NoActionBar">
++    <style name="DocumentsDefaultTheme" parent="@style/Theme.MaterialComponents.Light.NoActionBar">
+ 
+         <!-- This only used by support lib, not allow to overlay -->
+         <item name="windowActionBar">false</item>
+diff --git a/src/com/android/documentsui/BaseActivity.java b/src/com/android/documentsui/BaseActivity.java
+index c919edb00..9b70b8a38 100644
+--- a/src/com/android/documentsui/BaseActivity.java
++++ b/src/com/android/documentsui/BaseActivity.java
+@@ -60,6 +60,7 @@ import androidx.annotation.CallSuper;
+ import androidx.annotation.LayoutRes;
+ import androidx.annotation.VisibleForTesting;
+ import androidx.appcompat.app.AppCompatActivity;
++import androidx.appcompat.app.AppCompatDelegate;
+ import androidx.appcompat.widget.ActionMenuView;
+ import androidx.appcompat.widget.Toolbar;
+ import androidx.core.graphics.Insets;
+@@ -109,8 +110,9 @@ import com.android.modules.utils.build.SdkLevel;
+ 
+ import com.google.android.material.appbar.AppBarLayout;
+ import com.google.android.material.button.MaterialButton;
+-import com.google.android.material.color.DynamicColors;
+ 
++import com.bompotis.etesian.theme.EtesianBackground;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
+ import org.jspecify.annotations.NonNull;
+ 
+ import java.util.ArrayList;
+@@ -166,6 +168,11 @@ public abstract class BaseActivity
+     // Supplies the inline sync tick icon visibility duration.
+     private Supplier<Integer> mTestTickDurationSupplier = null;
+ 
++    /** The Etesian "Apps" background read at creation (N9 light, black, dark grey, wallpaper). */
++    private EtesianBackground.Style mEtesianStyle;
++    /** The options menu mirrored on the Etesian system toolbar, if any. */
++    private @Nullable Menu mEtesianMenu;
++
+     protected void setInitialStack(DocumentStack stack) {
+         if (mInitialStack.isInitialized()) {
+             if (DEBUG) {
+@@ -275,6 +282,16 @@ public abstract class BaseActivity
+                 new SummaryProviderManager(this, LifecycleOwnerKt.getLifecycleScope(this), uri));
+     }
+ 
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        // N9 (Etesian): night resources hold the N9 palette for dark backgrounds; force the mode
++        // both ways so the system dark theme never changes the light N9 look.
++        mEtesianStyle = EtesianBackground.content(newBase);
++        getDelegate().setLocalNightMode(mEtesianStyle.dark
++                ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
++        super.attachBaseContext(newBase);
++    }
++
+     @CallSuper
+     @Override
+     public void onCreate(Bundle savedInstanceState) {
+@@ -307,12 +324,20 @@ public abstract class BaseActivity
+         // in case Activity continuously encounter resource not found exception.
+         getTheme().applyStyle(getRes(R.style.DocumentsDefaultTheme), false);
+ 
+-        if (isUseMaterial3FlagEnabled() && SdkLevel.isAtLeastS()) {
+-            DynamicColors.applyToActivityIfAvailable(this);
+-        }
++        // N9 (Etesian) restyle: no Material You dynamic colour; the static palette in the
++        // theme is used instead.
+ 
+         super.onCreate(savedInstanceState);
+ 
++        if (mEtesianStyle.dark) {
++            // Black, dark grey or the wallpaper behind transparent pages, with light bar icons.
++            EtesianBackground.apply(this, mEtesianStyle);
++            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
++                    .setAppearanceLightStatusBars(false);
++            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
++                    .setAppearanceLightNavigationBars(false);
++        }
++
+         final Intent intent = getIntent();
+ 
+         addListenerForLaunchCompletion();
+@@ -727,6 +752,15 @@ public abstract class BaseActivity
+             final ActionMenuView subMenuView = findViewById(getRes(R.id.sub_menu));
+             mInjector.menuManager.updateSubMenu(subMenuView.getMenu());
+         }
++        // N9: grid/list are on the system toolbar (either layout).
++        if (EtesianToolbar.isAvailable(this)) {
++            final View subMenu = findViewById(getRes(R.id.sub_menu));
++            if (subMenu != null) subMenu.setVisibility(View.GONE);
++            final MenuItem grid = menu.findItem(getRes(R.id.sub_menu_grid));
++            final MenuItem list = menu.findItem(getRes(R.id.sub_menu_list));
++            if (grid != null) grid.setVisible(false);
++            if (list != null) list.setVisible(false);
++        }
+ 
+         if (isVisualSignalsFlagEnabled()) {
+             mInjector.menuManager.instantiateJobProgress(menu);
+@@ -735,6 +769,114 @@ public abstract class BaseActivity
+         return true;
+     }
+ 
++    @Override
++    protected void onResume() {
++        super.onResume();
++
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
++    }
++
++    /**
++     * N9 (Etesian): mirrors the main actions of the options menu on the system toolbar, with
++     * Back in sub-folders, and hides them from the app's own bar. Call after the menu is updated.
++     */
++    protected final void updateEtesianToolbar(Menu menu) {
++        if (!EtesianToolbar.isAvailable(this)) {
++            return;
++        }
++        mEtesianMenu = menu;
++
++        final List<EtesianToolbar.Item> items = new ArrayList<>();
++        if (mDrawer.isPresent()) {
++            items.add(EtesianToolbar.Item.action(ETESIAN_LOCATIONS,
++                    R.drawable.n9_toolbar_locations, getString(R.string.drawer_open)));
++        }
++        // Search hosts the search field: only keep it in the app bar while expanded.
++        addEtesianItem(items, menu, getRes(R.id.option_menu_search),
++                R.drawable.n9_toolbar_search, !mSearchManager.isExpanded());
++        addEtesianItem(items, menu, getRes(R.id.option_menu_create_dir),
++                R.drawable.n9_toolbar_new_folder, true);
++        addEtesianItem(items, menu, getRes(R.id.option_menu_sort),
++                R.drawable.n9_toolbar_sort, true);
++        // Grid/list: the app bar never shows them in N9 mode (MenuManager), so offer the
++        // other mode from the state.
++        if (mState != null) {
++            final boolean grid = mState.derivedMode == State.MODE_GRID;
++            final int id = getRes(grid ? R.id.sub_menu_list : R.id.sub_menu_grid);
++            items.add(EtesianToolbar.Item.action(Integer.toString(id),
++                    grid ? R.drawable.n9_toolbar_list : R.drawable.n9_toolbar_grid,
++                    getString(grid ? R.string.menu_list : R.string.menu_grid)));
++        }
++
++        EtesianToolbar.of(this)
++                .setBack(mState != null && mState.stack.size() > 1)
++                .setItems(items, this::onEtesianToolbarItem);
++    }
++
++    private static final String ETESIAN_LOCATIONS = "locations";
++
++    private Menu etesianViewMenu(Menu menu) {
++        if (menu.findItem(getRes(R.id.sub_menu_grid)) == null) {
++            final ActionMenuView subMenuView = findViewById(getRes(R.id.sub_menu));
++            if (subMenuView != null) {
++                // MenuManager re-shows its items on every refresh: hide the whole bar instead.
++                subMenuView.setVisibility(View.GONE);
++                return subMenuView.getMenu();
++            }
++        }
++        return menu;
++    }
++
++    private static void addEtesianItem(List<EtesianToolbar.Item> items, Menu menu,
++            int menuId, int iconRes, boolean hideInApp) {
++        final MenuItem item = menu.findItem(menuId);
++        if (item == null || !item.isVisible() || !item.isEnabled()) {
++            return;
++        }
++        items.add(EtesianToolbar.Item.action(Integer.toString(menuId), iconRes,
++                String.valueOf(item.getTitle())));
++        if (hideInApp) {
++            item.setVisible(false);
++        }
++    }
++
++    private void onEtesianToolbarItem(String id) {
++        if (ETESIAN_LOCATIONS.equals(id)) {
++            mDrawer.setOpen(true);
++            return;
++        }
++        if (mEtesianMenu == null) {
++            return;
++        }
++        final int menuId;
++        try {
++            menuId = Integer.parseInt(id);
++        } catch (NumberFormatException e) {
++            return;
++        }
++        if (menuId == getRes(R.id.option_menu_search)) {
++            final MenuItem search = mEtesianMenu.findItem(menuId);
++            if (search != null) {
++                search.setVisible(true);
++            }
++            mSearchManager.onSearchKeyboardShortcut();
++            mNavigator.update();
++            return;
++        }
++        MenuItem item = mEtesianMenu.findItem(menuId);
++        if (item == null) {
++            item = etesianViewMenu(mEtesianMenu).findItem(menuId);
++        }
++        if (item != null) {
++            onOptionsItemSelected(item);
++            // Grid/list swap which one the toolbar offers.
++            invalidateOptionsMenu();
++        }
++    }
++
+     @Override
+     protected void onDestroy() {
+         if (mRootsMonitor != null) {
+diff --git a/src/com/android/documentsui/MenuManager.java b/src/com/android/documentsui/MenuManager.java
+index 36641c8e4..cb82c4cd9 100644
+--- a/src/com/android/documentsui/MenuManager.java
++++ b/src/com/android/documentsui/MenuManager.java
+@@ -474,6 +474,12 @@ public abstract class MenuManager {
+     }
+ 
+     protected void updateModePicker(MenuItem grid, MenuItem list) {
++        // N9: the grid/list switch lives on the system toolbar, never in the app bar.
++        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(mContext)) {
++            Menus.setEnabledAndVisible(grid, false);
++            Menus.setEnabledAndVisible(list, false);
++            return;
++        }
+         // The order of enabling disabling menu item in wrong order removed accessibility focus.
+         if (mState.derivedMode != State.MODE_LIST) {
+             Menus.setEnabledAndVisible(list, mState.derivedMode != State.MODE_LIST);
+diff --git a/src/com/android/documentsui/NavigationViewManager.java b/src/com/android/documentsui/NavigationViewManager.java
+index be0ed53fd..503046a22 100644
+--- a/src/com/android/documentsui/NavigationViewManager.java
++++ b/src/com/android/documentsui/NavigationViewManager.java
+@@ -56,6 +56,8 @@ import com.android.modules.utils.build.SdkLevel;
+ import com.google.android.material.appbar.AppBarLayout;
+ import com.google.android.material.appbar.CollapsingToolbarLayout;
+ 
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
+ import java.util.Objects;
+ import java.util.function.IntConsumer;
+ 
+@@ -358,9 +360,11 @@ public class NavigationViewManager implements AppBarLayout.OnOffsetChangedListen
+ 
+         // Show burger menu on toolbar unless `use_material3` flag is on and the nav rail exists
+         // (the burger menu will show on the nav rail instead).
++        // N9 (Etesian): the system toolbar opens the roots instead, when it is showing.
+         boolean showBurgerMenuOnToolbar =
+-                !isUseMaterial3FlagEnabled()
+-                        || mActivity.findViewById(getRes(R.id.nav_rail_container_roots)) == null;
++                (!isUseMaterial3FlagEnabled()
++                        || mActivity.findViewById(getRes(R.id.nav_rail_container_roots)) == null)
++                && !EtesianToolbar.isAvailable(mActivity);
+         if (showBurgerMenuOnToolbar) {
+             mToolbar.setNavigationIcon(getActionBarIcon());
+             mToolbar.setNavigationContentDescription(getRes(R.string.drawer_open));
+diff --git a/src/com/android/documentsui/dirlist/DirectoryFragment.java b/src/com/android/documentsui/dirlist/DirectoryFragment.java
+index 689cb9ec6..28aba6b2c 100644
+--- a/src/com/android/documentsui/dirlist/DirectoryFragment.java
++++ b/src/com/android/documentsui/dirlist/DirectoryFragment.java
+@@ -168,6 +168,8 @@ import java.lang.annotation.RetentionPolicy;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.HashSet;
++import com.bompotis.etesian.fastscroll.EtesianFastScroller;
++
+ import java.util.List;
+ import java.util.Random;
+ import java.util.Set;
+@@ -246,6 +248,9 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+     private SwipeRefreshLayout mRefreshLayout;
+     private RecyclerView mRecView;
+     private GridEvenSpacingDecoration mGridEvenSpacingDecoration;
++    // N9 (Etesian): letter fast scroller and engraved rules with section letters.
++    private @Nullable EtesianFastScroller mEtesianFastScroller;
++    private @Nullable EtesianRuleDecoration mEtesianRuleDecoration;
+     private DocumentsAdapter mAdapter;
+     private DocumentClipper mClipper;
+     private GridLayoutManager mLayout;
+@@ -626,6 +631,30 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+         }
+     }
+ 
++    /**
++     * N9 (Etesian): the section of an adapter position, the first letter of the document's
++     * name, when the list is sorted by name; null otherwise (and for messages and dividers).
++     */
++    private @Nullable String etesianSectionFor(int position) {
++        if (mState == null || mAdapter == null || mModel == null
++                || mState.derivedMode != MODE_LIST
++                || mState.sortModel.getSortedDimensionId() != SortModel.SORT_DIMENSION_ID_TITLE
++                || position < 0 || position >= mAdapter.getItemCount()) {
++            return null;
++        }
++        final String modelId = mAdapter.getStableId(position);
++        if (modelId == null) {
++            return null;
++        }
++        final DocumentInfo doc = mModel.getDocument(modelId);
++        if (doc == null || TextUtils.isEmpty(doc.displayName)) {
++            return null;
++        }
++        final int first = doc.displayName.codePointAt(0);
++        return Character.isLetter(first)
++                ? new String(Character.toChars(Character.toUpperCase(first))) : "#";
++    }
++
+     @Override
+     public void onDestroyView() {
+         mInjector.actions.unregisterDisplayStateChangedListener(mOnDisplayStateChanged);
+@@ -665,6 +694,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+             mItemDecorationInvalidator = null;
+         }
+ 
++        if (mEtesianFastScroller != null) {
++            mEtesianFastScroller.detach();
++            mEtesianFastScroller = null;
++        }
++        if (mEtesianRuleDecoration != null) {
++            mRecView.removeItemDecoration(mEtesianRuleDecoration);
++            mEtesianRuleDecoration = null;
++        }
++
+         if (isSyncStateEnabled()) {
+             mInjector.networkMonitor.removeNetworkListener(mAdapter.getNetworkListener());
+         }
+@@ -736,6 +774,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+         }
+         mRecView.setLayoutManager(mLayout);
+ 
++        // N9 (Etesian): engraved rules with section letters, and the letter fast scroller.
++        mEtesianRuleDecoration = new EtesianRuleDecoration(getContext(),
++                this::etesianSectionFor, () -> mState.derivedMode == MODE_LIST);
++        mRecView.addItemDecoration(mEtesianRuleDecoration);
++        mEtesianFastScroller =
++                EtesianFastScroller.attach(mRecView, this::etesianSectionFor);
++        final EtesianFastScroller scroller = mEtesianFastScroller;
++        mEtesianRuleDecoration.setBandAlpha(scroller::bandAlpha);
++
+         mModel.addUpdateListener(mAdapter.getModelUpdateListener());
+         mModel.addUpdateListener(mModelUpdateListener);
+         if (isUseFileSummaryEnabled()) {
+diff --git a/src/com/android/documentsui/dirlist/GridDocumentHolder.java b/src/com/android/documentsui/dirlist/GridDocumentHolder.java
+index 01397fc86..dc808ee82 100644
+--- a/src/com/android/documentsui/dirlist/GridDocumentHolder.java
++++ b/src/com/android/documentsui/dirlist/GridDocumentHolder.java
+@@ -39,6 +39,7 @@ import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails;
+ 
+ import com.android.documentsui.ConfigStore;
+ import com.android.documentsui.DocumentsApplication;
++import com.android.documentsui.N9Squircle;
+ import com.android.documentsui.R;
+ import com.android.documentsui.base.DocumentInfo;
+ import com.android.documentsui.base.Events;
+@@ -124,6 +125,10 @@ final class GridDocumentHolder extends DocumentHolder {
+                                 itemView.findViewById(getRes(R.id.icon_check)));
+         mIconMimeLg = (ImageView) itemView.findViewById(getRes(R.id.icon_mime_lg));
+         mIconThumb = (ImageView) itemView.findViewById(getRes(R.id.icon_thumb));
++        // N9 look: the M3 grid icon tile / thumbnail is a Etesian squircle.
++        if (mIconWrapper != null) {
++            N9Squircle.tile(mIconWrapper, mIconThumb);
++        }
+         mIconBadge = (ImageView) itemView.findViewById(getRes(R.id.icon_profile_badge));
+         mPreviewIcon = itemView.findViewById(getRes(R.id.preview_icon));
+         mIconHelper = iconHelper;
+diff --git a/src/com/android/documentsui/dirlist/ListDocumentHolder.java b/src/com/android/documentsui/dirlist/ListDocumentHolder.java
+index 17067dffb..b96baf519 100644
+--- a/src/com/android/documentsui/dirlist/ListDocumentHolder.java
++++ b/src/com/android/documentsui/dirlist/ListDocumentHolder.java
+@@ -45,7 +45,10 @@ import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails;
+ 
+ import com.android.documentsui.ConfigStore;
+ import com.android.documentsui.DocumentsApplication;
++import com.android.documentsui.N9Squircle;
+ import com.android.documentsui.R;
++
++import com.google.android.material.card.MaterialCardView;
+ import com.android.documentsui.base.DocumentInfo;
+ import com.android.documentsui.base.Events;
+ import com.android.documentsui.base.Lookup;
+@@ -107,6 +110,10 @@ final class ListDocumentHolder extends DocumentHolder {
+         mIconLayout = itemView.findViewById(getRes(R.id.icon));
+         mIconMime = (ImageView) itemView.findViewById(getRes(R.id.icon_mime));
+         mIconThumb = (ImageView) itemView.findViewById(getRes(R.id.icon_thumb));
++        // N9 look: the file/folder icon tile and its thumbnail are a Etesian squircle.
++        if (mIconThumb.getParent() instanceof MaterialCardView) {
++            N9Squircle.tile((MaterialCardView) mIconThumb.getParent(), mIconThumb);
++        }
+         mIconCheck =
+                 (ImageView)
+                         conditionalView(
+@@ -402,7 +409,8 @@ final class ListDocumentHolder extends DocumentHolder {
+                         }
+ 
+                         hasDetails = !metadataList.isEmpty();
+-                        mMetadataView.setText(TextUtils.join(" • ", metadataList));
++                        // N9: "size | date" under the name.
++                        mMetadataView.setText(TextUtils.join(" | ", metadataList));
+                     } else {
+                         if (mDoc.lastModified > 0) {
+                             metadataList.add(Shared.formatTime(mContext, mDoc.lastModified));
+diff --git a/src/com/android/documentsui/files/FilesActivity.java b/src/com/android/documentsui/files/FilesActivity.java
+index 07cc2065d..dddc2f04c 100644
+--- a/src/com/android/documentsui/files/FilesActivity.java
++++ b/src/com/android/documentsui/files/FilesActivity.java
+@@ -439,6 +439,7 @@ public class FilesActivity extends BaseActivity implements AbstractActionHandler
+     public boolean onPrepareOptionsMenu(Menu menu) {
+         super.onPrepareOptionsMenu(menu);
+         mInjector.menuManager.updateOptionMenu(menu);
++        updateEtesianToolbar(menu);
+         return true;
+     }
+ 
+diff --git a/src/com/android/documentsui/picker/PickActivity.java b/src/com/android/documentsui/picker/PickActivity.java
+index f4fe0e475..534045643 100644
+--- a/src/com/android/documentsui/picker/PickActivity.java
++++ b/src/com/android/documentsui/picker/PickActivity.java
+@@ -500,6 +500,7 @@ public class PickActivity extends BaseActivity implements ActionHandler.Addons {
+     public boolean onPrepareOptionsMenu(Menu menu) {
+         super.onPrepareOptionsMenu(menu);
+         mInjector.menuManager.updateOptionMenu(menu);
++        updateEtesianToolbar(menu);
+ 
+         final DocumentInfo cwd = getCurrentDirectory();
+ 
+diff --git a/res/drawable/n9_toolbar_grid.xml b/res/drawable/n9_toolbar_grid.xml
+new file mode 100644
+index 000000000..2407f9375
+--- /dev/null
++++ b/res/drawable/n9_toolbar_grid.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2018 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M4,5v13h17L21,5L4,5zM14,7v3.5h-3L11,7h3zM6,7h3v3.5L6,10.5L6,7zM6,16v-3.5h3L9,16L6,16zM11,16v-3.5h3L14,16h-3zM19,16h-3v-3.5h3L19,16zM16,10.5L16,7h3v3.5h-3z"/>
++</vector>
+\ No newline at end of file
+diff --git a/res/drawable/n9_toolbar_list.xml b/res/drawable/n9_toolbar_list.xml
+new file mode 100644
+index 000000000..c6d62095f
+--- /dev/null
++++ b/res/drawable/n9_toolbar_list.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2018 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M3,5v14h17L20,5L3,5zM7,7v2L5,9L5,7h2zM5,13v-2h2v2L5,13zM5,15h2v2L5,17v-2zM18,17L9,17v-2h9v2zM18,13L9,13v-2h9v2zM18,9L9,9L9,7h9v2z"/>
++</vector>
+\ No newline at end of file
+diff --git a/res/drawable/n9_toolbar_locations.xml b/res/drawable/n9_toolbar_locations.xml
+new file mode 100644
+index 000000000..9857ff231
+--- /dev/null
++++ b/res/drawable/n9_toolbar_locations.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2018 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M3,18h18v-2H3V18zM3,13h18v-2H3V13zM3,6v2h18V6H3z"/>
++</vector>
+\ No newline at end of file
+diff --git a/res/drawable/n9_toolbar_new_folder.xml b/res/drawable/n9_toolbar_new_folder.xml
+new file mode 100644
+index 000000000..4746c2af7
+--- /dev/null
++++ b/res/drawable/n9_toolbar_new_folder.xml
+@@ -0,0 +1,28 @@
++<!--
++  ~ Copyright (C) 2019 The Android Open Source Project
++  ~
++  ~ Licensed under the Apache License, Version 2.0 (the "License");
++  ~ you may not use this file except in compliance with the License.
++  ~ You may obtain a copy of the License at
++  ~
++  ~      http://www.apache.org/licenses/LICENSE-2.0
++  ~
++  ~ Unless required by applicable law or agreed to in writing, software
++  ~ distributed under the License is distributed on an "AS IS" BASIS,
++  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  ~ See the License for the specific language governing permissions and
++  ~ limitations under the License.
++  -->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24.0"
++    android:viewportHeight="24.0"
++>
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M12 12h2v-2h2v2h2v2h-2v2h-2v-2h-2v-2zm10-4v10c0 1.1-0.9 2-2 2H4c-1.1 0-2-0.9-2-2l0.01-12c0-1.1 0.89 -2 1.99-2h6l2 2h8c1.1 0 2 0.9 2 2zm-2 0H4v10h16V8z" />
++    <path
++        android:pathData="M0 0h24v24H0V0z" />
++</vector>
+\ No newline at end of file
+diff --git a/res/drawable/n9_toolbar_search.xml b/res/drawable/n9_toolbar_search.xml
+new file mode 100644
+index 000000000..220ac0d5b
+--- /dev/null
++++ b/res/drawable/n9_toolbar_search.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2018 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z"/>
++</vector>
+\ No newline at end of file
+diff --git a/res/drawable/n9_toolbar_sort.xml b/res/drawable/n9_toolbar_sort.xml
+new file mode 100644
+index 000000000..cae15145e
+--- /dev/null
++++ b/res/drawable/n9_toolbar_sort.xml
+@@ -0,0 +1,26 @@
++<!--
++  ~ Copyright (C) 2019 The Android Open Source Project
++  ~
++  ~ Licensed under the Apache License, Version 2.0 (the "License");
++  ~ you may not use this file except in compliance with the License.
++  ~ You may obtain a copy of the License at
++  ~
++  ~      http://www.apache.org/licenses/LICENSE-2.0
++  ~
++  ~ Unless required by applicable law or agreed to in writing, software
++  ~ distributed under the License is distributed on an "AS IS" BASIS,
++  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  ~ See the License for the specific language governing permissions and
++  ~ limitations under the License.
++  -->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24.0"
++        android:viewportHeight="24.0"
++>
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M3,18h6v-2L3,16v2zM3,6v2h18L21,6L3,6zM3,13h12v-2L3,11v2z"/>
++</vector>
+\ No newline at end of file
+diff --git a/res/flag(com.android.documentsui.flags.use_material3)/drawable/n9_search_pill.xml b/res/flag(com.android.documentsui.flags.use_material3)/drawable/n9_search_pill.xml
+new file mode 100644
+index 000000000..6b6bd266b
+--- /dev/null
++++ b/res/flag(com.android.documentsui.flags.use_material3)/drawable/n9_search_pill.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2026 The LineageOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<!-- N9 (Etesian): the rounded grey search pill. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <corners android:radius="@dimen/n9_search_pill_radius" />
++    <solid android:color="@color/n9_search_pill" />
++    <stroke android:width="1dp" android:color="@color/n9_separator" />
++</shape>
+diff --git a/src/com/android/documentsui/N9Squircle.java b/src/com/android/documentsui/N9Squircle.java
+new file mode 100644
+index 000000000..47ffcf875
+--- /dev/null
++++ b/src/com/android/documentsui/N9Squircle.java
+@@ -0,0 +1,276 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.documentsui;
++
++import android.graphics.Bitmap;
++import android.graphics.BitmapShader;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.Matrix;
++import android.graphics.Outline;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.Shader;
++import android.graphics.Color;
++import android.graphics.drawable.Drawable;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.ViewOutlineProvider;
++import android.widget.ImageView;
++
++import com.google.android.material.card.MaterialCardView;
++import com.google.android.material.imageview.ShapeableImageView;
++import com.google.android.material.shape.ShapeAppearanceModel;
++
++/**
++ * N9 look: every thumb-sized image (avatars, icons, thumbnails) is a Etesian squircle, never a
++ * circle or a rounded rectangle. Shape is the AOSP squircle on a 100x100 box.
++ */
++public final class N9Squircle {
++    // "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++    private static final Path UNIT = new Path();
++    static {
++        // Superellipse |x|^n + |y|^n = 1 with n = 2.8: the N9 icon shape, measured from the
++        // N9's own icons. (n = 4 or more reads as a rounded square.)
++        final double n = 2.8;
++        final int steps = 96;
++        for (int i = 0; i < steps; i++) {
++            final double t = 2 * Math.PI * i / steps;
++            final double c = Math.cos(t), s = Math.sin(t);
++            final float x = (float) (50 + 50 * Math.signum(c) * Math.pow(Math.abs(c), 2 / n));
++            final float y = (float) (50 + 50 * Math.signum(s) * Math.pow(Math.abs(s), 2 / n));
++            if (i == 0) UNIT.moveTo(x, y); else UNIT.lineTo(x, y);
++        }
++        UNIT.close();
++    }
++
++    private N9Squircle() {}
++
++    /** Writes the squircle filling the given box into {@code out}. */
++    public static Path path(float left, float top, float right, float bottom, Path out) {
++        final Matrix m = new Matrix();
++        m.setScale((right - left) / 100f, (bottom - top) / 100f);
++        m.postTranslate(left, top);
++        out.reset();
++        UNIT.transform(m, out);
++        return out;
++    }
++
++    /** The squircle filling the given box. */
++    public static Path path(float left, float top, float right, float bottom) {
++        return path(left, top, right, bottom, new Path());
++    }
++
++    /** The largest squircle centred in {@code bounds}. */
++    public static Path centered(Rect bounds) {
++        final float half = Math.min(bounds.width(), bounds.height()) / 2f;
++        return path(bounds.exactCenterX() - half, bounds.exactCenterY() - half,
++                bounds.exactCenterX() + half, bounds.exactCenterY() + half);
++    }
++
++    /** Draws a squircle centred in {@code bounds} with {@code paint}. */
++    public static void draw(Canvas canvas, Rect bounds, Paint paint) {
++        canvas.drawPath(centered(bounds), paint);
++    }
++
++    /** Outline provider that clips a view to a squircle filling its bounds. */
++    public static final ViewOutlineProvider OUTLINE = new ViewOutlineProvider() {
++        @Override
++        public void getOutline(View view, Outline outline) {
++            final int w = view.getWidth(), h = view.getHeight();
++            if (w <= 0 || h <= 0) {
++                return;
++            }
++            outline.setPath(path(0, 0, w, h));
++        }
++    };
++
++    /** Clips {@code view} (and its content) to a squircle. */
++    public static void clip(View view) {
++        view.setOutlineProvider(OUTLINE);
++        view.setClipToOutline(true);
++    }
++
++    /** Returns {@code src} center-cropped to a {@code w}x{@code h} squircle bitmap. */
++    public static Bitmap bitmap(Bitmap src, int w, int h) {
++        if (src == null) {
++            return null;
++        }
++        final Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
++        final Drawable d = new BitmapDrawable(src);
++        d.setBounds(0, 0, w, h);
++        d.draw(new Canvas(out));
++        return out;
++    }
++
++    /** A bitmap drawable, center-cropped and clipped to a squircle (replaces circular ones). */
++    public static final class BitmapDrawable extends Drawable {
++        private final Bitmap mBitmap;
++        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
++        private final Matrix mMatrix = new Matrix();
++        private Path mPath = new Path();
++
++        public BitmapDrawable(Bitmap bitmap) {
++            mBitmap = bitmap;
++            mPaint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP,
++                    Shader.TileMode.CLAMP));
++        }
++
++        public Bitmap getBitmap() {
++            return mBitmap;
++        }
++
++        @Override
++        protected void onBoundsChange(Rect bounds) {
++            mPath = centered(bounds);
++            final float side = Math.min(bounds.width(), bounds.height());
++            final float scale = side / Math.min(mBitmap.getWidth(), mBitmap.getHeight());
++            mMatrix.setScale(scale, scale);
++            mMatrix.postTranslate(bounds.exactCenterX() - mBitmap.getWidth() * scale / 2f,
++                    bounds.exactCenterY() - mBitmap.getHeight() * scale / 2f);
++            mPaint.getShader().setLocalMatrix(mMatrix);
++        }
++
++        @Override
++        public void draw(Canvas canvas) {
++            canvas.drawPath(mPath, mPaint);
++        }
++
++        @Override
++        public void getOutline(Outline outline) {
++            outline.setPath(mPath);
++        }
++
++        @Override
++        public int getIntrinsicWidth() {
++            return mBitmap.getWidth();
++        }
++
++        @Override
++        public int getIntrinsicHeight() {
++            return mBitmap.getHeight();
++        }
++
++        @Override
++        public void setAlpha(int alpha) {
++            mPaint.setAlpha(alpha);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getAlpha() {
++            return mPaint.getAlpha();
++        }
++
++        @Override
++        public void setColorFilter(ColorFilter cf) {
++            mPaint.setColorFilter(cf);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getOpacity() {
++            return PixelFormat.TRANSLUCENT;
++        }
++    }
++
++    /**
++     * Turns a MaterialCardView icon tile (rounded rect, fill + hairline stroke) into a squircle
++     * tile: the card's own shape is flattened, a squircle fill/stroke is drawn behind its
++     * children, and the card (thumbnail included) is clipped to the squircle.
++     */
++    public static void tile(MaterialCardView card, ImageView thumb) {
++        if (card == null) {
++            return;
++        }
++        final int fill = card.getCardBackgroundColor().getDefaultColor();
++        final int stroke = card.getStrokeColor();
++        final int strokeWidth = card.getStrokeWidth();
++        card.setCardBackgroundColor(Color.TRANSPARENT);
++        card.setStrokeWidth(0);
++        card.setRadius(0);
++        final View bg = new View(card.getContext());
++        bg.setBackground(new Tile(fill, stroke, strokeWidth));
++        bg.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
++        card.addView(bg, 0, new ViewGroup.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
++        clip(card);
++        if (thumb instanceof ShapeableImageView) {
++            // The squircle clip shapes the thumbnail; drop its own rounded corners.
++            ((ShapeableImageView) thumb).setShapeAppearanceModel(
++                    ShapeAppearanceModel.builder().build());
++        }
++    }
++
++    /** A squircle filled with a colour and edged with a hairline. */
++    public static final class Tile extends Drawable {
++        private final Paint mFill = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final Paint mStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final float mStrokeWidth;
++        private Path mFillPath = new Path();
++        private Path mStrokePath = new Path();
++
++        public Tile(int fillColor, int strokeColor, float strokeWidth) {
++            mFill.setColor(fillColor);
++            mStroke.setColor(strokeColor);
++            mStroke.setStyle(Paint.Style.STROKE);
++            mStroke.setStrokeWidth(strokeWidth);
++            mStrokeWidth = strokeWidth;
++        }
++
++        @Override
++        protected void onBoundsChange(Rect b) {
++            mFillPath = path(b.left, b.top, b.right, b.bottom);
++            final float i = mStrokeWidth / 2f;
++            mStrokePath = path(b.left + i, b.top + i, b.right - i, b.bottom - i);
++        }
++
++        @Override
++        public void draw(Canvas canvas) {
++            canvas.drawPath(mFillPath, mFill);
++            if (mStrokeWidth > 0) {
++                canvas.drawPath(mStrokePath, mStroke);
++            }
++        }
++
++        @Override
++        public void getOutline(Outline outline) {
++            outline.setPath(mFillPath);
++        }
++
++        @Override
++        public void setAlpha(int alpha) {
++            mFill.setAlpha(alpha);
++            mStroke.setAlpha(alpha);
++            invalidateSelf();
++        }
++
++        @Override
++        public void setColorFilter(ColorFilter cf) {
++            mFill.setColorFilter(cf);
++            mStroke.setColorFilter(cf);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getOpacity() {
++            return PixelFormat.TRANSLUCENT;
++        }
++    }
++}
+diff --git a/src/com/android/documentsui/dirlist/EtesianRuleDecoration.java b/src/com/android/documentsui/dirlist/EtesianRuleDecoration.java
+new file mode 100644
+index 000000000..339ba1b01
+--- /dev/null
++++ b/src/com/android/documentsui/dirlist/EtesianRuleDecoration.java
+@@ -0,0 +1,121 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.documentsui.dirlist;
++
++import android.content.Context;
++import android.graphics.Canvas;
++import android.graphics.Paint;
++import android.graphics.Typeface;
++import android.util.TypedValue;
++import android.view.View;
++
++import androidx.recyclerview.widget.RecyclerView;
++
++import com.android.documentsui.R;
++
++import com.bompotis.etesian.fastscroll.EtesianFastScroller;
++
++import java.util.Objects;
++import java.util.function.BooleanSupplier;
++
++/**
++ * N9 (Etesian) list look: a thin engraved rule (grey line over a white line) under each
++ * document row, and the section letter small, grey and bold at the right where a new letter
++ * starts (when the list is sorted by name).
++ */
++final class EtesianRuleDecoration extends RecyclerView.ItemDecoration {
++
++    private final EtesianFastScroller.SectionProvider mSections;
++    private final BooleanSupplier mIsListMode;
++    private final Paint mRulePaint = new Paint();
++    private final Paint mHighlightPaint = new Paint();
++    private final Paint mLetterPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final int mInsetStart;
++    private final int mInsetEnd;
++    private final float mLetterGap;
++    /** The fast scroller's band (0..1): our letters fade out under it, it shows its own. */
++    private java.util.function.DoubleSupplier mBandAlpha = () -> 0;
++
++    /**
++     * @param sections section letter of an adapter position (null for none)
++     * @param isListMode whether the list (not grid) layout is showing
++     */
++    EtesianRuleDecoration(Context context, EtesianFastScroller.SectionProvider sections,
++            BooleanSupplier isListMode) {
++        mSections = sections;
++        mIsListMode = isListMode;
++        final float density = context.getResources().getDisplayMetrics().density;
++        mRulePaint.setColor(context.getColor(R.color.n9_separator));
++        mHighlightPaint.setColor(context.getColor(R.color.n9_rule_highlight));
++        mLetterPaint.setColor(context.getColor(R.color.n9_section_letter));
++        mLetterPaint.setTextAlign(Paint.Align.RIGHT);
++        mLetterPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 13,
++                context.getResources().getDisplayMetrics()));
++        mLetterPaint.setTypeface(Typeface.create(
++                Typeface.create("etesian-text", Typeface.NORMAL), 700, false));
++        mInsetStart = Math.round(16 * density);
++        mInsetEnd = Math.round(16 * density);
++        mLetterGap = 3 * density;
++    }
++
++    void setBandAlpha(java.util.function.DoubleSupplier bandAlpha) {
++        mBandAlpha = bandAlpha;
++    }
++
++    @Override
++    public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
++        if (!mIsListMode.getAsBoolean()) {
++            return;
++        }
++        final RecyclerView.Adapter<?> adapter = parent.getAdapter();
++        if (adapter == null) {
++            return;
++        }
++        final boolean rtl = parent.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
++        final int left = parent.getPaddingLeft() + (rtl ? mInsetEnd : mInsetStart);
++        final int right = parent.getWidth() - parent.getPaddingRight()
++                - (rtl ? mInsetStart : mInsetEnd);
++        mLetterPaint.setTextAlign(rtl ? Paint.Align.LEFT : Paint.Align.RIGHT);
++        mLetterPaint.setAlpha((int) (255 * (1 - Math.min(1, mBandAlpha.getAsDouble()))));
++
++        final int count = parent.getChildCount();
++        for (int i = 0; i < count; i++) {
++            final View child = parent.getChildAt(i);
++            final int position = parent.getChildAdapterPosition(child);
++            if (position == RecyclerView.NO_POSITION) {
++                continue;
++            }
++            if (!(parent.getChildViewHolder(child) instanceof ListDocumentHolder)) {
++                continue;
++            }
++            final int bottom = Math.round(child.getY()) + child.getHeight();
++            final int top = Math.round(child.getY());
++
++            // Engraved rule: grey line with a white line under it.
++            c.drawRect(left, bottom - 2, right, bottom - 1, mRulePaint);
++            c.drawRect(left, bottom - 1, right, bottom, mHighlightPaint);
++
++            // Section letter where a new letter starts, sitting just under the rule above.
++            final String section = mSections.sectionFor(position);
++            if (section != null && (position == 0
++                    || !Objects.equals(section, mSections.sectionFor(position - 1)))) {
++                final float baseline = top - mLetterPaint.ascent() + mLetterGap;
++                c.drawText(section, rtl ? left : right, baseline, mLetterPaint);
++            }
++        }
++    }
++}

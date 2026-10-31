@@ -1,0 +1,1156 @@
+diff --git a/app/Android.bp b/app/Android.bp
+index eb61716..9cf87e3 100644
+--- a/app/Android.bp
++++ b/app/Android.bp
+@@ -78,6 +78,7 @@ android_app {
+         "Glimpse_io.github.panpf.zoomimage_zoomimage-core-android",
+         "Glimpse_io.github.panpf.zoomimage_zoomimage-view-glide",
+         "kotlin-stdlib",
++        "etesian-toolbar",
+     ],
+ 
+     optimize: {
+diff --git a/app/src/main/java/org/lineageos/glimpse/GlimpseApplication.kt b/app/src/main/java/org/lineageos/glimpse/GlimpseApplication.kt
+index 6ec663f..76919ef 100644
+--- a/app/src/main/java/org/lineageos/glimpse/GlimpseApplication.kt
++++ b/app/src/main/java/org/lineageos/glimpse/GlimpseApplication.kt
+@@ -6,7 +6,6 @@
+ package org.lineageos.glimpse
+ 
+ import android.app.Application
+-import com.google.android.material.color.DynamicColors
+ import org.lineageos.glimpse.repository.MediaRepository
+ 
+ class GlimpseApplication : Application() {
+@@ -15,7 +14,6 @@ class GlimpseApplication : Application() {
+     override fun onCreate() {
+         super.onCreate()
+ 
+-        // Observe dynamic colors changes
+-        DynamicColors.applyToActivitiesIfAvailable(this)
++        // N9 look: no Material You dynamic colors, static palette from themes.xml
+     }
+ }
+diff --git a/app/src/main/java/org/lineageos/glimpse/MainActivity.kt b/app/src/main/java/org/lineageos/glimpse/MainActivity.kt
+index e1feb1a..26a0bb3 100644
+--- a/app/src/main/java/org/lineageos/glimpse/MainActivity.kt
++++ b/app/src/main/java/org/lineageos/glimpse/MainActivity.kt
+@@ -5,7 +5,9 @@
+ 
+ package org.lineageos.glimpse
+ 
++import android.graphics.Color
+ import android.os.Bundle
++import androidx.activity.SystemBarStyle
+ import androidx.activity.enableEdgeToEdge
+ import androidx.appcompat.app.AppCompatActivity
+ 
+@@ -14,6 +16,10 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
+         super.onCreate(savedInstanceState)
+ 
+         // Enable edge-to-edge
+-        enableEdgeToEdge()
++        // N9: the gallery is always black, so always light system bar icons
++        enableEdgeToEdge(
++            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
++            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
++        )
+     }
+ }
+diff --git a/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt b/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
+index 599b59b..70b2faa 100644
+--- a/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
++++ b/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
+@@ -33,9 +33,11 @@ import androidx.viewpager2.widget.ViewPager2
+ import com.google.android.material.appbar.AppBarLayout
+ import com.google.android.material.appbar.MaterialToolbar
+ import com.google.android.material.button.MaterialButton
++import com.google.android.material.dialog.MaterialAlertDialogBuilder
+ import kotlinx.coroutines.coroutineScope
+ import kotlinx.coroutines.flow.collectLatest
+ import kotlinx.coroutines.launch
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.glimpse.datasources.MediaError
+ import org.lineageos.glimpse.ext.buildEditIntent
+ import org.lineageos.glimpse.ext.buildShareIntent
+@@ -43,7 +45,6 @@ import org.lineageos.glimpse.ext.buildUseAsIntent
+ import org.lineageos.glimpse.ext.createDeleteRequest
+ import org.lineageos.glimpse.ext.createFavoriteRequest
+ import org.lineageos.glimpse.ext.createTrashRequest
+-import org.lineageos.glimpse.ext.fade
+ import org.lineageos.glimpse.ext.setBarsVisibility
+ import org.lineageos.glimpse.models.Album
+ import org.lineageos.glimpse.models.AlbumType
+@@ -70,16 +71,15 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+     private val intentsViewModel by viewModels<IntentsViewModel>()
+ 
+     // Views
+-    private val adjustButton by lazy { findViewById<MaterialButton>(R.id.adjustButton) }
++    private val backButton by lazy { findViewById<MaterialButton>(R.id.backButton) }
+     private val appBarLayout by lazy { findViewById<AppBarLayout>(R.id.appBarLayout) }
+     private val bottomSheetLinearLayout by lazy { findViewById<LinearLayout>(R.id.bottomSheetLinearLayout) }
+     private val deleteButton by lazy { findViewById<MaterialButton>(R.id.deleteButton) }
+     private val favoriteButton by lazy { findViewById<MaterialButton>(R.id.favoriteButton) }
+-    private val infoButton by lazy { toolbar.menu.findItem(R.id.info) }
++    private val menuButton by lazy { findViewById<MaterialButton>(R.id.menuButton) }
+     private val motionPhotoToggleButton by lazy { findViewById<MaterialButton>(R.id.motionPhotoToggleButton) }
+     private val shareButton by lazy { findViewById<MaterialButton>(R.id.shareButton) }
+     private val toolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
+-    private val useAsButton by lazy { toolbar.menu.findItem(R.id.useAs) }
+     private val viewPager by lazy { findViewById<ViewPager2>(R.id.viewPager) }
+ 
+     // System services
+@@ -87,6 +87,9 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+ 
+     private var lastVideoUriPlayed: Uri? = null
+ 
++    // Whether the system N9 toolbar shows our buttons instead of bottomSheetLinearLayout
++    private var useSystemToolbar = false
++
+     // Adapter
+     private val mediaViewerAdapter by lazy {
+         MediaViewerAdapter(
+@@ -183,6 +186,11 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+         // Enable edge-to-edge
+         enableEdgeToEdge()
+ 
++        // N9: a photo opens full screen, a tap shows the bars
++        if (savedInstanceState == null) {
++            viewModel.setFullscreenMode(true)
++        }
++
+         // We only want to show this activity on top of the keyguard if we're being launched with
+         // the ACTION_REVIEW_SECURE intent and the system is currently locked.
+         if (keyguardManager.isKeyguardLocked && intent.action == MediaStore.ACTION_REVIEW_SECURE) {
+@@ -213,33 +221,12 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+         // Attach the adapter to the view pager
+         viewPager.adapter = mediaViewerAdapter
+ 
+-        toolbar.setOnMenuItemClickListener { menuItem ->
+-            when (menuItem.itemId) {
+-                R.id.info -> {
+-                    viewModel.displayedMedia.value?.let {
+-                        MediaInfoBottomSheetDialog(
+-                            this@ViewActivity,
+-                            it,
+-                            mediaInfoBottomSheetDialogCallbacks,
+-                            viewModel.secure.value,
+-                        ).show()
+-                    }
+-                    true
+-                }
+-
+-                R.id.useAs -> {
+-                    viewModel.displayedMedia.value?.let {
+-                        startActivity(Intent.createChooser(buildUseAsIntent(it), null))
+-                    }
+-                    true
+-                }
+-
+-                else -> false
+-            }
++        backButton.setOnClickListener {
++            finish()
+         }
+ 
+-        toolbar.setNavigationOnClickListener {
+-            finish()
++        menuButton.setOnClickListener {
++            openMenu()
+         }
+ 
+         favoriteButton.setOnClickListener {
+@@ -265,19 +252,6 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+             }
+         }
+ 
+-        adjustButton.setOnClickListener {
+-            viewModel.displayedMedia.value?.let {
+-                dismissKeyguardAndRun {
+-                    startActivity(
+-                        Intent.createChooser(
+-                            buildEditIntent(it),
+-                            null
+-                        )
+-                    )
+-                }
+-            }
+-        }
+-
+         deleteButton.setOnClickListener {
+             viewModel.displayedMedia.value?.let {
+                 dismissKeyguardAndRun {
+@@ -320,6 +294,10 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+     override fun onResume() {
+         super.onResume()
+ 
++        useSystemToolbar = EtesianToolbar.isAvailable(this)
++        bottomSheetLinearLayout.isVisible = !useSystemToolbar
++        updateSystemToolbar()
++
+         viewModel.play()
+     }
+ 
+@@ -420,8 +398,8 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+ 
+             launch {
+                 viewModel.fullscreenMode.collectLatest { fullscreenMode ->
+-                    appBarLayout.fade(!fullscreenMode)
+-                    bottomSheetLinearLayout.fade(!fullscreenMode)
++                    slideBars(!fullscreenMode)
++                    updateSystemToolbar()
+ 
+                     window.setBarsVisibility(systemBars = !fullscreenMode)
+ 
+@@ -436,8 +414,10 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+                 viewModel.displayedMedia.collectLatest { displayedMedia ->
+                     // Update date and time text
+                     displayedMedia?.also {
+-                        toolbar.title = dateFormatter.format(it.dateModified)
+-                        toolbar.subtitle = timeFormatter.format(it.dateModified)
++                        toolbar.title = it.displayName ?: ""
++                        toolbar.subtitle = "${dateFormatter.format(it.dateModified)} ${
++                            timeFormatter.format(it.dateModified)
++                        }"
+                     } ?: run {
+                         toolbar.title = ""
+                         toolbar.subtitle = ""
+@@ -453,8 +433,6 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+                         }
+                     )
+ 
+-                    // Update info button
+-                    infoButton.isVisible = displayedMedia != null
+ 
+                     // Update delete button
+                     val isTrashed = displayedMedia?.isTrashed ?: false
+@@ -474,6 +452,8 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+ 
+                     // Reset motion photo toggle button
+                     viewModel.toggleMotionPhotoEnabled(false)
++
++                    updateSystemToolbar()
+                 }
+             }
+ 
+@@ -505,10 +485,8 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+             }
+ 
+             launch {
+-                viewModel.secure.collectLatest { secure ->
+-                    // Update use as button
+-                    useAsButton.isVisible = !secure
+-                }
++                // Keep it up to date for the menu (use as) and the info dialog
++                viewModel.secure.collect { }
+             }
+ 
+             launch {
+@@ -516,11 +494,10 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+                     // Update favorite button
+                     favoriteButton.isVisible = !readOnly
+ 
+-                    // Update adjust button
+-                    adjustButton.isVisible = !readOnly
+-
+                     // Update delete button
+                     deleteButton.isVisible = !readOnly
++
++                    updateSystemToolbar()
+                 }
+             }
+         }
+@@ -567,6 +544,151 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+         )
+     }
+ 
++    /**
++     * N9: the bars slide in over the photo from the top and bottom edges.
++     */
++    private fun slideBars(visible: Boolean) {
++        listOf(appBarLayout to -1, bottomSheetLinearLayout to 1).forEach { (bar, direction) ->
++            bar.animate().cancel()
++            if (visible) {
++                bar.isVisible = bar !== bottomSheetLinearLayout || !useSystemToolbar
++                if (bar.height > 0 && bar.translationY == 0f) {
++                    bar.translationY = (direction * bar.height).toFloat()
++                }
++                bar.animate()
++                    .translationY(0f)
++                    .setDuration(BARS_ANIMATION_DURATION)
++                    .start()
++            } else if (bar.height == 0) {
++                // Not laid out yet (opening full screen): just hide it
++                bar.isVisible = false
++            } else {
++                bar.animate()
++                    .translationY((direction * bar.height).toFloat())
++                    .setDuration(BARS_ANIMATION_DURATION)
++                    .withEndAction { bar.isVisible = false }
++                    .start()
++            }
++        }
++    }
++
++    /**
++     * Back, Favourite, Share, Delete and Menu on the system N9 toolbar while the bars are shown.
++     */
++    private fun updateSystemToolbar() {
++        if (!useSystemToolbar) {
++            return
++        }
++
++        val systemToolbar = EtesianToolbar.of(this)
++        if (viewModel.fullscreenMode.value) {
++            systemToolbar.clear()
++            return
++        }
++
++        val media = viewModel.displayedMedia.value
++        val readOnly = viewModel.readOnly.value
++        val isFavorite = media?.isFavorite ?: false
++        val isTrashed = media?.isTrashed ?: false
++
++        val items = buildList {
++            if (!readOnly) {
++                add(
++                    EtesianToolbar.Item.action(
++                        TOOLBAR_FAVORITE,
++                        if (isFavorite) R.drawable.ic_star else R.drawable.ic_star_border,
++                        getString(
++                            when (isFavorite) {
++                                true -> R.string.file_action_remove_from_favorites
++                                false -> R.string.file_action_add_to_favorites
++                            }
++                        ),
++                    )
++                )
++            }
++            add(
++                EtesianToolbar.Item.action(
++                    TOOLBAR_SHARE, R.drawable.ic_share, getString(R.string.file_action_share)
++                )
++            )
++            if (!readOnly) {
++                add(
++                    EtesianToolbar.Item.action(
++                        TOOLBAR_DELETE,
++                        if (isTrashed) R.drawable.ic_restore_from_trash else R.drawable.ic_delete,
++                        getString(
++                            when (isTrashed) {
++                                true -> R.string.file_action_restore_from_trash
++                                false -> R.string.file_action_move_to_trash
++                            }
++                        ),
++                    )
++                )
++            }
++            add(
++                EtesianToolbar.Item.action(
++                    TOOLBAR_MENU, R.drawable.ic_menu, getString(R.string.n9_menu)
++                )
++            )
++        }
++
++        systemToolbar
++            .setStyle(EtesianToolbar.STYLE_DARK)
++            .setBack(true)
++            .setItems(items) { id ->
++                when (id) {
++                    TOOLBAR_FAVORITE -> favoriteButton.performClick()
++                    TOOLBAR_SHARE -> shareButton.performClick()
++                    TOOLBAR_DELETE -> deleteButton.performClick()
++                    TOOLBAR_MENU -> openMenu()
++                }
++            }
++    }
++
++    /**
++     * The viewer's other actions (edit, use as, motion photo, info).
++     */
++    private fun openMenu() {
++        val media = viewModel.displayedMedia.value ?: return
++
++        val actions = buildList<Pair<Int, () -> Unit>> {
++            if (!viewModel.readOnly.value) {
++                add(R.string.file_action_edit to {
++                    dismissKeyguardAndRun {
++                        startActivity(Intent.createChooser(buildEditIntent(media), null))
++                    }
++                })
++            }
++            if (!viewModel.secure.value) {
++                add(R.string.file_action_use_as to {
++                    startActivity(Intent.createChooser(buildUseAsIntent(media), null))
++                })
++            }
++            if (motionPhotoToggleButton.isVisible) {
++                add(
++                    when (motionPhotoToggleButton.isSelected) {
++                        true -> R.string.motion_photo_show_photo
++                        false -> R.string.motion_photo_show_video
++                    } to { viewModel.toggleMotionPhotoEnabled() }
++                )
++            }
++            add(R.string.file_action_information to {
++                MediaInfoBottomSheetDialog(
++                    this@ViewActivity,
++                    media,
++                    mediaInfoBottomSheetDialogCallbacks,
++                    viewModel.secure.value,
++                ).show()
++            })
++        }
++
++        MaterialAlertDialogBuilder(this)
++            .setItems(actions.map { getString(it.first) }.toTypedArray()) { _, which ->
++                actions[which].second()
++            }
++            .show()
++    }
++
+     private fun updateSheetsHeight() {
+         appBarLayout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+         bottomSheetLinearLayout.measure(
+@@ -599,6 +721,13 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+     companion object {
+         private val LOG_TAG = ViewActivity::class.simpleName!!
+ 
++        private const val BARS_ANIMATION_DURATION = 200L
++
++        private const val TOOLBAR_FAVORITE = "favorite"
++        private const val TOOLBAR_SHARE = "share"
++        private const val TOOLBAR_DELETE = "delete"
++        private const val TOOLBAR_MENU = "menu"
++
+         private val dateFormatter = SimpleDateFormat.getDateInstance()
+         private val timeFormatter = SimpleDateFormat.getTimeInstance()
+ 
+diff --git a/app/src/main/java/org/lineageos/glimpse/fragments/AlbumFragment.kt b/app/src/main/java/org/lineageos/glimpse/fragments/AlbumFragment.kt
+index 9552773..6a63b99 100644
+--- a/app/src/main/java/org/lineageos/glimpse/fragments/AlbumFragment.kt
++++ b/app/src/main/java/org/lineageos/glimpse/fragments/AlbumFragment.kt
+@@ -47,6 +47,7 @@ import com.google.android.material.shape.MaterialShapeDrawable
+ import kotlinx.coroutines.coroutineScope
+ import kotlinx.coroutines.flow.collectLatest
+ import kotlinx.coroutines.launch
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.glimpse.R
+ import org.lineageos.glimpse.ViewActivity
+ import org.lineageos.glimpse.datasources.MediaError
+@@ -382,6 +383,17 @@ class AlbumFragment : Fragment(R.layout.fragment_album) {
+         }
+     }
+ 
++    override fun onResume() {
++        super.onResume()
++
++        // Sub-screen (an album's contents): only Back on the system N9 toolbar
++        if (!hideToolbar && EtesianToolbar.isAvailable(requireContext())) {
++            EtesianToolbar.of(requireActivity())
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setBack(true).setItems(listOf()) { }
++        }
++    }
++
+     override fun onDestroyView() {
+         // Clear action mode if still active
+         endSelectionMode()
+diff --git a/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt b/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
+index 390b284..e4c6978 100644
+--- a/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
++++ b/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
+@@ -8,6 +8,7 @@ package org.lineageos.glimpse.fragments
+ import android.content.Intent
+ import android.os.Bundle
+ import android.view.View
++import androidx.core.view.isVisible
+ import androidx.fragment.app.Fragment
+ import androidx.navigation.fragment.findNavController
+ import androidx.navigation.ui.setupWithNavController
+@@ -16,6 +17,7 @@ import androidx.viewpager2.widget.ViewPager2
+ import com.google.android.material.appbar.MaterialToolbar
+ import com.google.android.material.button.MaterialButton
+ import com.google.android.material.navigation.NavigationBarView
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.glimpse.R
+ import org.lineageos.glimpse.SettingsActivity
+ import org.lineageos.glimpse.ext.getViewProperty
+@@ -34,6 +36,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
+                 super.onPageSelected(position)
+ 
+                 navigationBarView.menu.getItem(position).isChecked = true
++                updateSystemToolbar()
+             }
+         }
+     }
+@@ -44,9 +47,11 @@ class MainFragment : Fragment(R.layout.fragment_main) {
+         // Toolbar
+         toolbar.setupWithNavController(findNavController())
+ 
++        // N9: no title bar on the gallery, the app bar only pads the status bar
++        toolbar.isVisible = false
++
+         settingsMaterialButton.setOnClickListener {
+-            val intent = Intent(context, SettingsActivity::class.java)
+-            startActivity(intent)
++            openSettings()
+         }
+ 
+         // ViewPager2
+@@ -70,16 +75,74 @@ class MainFragment : Fragment(R.layout.fragment_main) {
+                     false
+                 }
+ 
+-                R.id.libraryFragment -> {
++                R.id.favoritesFragment -> {
+                     viewPager2.currentItem = 2
+                     true
+                 }
+ 
++                R.id.libraryFragment -> {
++                    viewPager2.currentItem = 3
++                    true
++                }
++
++                R.id.settingsMenuItem -> {
++                    openSettings()
++                    false
++                }
++
+                 else -> false
+             }
+         }
+     }
+ 
++    override fun onResume() {
++        super.onResume()
++
++        // With the system N9 toolbar on, the tabs go there instead of our own bar
++        val useSystemToolbar = EtesianToolbar.isAvailable(requireContext())
++        navigationBarView.isVisible = !useSystemToolbar
++        updateSystemToolbar()
++    }
++
++    private fun openSettings() {
++        startActivity(Intent(context, SettingsActivity::class.java))
++    }
++
++    /**
++     * Publish the main tabs to the system N9 toolbar (no Back on the main screen).
++     */
++    private fun updateSystemToolbar() {
++        if (!isResumed || !EtesianToolbar.isAvailable(requireContext())) {
++            return
++        }
++
++        val selected = viewPager2.currentItem
++        fun tab(position: Int, icon: Int, label: Int) = EtesianToolbar.Item.tab(
++            position.toString(), icon, getString(label), position == selected
++        )
++
++        EtesianToolbar.of(requireActivity())
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setBack(false).setItems(
++            listOf(
++                tab(0, R.drawable.ic_photo_size_select_actual, R.string.reels_title),
++                tab(1, R.drawable.ic_albums, R.string.albums_title),
++                tab(2, R.drawable.ic_star, R.string.album_favorites),
++                tab(3, R.drawable.ic_library, R.string.library_title),
++                EtesianToolbar.Item.action(
++                    SYSTEM_TOOLBAR_MENU, R.drawable.ic_menu,
++                    getString(R.string.title_activity_settings)
++                ),
++            )
++        ) { id ->
++            if (id == SYSTEM_TOOLBAR_MENU) {
++                openSettings()
++            } else {
++                id.toIntOrNull()?.let { viewPager2.currentItem = it }
++            }
++        }
++    }
++
+     override fun onDestroyView() {
+         // ViewPager2
+         viewPager2.unregisterOnPageChangeCallback(onPageChangeCallback)
+@@ -89,6 +152,8 @@ class MainFragment : Fragment(R.layout.fragment_main) {
+     }
+ 
+     companion object {
++        private const val SYSTEM_TOOLBAR_MENU = "menu"
++
+         // Keep in sync with the NavigationBarView menu
+         private val fragments = arrayOf(
+             {
+@@ -100,6 +165,14 @@ class MainFragment : Fragment(R.layout.fragment_main) {
+                 }
+             },
+             { AlbumsFragment() },
++            {
++                AlbumFragment().apply {
++                    arguments = AlbumFragment.createBundle(
++                        albumType = AlbumType.FAVORITES,
++                        hideToolbar = true,
++                    )
++                }
++            },
+             { LibraryFragment() },
+         )
+     }
+diff --git a/app/src/main/java/org/lineageos/glimpse/ui/recyclerview/ThumbnailLayoutManager.kt b/app/src/main/java/org/lineageos/glimpse/ui/recyclerview/ThumbnailLayoutManager.kt
+index ce328ae..9a8ffaa 100644
+--- a/app/src/main/java/org/lineageos/glimpse/ui/recyclerview/ThumbnailLayoutManager.kt
++++ b/app/src/main/java/org/lineageos/glimpse/ui/recyclerview/ThumbnailLayoutManager.kt
+@@ -13,7 +13,7 @@ import org.lineageos.glimpse.viewmodels.AlbumViewModel
+ class ThumbnailLayoutManager(
+     context: Context,
+     adapter: RecyclerView.Adapter<*>,
+-) : DisplayAwareGridLayoutManager(context, 4, 4.px) {
++) : DisplayAwareGridLayoutManager(context, 3, 2.px) {
+     init {
+         spanSizeLookup = ThumbnailSpanSizeLookup(adapter, spanCount)
+     }
+diff --git a/app/src/main/java/org/lineageos/glimpse/viewmodels/AlbumViewModel.kt b/app/src/main/java/org/lineageos/glimpse/viewmodels/AlbumViewModel.kt
+index 25b38da..0e515c2 100644
+--- a/app/src/main/java/org/lineageos/glimpse/viewmodels/AlbumViewModel.kt
++++ b/app/src/main/java/org/lineageos/glimpse/viewmodels/AlbumViewModel.kt
+@@ -100,7 +100,8 @@ class AlbumViewModel(application: Application) : GlimpseViewModel(application) {
+                 val (album, medias) = data
+ 
+                 album to buildList {
+-                    val addHeaders = album !== TRASH_ALBUM
++                    // N9: a plain grid, no date section headers
++                    val addHeaders = false
+ 
+                     if (addHeaders) {
+                         for (i in medias.indices) {
+diff --git a/app/src/main/java/org/lineageos/glimpse/viewmodels/LocalPlayerViewModel.kt b/app/src/main/java/org/lineageos/glimpse/viewmodels/LocalPlayerViewModel.kt
+index 3441779..9f42211 100644
+--- a/app/src/main/java/org/lineageos/glimpse/viewmodels/LocalPlayerViewModel.kt
++++ b/app/src/main/java/org/lineageos/glimpse/viewmodels/LocalPlayerViewModel.kt
+@@ -357,6 +357,13 @@ class LocalPlayerViewModel(
+         _sheetsHeight.value = top to bottom
+     }
+ 
++    /**
++     * Toggle fullscreen mode.
++     */
++    fun setFullscreenMode(fullscreenMode: Boolean) {
++        _fullscreenMode.value = fullscreenMode
++    }
++
+     /**
+      * Toggle fullscreen mode.
+      */
+diff --git a/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml b/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml
+index c02ccf3..04b2be4 100644
+--- a/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml
++++ b/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml
+@@ -6,7 +6,7 @@
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+     <item>
+         <shape>
+-            <gradient android:angle="270" android:endColor="#DD000000" android:startColor="@android:color/transparent" android:type="linear" />
++            <solid android:color="@color/n9_viewer_bar" />
+         </shape>
+     </item>
+ </selector>
+diff --git a/app/src/main/res/drawable/bg_media_viewer_top_sheet.xml b/app/src/main/res/drawable/bg_media_viewer_top_sheet.xml
+index cacd151..04b2be4 100644
+--- a/app/src/main/res/drawable/bg_media_viewer_top_sheet.xml
++++ b/app/src/main/res/drawable/bg_media_viewer_top_sheet.xml
+@@ -6,7 +6,7 @@
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+     <item>
+         <shape>
+-            <gradient android:angle="270" android:endColor="@android:color/transparent" android:startColor="#DD000000" android:type="linear" />
++            <solid android:color="@color/n9_viewer_bar" />
+         </shape>
+     </item>
+ </selector>
+diff --git a/app/src/main/res/drawable/bg_thumbnail.xml b/app/src/main/res/drawable/bg_thumbnail.xml
+index a732680..dcb9a96 100644
+--- a/app/src/main/res/drawable/bg_thumbnail.xml
++++ b/app/src/main/res/drawable/bg_thumbnail.xml
+@@ -5,5 +5,6 @@
+ -->
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+-    <corners android:radius="4dp" />
++    <!-- N9: square thumbnails -->
++    <solid android:color="#FF111111" />
+ </shape>
+diff --git a/app/src/main/res/layout-sw600dp/fragment_main.xml b/app/src/main/res/layout-sw600dp/fragment_main.xml
+index 2d16233..fe42bac 100644
+--- a/app/src/main/res/layout-sw600dp/fragment_main.xml
++++ b/app/src/main/res/layout-sw600dp/fragment_main.xml
+@@ -8,6 +8,8 @@
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
++    android:background="@android:color/black"
++    android:theme="@style/ThemeOverlay.Glimpse.BlackGrid"
+     tools:context=".MainActivity">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+@@ -56,6 +58,11 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
++        android:background="@drawable/bg_n9_tab_bar"
++        app:itemActiveIndicatorStyle="@style/Widget.Glimpse.N9TabIndicator"
++        app:itemBackground="@drawable/bg_n9_tab_item"
++        app:itemIconTint="@color/n9_tab_icon"
++        app:labelVisibilityMode="unlabeled"
+         app:menu="@menu/fragment_main_bottom_app_bar"
+         app:menuGravity="center" />
+ 
+diff --git a/app/src/main/res/layout/activity_view.xml b/app/src/main/res/layout/activity_view.xml
+index 829b08c..f8c067d 100644
+--- a/app/src/main/res/layout/activity_view.xml
++++ b/app/src/main/res/layout/activity_view.xml
+@@ -27,13 +27,8 @@
+             android:id="@+id/toolbar"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+-            app:menu="@menu/activity_view_toolbar"
+-            app:navigationIcon="@drawable/ic_back"
+-            app:navigationIconTint="@android:color/white"
+-            app:subtitleTextAppearance="?attr/textAppearanceTitleSmall"
+-            app:subtitleTextColor="@android:color/white"
+-            app:titleTextAppearance="?attr/textAppearanceTitleSmall"
+-            app:titleTextColor="@android:color/white" />
++            app:subtitleTextAppearance="@style/TextAppearance.Glimpse.MediaViewer.Subtitle"
++            app:titleTextAppearance="@style/TextAppearance.Glimpse.MediaViewer.Title" />
+ 
+     </com.google.android.material.appbar.AppBarLayout>
+ 
+@@ -42,7 +37,7 @@
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_gravity="bottom"
+-        android:background="@drawable/bg_media_viewer_bottom_sheet"
++        android:background="@drawable/bg_n9_tab_bar"
+         android:gravity="top|center">
+ 
+         <!-- Cannot mess with fixed padding from here because of insets -->
+@@ -50,6 +45,13 @@
+             android:layout_width="16dp"
+             android:layout_height="match_parent" />
+ 
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/backButton"
++            style="@style/Theme.Glimpse.MediaViewer.BottomSheet.Button"
++            android:contentDescription="@string/n9_back"
++            android:drawableTop="@drawable/ic_back"
++            android:text="@string/n9_back" />
++
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/favoriteButton"
+             style="@style/Theme.Glimpse.MediaViewer.BottomSheet.Button"
+@@ -73,13 +75,6 @@
+             android:visibility="gone"
+             tools:visibility="visible" />
+ 
+-        <com.google.android.material.button.MaterialButton
+-            android:id="@+id/adjustButton"
+-            style="@style/Theme.Glimpse.MediaViewer.BottomSheet.Button"
+-            android:contentDescription="@string/file_action_edit"
+-            android:drawableTop="@drawable/ic_edit"
+-            android:text="@string/file_action_edit" />
+-
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/deleteButton"
+             style="@style/Theme.Glimpse.MediaViewer.BottomSheet.Button"
+@@ -87,6 +82,13 @@
+             android:drawableTop="@drawable/ic_delete"
+             android:text="@string/file_action_move_to_trash" />
+ 
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/menuButton"
++            style="@style/Theme.Glimpse.MediaViewer.BottomSheet.Button"
++            android:contentDescription="@string/n9_menu"
++            android:drawableTop="@drawable/ic_menu"
++            android:text="@string/n9_menu" />
++
+         <!-- Cannot mess with fixed padding from here because of insets -->
+         <Space
+             android:layout_width="16dp"
+diff --git a/app/src/main/res/layout/album_thumbnail_view.xml b/app/src/main/res/layout/album_thumbnail_view.xml
+index b56efc5..8ea02d0 100644
+--- a/app/src/main/res/layout/album_thumbnail_view.xml
++++ b/app/src/main/res/layout/album_thumbnail_view.xml
+@@ -27,6 +27,8 @@
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
+         android:layout_marginTop="8dp"
++        android:fontFamily="etesian-text"
++        android:textColor="@android:color/white"
+         app:layout_constraintEnd_toEndOf="@+id/thumbnailImageView"
+         app:layout_constraintStart_toStartOf="@+id/thumbnailImageView"
+         app:layout_constraintTop_toBottomOf="@+id/thumbnailImageView" />
+@@ -37,8 +39,9 @@
+         android:layout_height="wrap_content"
+         android:layout_marginTop="4dp"
+         android:layout_marginBottom="6dp"
++        android:fontFamily="etesian-text"
+         android:textAppearance="?attr/textAppearanceBodyMedium"
+-        android:textColor="?attr/colorOnSurfaceVariant"
++        android:textColor="@color/n9_text_secondary"
+         app:layout_constraintEnd_toEndOf="@+id/thumbnailImageView"
+         app:layout_constraintStart_toStartOf="@+id/thumbnailImageView"
+         app:layout_constraintTop_toBottomOf="@+id/descriptionTextView" />
+diff --git a/app/src/main/res/layout/fragment_album.xml b/app/src/main/res/layout/fragment_album.xml
+index 14f0411..31748e5 100644
+--- a/app/src/main/res/layout/fragment_album.xml
++++ b/app/src/main/res/layout/fragment_album.xml
+@@ -8,6 +8,8 @@
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
++    android:background="@android:color/black"
++    android:theme="@style/ThemeOverlay.Glimpse.BlackGrid"
+     tools:context=".fragments.AlbumFragment">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+@@ -49,7 +51,7 @@
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:clipToPadding="false"
+-        android:paddingHorizontal="8dp"
++        android:paddingHorizontal="0dp"
+         android:scrollbarStyle="outsideOverlay"
+         android:scrollbars="vertical"
+         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+diff --git a/app/src/main/res/layout/fragment_albums.xml b/app/src/main/res/layout/fragment_albums.xml
+index e234d42..de0f91f 100644
+--- a/app/src/main/res/layout/fragment_albums.xml
++++ b/app/src/main/res/layout/fragment_albums.xml
+@@ -8,6 +8,8 @@
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
++    android:background="@android:color/black"
++    android:theme="@style/ThemeOverlay.Glimpse.BlackGrid"
+     tools:context=".fragments.AlbumsFragment">
+ 
+     <include
+diff --git a/app/src/main/res/layout/fragment_main.xml b/app/src/main/res/layout/fragment_main.xml
+index 6030cc1..d8eb239 100644
+--- a/app/src/main/res/layout/fragment_main.xml
++++ b/app/src/main/res/layout/fragment_main.xml
+@@ -8,6 +8,8 @@
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
++    android:background="@android:color/black"
++    android:theme="@style/ThemeOverlay.Glimpse.BlackGrid"
+     tools:context=".MainActivity">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+@@ -56,6 +58,11 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
++        android:background="@drawable/bg_n9_tab_bar"
++        app:itemActiveIndicatorStyle="@style/Widget.Glimpse.N9TabIndicator"
++        app:itemBackground="@drawable/bg_n9_tab_item"
++        app:itemIconTint="@color/n9_tab_icon"
++        app:labelVisibilityMode="unlabeled"
+         app:menu="@menu/fragment_main_bottom_app_bar" />
+ 
+ </androidx.constraintlayout.widget.ConstraintLayout>
+diff --git a/app/src/main/res/layout/thumbnail_view.xml b/app/src/main/res/layout/thumbnail_view.xml
+index ed50d86..68bd394 100644
+--- a/app/src/main/res/layout/thumbnail_view.xml
++++ b/app/src/main/res/layout/thumbnail_view.xml
+@@ -7,7 +7,7 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    android:padding="4dp">
++    android:padding="1dp">
+ 
+     <ImageView
+         android:id="@+id/thumbnailImageView"
+diff --git a/app/src/main/res/menu/fragment_main_bottom_app_bar.xml b/app/src/main/res/menu/fragment_main_bottom_app_bar.xml
+index 208d6aa..99dbca8 100644
+--- a/app/src/main/res/menu/fragment_main_bottom_app_bar.xml
++++ b/app/src/main/res/menu/fragment_main_bottom_app_bar.xml
+@@ -17,10 +17,23 @@
+         android:icon="@drawable/ic_albums"
+         android:title="@string/albums_title" />
+ 
++    <item
++        android:id="@+id/favoritesFragment"
++        style="@style/Theme.Glimpse.BottomAppBarOption"
++        android:icon="@drawable/ic_star"
++        android:title="@string/album_favorites" />
++
+     <item
+         android:id="@+id/libraryFragment"
+         style="@style/Theme.Glimpse.BottomAppBarOption"
+         android:icon="@drawable/ic_library"
+         android:title="@string/library_title" />
+ 
++    <item
++        android:id="@+id/settingsMenuItem"
++        style="@style/Theme.Glimpse.BottomAppBarOption"
++        android:checkable="false"
++        android:icon="@drawable/ic_menu"
++        android:title="@string/title_activity_settings" />
++
+ </menu>
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index d80c0f7..0165f61 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -7,4 +7,16 @@
+     <!-- Media3: Remove color overlay on visible player controls -->
+     <color name="exo_bottom_bar_background" tools:override="true">@android:color/transparent</color>
+     <color name="exo_black_opacity_60" tools:override="true">@android:color/transparent</color>
++
++    <!-- N9 (Etesian blanco) palette -->
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_surface">#F4F4F4</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_green">#62AE2E</color>
++    <color name="n9_red">#D42D2A</color>
++    <!-- Translucent black viewer toolbars -->
++    <color name="n9_viewer_bar">#B3000000</color>
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index e5f63c5..2554e63 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -154,4 +154,8 @@
+     <string name="hide_native_seek_buttons_description">Hide rewind and fast-forward buttons from the video player controls</string>
+     <string name="remember_video_playback_position_enabled_title">Remember playback position</string>
+     <string name="remember_video_playback_position_enabled_description">Resume videos from the last stopped position</string>
++
++    <string name="n9_font_family" translatable="false">etesian-text</string>
++    <string name="n9_back">Back</string>
++    <string name="n9_menu">Menu</string>
+ </resources>
+diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
+index 4c2766d..10693fd 100644
+--- a/app/src/main/res/values/themes.xml
++++ b/app/src/main/res/values/themes.xml
+@@ -5,11 +5,78 @@
+ -->
+ <resources>
+     <!-- Base application theme -->
+-    <style name="Theme.Glimpse" parent="Theme.Material3.DayNight.NoActionBar">
++    <style name="Theme.Glimpse" parent="Theme.Material3.Light.NoActionBar">
+         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
++        <!-- N9 (Etesian blanco) static light palette -->
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@android:color/white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue</item>
++        <item name="colorOnPrimaryContainer">@android:color/white</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorOnSecondary">@android:color/white</item>
++        <item name="colorSecondaryContainer">@color/n9_surface</item>
++        <item name="colorOnSecondaryContainer">@color/n9_text</item>
++        <item name="colorTertiary">@color/n9_green</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorError">@color/n9_red</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:windowBackground">@color/n9_window</item>
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorSurfaceContainerLow">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="colorOutline">@color/n9_separator</item>
++        <item name="colorOutlineVariant">@color/n9_separator</item>
++        <item name="android:statusBarColor">@color/n9_window</item>
++        <item name="android:navigationBarColor">@color/n9_window</item>
++        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:windowLightNavigationBar">true</item>
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
++        <item name="toolbarStyle">@style/Widget.Glimpse.Toolbar</item>
++        <item name="appBarLayoutStyle">@style/Widget.Glimpse.AppBarLayout</item>
+         <item name="windowActionModeOverlay">true</item>
+     </style>
+ 
++    <!-- Flat app bar, no lift/elevation -->
++    <style name="Widget.Glimpse.AppBarLayout" parent="Widget.Material3.AppBarLayout">
++        <item name="android:background">@android:color/transparent</item>
++        <item name="liftOnScroll">false</item>
++        <item name="elevation">0dp</item>
++    </style>
++
++    <style name="Widget.Glimpse.Toolbar" parent="Widget.Material3.Toolbar">
++        <item name="titleTextAppearance">@style/TextAppearance.Glimpse.Title</item>
++    </style>
++
++    <!-- Etesian page title: large, light weight -->
++    <style name="TextAppearance.Glimpse.Title" parent="TextAppearance.Material3.HeadlineMedium">
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
++        <item name="android:textSize">32sp</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="android:textColor">?attr/colorOnSurface</item>
++    </style>
++
++    <!-- Black photo grid (N9 Gallery main view) -->
++    <style name="ThemeOverlay.Glimpse.BlackGrid" parent="ThemeOverlay.Material3.Dark">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="android:colorBackground">@android:color/black</item>
++        <item name="colorSurface">@android:color/black</item>
++        <item name="colorSurfaceContainer">@android:color/black</item>
++        <item name="colorOnSurface">@android:color/white</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:textColorPrimary">@android:color/white</item>
++    </style>
++
++    <!-- N9 tab bar: no Material pill, the item background marks the selected tab -->
++    <style name="Widget.Glimpse.N9TabIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
++        <item name="android:color">@android:color/transparent</item>
++    </style>
++
+     <!-- Top app bar option -->
+     <style name="Theme.Glimpse.TopAppBarOption">
+         <item name="android:iconTint">?attr/colorOnSurface</item>
+@@ -25,6 +92,31 @@
+     <!-- Media viewer -->
+     <style name="Theme.Glimpse.MediaViewer" parent="Theme.Material3.Dark.NoActionBar">
+         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="android:colorBackground">@android:color/black</item>
++        <item name="android:windowBackground">@android:color/black</item>
++        <item name="colorSurface">@android:color/black</item>
++        <item name="colorOnSurface">@android:color/white</item>
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
++    </style>
++
++    <!-- Media viewer top bar (N9): bold file name over a grey date -->
++    <style name="TextAppearance.Glimpse.MediaViewer.Title" parent="TextAppearance.Material3.TitleMedium">
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
++        <item name="android:textSize">20sp</item>
++        <item name="android:textStyle">bold</item>
++        <item name="android:textColor">@android:color/white</item>
++    </style>
++
++    <style name="TextAppearance.Glimpse.MediaViewer.Subtitle" parent="TextAppearance.Material3.BodyLarge">
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
++        <item name="android:textSize">16sp</item>
++        <item name="android:textColor">@color/n9_text_secondary</item>
+     </style>
+ 
+     <!-- Media viewer bottom sheet -->
+diff --git a/app/src/main/res/values/themes_settingslib.xml b/app/src/main/res/values/themes_settingslib.xml
+index daae313..1d1a527 100644
+--- a/app/src/main/res/values/themes_settingslib.xml
++++ b/app/src/main/res/values/themes_settingslib.xml
+@@ -5,7 +5,18 @@
+ -->
+ <resources>
+     <!-- Settings activity theme. -->
+-    <style name="Theme.SettingsLib" parent="Theme.Material3Expressive.DayNight.NoActionBar">
++    <style name="Theme.SettingsLib" parent="Theme.Material3Expressive.Light.NoActionBar">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorPrimaryContainer">@color/n9_blue</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:windowBackground">@color/n9_window</item>
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">@string/n9_font_family</item>
++        <item name="fontFamily">@string/n9_font_family</item>
+         <item name="android:listPreferredItemPaddingLeft">24dp</item>
+         <item name="android:listPreferredItemPaddingStart">24dp</item>
+         <item name="alertDialogTheme">@style/Theme.SettingsLib.AlertDialog</item>
+diff --git a/app/src/main/res/color/n9_tab_icon.xml b/app/src/main/res/color/n9_tab_icon.xml
+new file mode 100644
+index 0000000..f4052e1
+--- /dev/null
++++ b/app/src/main/res/color/n9_tab_icon.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:color="@android:color/white" android:state_checked="true" />
++    <item android:color="#FFBDBDBD" />
++</selector>
+diff --git a/app/src/main/res/drawable/bg_n9_tab_bar.xml b/app/src/main/res/drawable/bg_n9_tab_bar.xml
+new file mode 100644
+index 0000000..49e9947
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_n9_tab_bar.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 dark toolbar: near-black vertical gradient -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:endColor="#FF000000"
++        android:startColor="#FF2A2A2A" />
++</shape>
+diff --git a/app/src/main/res/drawable/bg_n9_tab_item.xml b/app/src/main/res/drawable/bg_n9_tab_item.xml
+new file mode 100644
+index 0000000..ccdc152
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_n9_tab_item.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 toolbar: the selected tab is a slightly lighter block -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true">
++        <shape android:shape="rectangle">
++            <gradient
++                android:angle="270"
++                android:endColor="#FF1C1C1C"
++                android:startColor="#FF4A4A4A" />
++        </shape>
++    </item>
++    <item android:drawable="@android:color/transparent" />
++</selector>
+diff --git a/app/src/main/res/drawable/ic_menu.xml b/app/src/main/res/drawable/ic_menu.xml
+new file mode 100644
+index 0000000..8484411
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_menu.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: Material Design Authors / Google LLC
++     SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="#000000"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@android:color/white"
++        android:pathData="M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z" />
++</vector>

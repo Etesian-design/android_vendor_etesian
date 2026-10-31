@@ -1,0 +1,7 @@
+// Etesian toolbar API: lets an app put its own N9 actions on the system bottom bar.
+java_library {
+    name: "etesian-toolbar",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    min_sdk_version: "31",
+}

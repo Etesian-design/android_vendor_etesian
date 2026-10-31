@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nokia Pure Text as a choice in Settings > Wallpaper & style > Font. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bompotis.etesian.overlay.font.nokiapure">
+    <overlay
+        android:targetPackage="android"
+        android:category="android.theme.customization.font"
+        android:priority="1" />
+    <application android:hasCode="false" android:label="Nokia Pure">
+        <meta-data
+            android:name="android.theme.customization.REQUIRED_SYSTEM_FONTS"
+            android:value="nokia-pure-text" />
+    </application>
+</manifest>

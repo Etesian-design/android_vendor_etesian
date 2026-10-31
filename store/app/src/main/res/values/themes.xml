@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Static light N9 palette; no dynamic colour, no night variant on purpose. -->
+    <style name="Theme.EtesianStore" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">etesian-text</item>
+        <item name="android:colorPrimary">@color/n9_blue</item>
+        <item name="android:colorAccent">@color/n9_blue</item>
+        <item name="android:colorControlActivated">@color/n9_blue</item>
+        <item name="android:textColorPrimary">@color/n9_text</item>
+        <item name="android:textColorSecondary">@color/n9_secondary</item>
+        <item name="android:windowBackground">@color/n9_window</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

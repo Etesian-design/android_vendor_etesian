@@ -1,0 +1,325 @@
+diff --git a/res/drawable/n9_key_advanced.xml b/res/drawable/n9_key_advanced.xml
+new file mode 100644
+index 0000000..054eda6
+--- /dev/null
++++ b/res/drawable/n9_key_advanced.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_key_pressed" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_card" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_key_digit.xml b/res/drawable/n9_key_digit.xml
+new file mode 100644
+index 0000000..5e82ca1
+--- /dev/null
++++ b/res/drawable/n9_key_digit.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_key_pressed" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_key_digit" />
++                <stroke android:width="1dp" android:color="@color/n9_separator" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_key_equals.xml b/res/drawable/n9_key_equals.xml
+new file mode 100644
+index 0000000..a2cb5d2
+--- /dev/null
++++ b/res/drawable/n9_key_equals.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_blue_dark" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <gradient android:angle="270" android:startColor="#1FB6F0" android:endColor="@color/n9_blue" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_key_function.xml b/res/drawable/n9_key_function.xml
+new file mode 100644
+index 0000000..60c4117
+--- /dev/null
++++ b/res/drawable/n9_key_function.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_key_pressed" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="3dp" android:insetBottom="3dp">
++            <shape android:shape="rectangle">
++                <solid android:color="@color/n9_key_function" />
++                <corners android:radius="@dimen/n9_key_corner_radius" />
++            </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/values/attr.xml b/res/values/attr.xml
+index 4e998db..16ca772 100644
+--- a/res/values/attr.xml
++++ b/res/values/attr.xml
+@@ -11,4 +11,7 @@
+         <attr name="stepTextSize" format="dimension" />
+     </declare-styleable>
+ 
++    <!-- N9 keypad: per-key-type background, set by the Theme.Button.* overlays. -->
++    <attr name="n9KeyBackground" format="reference" />
++
+ </resources>
+diff --git a/res/values/color.xml b/res/values/color.xml
+index d49facd..28009c6 100644
+--- a/res/values/color.xml
++++ b/res/values/color.xml
+@@ -5,13 +5,25 @@
+ -->
+ <resources>
+ 
++    <!-- N9 (Etesian blanco) static palette; no dynamic colour, no night variant. -->
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_card">#F4F4F4</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_blue_dark">#0086BA</color>
++    <color name="n9_key_digit">#FFFFFF</color>
++    <color name="n9_key_function">#D9D9D9</color>
++    <color name="n9_key_pressed">#F2B111</color>
++
+     <!-- Display background -->
+-    <color name="history_background_color">@color/material_dynamic_neutral95</color>
+-    <color name="display_background_color">@color/material_dynamic_neutral90</color>
++    <color name="history_background_color">@color/n9_card</color>
++    <color name="display_background_color">@color/n9_window</color>
+ 
+     <!-- Display text -->
+-    <color name="display_formula_text_color">@color/material_dynamic_neutral20</color>
+-    <color name="display_result_text_color">@color/material_dynamic_neutral40</color>
+-    <color name="display_result_exponent_text_color">@color/material_dynamic_neutral40</color>
++    <color name="display_formula_text_color">@color/n9_text_secondary</color>
++    <color name="display_result_text_color">@color/n9_text</color>
++    <color name="display_result_exponent_text_color">@color/n9_blue</color>
+ 
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index 0fd3098..00393fe 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -12,6 +12,8 @@
+ 
+     <dimen name="drag_handle_margin">8dp</dimen>
+     <dimen name="display_corner_radius">16dp</dimen>
++    <!-- N9 squircle key corner (~28% of a typical key short side). -->
++    <dimen name="n9_key_corner_radius">18dp</dimen>
+ 
+     <!-- Dimens for display formula. -->
+     <dimen name="formula_padding_top">16dip</dimen>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 3855c43..b0e90d6 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -7,7 +7,8 @@
+ 
+     <style name="DisplayTextStyle" parent="Widget.MaterialComponents.TextView">
+         <item name="android:cursorVisible">false</item>
+-        <item name="fontFamily">sans-serif</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
+         <item name="android:includeFontPadding">false</item>
+         <item name="android:gravity">bottom|end</item>
+         <item name="android:textAlignment">viewEnd</item>
+@@ -34,6 +35,8 @@
+         <item name="android:gravity">bottom</item>
+         <item name="android:textSize">@dimen/result_textsize</item>
+         <item name="android:fontFeatureSettings">tnum, cv03, cv04</item>
++        <!-- N9: large light-weight result -->
++        <item name="android:textFontWeight">300</item>
+     </style>
+ 
+     <style name="HistoryItemTextStyle" parent="DisplayTextStyle">
+@@ -55,6 +58,16 @@
+         <item name="android:onClick">onButtonClick</item>
+         <item name="android:fontFeatureSettings">tnum, cv03, cv04</item>
+         <item name="android:layout_marginHorizontal">@dimen/button_horizontal_margin</item>
++        <!-- N9 keys: static squircle drawables instead of Material shape/tint/morph -->
++        <item name="android:background">?attr/n9KeyBackground</item>
++        <item name="backgroundTint">@null</item>
++        <item name="android:backgroundTint">@null</item>
++        <item name="android:stateListAnimator">@null</item>
++        <item name="android:elevation">0dp</item>
++        <item name="android:textColor">?colorOnContainer</item>
++        <item name="iconTint">?colorOnContainer</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
+     </style>
+ 
+     <style name="PadButtonStyle.Caps">
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 6fbc2af..f55d549 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -6,10 +6,21 @@
+ <resources>
+ 
+     <style name="Theme" parent="Theme.Material3Expressive.DayNight">
++        <!-- N9: static light palette, pinned (no dynamic colour, no dark mode) -->
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@android:color/white</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
+         <item name="android:statusBarColor">@color/display_background_color</item>
+-        <item name="android:windowLightStatusBar">?isLightTheme</item>
+-        <item name="android:navigationBarColor">?colorSurface</item>
+-        <item name="android:windowLightNavigationBar">?isLightTheme</item>
++        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:navigationBarColor">@color/n9_window</item>
++        <item name="android:windowLightNavigationBar">true</item>
+     </style>
+ 
+     <style name="Theme.Calculator">
+@@ -20,43 +31,54 @@
+     </style>
+ 
+     <style name="Theme.Licenses" parent="Theme.Material3Expressive.DayNight.NoActionBar">
+-        <item name="android:statusBarColor">?colorSurface</item>
+-        <item name="android:windowLightStatusBar">?isLightTheme</item>
+-        <item name="android:navigationBarColor">?colorSurface</item>
+-        <item name="android:windowLightNavigationBar">?isLightTheme</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:statusBarColor">@color/n9_window</item>
++        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:navigationBarColor">@color/n9_window</item>
++        <item name="android:windowLightNavigationBar">true</item>
+     </style>
+ 
+     <style name="Theme.Button" parent="ThemeOverlay.Material3Expressive.Button.TextButton">
+     </style>
+ 
+     <style name="Theme.Button.Advanced">
+-        <item name="colorContainer">?colorSurface</item>
+-        <item name="colorOnContainer">?colorOnSurface</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="n9KeyBackground">@drawable/n9_key_advanced</item>
+     </style>
+ 
+     <style name="Theme.Button.Numeric">
+-        <item name="colorContainer">?colorSurfaceVariant</item>
+-        <item name="colorOnContainer">?colorOnSurface</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="n9KeyBackground">@drawable/n9_key_digit</item>
+     </style>
+ 
+     <style name="Theme.Button.Operator">
+-        <item name="colorContainer">?colorSecondaryContainer</item>
+-        <item name="colorOnContainer">?colorOnSecondaryContainer</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="n9KeyBackground">@drawable/n9_key_function</item>
+     </style>
+ 
+     <style name="Theme.Button.Clear">
+-        <item name="colorContainer">?colorSurfaceVariant</item>
+-        <item name="colorOnContainer">?colorOnSurfaceVariant</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="n9KeyBackground">@drawable/n9_key_function</item>
+     </style>
+ 
+     <style name="Theme.Button.Action">
+-        <item name="colorContainer">?colorPrimaryContainer</item>
+-        <item name="colorOnContainer">?colorOnPrimaryContainer</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="n9KeyBackground">@drawable/n9_key_function</item>
+     </style>
+ 
+     <style name="Theme.Button.Equals">
+-        <item name="colorContainer">?colorTertiary</item>
+-        <item name="colorOnContainer">?colorOnTertiary</item>
++        <item name="colorContainer">@color/n9_key_function</item>
++        <item name="colorOnContainer">@android:color/white</item>
++        <item name="n9KeyBackground">@drawable/n9_key_equals</item>
+     </style>
+ 
+ </resources>
+diff --git a/src/com/android/calculator2/CalculatorApplication.java b/src/com/android/calculator2/CalculatorApplication.java
+index 00b71b5..970883c 100644
+--- a/src/com/android/calculator2/CalculatorApplication.java
++++ b/src/com/android/calculator2/CalculatorApplication.java
+@@ -7,12 +7,13 @@ package com.android.calculator2;
+ 
+ import android.app.Application;
+ 
+-import com.google.android.material.color.DynamicColors;
++import androidx.appcompat.app.AppCompatDelegate;
+ 
+ public class CalculatorApplication extends Application {
+     @Override
+     public void onCreate() {
+         super.onCreate();
+-        DynamicColors.applyToActivitiesIfAvailable(this);
++        // N9 look: static light palette, no dynamic colour, ignore system dark mode.
++        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+     }
+ }

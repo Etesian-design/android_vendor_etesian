@@ -1,0 +1,187 @@
+diff --git a/res/drawable/popup_background.xml b/res/drawable/popup_background.xml
+index 0e5868c..ff5f9d9 100644
+--- a/res/drawable/popup_background.xml
++++ b/res/drawable/popup_background.xml
+@@ -7,6 +7,6 @@
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     android:shape="rectangle">
+ 
+-    <corners android:radius="28dp" />
+-    <solid android:color="@android:color/system_neutral2_700" />
++    <corners android:radius="4dp" />
++    <solid android:color="@color/n9_button" />
+ </shape>
+diff --git a/res/layout-land/controls_generic.xml b/res/layout-land/controls_generic.xml
+index 75a41cd..b6691d9 100644
+--- a/res/layout-land/controls_generic.xml
++++ b/res/layout-land/controls_generic.xml
+@@ -26,7 +26,7 @@
+             android:layout_gravity="center"
+             android:layout_margin="@dimen/preset_text_padding"
+             android:ellipsize="end"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:maxLines="1"
+             android:text="@string/reverb"
+             android:textColor="@color/white"
+diff --git a/res/layout/action_bar_custom_components.xml b/res/layout/action_bar_custom_components.xml
+index c53682b..7e39df7 100644
+--- a/res/layout/action_bar_custom_components.xml
++++ b/res/layout/action_bar_custom_components.xml
+@@ -21,7 +21,7 @@
+             android:layout_gravity="center_vertical"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:theme="@style/Theme.Material3.DynamicColors.DayNight"
++            android:theme="@style/N9Switch"
+     />
+ 
+ </LinearLayout>
+diff --git a/res/layout/controls_generic.xml b/res/layout/controls_generic.xml
+index 77295d8..30ad55d 100644
+--- a/res/layout/controls_generic.xml
++++ b/res/layout/controls_generic.xml
+@@ -26,7 +26,7 @@
+             android:layout_gravity="center"
+             android:layout_margin="@dimen/preset_text_padding"
+             android:ellipsize="end"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:maxLines="1"
+             android:paddingStart="4dp"
+             android:paddingEnd="4dp"
+@@ -39,7 +39,7 @@
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center"
+-            android:theme="@style/Theme.Material3.DynamicColors.Light" />
++            android:theme="@style/N9Switch" />
+ 
+     </LinearLayout>
+ 
+diff --git a/res/layout/preset_adapter_row.xml b/res/layout/preset_adapter_row.xml
+index e53ae48..34c707b 100644
+--- a/res/layout/preset_adapter_row.xml
++++ b/res/layout/preset_adapter_row.xml
+@@ -8,7 +8,7 @@
+           android:id="@+id/text"
+ 
+           android:layout_gravity="center"
+-          android:fontFamily="sans-serif"
++          android:fontFamily="etesian-text"
+           android:textStyle="bold"
+           android:textSize="@dimen/preset_text_size"
+           android:gravity="center"
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 22a648b..2958dd8 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -6,26 +6,29 @@
+      SPDX-License-Identifier: BSD-3-Clause
+ -->
+ <resources>
+-    <color name="highlight">#cc8f8f8f</color>
++    <color name="highlight">#cc00a5e5</color>
+ 
+     <color name="white">#ffffffff</color>
+ 
+-    <color name="preset_custom">#CE5B4C</color>
+-    <color name="preset_normal">#CB6139</color>
+-    <color name="preset_classical">#BE963F</color>
+-    <color name="preset_dance">#BEBD3F</color>
+-    <color name="preset_flat">#84B74E</color>
+-    <color name="preset_folk">#80B74F</color>
+-    <color name="preset_metal">#65B759</color>
+-    <color name="preset_hiphop">#5CB797</color>
+-    <color name="preset_jazz">#5B82B7</color>
+-    <color name="preset_pop">#585DCA</color>
+-    <color name="preset_rock">#9A62CB</color>
+-    <color name="preset_electronic">#C862C5</color>
+-    <color name="preset_small_speakers">#CB629A</color>
++    <color name="preset_custom">#000000</color>
++    <color name="preset_normal">#000000</color>
++    <color name="preset_classical">#000000</color>
++    <color name="preset_dance">#000000</color>
++    <color name="preset_flat">#000000</color>
++    <color name="preset_folk">#000000</color>
++    <color name="preset_metal">#000000</color>
++    <color name="preset_hiphop">#000000</color>
++    <color name="preset_jazz">#000000</color>
++    <color name="preset_pop">#000000</color>
++    <color name="preset_rock">#000000</color>
++    <color name="preset_electronic">#000000</color>
++    <color name="preset_small_speakers">#000000</color>
+     <color name="band_bar_color_selected">#ffffffff</color>
+-    <color name="knob_container_background">#323437</color>
++    <color name="knob_container_background">#000000</color>
+     <color name="disabled_eq">#ff6c6c6c</color>
+-    <color name="radial_knob_arc_bg">#4e5052</color>
++    <color name="radial_knob_arc_bg">#2a2a2a</color>
+     <color name="radial_knob_arc_bg_disabled">#6c6c6c</color>
++    <!-- N9 (Etesian) media palette -->
++    <color name="n9_accent">#ff00a5e5</color>
++    <color name="n9_button">#ff2a2a2a</color>
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 29142fb..b0e6b31 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -8,7 +8,10 @@
+ <resources>
+     <style name="AppThemeV2" parent="android:Theme.Material">
+         <item name="android:actionBarStyle">@style/ActionBar</item>
+-        <item name="android:colorAccent">@color/white</item>
++        <item name="android:colorAccent">@color/n9_accent</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:windowBackground">@android:color/black</item>
++        <item name="android:colorBackground">@android:color/black</item>
+         <item name="android:popupTheme">@style/AppThemeV2.Popup</item>
+         <item name="android:navigationBarColor">@color/knob_container_background</item>
+     </style>
+@@ -21,14 +24,14 @@
+ 
+     <style name="AppThemeV2.ActionBar.TitleTextStyle" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
+         <item name="android:textColor">@color/white</item>
+-        <item name="android:textSize">18sp</item>
+-        <item name="android:fontFamily">sans-serif</item>
+-        <item name="android:textStyle">bold</item>
++        <item name="android:textSize">24sp</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
+     </style>
+ 
+     <style name="AppThemeV2.ActionBar.SubtitleTextStyle" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Subtitle">
+-        <item name="android:textSize">10sp</item>
+-        <item name="android:fontFamily">sans-serif</item>
++        <item name="android:textSize">12sp</item>
++        <item name="android:fontFamily">etesian-text</item>
+     </style>
+ 
+     <style name="AppThemeV2.Popup" parent="Widget.AppCompat.PopupMenu">
+@@ -36,4 +39,13 @@
+         <item name="android:colorBackground">@android:color/transparent</item>
+     </style>
+ 
++    <!-- N9 switch: static palette, no Material You dynamic colour -->
++    <style name="N9Switch" parent="Theme.Material3.Dark">
++        <item name="colorPrimary">@color/n9_accent</item>
++        <item name="colorOnPrimary">@color/white</item>
++        <item name="colorPrimaryContainer">@color/n9_accent</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_button</item>
++        <item name="colorOutline">#ff8c8c8c</item>
++    </style>
++
+ </resources>
+diff --git a/src/org/lineageos/audiofx/eq/EqContainerView.java b/src/org/lineageos/audiofx/eq/EqContainerView.java
+index 97c1910..f83c3d0 100644
+--- a/src/org/lineageos/audiofx/eq/EqContainerView.java
++++ b/src/org/lineageos/audiofx/eq/EqContainerView.java
+@@ -262,7 +262,7 @@ public class EqContainerView extends FrameLayout
+                 } else {
+                     bar.setAlpha(0.8f);
+                 }
+-                bar.setBackgroundColor(Color.WHITE);
++                bar.setBackgroundColor(getResources().getColor(R.color.n9_accent, mContext.getTheme()));
+ 
+                 addView(bar, getFrameParams(i));
+                 bar.setParentHeight(mHeight, getTop());

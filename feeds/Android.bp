@@ -1,0 +1,35 @@
+// Etesian Feeds: the N9 Feeds app (RSS and Atom). Owns the subscriptions and items; the
+// launcher's Events view and Belle widget read them through FeedsProvider.
+android_app {
+    name: "EtesianFeeds",
+    srcs: ["app/src/main/java/**/*.kt"],
+    resource_dirs: ["app/src/main/res"],
+    manifest: ":EtesianFeeds-manifest",
+    platform_apis: true,
+    certificate: "platform",
+    system_ext_specific: true,
+    privileged: true,
+    static_libs: [
+        "etesian-toolbar",
+    ],
+    aaptflags: [
+        "--version-code",
+        "100",
+        "--version-name",
+        "rom",
+    ],
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
+}
+
+// aapt2 needs the package in the manifest (kept out of the source manifest like the launcher).
+genrule {
+    name: "EtesianFeeds-manifest",
+    srcs: ["app/src/main/AndroidManifest.xml"],
+    out: ["AndroidManifest.xml"],
+    cmd: "sed 's|<manifest |<manifest package=\"com.bompotis.etesian.feeds\" |' $(in) > $(out)",
+}

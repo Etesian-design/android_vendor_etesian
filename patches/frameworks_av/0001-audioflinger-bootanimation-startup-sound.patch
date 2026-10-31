@@ -1,0 +1,18 @@
+diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
+index b37dc6fbba..26148e3fd2 100644
+--- a/services/audioflinger/AudioFlinger.cpp
++++ b/services/audioflinger/AudioFlinger.cpp
+@@ -149,6 +149,13 @@ validateAttributionFromContextOrTrustedCaller(AttributionSourceState attr,
+             }
+         }
+         return ValidatedAttributionSourceState::createFromTrustedSource(std::move(attr));
++    } else if (callingUid == AID_GRAPHICS) {
++        // Etesian: bootanimation (graphics uid) has no package, so the package lookup below
++        // always fails and the startup sound could never play. Its identity is its binder context.
++        attr.uid = callingUid;
++        attr.pid = IPCThreadState::self()->getCallingPid();
++        attr.packageName = "bootanimation";
++        return ValidatedAttributionSourceState::createFromTrustedSource(std::move(attr));
+     } else {
+         // Behavior change: Populate pid with callingPid unconditionally. Previously, we
+         // allowed caller provided pid, if uid matched calling context, but this is error-prone

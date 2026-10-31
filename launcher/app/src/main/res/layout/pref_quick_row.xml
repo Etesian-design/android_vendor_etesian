@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- N9 settings main page quick row: bold title, no icon; a switch, star or chevron at the end. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp"
+    android:background="?android:attr/selectableItemBackground" android:gravity="center_vertical"
+    android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp">
+    <TextView android:id="@android:id/title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:ellipsize="end" android:maxLines="1" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+    <ImageView android:id="@+id/quick_star" android:layout_width="14dp" android:layout_height="14dp" android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_n9_star_filled" android:tint="#FF00A5E5" android:visibility="gone"/>
+    <ImageView android:id="@+id/quick_chevron" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_set_chevron"/>
+    <LinearLayout android:id="@android:id/widget_frame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical"/>
+</LinearLayout>

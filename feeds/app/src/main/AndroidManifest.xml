@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Lets the launcher (same signature) show feed items in Events and the Belle widget. -->
+    <permission
+        android:name="com.bompotis.etesian.feeds.permission.READ"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Keeps the background refresh scheduled across reboots. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.EtesianFeeds">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".PostsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Started by the launcher for an item tapped in Events or the Belle widget. -->
+        <activity
+            android:name=".ReaderActivity"
+            android:exported="true"
+            android:permission="com.bompotis.etesian.feeds.permission.READ" />
+
+        <provider
+            android:name=".FeedsProvider"
+            android:authorities="com.bompotis.etesian.feeds"
+            android:exported="true"
+            android:readPermission="com.bompotis.etesian.feeds.permission.READ" />
+
+        <service
+            android:name=".FeedsJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+    </application>
+</manifest>

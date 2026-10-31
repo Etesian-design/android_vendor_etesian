@@ -1,0 +1,928 @@
+diff --git a/app/Android.bp b/app/Android.bp
+index 1500f12..77af518 100644
+--- a/app/Android.bp
++++ b/app/Android.bp
+@@ -52,6 +52,8 @@ android_app {
+         "kotlin-stdlib",
+         "kotlinx-coroutines-android",
+         "kotlinx-coroutines-core",
++        // N9: system bottom toolbar
++        "etesian-toolbar",
+     ],
+ 
+     sdk_version: "36",
+diff --git a/app/src/main/java/org/lineageos/jelly/JellyApplication.kt b/app/src/main/java/org/lineageos/jelly/JellyApplication.kt
+index 0b10e7e..660aad6 100644
+--- a/app/src/main/java/org/lineageos/jelly/JellyApplication.kt
++++ b/app/src/main/java/org/lineageos/jelly/JellyApplication.kt
+@@ -6,7 +6,6 @@
+ package org.lineageos.jelly
+ 
+ import android.app.Application
+-import com.google.android.material.color.DynamicColors
+ import org.lineageos.jelly.database.FavoriteDatabase
+ import org.lineageos.jelly.database.HistoryDatabase
+ import org.lineageos.jelly.repository.FavoriteRepository
+@@ -22,7 +21,6 @@ class JellyApplication : Application() {
+     override fun onCreate() {
+         super.onCreate()
+ 
+-        // Observe dynamic colors changes
+-        DynamicColors.applyToActivitiesIfAvailable(this)
++        // N9 look: static light palette, no Material You dynamic colours.
+     }
+ }
+diff --git a/app/src/main/java/org/lineageos/jelly/MainActivity.kt b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
+index ac52c8e..8f20e8c 100644
+--- a/app/src/main/java/org/lineageos/jelly/MainActivity.kt
++++ b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
+@@ -69,6 +69,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
+ import com.google.android.material.snackbar.Snackbar
+ import kotlinx.coroutines.flow.collectLatest
+ import kotlinx.coroutines.launch
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.jelly.ext.buildShareIntent
+ import org.lineageos.jelly.favorite.FavoriteActivity
+ import org.lineageos.jelly.history.HistoryActivity
+@@ -78,6 +79,7 @@ import org.lineageos.jelly.shortcut.BackgroundShortcut
+ import org.lineageos.jelly.shortcut.BackgroundShortcutActivity
+ import org.lineageos.jelly.shortcut.BackgroundShortcutService
+ import org.lineageos.jelly.ui.MenuDialog
++import org.lineageos.jelly.ui.StartPageView
+ import org.lineageos.jelly.ui.UrlBarLayout
+ import org.lineageos.jelly.utils.IntentUtils
+ import org.lineageos.jelly.utils.PermissionsUtils
+@@ -101,6 +103,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+     private val favoritesViewModel: FavoriteViewModel by viewModels()
+     private val suggestionProviderViewModel: SuggestionProviderViewModel by viewModels()
+ 
++    // N9: native start page shown over the WebView for new tabs / home
++    private var startPage: StartPageView? = null
++
+     // Views
+     private val appBarLayout by lazy { findViewById<AppBarLayout>(R.id.appBarLayout) }
+     private val constraintLayout by lazy { findViewById<ConstraintLayout>(R.id.constraintLayout) }
+@@ -351,6 +356,14 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+             menuDialog.showAsDropdownMenu(urlBarLayout, sharedPreferencesExt.reachModeEnabled)
+         }
+ 
++        // N9: Back, refresh/stop, favorites and the menu live on the system toolbar
++        urlBarLayout.isMoreButtonVisible = !EtesianToolbar.isAvailable(this)
++        urlBarLayout.onLoadingChangedCallback = { isLoading ->
++            if (isLoading) showBars()
++            updateEtesianToolbar()
++            updateStartPage()
++        }
++
+         CookieManager.getInstance()
+             .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
+ 
+@@ -432,6 +445,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+     override fun onResume() {
+         super.onResume()
+         if (backgroundShortcutId == null) webView.onResume()
++        updateEtesianToolbar()
+         CookieManager.getInstance()
+             .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
+         if (sharedPreferencesExt.lookLockEnabled) {
+@@ -477,14 +491,147 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+         if (urlBarLayout.url == null) urlBarLayout.url = webView.url
+         webView.parent?.let { ViewGroup::class.cast(it).removeView(webView) }
+         constraintLayout.addView(webView)
++        setupStartPage()
+         setUiMode()
+-        if (webView.initialized) return
++        setupBarsAutoHide()
++        if (webView.initialized) {
++            updateStartPage()
++            return
++        }
+         webView.init(this, urlBarLayout, desktopMode, incognito)
+-        if (url != null || sharedPreferencesExt.homePageAutoload) {
++        updateStartPage()
++        // N9: new tabs open on the start page instead of the configured home page
++        if (url != null || (startPage == null && sharedPreferencesExt.homePageAutoload)) {
+             webView.loadUrl(url ?: sharedPreferencesExt.homePage)
+         }
+     }
+ 
++    /**
++     * N9: in Etesian mode new tabs / home show a native start page (address field, top
++     * sites and bookmarks) layered over the WebView while it has nothing loaded.
++     */
++    private fun setupStartPage() {
++        if (!StartPageView.isEnabled(this) || backgroundShortcutId != null) {
++            return
++        }
++        val page = startPage ?: StartPageView(this).also { page ->
++            startPage = page
++            page.id = View.generateViewId()
++            page.onOpenUrl = { target ->
++                UiUtils.hideKeyboard(window, page)
++                webView.loadUrl(target)
++            }
++            lifecycleScope.launch {
++                repeatOnLifecycle(Lifecycle.State.STARTED) {
++                    launch { historyViewModel.history.collectLatest { page.setHistory(it) } }
++                    launch { favoritesViewModel.favorites.collectLatest { page.setFavorites(it) } }
++                }
++            }
++        }
++        page.parent?.let { ViewGroup::class.cast(it).removeView(page) }
++        // Cover exactly the WebView's area, whatever the reach mode does to it
++        constraintLayout.addView(page, ConstraintLayout.LayoutParams(0, 0).apply {
++            startToStart = R.id.webView
++            endToEnd = R.id.webView
++            topToTop = R.id.webView
++            bottomToBottom = R.id.webView
++        })
++    }
++
++    private fun updateStartPage() {
++        val page = startPage ?: return
++        if (!::webView.isInitialized) return
++        val show = StartPageView.isStartUrl(webView.url) && !urlBarLayout.isLoading
++        if (show && !page.isVisible) page.reset()
++        page.isVisible = show
++    }
++
++    private fun updateEtesianToolbar() {
++        if (!EtesianToolbar.isAvailable(this)) {
++            return
++        }
++
++        val isLoading = urlBarLayout.isLoading
++
++        EtesianToolbar.of(this)
++            .setStyle(EtesianToolbar.STYLE_LIGHT)
++            .setBack(true)
++            .setItems(
++                listOf(
++                    when (isLoading) {
++                        true -> EtesianToolbar.Item.action(
++                            TOOLBAR_STOP, R.drawable.ic_clear, getString(R.string.n9_toolbar_stop)
++                        )
++
++                        false -> EtesianToolbar.Item.action(
++                            TOOLBAR_REFRESH, R.drawable.ic_refresh,
++                            getString(R.string.menu_refresh)
++                        )
++                    },
++                    EtesianToolbar.Item.action(
++                        TOOLBAR_FAVORITES, R.drawable.ic_favorite,
++                        getString(R.string.menu_favorites)
++                    ),
++                    EtesianToolbar.Item.action(
++                        TOOLBAR_MENU, R.drawable.ic_menu, getString(R.string.url_bar_more)
++                    ),
++                )
++            ) { id -> onEtesianToolbarItem(id) }
++    }
++
++    private fun onEtesianToolbarItem(id: String) {
++        if (!::webView.isInitialized) {
++            return
++        }
++
++        when (id) {
++            TOOLBAR_STOP -> webView.stopLoading()
++            TOOLBAR_REFRESH -> webView.reload()
++            TOOLBAR_FAVORITES -> startActivity(Intent(this, FavoriteActivity::class.java))
++            TOOLBAR_MENU -> {
++                showBars()
++                UiUtils.hideKeyboard(window, urlBarLayout)
++                menuDialog.showAsDropdownMenu(urlBarLayout, sharedPreferencesExt.reachModeEnabled)
++            }
++        }
++    }
++
++    /**
++     * N9: the address bar slides away while scrolling down the page and comes back on the
++     * way up, so the page gets the whole screen.
++     */
++    private fun setupBarsAutoHide() {
++        webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
++            if (isFullscreenPwa || customView != null ||
++                sharedPreferencesExt.reachModeEnabled ||
++                urlBarLayout.currentMode != UrlBarLayout.UrlBarMode.URL ||
++                urlBarLayout.hasFocus()
++            ) {
++                return@setOnScrollChangeListener
++            }
++
++            val dy = scrollY - oldScrollY
++            when {
++                scrollY <= 0 || dy < -BARS_SCROLL_THRESHOLD -> showBars()
++                dy > BARS_SCROLL_THRESHOLD && scrollY > appBarLayout.height -> hideBars()
++            }
++        }
++    }
++
++    private fun showBars() {
++        if (isFullscreenPwa || customView != null || appBarLayout.isVisible) {
++            return
++        }
++        appBarLayout.isVisible = true
++    }
++
++    private fun hideBars() {
++        if (!appBarLayout.isVisible) {
++            return
++        }
++        appBarLayout.isVisible = false
++    }
++
+     private fun registerShortcuts() {
+         shortcutManager.dynamicShortcuts = listOf(
+             ShortcutInfo.Builder(this, "new_incognito_tab_shortcut")
+@@ -501,6 +648,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+     }
+ 
+     private fun showSearch() {
++        showBars()
+         urlBarLayout.currentMode = UrlBarLayout.UrlBarMode.SEARCH
+     }
+ 
+@@ -670,6 +818,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+             urlIcon = it.config?.let { config ->
+                 it.copy(config, true)
+             }
++            if (startPage != null && !incognito) {
++                urlIcon?.let { icon -> StartPageView.saveFavicon(this, webView.url, icon) }
++            }
+             updateTaskDescription()
+             if (!it.isRecycled) {
+                 it.recycle()
+@@ -907,6 +1058,11 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+         private val TAG = MainActivity::class.java.simpleName
+         private const val MANIFEST_DISPLAY = "manifest_display"
+         private const val MANIFEST_THEME_COLOR = "manifest_theme_color"
++        private const val TOOLBAR_STOP = "stop"
++        private const val TOOLBAR_REFRESH = "refresh"
++        private const val TOOLBAR_FAVORITES = "favorites"
++        private const val TOOLBAR_MENU = "menu"
++        private const val BARS_SCROLL_THRESHOLD = 12
+         private val ALLOWED_FULLSCREEN_PWA_VALUES = arrayOf("fullscreen", "standalone")
+     }
+ }
+diff --git a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
+index 9cc8982..ec30b35 100644
+--- a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
++++ b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
+@@ -23,6 +23,7 @@ import androidx.constraintlayout.widget.Group
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.WindowInsetsCompat
+ import androidx.core.view.isVisible
++import androidx.core.view.updateLayoutParams
+ import com.google.android.material.progressindicator.LinearProgressIndicator
+ import org.lineageos.jelly.R
+ import org.lineageos.jelly.ext.requireActivity
+@@ -83,12 +84,14 @@ class UrlBarLayout @JvmOverloads constructor(
+ 
+             loadingProgressIndicator.progress = value
+         }
+-    private var isLoading = false
+-        set(value) {
++    var isLoading = false
++        private set(value) {
+             field = value
+ 
+             loadingProgressIndicator.isVisible = value
++            onLoadingChangedCallback?.invoke(value)
+         }
++    var onLoadingChangedCallback: ((Boolean) -> Unit)? = null
+ 
+     var url: String? = null
+         set(value) {
+@@ -122,6 +125,28 @@ class UrlBarLayout @JvmOverloads constructor(
+ 
+     // Callbacks
+     var onMoreButtonClickCallback: (() -> Unit)? = null
++
++    /**
++     * N9: the menu lives on the system toolbar, so the in-bar overflow button can be hidden.
++     */
++    var isMoreButtonVisible = true
++        set(value) {
++            field = value
++
++            // The URL group drives the button's visibility, so collapse it instead
++            val size = moreButtonSize
++            val margin = moreButtonMarginEnd
++            moreButton.isEnabled = value
++            moreButton.alpha = if (value) 1f else 0f
++            moreButton.updateLayoutParams<LayoutParams> {
++                width = if (value) size else 0
++                marginEnd = if (value) margin else 0
++            }
++        }
++    private val moreButtonSize by lazy { moreButton.layoutParams.width }
++    private val moreButtonMarginEnd by lazy {
++        (moreButton.layoutParams as LayoutParams).marginEnd
++    }
+     var onLoadUrlCallback: ((url: String) -> Unit)? = null
+     var onStartSearchCallback: ((query: String) -> Unit)? = null
+     var onSearchPositionChangeCallback: ((next: Boolean) -> Unit)? = null
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index c570449..97ada47 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -14,6 +14,9 @@
+         android:id="@+id/appBarLayout"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_window"
++        app:elevation="0dp"
++        app:liftOnScroll="false"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent">
+diff --git a/app/src/main/res/layout/url_bar_layout.xml b/app/src/main/res/layout/url_bar_layout.xml
+index 7db412b..9446150 100644
+--- a/app/src/main/res/layout/url_bar_layout.xml
++++ b/app/src/main/res/layout/url_bar_layout.xml
+@@ -7,7 +7,7 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+-    android:background="?attr/colorSurface">
++    android:background="@color/n9_window">
+ 
+     <!-- URL group -->
+     <androidx.constraintlayout.widget.Group
+@@ -22,16 +22,18 @@
+         android:layout_width="0dp"
+         android:layout_height="0dp"
+         android:layout_marginStart="16dp"
+-        android:layout_marginTop="8dp"
++        android:layout_marginTop="7dp"
+         android:layout_marginEnd="4dp"
+-        android:layout_marginBottom="8dp"
+-        android:backgroundTint="?attr/colorSurfaceVariant"
+-        app:cardCornerRadius="32dp"
++        android:layout_marginBottom="7dp"
++        android:backgroundTint="@color/n9_white"
++        app:cardCornerRadius="10dp"
++        app:cardElevation="0dp"
++        app:strokeColor="@color/n9_separator"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/moreButton"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:strokeWidth="0dp">
++        app:strokeWidth="1dp">
+ 
+         <androidx.constraintlayout.widget.ConstraintLayout
+             android:layout_width="match_parent"
+@@ -50,7 +52,7 @@
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+             <ImageButton
+                 android:id="@+id/secureButton"
+@@ -65,7 +67,7 @@
+                 app:layout_constraintStart_toEndOf="@+id/incognitoIcon"
+                 app:layout_constraintTop_toTopOf="parent"
+                 app:layout_goneMarginStart="14dp"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+             <org.lineageos.jelly.ui.AutoCompleteTextViewExt
+                 android:id="@+id/autoCompleteTextView"
+@@ -83,10 +85,11 @@
+                 android:maxLines="1"
+                 android:nextFocusLeft="@id/autoCompleteTextView"
+                 android:nextFocusUp="@id/autoCompleteTextView"
+-                android:popupBackground="?attr/colorSurface"
++                android:popupBackground="@color/n9_surface"
+                 android:popupElevation="0dp"
+                 android:selectAllOnFocus="true"
+-                android:textColor="?attr/colorOnSurface"
++                android:textColor="@color/n9_text"
++                android:textColorHint="@color/n9_text_secondary"
+                 android:hint="@string/url_bar_auto_complete_hint"
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+@@ -108,7 +111,7 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <!-- Search group -->
+     <androidx.constraintlayout.widget.Group
+@@ -129,23 +132,25 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <com.google.android.material.card.MaterialCardView
+         android:id="@+id/searchCardView"
+         android:layout_width="0dp"
+         android:layout_height="0dp"
+         android:layout_marginStart="4dp"
+-        android:layout_marginTop="8dp"
++        android:layout_marginTop="7dp"
+         android:layout_marginEnd="4dp"
+-        android:layout_marginBottom="8dp"
+-        android:backgroundTint="?attr/colorSurfaceVariant"
+-        app:cardCornerRadius="32dp"
++        android:layout_marginBottom="7dp"
++        android:backgroundTint="@color/n9_white"
++        app:cardCornerRadius="10dp"
++        app:cardElevation="0dp"
++        app:strokeColor="@color/n9_separator"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/searchPreviousButton"
+         app:layout_constraintStart_toEndOf="@+id/searchCancelButton"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:strokeWidth="0dp">
++        app:strokeWidth="1dp">
+ 
+         <androidx.constraintlayout.widget.ConstraintLayout
+             android:layout_width="match_parent"
+@@ -192,7 +197,7 @@
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+         </androidx.constraintlayout.widget.ConstraintLayout>
+ 
+@@ -208,7 +213,7 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/searchNextButton"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <ImageButton
+         android:id="@+id/searchNextButton"
+@@ -221,16 +226,18 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <com.google.android.material.progressindicator.LinearProgressIndicator
+         android:id="@+id/loadingProgressIndicator"
+         android:layout_width="match_parent"
+-        android:layout_height="2dp"
++        android:layout_height="3dp"
+         android:max="100"
+         android:progress="22"
+         android:visibility="gone"
+-        app:indicatorColor="?attr/colorAccent"
++        app:indicatorColor="@color/n9_blue"
++        app:trackColor="@android:color/transparent"
++        app:trackThickness="3dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent" />
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 79b0683..83dd69d 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -5,4 +5,16 @@
+ -->
+ <resources>
+     <color name="colorDelete">#F44336</color>
++
++    <!-- N9 (Etesian blanco) palette -->
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_surface">#F4F4F4</color>
++    <color name="n9_white">#FFFFFF</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_blue_container">#CCEDFA</color>
++    <color name="n9_green">#62AE2E</color>
++    <color name="n9_red">#D42D2A</color>
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index e27ef8a..673aeee 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -256,4 +256,10 @@
+ 
+     <!-- Media session -->
+     <string name="media_session_destroy_action">Stop</string>
++
++    <!-- N9 system toolbar -->
++    <string name="n9_toolbar_stop">Stop</string>
++    <string name="n9_start_address_hint">Enter address or search</string>
++    <string name="n9_start_top_sites">Top sites</string>
++    <string name="n9_start_bookmarks">Bookmarks</string>
+ </resources>
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index d9deed5..aa7d945 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -5,11 +5,43 @@
+ -->
+ <resources xmlns:tools="http://schemas.android.com/tools">
+ 
+-    <style name="Theme.Jelly" parent="Theme.Material3.DayNight">
++    <style name="Theme.Jelly" parent="Theme.Material3.Light">
+         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">true</item>
+         <item name="android:navigationBarColor">@android:color/transparent</item>
+         <item name="android:statusBarColor">@android:color/transparent</item>
+-        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
++        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
++        <!-- N9 static light palette (pinned; no dynamic colour, no dark mode) -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:windowBackground">@color/n9_window</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnPrimaryContainer">@color/n9_text</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorOnSecondary">@color/n9_white</item>
++        <item name="colorSecondaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnSecondaryContainer">@color/n9_text</item>
++        <item name="colorTertiary">@color/n9_green</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorError">@color/n9_red</item>
++        <item name="colorSurface">@color/n9_surface</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorSurfaceVariant">@color/n9_separator</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text</item>
++        <item name="colorSurfaceContainerLowest">@color/n9_white</item>
++        <item name="colorSurfaceContainerLow">@color/n9_surface</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_white</item>
++        <item name="colorOutline">@color/n9_separator</item>
++        <item name="colorOutlineVariant">@color/n9_separator</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:textColorLink">@color/n9_blue</item>
++        <item name="elevationOverlayEnabled">false</item>
+         <item name="alertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
+         <item name="materialAlertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
+         <item name="autoCompleteTextViewStyle">@style/Theme.Jelly.AutoCompleteTextViewStyle</item>
+@@ -22,6 +54,8 @@
+ 
+     <style name="Theme.Jelly.ToolbarTheme" parent="Widget.Material3.Toolbar">
+         <item name="contentInsetStart">0dp</item>
++        <item name="contentInsetEnd">0dp</item>
++        <item name="android:background">@color/n9_window</item>
+     </style>
+ 
+     <style name="Theme.Jelly.BottomSheetLayout">
+@@ -84,6 +118,9 @@
+     <!-- Search bar autocomplete text style -->
+     <style name="Theme.Jelly.AutoCompleteTextViewStyle" parent="Widget.AppCompat.AutoCompleteTextView">
+         <item name="android:textSize">16sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:textColorHint">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
+     </style>
+ 
+     <!-- Settings activity theme. -->
+@@ -94,7 +131,9 @@
+     <!-- Alert dialog theme. -->
+     <style name="Theme.Jelly.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+         <item name="android:colorBackground">?attr/colorSurface</item>
+-        <item name="dialogCornerRadius">16dp</item>
++        <item name="dialogCornerRadius">10dp</item>
++        <item name="colorSurface">@color/n9_surface</item>
++        <item name="colorPrimary">@color/n9_blue</item>
+     </style>
+ 
+     <!-- Settings switch theme. -->
+@@ -107,12 +146,14 @@
+ 
+     <!-- Collapsing toolbar style -->
+     <style name="Theme.Jelly.Settings.ToolbarCollapsed" parent="@android:style/TextAppearance.DeviceDefault.Widget.ActionBar.Title">
+-        <item name="android:fontFamily">sans-serif</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textColor">@color/n9_text</item>
+         <item name="android:textSize">20sp</item>
+     </style>
+ 
+     <style name="Theme.Jelly.Settings.ToolbarExpanded" parent="Theme.Jelly.Settings.ToolbarCollapsed">
+-        <item name="android:textSize">36sp</item>
++        <item name="android:textSize">32sp</item>
++        <item name="android:fontFamily">sans-serif-light</item>
+         <item name="android:drawablePadding">10dp</item>
+     </style>
+ 
+@@ -144,7 +185,7 @@
+         <item name="android:ellipsize">end</item>
+         <item name="android:maxLines">1</item>
+         <item name="android:textColor">?attr/colorOnSurface</item>
+-        <item name="android:textSize">16sp</item>
++        <item name="android:textSize">18sp</item>
+         <item name="drawableTint">?attr/colorOnSurface</item>
+     </style>
+ 
+diff --git a/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt b/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt
+new file mode 100644
+index 0000000..e2e10dc
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt
+@@ -0,0 +1,291 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.jelly.ui
++
++import android.content.Context
++import android.graphics.Bitmap
++import android.graphics.BitmapFactory
++import android.graphics.Color
++import android.graphics.Matrix
++import android.graphics.Outline
++import android.graphics.Typeface
++import android.graphics.drawable.GradientDrawable
++import android.net.Uri
++import android.provider.Settings
++import android.text.TextUtils
++import android.util.TypedValue
++import android.view.Gravity
++import android.view.KeyEvent
++import android.view.View
++import android.view.ViewOutlineProvider
++import androidx.core.graphics.PathParser
++import android.view.inputmethod.EditorInfo
++import android.widget.EditText
++import android.widget.FrameLayout
++import android.widget.GridLayout
++import android.widget.ImageView
++import android.widget.LinearLayout
++import android.widget.ScrollView
++import android.widget.TextView
++import org.lineageos.jelly.R
++import org.lineageos.jelly.model.Favorite
++import org.lineageos.jelly.model.History
++import java.io.File
++import java.io.FileOutputStream
++
++/**
++ * N9: the browser start page shown for new tabs / home in Etesian mode. A native overlay
++ * placed over the WebView: address field, "Top sites" grid and "Bookmarks" list.
++ */
++class StartPageView(context: Context) : ScrollView(context) {
++    var onOpenUrl: ((String) -> Unit)? = null
++
++    // The Jelly N9 restyle pins the static light palette (no dark mode), so mirror it
++    private val dark = false
++    private val bgColor = if (dark) Color.BLACK else Color.parseColor("#E6E7E8")
++    private val cardColor = if (dark) Color.parseColor("#262626") else Color.WHITE
++    private val textColor = if (dark) Color.WHITE else context.getColor(R.color.n9_text)
++    private val secondaryColor = context.getColor(R.color.n9_text_secondary)
++
++    private val content = LinearLayout(context).apply {
++        orientation = LinearLayout.VERTICAL
++        setPadding(dp(16), dp(16), dp(16), dp(24))
++    }
++    private val addressField = EditText(context).apply {
++        hint = context.getString(R.string.n9_start_address_hint)
++        setSingleLine()
++        textSize = 18f
++        setTextColor(textColor)
++        setHintTextColor(secondaryColor)
++        inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI or
++                android.text.InputType.TYPE_CLASS_TEXT
++        imeOptions = EditorInfo.IME_ACTION_GO
++        background = rounded(cardColor, dp(24).toFloat(), stroke = true)
++        setPadding(dp(18), 0, dp(18), 0)
++        setOnEditorActionListener { v, actionId, event ->
++            if (actionId == EditorInfo.IME_ACTION_GO ||
++                event?.keyCode == KeyEvent.KEYCODE_ENTER
++            ) {
++                v.text.toString().trim().takeIf { it.isNotEmpty() }?.let { onOpenUrl?.invoke(it) }
++                true
++            } else false
++        }
++    }
++    private val topSitesTitle = sectionTitle(R.string.n9_start_top_sites)
++    private val grid = GridLayout(context).apply { columnCount = 2 }
++    private val bookmarksTitle = sectionTitle(R.string.n9_start_bookmarks)
++    private val bookmarksList = LinearLayout(context).apply {
++        orientation = LinearLayout.VERTICAL
++        background = rounded(cardColor, dp(8).toFloat())
++    }
++
++    private var history: List<History> = emptyList()
++    private var favorites: List<Favorite> = emptyList()
++
++    init {
++        setBackgroundColor(bgColor)
++        isFillViewport = true
++        // The browser's own address bar is already above the page: no second field here.
++        content.addView(topSitesTitle)
++        content.addView(grid, LinearLayout.LayoutParams(
++            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
++        content.addView(bookmarksTitle)
++        content.addView(bookmarksList, LinearLayout.LayoutParams(
++            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
++        addView(content)
++    }
++
++    fun setHistory(items: List<History>) {
++        history = items
++        rebuild()
++    }
++
++    fun setFavorites(items: List<Favorite>) {
++        favorites = items
++        rebuild()
++    }
++
++    fun reset() {
++        addressField.setText("")
++        scrollTo(0, 0)
++    }
++
++    private fun rebuild() {
++        // Top sites: bookmarks first, then the most frequently visited hosts
++        val seen = HashSet<String>()
++        val sites = ArrayList<Pair<String, String>>()
++        favorites.forEach { if (seen.add(it.url)) sites.add(it.title to it.url) }
++        history.groupBy { Uri.parse(it.url).host ?: it.url }
++            .entries.sortedByDescending { it.value.size }
++            .forEach { (_, visits) ->
++                val latest = visits.first()
++                if (seen.add(latest.url)) sites.add(latest.title to latest.url)
++            }
++
++        grid.removeAllViews()
++        sites.take(MAX_TOP_SITES).forEachIndexed { i, (title, url) ->
++            grid.addView(siteCard(title, url), GridLayout.LayoutParams(
++                GridLayout.spec(i / 2), GridLayout.spec(i % 2, 1f)
++            ).apply {
++                width = 0
++                setMargins(if (i % 2 == 0) 0 else dp(6), dp(6), if (i % 2 == 0) dp(6) else 0, dp(6))
++            })
++        }
++        topSitesTitle.visibility = if (grid.childCount > 0) View.VISIBLE else View.GONE
++
++        bookmarksList.removeAllViews()
++        favorites.forEachIndexed { i, fav ->
++            if (i > 0) bookmarksList.addView(View(context).apply {
++                setBackgroundColor(context.getColor(R.color.n9_separator))
++            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1))
++            bookmarksList.addView(bookmarkRow(fav))
++        }
++        val hasBookmarks = favorites.isNotEmpty()
++        bookmarksTitle.visibility = if (hasBookmarks) View.VISIBLE else View.GONE
++        bookmarksList.visibility = if (hasBookmarks) View.VISIBLE else View.GONE
++    }
++
++    private fun siteCard(title: String, url: String): View {
++        val card = LinearLayout(context).apply {
++            orientation = LinearLayout.VERTICAL
++            setOnClickListener { onOpenUrl?.invoke(url) }
++        }
++        val thumb = FrameLayout(context).apply {
++            background = rounded(cardColor, dp(8).toFloat(), stroke = true)
++            clipToOutline = true
++        }
++        thumb.addView(iconView(url, dp(48)), FrameLayout.LayoutParams(
++            dp(48), dp(48), Gravity.CENTER))
++        card.addView(thumb, LinearLayout.LayoutParams(
++            LinearLayout.LayoutParams.MATCH_PARENT, dp(110)))
++        card.addView(TextView(context).apply {
++            text = title.ifBlank { Uri.parse(url).host ?: url }
++            textSize = 15f
++            setTextColor(textColor)
++            setSingleLine()
++            ellipsize = TextUtils.TruncateAt.END
++            gravity = Gravity.CENTER_HORIZONTAL
++            setPadding(0, dp(6), 0, 0)
++        })
++        return card
++    }
++
++    private fun bookmarkRow(fav: Favorite): View = LinearLayout(context).apply {
++        orientation = LinearLayout.HORIZONTAL
++        gravity = Gravity.CENTER_VERTICAL
++        minimumHeight = dp(64)
++        setPadding(dp(16), dp(8), dp(16), dp(8))
++        setOnClickListener { onOpenUrl?.invoke(fav.url) }
++        addView(iconView(fav.url, dp(32), fav.color), LinearLayout.LayoutParams(dp(32), dp(32)))
++        addView(LinearLayout(context).apply {
++            orientation = LinearLayout.VERTICAL
++            setPadding(dp(16), 0, 0, 0)
++            addView(TextView(context).apply {
++                text = fav.title
++                textSize = 18f
++                setTextColor(textColor)
++                setSingleLine()
++                ellipsize = TextUtils.TruncateAt.END
++            })
++            addView(TextView(context).apply {
++                text = fav.url
++                textSize = 14f
++                setTextColor(secondaryColor)
++                setSingleLine()
++                ellipsize = TextUtils.TruncateAt.END
++            })
++        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
++    }
++
++    /** Cached favicon if we have one, otherwise the host's initial on a coloured N9 squircle. */
++    private fun iconView(url: String, size: Int, color: Int = 0): View {
++        loadFavicon(context, url)?.let { bmp ->
++            return ImageView(context).apply {
++                setImageBitmap(bmp)
++                scaleType = ImageView.ScaleType.CENTER_CROP
++                clipToSquircle(this)
++            }
++        }
++        val host = Uri.parse(url).host?.removePrefix("www.") ?: url
++        return TextView(context).apply {
++            text = host.take(1).uppercase()
++            gravity = Gravity.CENTER
++            setTextColor(Color.WHITE)
++            setTextSize(TypedValue.COMPLEX_UNIT_PX, size * 0.5f)
++            typeface = Typeface.DEFAULT_BOLD
++            setBackgroundColor(if (color != 0 && color != Color.TRANSPARENT) color
++                else context.getColor(R.color.n9_blue))
++            clipToSquircle(this)
++        }
++    }
++
++    /** N9: every thumb-sized icon is the AOSP squircle (100x100 path, scaled and centred). */
++    private fun clipToSquircle(v: View) {
++        v.outlineProvider = object : ViewOutlineProvider() {
++            override fun getOutline(view: View, outline: Outline) {
++                val size = minOf(view.width, view.height).toFloat()
++                if (size <= 0f) return
++                outline.setPath(PathParser.createPathFromPathData(SQUIRCLE).apply {
++                    transform(Matrix().apply {
++                        setScale(size / 100f, size / 100f)
++                        postTranslate((view.width - size) / 2f, (view.height - size) / 2f)
++                    })
++                })
++            }
++        }
++        v.clipToOutline = true
++    }
++
++    private fun sectionTitle(res: Int) = TextView(context).apply {
++        setText(res)
++        textSize = 22f
++        typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
++        setTextColor(secondaryColor)
++        setPadding(dp(4), dp(20), 0, dp(8))
++    }
++
++    private fun rounded(color: Int, radius: Float, stroke: Boolean = false) =
++        GradientDrawable().apply {
++            setColor(color)
++            cornerRadius = radius
++            if (stroke && !dark) setStroke(1, context.getColor(R.color.n9_separator))
++        }
++
++    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
++
++    companion object {
++        private const val SQUIRCLE =
++            "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++        private const val MAX_TOP_SITES = 8
++        private const val FAVICON_DIR = "n9_favicons"
++
++        fun isEnabled(context: Context) = Settings.Secure.getInt(
++            context.contentResolver, "etesian_gestures", 0
++        ) == 1
++
++        fun isStartUrl(url: String?) = url.isNullOrEmpty() || url == "about:blank"
++
++        private fun faviconFile(context: Context, url: String): File? {
++            val host = Uri.parse(url).host ?: return null
++            return File(File(context.cacheDir, FAVICON_DIR), "$host.png")
++        }
++
++        fun saveFavicon(context: Context, url: String?, icon: Bitmap) {
++            if (url == null) return
++            val file = faviconFile(context, url) ?: return
++            runCatching {
++                file.parentFile?.mkdirs()
++                FileOutputStream(file).use { icon.compress(Bitmap.CompressFormat.PNG, 100, it) }
++            }
++        }
++
++        fun loadFavicon(context: Context, url: String): Bitmap? {
++            val file = faviconFile(context, url) ?: return null
++            if (!file.exists()) return null
++            return runCatching { BitmapFactory.decodeFile(file.path) }.getOrNull()
++        }
++    }
++}

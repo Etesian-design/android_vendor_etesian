@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle data tracker (the email/calendar reference, belle-ref9.jpg): a dark disc, blue ring. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bc_ring" android:layout_width="78dp" android:layout_height="78dp" android:layout_gravity="center"/>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center"
+        android:gravity="center_horizontal" android:orientation="vertical">
+        <TextView android:id="@+id/bc_amount" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#FFFFFFFF" android:textSize="19sp" android:fontFamily="etesian-text"/>
+        <TextView android:id="@+id/bc_unit" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#FFB0B1B5" android:textSize="8sp" android:fontFamily="etesian-text"/>
+    </LinearLayout>
+</FrameLayout>
