@@ -11,7 +11,7 @@ d=app/src/main/res/drawable
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 cp -r app "$tmp/" 2>/dev/null; mkdir -p "$tmp/tools" && cp tools/belle_art.py "$tmp/tools/"
 python3 "$tmp/tools/belle_art.py" >/dev/null
-for f in bc_square_dial bc_date_box bc_hand_hour_l bc_hand_minute_l bc_hand_second bc_toggle_on bc_toggle_off bc_sw_on bc_sw_off bc_power_on bc_power_off; do
+for f in bc_hand_second_gear bc_square_dial bc_date_box bc_hand_hour_l bc_hand_minute_l bc_hand_second bc_toggle_on bc_toggle_off bc_sw_on bc_sw_off bc_power_on bc_power_off; do
   cmp -s "$d/$f.xml" "$tmp/app/src/main/res/drawable/$f.xml" || bad "$f.xml differs from tools/belle_art.py"
   grep -q '<corners' "$d/$f.xml" && bad "$f.xml is a rounded rectangle"
 done
@@ -32,5 +32,6 @@ assert dot and float(dot.group(1)) == 12 and float(dot.group(4)) > 1, 'dot'
 xs = [float(a) for a, _ in re.findall(r'[MA ]([\d.]+),([\d.]+)A', s)] + [float(x) for x in re.findall(r'1,([\d.]+),[\d.]+(?=M|")', s)]
 assert abs((min(xs) + max(xs)) / 2 - 12) < 0.05, 'arcs'
 PY
+grep -q 'hand_second="@drawable/bc_hand_second_gear"' app/src/main/res/layout/bc_gearclock.xml || bad "the gear clock's second hand is not the thin light one (belle-ref11)"
 
 [ $fail = 0 ] && echo "PASS Belle shapes follow the 701 art"
