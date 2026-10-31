@@ -48,9 +48,11 @@ sh_ input swipe $bx $by $bx $(( fy - 40 )) 1200; sleep 1.5
 set -- $(gy Bluetooth); nby=${2%.*}; set -- $(gy "$first"); nfy=${2%.*}
 check "drag moves Bluetooth above $first" '[ -n "$nby" ] && [ "$nby" -lt "$nfy" ]'
 tap_text "Add item"; sleep 1.2
-check "Add item lists sliders" 'dump | grep -q "text=\"Brightness\""'
-tap_text "Brightness"; sleep 1.2
-check "Brightness slider added" 'desc "Drag Brightness"'
+# the list offers only what is not shown yet: take the first slider it lists (Brightness, Alarm volume, ...)
+sl=$(dump | grep -o 'text="[^"]*"' | sed 's/text="//;s/"$//' | grep -B1 -x Slider | head -1)
+check "Add item lists sliders ($sl)" '[ -n "$sl" ] && [ "$sl" != Slider ]'
+tap_text "$sl"; sleep 1.2
+check "$sl slider added" 'desc "Drag $sl"'
 tap_text "Add item"; sleep 1.2; tap_text "Flight mode"; sleep 1.2
 check "Flight mode row added" 'desc "Drag Flight mode"'
 tap_desc "Edit toggles"; sleep 1.2
