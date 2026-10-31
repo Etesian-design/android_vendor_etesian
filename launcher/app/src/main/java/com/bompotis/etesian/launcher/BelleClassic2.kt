@@ -867,6 +867,7 @@ class BelleWeatherClassicWidget : AppWidgetProvider() {
                     v.setTextViewText(dy, DateFormat.format("EEE", d.time))
                 }
             v.setOnClickPendingIntent(R.id.bc_root, BelleWidgets.activity(ctx, 84, BelleWidgets.eventsPage(ctx)))
+            v.setOnClickPendingIntent(R.id.bc_place, BelleWidgets.activity(ctx, 85, Intent(ctx, WeatherPlaceActivity::class.java)))
             AppWidgetManager.getInstance(ctx).updateAppWidget(ids, v)
         }
     }

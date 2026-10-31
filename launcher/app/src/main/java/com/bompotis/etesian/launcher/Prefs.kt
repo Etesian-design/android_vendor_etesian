@@ -127,6 +127,8 @@ object Prefs {
     fun weatherEnabled(ctx: Context) = of(ctx).getBoolean(WEATHER, true)
     const val WEATHER_CITY = "weather_city"
     fun weatherCity(ctx: Context) = of(ctx).getString(WEATHER_CITY, "")!!
+    /** "lat,lon" of the place picked in the place picker, kept with its name (two towns can share one). */
+    const val WEATHER_PLACE = "weather_place"
     fun weatherFahrenheit(ctx: Context) = of(ctx).getString(WEATHER_UNITS, "c") == "f"
     fun eventsStyleKey(s: EventsClassifier.Section) = "events_style_${s.key}"
     fun eventsStyle(ctx: Context, s: EventsClassifier.Section): EventsClassifier.Style {

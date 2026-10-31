@@ -123,6 +123,8 @@ class BelleWeatherWidget : AppWidgetProvider() {
                 views.setImageViewBitmap(R.id.belle_icon, icon(ctx, now.code, now.day))
             }
             views.setOnClickPendingIntent(R.id.belle_root, BelleWidgets.activity(ctx, 3, BelleWidgets.eventsPage(ctx)))
+            // The place, as on Belle: picks the place shown.
+            views.setOnClickPendingIntent(R.id.belle_place, BelleWidgets.activity(ctx, 4, Intent(ctx, WeatherPlaceActivity::class.java)))
             AppWidgetManager.getInstance(ctx).updateAppWidget(ids, views)
         }
 

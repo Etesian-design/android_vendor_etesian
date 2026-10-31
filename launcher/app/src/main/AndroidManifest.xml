@@ -483,6 +483,13 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/bc_rss_info" />
         </receiver>
         <activity
+            android:name=".WeatherPlaceActivity"
+            android:exported="false"
+            android:label="Place"
+            android:windowSoftInputMode="stateVisible|adjustResize"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:taskAffinity="com.bompotis.etesian.launcher.widgets" />
+        <activity
             android:name=".BelleRssConfigActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar"

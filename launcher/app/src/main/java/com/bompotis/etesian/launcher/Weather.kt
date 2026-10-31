@@ -39,7 +39,7 @@ object Weather {
         val fahrenheit = Prefs.weatherFahrenheit(ctx)
         val city = Prefs.weatherCity(ctx)
         // A changed city or unit makes the cached reading stale.
-        val key = "$city/$fahrenheit"
+        val key = "$city/${Prefs.of(ctx).getString(Prefs.WEATHER_PLACE, "")}/$fahrenheit"
         if (key != lastKey) { lastKey = key; fetchedAt = 0 }
         current?.let { publish(ctx, it) }
         if (fetching || System.currentTimeMillis() - fetchedAt < MAX_AGE_MS && current != null) return
@@ -55,6 +55,11 @@ object Weather {
                     if (now != null) { current = now; fetchedAt = System.currentTimeMillis(); publish(app, now); done() }
                 }
             }
+        }
+        // Picked in the place picker: its own coordinates, while the name is still the one picked (settings can retype it).
+        val picked = Prefs.of(ctx).getString(Prefs.WEATHER_PLACE, null)?.split(',')?.mapNotNull { it.toDoubleOrNull() }
+        if (city.isNotBlank() && picked?.size == 2 && Prefs.of(ctx).getString(Prefs.WEATHER_PLACE + "_name", null) == city) {
+            load(picked[0], picked[1], city); return
         }
         if (city.isNotBlank()) {
             // A city typed in settings: look it up once with Open-Meteo's geocoding.
@@ -86,6 +91,34 @@ object Weather {
             .inputStream.bufferedReader().use { it.readText() }
         val r = JSONObject(body).getJSONArray("results").getJSONObject(0)
         return Triple(r.getDouble("latitude"), r.getDouble("longitude"), r.getString("name"))
+    }
+
+    /** A place found by [search]: its name, "region, country", and where it is. */
+    class Place(val name: String, val detail: String, val lat: Double, val lon: Double)
+
+    /** Places named like [query] (Open-Meteo geocoding, up to 10), for the place picker. Network: call off the main thread. */
+    fun search(query: String): List<Place> {
+        val url = "https://geocoding-api.open-meteo.com/v1/search?count=10&name=" + java.net.URLEncoder.encode(query, "UTF-8")
+        val body = (URL(url).openConnection() as HttpURLConnection).apply { connectTimeout = 8000; readTimeout = 8000 }
+            .inputStream.bufferedReader().use { it.readText() }
+        val rs = JSONObject(body).optJSONArray("results") ?: return emptyList()
+        return List(rs.length()) { i ->
+            val r = rs.getJSONObject(i)
+            Place(r.getString("name"), listOf(r.optString("admin1"), r.optString("country")).filter { it.isNotBlank() }.joinToString(", "),
+                r.getDouble("latitude"), r.getDouble("longitude"))
+        }
+    }
+
+    /** Uses [p] from now on (null: the phone's location again) and refreshes every weather surface. */
+    fun choose(ctx: Context, p: Place?) {
+        Prefs.of(ctx).edit().apply {
+            if (p == null) { remove(Prefs.WEATHER_CITY); remove(Prefs.WEATHER_PLACE); remove(Prefs.WEATHER_PLACE + "_name") }
+            else { putString(Prefs.WEATHER_CITY, p.name); putString(Prefs.WEATHER_PLACE, "${p.lat},${p.lon}"); putString(Prefs.WEATHER_PLACE + "_name", p.name) }
+        }.commit()
+        current = null
+        val app = ctx.applicationContext
+        BelleWeatherWidget.updateAll(app); BelleWeatherClassicWidget.updateAll(app)
+        refresh(app) { BelleWeatherWidget.updateAll(app); BelleWeatherClassicWidget.updateAll(app) }
     }
 
     private fun lastLocation(ctx: Context): Location? {
