@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Belle switches (belle-ref4.jpg): four squircle buttons, lit blue when on, labels under. -->
+<!-- Belle switches: four of Belle's metal caps (bc_toggle_*, tools/belle_art.py), up over a blue glow when on, labels under. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@drawable/belle_panel" android:gravity="center_vertical" android:orientation="horizontal" android:padding="4dp">
     <LinearLayout android:id="@+id/bc_t0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
         android:gravity="center" android:orientation="vertical">
-        <FrameLayout android:id="@+id/bc_t0_bg" android:layout_width="60dp" android:layout_height="56dp" android:background="@drawable/bc_toggle_off">
-            <ImageView android:id="@+id/bc_t0_icon" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center"/>
+        <FrameLayout android:id="@+id/bc_t0_bg" android:layout_width="54dp" android:layout_height="62dp" android:background="@drawable/bc_toggle_off">
+            <ImageView android:id="@+id/bc_t0_icon" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"/>
         </FrameLayout>
         <TextView android:id="@+id/bc_t0_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
             android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
     </LinearLayout>
     <LinearLayout android:id="@+id/bc_t1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
         android:gravity="center" android:orientation="vertical">
-        <FrameLayout android:id="@+id/bc_t1_bg" android:layout_width="60dp" android:layout_height="56dp" android:background="@drawable/bc_toggle_off">
-            <ImageView android:id="@+id/bc_t1_icon" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center"/>
+        <FrameLayout android:id="@+id/bc_t1_bg" android:layout_width="54dp" android:layout_height="62dp" android:background="@drawable/bc_toggle_off">
+            <ImageView android:id="@+id/bc_t1_icon" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"/>
         </FrameLayout>
         <TextView android:id="@+id/bc_t1_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
             android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
     </LinearLayout>
     <LinearLayout android:id="@+id/bc_t2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
         android:gravity="center" android:orientation="vertical">
-        <FrameLayout android:id="@+id/bc_t2_bg" android:layout_width="60dp" android:layout_height="56dp" android:background="@drawable/bc_toggle_off">
-            <ImageView android:id="@+id/bc_t2_icon" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center"/>
+        <FrameLayout android:id="@+id/bc_t2_bg" android:layout_width="54dp" android:layout_height="62dp" android:background="@drawable/bc_toggle_off">
+            <ImageView android:id="@+id/bc_t2_icon" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"/>
         </FrameLayout>
         <TextView android:id="@+id/bc_t2_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
             android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
     </LinearLayout>
     <LinearLayout android:id="@+id/bc_t3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
         android:gravity="center" android:orientation="vertical">
-        <FrameLayout android:id="@+id/bc_t3_bg" android:layout_width="60dp" android:layout_height="56dp" android:background="@drawable/bc_toggle_off">
-            <ImageView android:id="@+id/bc_t3_icon" android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center"/>
+        <FrameLayout android:id="@+id/bc_t3_bg" android:layout_width="54dp" android:layout_height="62dp" android:background="@drawable/bc_toggle_off">
+            <ImageView android:id="@+id/bc_t3_icon" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"/>
         </FrameLayout>
         <TextView android:id="@+id/bc_t3_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
             android:ellipsize="end" android:gravity="center" android:maxLines="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
