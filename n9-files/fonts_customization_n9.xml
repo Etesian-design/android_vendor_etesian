@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fonts-modification version="1">
+    <family customizationType="new-named-family" name="nokia-pure-text">
+        <font weight="300" style="normal">NokiaPureText_Lt.ttf</font>
+        <font weight="400" style="normal">NokiaPureText_Rg.ttf</font>
+        <font weight="500" style="normal">NokiaPureText_Bd.ttf</font>
+        <font weight="700" style="normal">NokiaPureText_Bd.ttf</font>
+    </family>
+</fonts-modification>

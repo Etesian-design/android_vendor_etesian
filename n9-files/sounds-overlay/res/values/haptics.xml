@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The N9's touch feedback is one short, crisp push (the stock pattern here is two). -->
+<resources>
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>15</item>
+    </integer-array>
+</resources>

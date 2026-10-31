@@ -1,0 +1,2022 @@
+diff --git a/Android.bp b/Android.bp
+index a82bca683..97970a589 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -243,6 +243,9 @@ android_app {
+         "libphonenumber",
+         "org.lineageos.lib.phone",
+         "volley",
++        "etesian-toolbar",
++        "etesian-fastscroll",
++        "etesian-theme",
+     ],
+     use_embedded_native_libs: true,
+ }
+diff --git a/java/com/android/dialer/app/BaseActivity.java b/java/com/android/dialer/app/BaseActivity.java
+index b672ad92e..910612f07 100644
+--- a/java/com/android/dialer/app/BaseActivity.java
++++ b/java/com/android/dialer/app/BaseActivity.java
+@@ -18,11 +18,50 @@ package com.android.dialer.app;
+ import android.view.View;
+ 
+ import androidx.appcompat.app.AppCompatActivity;
++import androidx.appcompat.app.AppCompatDelegate;
+ import androidx.core.graphics.Insets;
+ import androidx.core.view.ViewCompat;
+ import androidx.core.view.WindowInsetsCompat;
+ 
++import com.bompotis.etesian.theme.EtesianBackground;
++
+ public class BaseActivity extends AppCompatActivity {
++
++    // N9 look: the Etesian background this activity was created with.
++    private EtesianBackground.Style mEtesianStyle;
++
++    @Override
++    protected void attachBaseContext(android.content.Context newBase) {
++        // Night resources hold the N9 palette for the dark Etesian backgrounds (black, dark
++        // grey, wallpaper); force the mode both ways so the system dark theme never changes the
++        // light N9 look. Set before the delegate attaches, so it applies without a recreate.
++        mEtesianStyle = EtesianBackground.content(newBase);
++        getDelegate().setLocalNightMode(mEtesianStyle.dark
++                ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
++        super.attachBaseContext(newBase);
++    }
++
++    @Override
++    protected void onCreate(android.os.Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        if (mEtesianStyle != null && mEtesianStyle.dark) {
++            EtesianBackground.apply(this, mEtesianStyle);
++        }
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != null && mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
++    }
++
++    /** N9 look: the Etesian background (light N9 by default). */
++    protected EtesianBackground.Style getEtesianStyle() {
++        return mEtesianStyle;
++    }
+     public void setupInsets(View rootView) {
+         // Handle window insets for padding adjustments
+         ViewCompat.setOnApplyWindowInsetsListener(rootView, (view, insets) -> {
+diff --git a/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java b/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
+index de22ef735..2a219c230 100644
+--- a/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
++++ b/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
+@@ -27,9 +27,11 @@ import android.telephony.TelephonyManager;
+ import android.text.TextUtils;
+ import android.text.format.DateUtils;
+ import android.view.View;
++import android.widget.ImageView;
+ 
+ import com.android.dialer.R;
+ import com.android.dialer.app.calllog.calllogcache.CallLogCache;
++import com.android.dialer.calllogutils.CallTypeHelper;
+ import com.android.dialer.calllogutils.PhoneCallDetails;
+ import com.android.dialer.compat.telephony.TelephonyManagerCompat;
+ import com.android.dialer.logging.ContactSource;
+@@ -57,6 +59,9 @@ public class PhoneCallDetailsHelper {
+ 
+   private final CachedNumberLookupService cachedNumberLookupService;
+ 
++  /** N9 look: names the call type (Incoming, Outgoing, Missed...) on the second line. */
++  private final CallTypeHelper callTypeHelper;
++
+   /** List of items to be concatenated together for accessibility descriptions */
+   private final ArrayList<CharSequence> descriptionItems = new ArrayList<>();
+ 
+@@ -73,6 +78,7 @@ public class PhoneCallDetailsHelper {
+     this.callLogCache = callLogCache;
+     calendar = Calendar.getInstance();
+     cachedNumberLookupService = PhoneNumberCache.get(context).getCachedNumberLookupService();
++    callTypeHelper = new CallTypeHelper(resources);
+   }
+ 
+   /** Returns true if primary name is empty or the data is from Cequint Caller ID. */
+@@ -103,11 +109,17 @@ public class PhoneCallDetailsHelper {
+     int count = details.callTypes.length;
+     boolean isVoicemail = false;
+     for (int index = 0; index < count && index < MAX_CALL_TYPE_ICONS; ++index) {
+-      views.callTypeIcons.add(details.callTypes[index]);
++      // N9 look: the call type is the large icon at the start of the row instead.
++      if (views.n9CallTypeIcon == null) {
++        views.callTypeIcons.add(details.callTypes[index]);
++      }
+       if (index == 0) {
+         isVoicemail = details.callTypes[index] == Calls.VOICEMAIL_TYPE;
+       }
+     }
++    if (views.n9CallTypeIcon != null && count > 0) {
++      setN9CallTypeIcon(views.n9CallTypeIcon, details.callTypes[0]);
++    }
+ 
+     // Show the video icon if the call had video enabled.
+     views.callTypeIcons.setShowVideo(
+@@ -162,14 +174,46 @@ public class PhoneCallDetailsHelper {
+ 
+     setNameView(views, details);
+ 
+-    // Bold if not read
+-    Typeface typeface = details.isRead ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD;
++    // N9 look: the name is always bold Nokia Pure; the second line stays grey.
++    Typeface typeface = Typeface.create("etesian-text", Typeface.BOLD);
+     views.nameView.setTypeface(typeface);
+-    views.callLocationAndDate.setTypeface(typeface);
++    views.callLocationAndDate.setTypeface(Typeface.create("etesian-text", Typeface.NORMAL));
+     views.callLocationAndDate.setTextColor(
+-        details.isRead
+-            ? ThemeComponent.get(context).theme().getTextColorSecondary()
+-            : ThemeComponent.get(context).theme().getTextColorPrimary());
++        ThemeComponent.get(context).theme().getTextColorSecondary());
++  }
++
++  /** N9 look: incoming, outgoing or missed (in red) as the row's large icon. */
++  private void setN9CallTypeIcon(ImageView icon, int callType) {
++    final int drawable;
++    final int color;
++    switch (callType) {
++      case Calls.OUTGOING_TYPE:
++        drawable = R.drawable.quantum_ic_call_made_vd_theme_24;
++        color = R.color.n9_call_log_icon;
++        break;
++      case Calls.MISSED_TYPE:
++      case Calls.REJECTED_TYPE:
++        drawable = R.drawable.quantum_ic_call_missed_vd_theme_24;
++        color = R.color.dialer_red;
++        break;
++      case Calls.VOICEMAIL_TYPE:
++        drawable = R.drawable.quantum_ic_voicemail_vd_theme_24;
++        color = R.color.n9_call_log_icon;
++        break;
++      case Calls.BLOCKED_TYPE:
++        drawable = R.drawable.quantum_ic_block_vd_theme_24;
++        color = R.color.n9_call_log_icon;
++        break;
++      default:
++        drawable = R.drawable.quantum_ic_call_received_vd_theme_24;
++        color = R.color.n9_call_log_icon;
++        break;
++    }
++    icon.setImageResource(drawable);
++    icon.setImageTintList(
++        android.content.res.ColorStateList.valueOf(
++            context.getResources().getColor(color, context.getTheme())));
++    icon.setContentDescription(callTypeHelper.getCallTypeText(callType, false, false));
+   }
+ 
+   private void setNameView(PhoneCallDetailsViews views, PhoneCallDetails details) {
+@@ -204,6 +248,22 @@ public class PhoneCallDetailsHelper {
+     synchronized (this) {
+       descriptionItems.clear();
+ 
++      // N9 look: "type | time", e.g. "Missed call | 14:02".
++      if (details.callTypes.length > 0) {
++        final CharSequence callType =
++            details.isSpam || details.isBlocked
++                ? getCallTypeOrLocation(details)
++                : callTypeHelper.getCallTypeText(
++                    details.callTypes[0],
++                    (details.features & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO,
++                    (details.features & Calls.FEATURES_PULLED_EXTERNALLY)
++                        == Calls.FEATURES_PULLED_EXTERNALLY);
++        if (TextUtils.isEmpty(callType)) {
++          return getCallDate(details);
++        }
++        return TextUtils.concat(callType, " | ", getCallDate(details));
++      }
++
+       if (details.callTypes[0] != Calls.VOICEMAIL_TYPE) {
+         // Get type of call (ie mobile, home, etc) if known, or the caller's location.
+         CharSequence callTypeOrLocation = getCallTypeOrLocation(details);
+diff --git a/java/com/android/dialer/app/calllog/PhoneCallDetailsViews.java b/java/com/android/dialer/app/calllog/PhoneCallDetailsViews.java
+index 54e07f728..94755b7fc 100644
+--- a/java/com/android/dialer/app/calllog/PhoneCallDetailsViews.java
++++ b/java/com/android/dialer/app/calllog/PhoneCallDetailsViews.java
+@@ -18,6 +18,7 @@
+ package com.android.dialer.app.calllog;
+ 
+ import android.view.View;
++import android.widget.ImageView;
+ import android.widget.TextView;
+ 
+ import com.android.dialer.R;
+@@ -32,18 +33,22 @@ public final class PhoneCallDetailsViews {
+   public final CallTypeIconsView callTypeIcons;
+   public final TextView callLocationAndDate;
+   public final TextView callAccountLabel;
++  /** N9 look: the large call type icon at the start of the row (may be null). */
++  public final ImageView n9CallTypeIcon;
+ 
+   private PhoneCallDetailsViews(
+       BidiTextView nameView,
+       View callTypeView,
+       CallTypeIconsView callTypeIcons,
+       TextView callLocationAndDate,
+-      TextView callAccountLabel) {
++      TextView callAccountLabel,
++      ImageView n9CallTypeIcon) {
+     this.nameView = nameView;
+     this.callTypeView = callTypeView;
+     this.callTypeIcons = callTypeIcons;
+     this.callLocationAndDate = callLocationAndDate;
+     this.callAccountLabel = callAccountLabel;
++    this.n9CallTypeIcon = n9CallTypeIcon;
+   }
+ 
+   /**
+@@ -59,6 +64,7 @@ public final class PhoneCallDetailsViews {
+         view.findViewById(R.id.call_type),
+         (CallTypeIconsView) view.findViewById(R.id.call_type_icons),
+         (TextView) view.findViewById(R.id.call_location_and_date),
+-        (TextView) view.findViewById(R.id.call_account_label));
++        (TextView) view.findViewById(R.id.call_account_label),
++        (ImageView) view.findViewById(R.id.n9_call_type_icon));
+   }
+ }
+diff --git a/java/com/android/dialer/app/contactinfo/ContactPhotoLoader.java b/java/com/android/dialer/app/contactinfo/ContactPhotoLoader.java
+index 4615d3905..114c1637a 100644
+--- a/java/com/android/dialer/app/contactinfo/ContactPhotoLoader.java
++++ b/java/com/android/dialer/app/contactinfo/ContactPhotoLoader.java
+@@ -103,11 +103,8 @@ public class ContactPhotoLoader {
+             "createPhotoIconDrawable: Bitmap is null");
+         return null;
+       }
+-      final RoundedBitmapDrawable drawable =
+-          RoundedBitmapDrawableFactory.create(context.getResources(), bitmap);
+-      drawable.setAntiAlias(true);
+-      drawable.setCircular(true);
+-      return drawable;
++      // N9 look: Etesian squircle instead of a circle
++      return new com.android.dialer.util.N9Squircle.BitmapDrawable(bitmap);
+     } catch (IOException e) {
+       LogUtil.e("ContactPhotoLoader.createPhotoIconDrawable", e.toString());
+       return null;
+diff --git a/java/com/android/dialer/app/res/drawable/popup_background.xml b/java/com/android/dialer/app/res/drawable/popup_background.xml
+index fe5e4656a..13aa2805e 100644
+--- a/java/com/android/dialer/app/res/drawable/popup_background.xml
++++ b/java/com/android/dialer/app/res/drawable/popup_background.xml
+@@ -3,5 +3,5 @@
+     android:shape="rectangle">
+ 
+     <corners android:radius="28dp" />
+-    <solid android:color="@android:color/system_neutral2_700" />
++    <solid android:color="#3C3C3C" />
+ </shape>
+diff --git a/java/com/android/dialer/app/res/layout/call_log_list_item.xml b/java/com/android/dialer/app/res/layout/call_log_list_item.xml
+index 40db1ce35..ea2753597 100644
+--- a/java/com/android/dialer/app/res/layout/call_log_list_item.xml
++++ b/java/com/android/dialer/app/res/layout/call_log_list_item.xml
+@@ -65,10 +65,18 @@
+             android:layout_gravity="top"
+             >
+ 
+-          <com.android.dialer.app.calllog.DialerQuickContactBadge
+-              android:id="@+id/quick_contact_photo"
++          <!-- N9 look: the call type (in, out, missed in red) in place of the photo -->
++          <ImageView
++              android:id="@+id/n9_call_type_icon"
+               android:layout_width="@dimen/contact_photo_size"
+               android:layout_height="@dimen/contact_photo_size"
++              android:scaleType="center"
++              android:importantForAccessibility="no"/>
++
++          <com.android.dialer.app.calllog.DialerQuickContactBadge
++              android:id="@+id/quick_contact_photo"
++              android:layout_width="0dp"
++              android:layout_height="0dp"
+               android:paddingTop="2dp"
+               android:nextFocusRight="@id/primary_action_view"
+               android:focusable="true"
+@@ -165,6 +173,20 @@
+         android:layout_height="wrap_content"
+         android:layout_gravity="bottom"/>
+ 
++      <!-- N9 look: engraved rule under the row -->
++      <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:layout_marginStart="@dimen/call_log_start_margin"
++        android:layout_marginEnd="@dimen/call_log_outer_margin"
++        android:background="@color/n9_call_log_rule"/>
++      <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:layout_marginStart="@dimen/call_log_start_margin"
++        android:layout_marginEnd="@dimen/call_log_outer_margin"
++        android:background="@color/n9_call_log_rule_highlight"/>
++
+     </LinearLayout>
+ 
+   </androidx.cardview.widget.CardView>
+diff --git a/java/com/android/dialer/app/res/values-night/colors.xml b/java/com/android/dialer/app/res/values-night/colors.xml
+index 01b176cea..719f13a3a 100644
+--- a/java/com/android/dialer/app/res/values-night/colors.xml
++++ b/java/com/android/dialer/app/res/values-night/colors.xml
+@@ -1,21 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
+ <!--
+-  ~ Copyright (C) 2012 The Android Open Source Project
+-  ~
+-  ~ Licensed under the Apache License, Version 2.0 (the "License");
+-  ~ you may not use this file except in compliance with the License.
+-  ~ You may obtain a copy of the License at
+-  ~
+-  ~      http://www.apache.org/licenses/LICENSE-2.0
+-  ~
+-  ~ Unless required by applicable law or agreed to in writing, software
+-  ~ distributed under the License is distributed on an "AS IS" BASIS,
+-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-  ~ See the License for the specific language governing permissions and
+-  ~ limitations under the License
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
+ -->
+-
++<!-- N9 (Etesian) look: night resources are only used for the dark Etesian backgrounds. -->
+ <resources>
+-  <color name="nav_item">@android:color/system_neutral1_300</color>
+-  <color name="dialer_pill_color">@android:color/system_accent2_700</color>
+-  <color name="dialer_fab_icon_color">#ff000000</color>
++  <color name="nav_item">#B0B0B0</color>
++  <color name="n9_call_log_icon">#B0B0B0</color>
++  <color name="n9_call_log_rule">#000000</color>
++  <color name="n9_call_log_rule_highlight">#3A3A3A</color>
+ </resources>
+diff --git a/java/com/android/dialer/app/res/values/colors.xml b/java/com/android/dialer/app/res/values/colors.xml
+index 45aba5568..5cd82be1a 100644
+--- a/java/com/android/dialer/app/res/values/colors.xml
++++ b/java/com/android/dialer/app/res/values/colors.xml
+@@ -22,12 +22,12 @@
+   <!-- Text color for the "Remove" text when a contact is dragged on top of the remove view -->
+   <color name="remove_highlighted_text_color">#FF3F3B</color>
+ 
+-  <color name="nav_item">@android:color/system_neutral1_600</color>
+-  <color name="dialer_pill_color">@android:color/system_accent2_200</color>
++  <color name="nav_item">#8C8C8C</color>
++  <color name="dialer_pill_color">#3300A5E5</color>
+   <color name="dialer_fab_icon_color">#ffffffff</color>
+ 
+   <!-- Material next state on color-->
+-  <color name="state_on_color">@android:color/system_accent3_100</color>
++  <color name="state_on_color">#00A5E5</color>
+ 
+   <!-- Material next thumb disable color-->
+   <color name="thumb_disabled_color">@android:color/black</color>
+@@ -39,5 +39,10 @@
+   <color name="track_on_color">@color/dialer_theme_color</color>
+ 
+   <!-- Material next track off color-->
+-  <color name="track_off_color">@android:color/system_neutral2_500</color>
++  <color name="track_off_color">#BDBDBD</color>
++
++  <!-- N9 look: call log rows -->
++  <color name="n9_call_log_icon">#6E6E6E</color>
++  <color name="n9_call_log_rule">#C8C8C8</color>
++  <color name="n9_call_log_rule_highlight">#FFFFFF</color>
+ </resources>
+diff --git a/java/com/android/dialer/contactphoto/BitmapUtil.java b/java/com/android/dialer/contactphoto/BitmapUtil.java
+index 36055e2c1..67a399c50 100644
+--- a/java/com/android/dialer/contactphoto/BitmapUtil.java
++++ b/java/com/android/dialer/contactphoto/BitmapUtil.java
+@@ -111,7 +111,9 @@ public class BitmapUtil {
+     canvas.drawARGB(0, 0, 0, 0);
+     paint.setAntiAlias(true);
+     final RectF dst = new RectF(0, 0, targetWidth, targetHeight);
+-    canvas.drawOval(dst, paint);
++    // N9 look: Etesian squircle instead of an oval
++    canvas.drawPath(
++        com.android.dialer.util.N9Squircle.path(dst.left, dst.top, dst.right, dst.bottom), paint);
+ 
+     // Specifies that only pixels present in the destination (i.e. the drawn oval) should
+     // be overwritten with pixels from the input bitmap.
+diff --git a/java/com/android/dialer/contactphoto/ContactPhotoManagerImpl.java b/java/com/android/dialer/contactphoto/ContactPhotoManagerImpl.java
+index dd2a33b80..087f43512 100644
+--- a/java/com/android/dialer/contactphoto/ContactPhotoManagerImpl.java
++++ b/java/com/android/dialer/contactphoto/ContactPhotoManagerImpl.java
+@@ -578,10 +578,8 @@ class ContactPhotoManagerImpl extends ContactPhotoManager implements Callback {
+    */
+   private Drawable getDrawableForBitmap(Resources resources, Bitmap bitmap, Request request) {
+     if (request.isCircular) {
+-      final RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(resources, bitmap);
+-      drawable.setAntiAlias(true);
+-      drawable.setCornerRadius(drawable.getIntrinsicHeight() / 2);
+-      return drawable;
++      // N9 look: Etesian squircle instead of a circle
++      return new com.android.dialer.util.N9Squircle.BitmapDrawable(bitmap);
+     } else {
+       return new BitmapDrawable(resources, bitmap);
+     }
+diff --git a/java/com/android/dialer/contactsfragment/ContactsFragment.java b/java/com/android/dialer/contactsfragment/ContactsFragment.java
+index 6dbbbad5f..a64387be7 100644
+--- a/java/com/android/dialer/contactsfragment/ContactsFragment.java
++++ b/java/com/android/dialer/contactsfragment/ContactsFragment.java
+@@ -182,7 +182,8 @@ public class ContactsFragment extends Fragment
+             super.onLayoutChildren(recycler, state);
+             int itemsShown = findLastVisibleItemPosition() - findFirstVisibleItemPosition() + 1;
+             if (adapter.getItemCount() > itemsShown) {
+-              fastScroller.setVisibility(View.VISIBLE);
++              // N9 look: the Etesian fast scroll band instead of the letter bubble.
++              fastScroller.setVisibility(View.GONE);
+               recyclerView.setOnScrollChangeListener(ContactsFragment.this);
+             } else {
+               fastScroller.setVisibility(View.GONE);
+@@ -190,6 +191,15 @@ public class ContactsFragment extends Fragment
+           }
+         };
+     recyclerView.setLayoutManager(manager);
++    com.bompotis.etesian.fastscroll.EtesianFastScroller.attach(recyclerView, position -> {
++      if (adapter.getItemCount() == 0 || position >= adapter.getItemCount()) return null;
++      final String h = adapter.getHeaderString(position);
++      return "+".equals(h) ? null : h;
++    }).setOnJump(() -> {
++      // A jump re-lays the list without a scroll change: refresh the pinned letter, or the
++      // old one stays over the new section's.
++      if (adapter != null && adapter.getItemCount() > 0) onScrollChange(recyclerView, 0, 0, 0, 0);
++    });
+ 
+     emptyContentView = view.findViewById(R.id.empty_list_view);
+     emptyContentView.setImage(R.drawable.empty_contacts);
+@@ -292,7 +302,9 @@ public class ContactsFragment extends Fragment
+         getContactHolder(firstCompletelyVisible).getHeaderView().setVisibility(View.INVISIBLE);
+       } else {
+         anchoredHeader.setVisibility(View.INVISIBLE);
+-        getContactHolder(firstVisibleItem).getHeaderView().setVisibility(View.VISIBLE);
++        // N9 look: a row cut off at the top shows no letter, or it sits on the next one's.
++        getContactHolder(firstVisibleItem).getHeaderView().setVisibility(
++            firstVisibleItem == firstCompletelyVisible ? View.VISIBLE : View.INVISIBLE);
+         getContactHolder(firstCompletelyVisible).getHeaderView().setVisibility(View.VISIBLE);
+       }
+     }
+diff --git a/java/com/android/dialer/dialpadview/DialpadView.java b/java/com/android/dialer/dialpadview/DialpadView.java
+index eb9cba85f..d39bb1670 100644
+--- a/java/com/android/dialer/dialpadview/DialpadView.java
++++ b/java/com/android/dialer/dialpadview/DialpadView.java
+@@ -195,7 +195,8 @@ public class DialpadView extends LinearLayout {
+       }
+ 
+       final RippleDrawable rippleBackground =
+-          (RippleDrawable) getContext().getDrawable(R.drawable.btn_dialpad_key);
++          // N9 look: white rounded key instead of the borderless ripple.
++          (RippleDrawable) getContext().getDrawable(R.drawable.n9_dialpad_key).mutate();
+       if (rippleColor != null) {
+         rippleBackground.setColor(rippleColor);
+       }
+diff --git a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
+index 4540c31fe..c0af27c1b 100644
+--- a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
++++ b/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
+@@ -1,7 +1,4 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android">
+     <solid android:color="@color/rounded_dialpad_bg_color" />
+-    <corners
+-        android:topLeftRadius="28dp"
+-        android:topRightRadius="28dp" />
+ </shape>
+diff --git a/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml b/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml
+index d60fbba89..291c2c4de 100644
+--- a/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml
++++ b/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml
+@@ -78,6 +78,7 @@
+           android:src="@drawable/quantum_ic_call_vd_theme_24"
+           android:visibility="invisible"
+           app:backgroundTint="@color/dialer_call_green"
++      app:shapeAppearanceOverlay="@style/N9SquircleShape"
+           app:elevation="@dimen/floating_action_button_translation_z"/>
+     </RelativeLayout>
+   </LinearLayout>
+diff --git a/java/com/android/dialer/dialpadview/res/layout/dialpad_fragment.xml b/java/com/android/dialer/dialpadview/res/layout/dialpad_fragment.xml
+index 71c297712..e96e363f2 100644
+--- a/java/com/android/dialer/dialpadview/res/layout/dialpad_fragment.xml
++++ b/java/com/android/dialer/dialpadview/res/layout/dialpad_fragment.xml
+@@ -64,9 +64,10 @@
+       android:layout_centerHorizontal="true"
+       android:contentDescription="@string/description_dial_button"
+       android:src="@drawable/quantum_ic_call_vd_theme_24"
+-      android:tint="?colorIconOnUnthemedDarkBackground"
++      android:tint="@android:color/white"
+       android:visibility="invisible"
+       app:backgroundTint="@color/dialer_call_green"
++      app:shapeAppearanceOverlay="@style/N9SquircleShape"
+       app:colorControlNormal="?colorIconOnUnthemedDarkBackground"
+       app:elevation="@dimen/floating_action_button_translation_z"/>
+ </view>
+diff --git a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
+index b7fe92ef5..74164804b 100644
+--- a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
++++ b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
+@@ -73,6 +73,7 @@
+       android:id="@+id/digits_container"
+       android:layout_width="match_parent"
+       android:layout_height="?attr/dialpad_digits_adjustable_height"
++      android:background="@drawable/n9_dialpad_digits_bg"
+       android:orientation="horizontal"
+       tools:layout_height="50dp">
+ 
+@@ -128,7 +129,7 @@
+             android:background="@android:color/transparent"
+             android:cursorVisible="false"
+             android:focusableInTouchMode="true"
+-            android:fontFamily="@*android:string/config_bodyFontFamily"
++            android:fontFamily="etesian-text"
+             android:freezesText="true"
+             android:gravity="center"
+             android:importantForAutofill="no"
+diff --git a/java/com/android/dialer/dialpadview/res/values-land/styles.xml b/java/com/android/dialer/dialpadview/res/values-land/styles.xml
+index a04ae2348..e9787f97e 100644
+--- a/java/com/android/dialer/dialpadview/res/values-land/styles.xml
++++ b/java/com/android/dialer/dialpadview/res/values-land/styles.xml
+@@ -20,7 +20,7 @@
+   <style name="DialpadKeyNumberStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_primary</item>
+     <item name="android:textSize">?attr/dialpad_key_numbers_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+     <item name="android:layout_gravity">center</item>
+@@ -29,7 +29,7 @@
+   <style name="DialpadKeyStarStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">@dimen/dialpad_key_star_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:alpha">0.8</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+@@ -40,7 +40,7 @@
+   <style name="DialpadKeyPoundStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">@dimen/dialpad_key_pound_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:alpha">0.8</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+@@ -51,7 +51,7 @@
+   <style name="DialpadKeyLettersStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">?attr/dialpad_key_letters_size_for_single_alphabet</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+     <item name="android:layout_gravity">left|center_vertical</item>
+diff --git a/java/com/android/dialer/dialpadview/res/values/styles.xml b/java/com/android/dialer/dialpadview/res/values/styles.xml
+index 712af38eac..f36a9017a 100644
+--- a/java/com/android/dialer/dialpadview/res/values/styles.xml
++++ b/java/com/android/dialer/dialpadview/res/values/styles.xml
+@@ -25,7 +25,7 @@
+   <style name="DialpadKeyNumberStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_primary</item>
+     <item name="android:textSize">?attr/dialpad_key_numbers_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+     <item name="android:layout_marginBottom">?attr/dialpad_key_number_margin_bottom</item>
+@@ -35,7 +35,7 @@
+   <style name="DialpadKeyStarStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">@dimen/dialpad_key_star_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:alpha">0.8</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+@@ -46,7 +46,7 @@
+   <style name="DialpadKeyPoundStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">@dimen/dialpad_key_pound_size</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:alpha">0.8</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+@@ -57,7 +57,7 @@
+   <style name="DialpadKeyLettersStyle">
+     <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
+     <item name="android:textSize">?attr/dialpad_key_letters_size_for_single_alphabet</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="android:layout_width">wrap_content</item>
+     <item name="android:layout_height">wrap_content</item>
+     <item name="android:layout_gravity">center</item>
+@@ -70,7 +70,7 @@
+     <item name="android:layout_height">match_parent</item>
+     <item name="android:layout_weight">15</item>
+     <item name="android:minHeight">@dimen/dialpad_key_height</item>
+-    <item name="android:background">@drawable/btn_dialpad_key</item>
++    <item name="android:background">@drawable/n9_dialpad_key</item>
+     <item name="android:focusable">true</item>
+   </style>
+ 
+@@ -86,4 +86,10 @@
+     <item name="android:textColor">?android:attr/textColorPrimary</item>
+     <item name="android:textSize">16sp</item>
+   </style>
++
++  <!-- N9 (Etesian) squircle: rounded square, radius ~28% of the short side. -->
++  <style name="N9SquircleShape" parent="">
++    <item name="cornerFamily">rounded</item>
++    <item name="cornerSize">28%</item>
++  </style>
+ </resources>
+diff --git a/java/com/android/dialer/dialpadview/theme/res/values/styles.xml b/java/com/android/dialer/dialpadview/theme/res/values/styles.xml
+index 9729b91e8..b1c5a5b7a 100644
+--- a/java/com/android/dialer/dialpadview/theme/res/values/styles.xml
++++ b/java/com/android/dialer/dialpadview/theme/res/values/styles.xml
+@@ -27,9 +27,9 @@
+   </style>
+ 
+   <style name="Dialpad.Themed">
+-    <item name="dialpad_text_color">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_primary">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_secondary">?android:attr/textColorSecondary</item>
++    <item name="dialpad_text_color">@color/n9_dialpad_text</item>
++    <item name="dialpad_text_color_primary">@color/n9_dialpad_text</item>
++    <item name="dialpad_text_color_secondary">@color/n9_dialpad_text_secondary</item>
+     <item name="dialpad_background">@drawable/rounded_dialpad_bg</item>
+   </style>
+ </resources>
+diff --git a/java/com/android/dialer/glidephotomanager/impl/GlidePhotoManagerImpl.java b/java/com/android/dialer/glidephotomanager/impl/GlidePhotoManagerImpl.java
+index 078a6ceae..9ea99599e 100644
+--- a/java/com/android/dialer/glidephotomanager/impl/GlidePhotoManagerImpl.java
++++ b/java/com/android/dialer/glidephotomanager/impl/GlidePhotoManagerImpl.java
+@@ -19,6 +19,7 @@ package com.android.dialer.glidephotomanager.impl;
+ 
+ import android.content.ContentUris;
+ import android.content.Context;
++import android.graphics.Bitmap;
+ import android.graphics.drawable.Drawable;
+ import android.net.Uri;
+ import android.provider.ContactsContract.Contacts;
+@@ -29,7 +30,13 @@ import android.widget.ImageView;
+ import android.widget.QuickContactBadge;
+ 
+ import androidx.annotation.MainThread;
++import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
++import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
++import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
++import com.bumptech.glide.load.resource.bitmap.TransformationUtils;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
+ 
+ import com.android.dialer.R;
+ import com.android.dialer.common.Assert;
+@@ -119,7 +126,8 @@ public class GlidePhotoManagerImpl implements GlidePhotoManager {
+         .fallback(defaultDrawable); // when there's nothing to load.
+ 
+     if (circleCrop) {
+-      request.circleCrop();
++      // N9 look: Etesian squircle instead of a circle
++      request.transform(new N9SquircleCrop());
+     }
+ 
+     return request;
+@@ -184,4 +192,31 @@ public class GlidePhotoManagerImpl implements GlidePhotoManager {
+     }
+     return lookupKey;
+   }
++
++  /** N9 look: center-crops Glide photos into a Etesian squircle. */
++  private static final class N9SquircleCrop extends BitmapTransformation {
++    private static final byte[] ID = "dialer.N9SquircleCrop.1".getBytes(StandardCharsets.UTF_8);
++
++    @Override
++    protected Bitmap transform(
++        @NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
++      Bitmap cropped = TransformationUtils.centerCrop(pool, toTransform, outWidth, outHeight);
++      return com.android.dialer.util.N9Squircle.bitmap(cropped, outWidth, outHeight);
++    }
++
++    @Override
++    public boolean equals(Object o) {
++      return o instanceof N9SquircleCrop;
++    }
++
++    @Override
++    public int hashCode() {
++      return 0x4e39;
++    }
++
++    @Override
++    public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
++      messageDigest.update(ID);
++    }
++  }
+ }
+diff --git a/java/com/android/dialer/lettertile/LetterTileDrawable.java b/java/com/android/dialer/lettertile/LetterTileDrawable.java
+index bfd51b81e..4474c0f6c 100644
+--- a/java/com/android/dialer/lettertile/LetterTileDrawable.java
++++ b/java/com/android/dialer/lettertile/LetterTileDrawable.java
+@@ -202,7 +202,8 @@ public class LetterTileDrawable extends Drawable {
+     final int minDimension = Math.min(bounds.width(), bounds.height());
+ 
+     if (isCircle) {
+-      canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2, paint);
++      // N9 look: Etesian squircle instead of a circle
++      com.android.dialer.util.N9Squircle.draw(canvas, bounds, paint);
+     } else {
+       canvas.drawRect(bounds, paint);
+     }
+@@ -286,7 +287,7 @@ public class LetterTileDrawable extends Drawable {
+   @Override
+   public void getOutline(Outline outline) {
+     if (isCircle) {
+-      outline.setOval(getBounds());
++      outline.setPath(com.android.dialer.util.N9Squircle.centered(getBounds())); // N9 look: squircle
+     } else {
+       outline.setRect(getBounds());
+     }
+diff --git a/java/com/android/dialer/main/impl/MainSearchController.java b/java/com/android/dialer/main/impl/MainSearchController.java
+index 085269598..ba421e607 100644
+--- a/java/com/android/dialer/main/impl/MainSearchController.java
++++ b/java/com/android/dialer/main/impl/MainSearchController.java
+@@ -94,6 +94,9 @@ public class MainSearchController implements SearchBarListener {
+ 
+   private final List<OnSearchShowListener> onSearchShowListenerList = new ArrayList<>();
+ 
++  // N9 look: told when the dialpad or search opens or closes, to update the system toolbar.
++  @Nullable private Runnable n9StateListener;
++
+   /**
+    * True when an action happens that closes search (like leaving the app or placing a call). We
+    * want to wait until onPause is called otherwise the transition will look extremely janky.
+@@ -188,6 +191,30 @@ public class MainSearchController implements SearchBarListener {
+     transaction.commit();
+ 
+     notifyListenersOnSearchOpen();
++    notifyN9StateListener();
++  }
++
++  /** N9 look: sets what to run when the dialpad or search opens or closes. */
++  public void setN9StateListener(@Nullable Runnable listener) {
++    n9StateListener = listener;
++  }
++
++  private void notifyN9StateListener() {
++    if (n9StateListener != null) {
++      n9StateListener.run();
++    }
++  }
++
++  /** Whether the dialpad is showing (the N9 toolbar's Dialer tab). */
++  public boolean isDialpadShown() {
++    return isDialpadVisible();
++  }
++
++  /** Closes the dialpad and search, e.g. when another N9 toolbar tab is chosen. */
++  public void closeSearchAndDialpad() {
++    if (isSearchVisible()) {
++      closeSearch(true);
++    }
+   }
+ 
+   /**
+@@ -247,6 +274,7 @@ public class MainSearchController implements SearchBarListener {
+           @Override
+           public void onAnimationRepeat(Animation animation) {}
+         });
++    notifyN9StateListener();
+   }
+ 
+   private void hideBottomNav() {
+@@ -262,6 +290,7 @@ public class MainSearchController implements SearchBarListener {
+     LogUtil.enterBlock("MainSearchController.onDialpadShown");
+     dialpadFragment.slideUp(true);
+     hideBottomNav();
++    notifyN9StateListener();
+   }
+ 
+   /**
+@@ -352,6 +381,7 @@ public class MainSearchController implements SearchBarListener {
+     }
+ 
+     notifyListenersOnSearchClose();
++    notifyN9StateListener();
+   }
+ 
+   @Nullable
+diff --git a/java/com/android/dialer/main/impl/OldMainActivityPeer.java b/java/com/android/dialer/main/impl/OldMainActivityPeer.java
+index fd7d1c481..10cef6798 100644
+--- a/java/com/android/dialer/main/impl/OldMainActivityPeer.java
++++ b/java/com/android/dialer/main/impl/OldMainActivityPeer.java
+@@ -91,15 +91,19 @@ import com.android.dialer.util.PermissionsUtil;
+ import com.android.dialer.util.TransactionSafeActivity;
+ import com.android.dialer.voicemailstatus.VisualVoicemailEnabledChecker;
+ import com.android.dialer.voicemailstatus.VoicemailStatusHelper;
++import com.android.dialer.widget.DialerFloatingActionButton;
+ import com.android.voicemail.VoicemailComponent;
+ 
+ import com.google.android.material.bottomsheet.BottomSheetBehavior;
+ import com.google.android.material.floatingactionbutton.FloatingActionButton;
+ import com.google.common.util.concurrent.ListenableFuture;
+ 
++import java.util.ArrayList;
++import java.util.List;
+ import java.util.Locale;
+ import java.util.Optional;
+ import java.util.concurrent.TimeUnit;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
+ 
+ /**
+  * OldMainActivityPeer which implements all of the old fragments we know and love <3
+@@ -147,6 +151,8 @@ public class OldMainActivityPeer implements MainActivityPeer, FragmentUtilListen
+   private LastTabController lastTabController;
+ 
+   private BottomNavBar bottomNav;
++  // N9 look: the tabs live on the Etesian system toolbar when there is one.
++  private boolean useN9Toolbar;
+   private MainBottomNavBarBottomNavTabListener bottomNavTabListener;
+   private View snackbarContainer;
+   private MissedCallCountObserver missedCallCountObserver;
+@@ -251,6 +257,39 @@ public class OldMainActivityPeer implements MainActivityPeer, FragmentUtilListen
+     searchController = getNewMainSearchController(bottomNav, fab, toolbar, snackbarContainer);
+     toolbar.setSearchBarListener(searchController);
+ 
++    // N9 look: Call log / Dialer / Contacts tabs on the Etesian system toolbar, in place of
++    // the bottom navigation bar and the dialpad button.
++    useN9Toolbar = EtesianToolbar.isAvailable(activity);
++    if (useN9Toolbar) {
++      bottomNav.setSuppressed(true);
++      if (fab instanceof DialerFloatingActionButton) {
++        ((DialerFloatingActionButton) fab).setSuppressed(true);
++      }
++      searchController.setN9StateListener(this::updateN9Toolbar);
++      bottomNav.addOnTabSelectedListener(
++          new OnBottomNavTabSelectedListener() {
++            @Override
++            public void onSpeedDialSelected() {
++              updateN9Toolbar();
++            }
++
++            @Override
++            public void onCallLogSelected() {
++              updateN9Toolbar();
++            }
++
++            @Override
++            public void onContactsSelected() {
++              updateN9Toolbar();
++            }
++
++            @Override
++            public void onVoicemailSelected() {
++              updateN9Toolbar();
++            }
++          });
++    }
++
+     onDialpadQueryChangedListener = getNewOnDialpadQueryChangedListener(searchController);
+     dialpadListener =
+         new MainDialpadListener(activity, searchController, getLastOutgoingCallListener);
+@@ -425,6 +464,77 @@ public class OldMainActivityPeer implements MainActivityPeer, FragmentUtilListen
+     } else {
+       bottomNav.setVisibility(View.VISIBLE);
+     }
++    updateN9Toolbar();
++  }
++
++  /** N9 look: shows the tabs on the Etesian system toolbar, the current one selected. */
++  private void updateN9Toolbar() {
++    if (!useN9Toolbar || searchController == null) {
++      return;
++    }
++    final boolean dialpad = searchController.isDialpadShown();
++    final int tab = bottomNav.getSelectedTab();
++    final List<EtesianToolbar.Item> items = new ArrayList<>();
++    items.add(
++        EtesianToolbar.Item.tab(
++            "call_log",
++            R.drawable.quantum_ic_access_time_vd_theme_24,
++            activity.getString(R.string.tab_title_call_history),
++            !dialpad && tab == TabIndex.CALL_LOG));
++    items.add(
++        EtesianToolbar.Item.tab(
++            "dialer",
++            R.drawable.quantum_ic_dialpad_vd_theme_24,
++            activity.getString(R.string.dialpad_activity_title),
++            dialpad));
++    items.add(
++        EtesianToolbar.Item.tab(
++            "contacts",
++            R.drawable.quantum_ic_people_outline_vd_theme_24,
++            activity.getString(R.string.tab_all_contacts),
++            !dialpad && tab == TabIndex.CONTACTS));
++    items.add(
++        EtesianToolbar.Item.tab(
++            "speed_dial",
++            R.drawable.quantum_ic_star_outline_vd_theme_24,
++            activity.getString(R.string.tab_title_speed_dial),
++            !dialpad && tab == TabIndex.SPEED_DIAL));
++    if (bottomNav.isVoicemailShown()) {
++      items.add(
++          EtesianToolbar.Item.tab(
++              "voicemail",
++              R.drawable.quantum_ic_voicemail_vd_theme_24,
++              activity.getString(R.string.tab_title_voicemail),
++              !dialpad && tab == TabIndex.VOICEMAIL));
++    }
++    EtesianToolbar.of(activity).setBack(false).setItems(items, this::onN9ToolbarItem);
++  }
++
++  private void onN9ToolbarItem(String id) {
++    if ("dialer".equals(id)) {
++      if (!searchController.isDialpadShown()) {
++        if (callLogAdapterOnActionModeStateChangedListener.isEnabled) {
++          callLogAdapterOnActionModeStateChangedListener.actionMode.finish();
++        }
++        searchController.showDialpad(true);
++      }
++      return;
++    }
++    @TabIndex int tab;
++    if ("call_log".equals(id)) {
++      tab = TabIndex.CALL_LOG;
++    } else if ("contacts".equals(id)) {
++      tab = TabIndex.CONTACTS;
++    } else if ("speed_dial".equals(id)) {
++      tab = TabIndex.SPEED_DIAL;
++    } else if ("voicemail".equals(id)) {
++      tab = TabIndex.VOICEMAIL;
++    } else {
++      return;
++    }
++    searchController.closeSearchAndDialpad();
++    bottomNav.selectTab(tab);
++    updateN9Toolbar();
+   }
+ 
+   @Override
+diff --git a/java/com/android/dialer/main/impl/bottomnav/BottomNavBar.java b/java/com/android/dialer/main/impl/bottomnav/BottomNavBar.java
+index 776668762..e05553e66 100644
+--- a/java/com/android/dialer/main/impl/bottomnav/BottomNavBar.java
++++ b/java/com/android/dialer/main/impl/bottomnav/BottomNavBar.java
+@@ -62,11 +62,31 @@ public final class BottomNavBar extends LinearLayout {
+   private BottomNavItem contacts;
+   private BottomNavItem voicemail;
+   private @TabIndex int selectedTab;
++  // N9 look: kept hidden while the Etesian system toolbar shows the tabs.
++  private boolean suppressed;
+ 
+   public BottomNavBar(Context context, @Nullable AttributeSet attrs) {
+     super(context, attrs);
+   }
+ 
++  /** Hides the bar for good while the Etesian system toolbar shows the tabs instead. */
++  public void setSuppressed(boolean suppressed) {
++    this.suppressed = suppressed;
++    if (suppressed) {
++      super.setVisibility(View.GONE);
++    }
++  }
++
++  @Override
++  public void setVisibility(int visibility) {
++    super.setVisibility(suppressed ? View.GONE : visibility);
++  }
++
++  /** Whether the voicemail tab is shown. */
++  public boolean isVoicemailShown() {
++    return voicemail != null && voicemail.getVisibility() == View.VISIBLE;
++  }
++
+   @Override
+   protected void onFinishInflate() {
+     super.onFinishInflate();
+diff --git a/java/com/android/dialer/main/impl/bottomnav/res/layout/bottom_nav_bar_layout.xml b/java/com/android/dialer/main/impl/bottomnav/res/layout/bottom_nav_bar_layout.xml
+index 668a6557e..a1b46a0a0 100644
+--- a/java/com/android/dialer/main/impl/bottomnav/res/layout/bottom_nav_bar_layout.xml
++++ b/java/com/android/dialer/main/impl/bottomnav/res/layout/bottom_nav_bar_layout.xml
+@@ -20,7 +20,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:background="@color/rounded_dialpad_bg_color"
+-    android:elevation="8dp">
++    android:elevation="0dp">
+ 
+   <include
+       android:id="@+id/speed_dial_tab"
+diff --git a/java/com/android/dialer/main/impl/res/layout/main_activity.xml b/java/com/android/dialer/main/impl/res/layout/main_activity.xml
+index 1f6ecfa79..63cf8abaf 100644
+--- a/java/com/android/dialer/main/impl/res/layout/main_activity.xml
++++ b/java/com/android/dialer/main/impl/res/layout/main_activity.xml
+@@ -56,7 +56,8 @@
+         android:tint="@color/dialer_fab_icon_color"
+         app:tint="@color/dialer_fab_icon_color"
+         android:contentDescription="@string/dialpad_button_content_description"
+-        app:backgroundTint="@color/dialer_theme_color_light"/>
++        app:backgroundTint="@color/dialer_theme_color_light"
++        app:shapeAppearanceOverlay="@style/N9SquircleShape"/>
+ 
+     <include android:id="@+id/promotion_bottom_sheet"
+         layout="@layout/promotion_bottom_sheet"/>
+diff --git a/java/com/android/dialer/main/impl/res/values-night/styles.xml b/java/com/android/dialer/main/impl/res/values-night/styles.xml
+deleted file mode 100644
+index 19afffcf2..000000000
+--- a/java/com/android/dialer/main/impl/res/values-night/styles.xml
++++ /dev/null
+@@ -1,27 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-  ~ Copyright (C) 2017 The Android Open Source Project
+-  ~
+-  ~ Licensed under the Apache License, Version 2.0 (the "License");
+-  ~ you may not use this file except in compliance with the License.
+-  ~ You may obtain a copy of the License at
+-  ~
+-  ~      http://www.apache.org/licenses/LICENSE-2.0
+-  ~
+-  ~ Unless required by applicable law or agreed to in writing, software
+-  ~ distributed under the License is distributed on an "AS IS" BASIS,
+-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-  ~ See the License for the specific language governing permissions and
+-  ~ limitations under the License
+-  -->
+-<resources>
+-
+-  <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+-    <item name="android:colorPrimary">@color/dialer_primary_color</item>
+-    <item name="colorPrimary">@color/dialer_primary_color</item>
+-    <item name="android:colorPrimaryDark">@color/dialer_theme_color_dark</item>
+-    <item name="colorPrimaryDark">@color/dialer_theme_color_dark</item>
+-    <item name="android:windowLightStatusBar">false</item>
+-  </style>
+-
+-</resources>
+diff --git a/java/com/android/dialer/main/impl/res/values/styles.xml b/java/com/android/dialer/main/impl/res/values/styles.xml
+index 322d62a91..a29048f74 100644
+--- a/java/com/android/dialer/main/impl/res/values/styles.xml
++++ b/java/com/android/dialer/main/impl/res/values/styles.xml
+@@ -16,7 +16,8 @@
+   -->
+ <resources>
+ 
+-  <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
++  <style name="LaunchTheme" parent="Theme.AppCompat.Light.DarkActionBar">
++    <item name="android:windowBackground">@color/dialer_background_color</item>
+     <item name="android:colorPrimary">@color/dialer_primary_color</item>
+     <item name="colorPrimary">@color/dialer_primary_color</item>
+     <item name="android:colorPrimaryDark">@color/dialer_theme_color_dark</item>
+diff --git a/java/com/android/dialer/theme/base/res/values-night/theme_dialer_light.xml b/java/com/android/dialer/theme/base/res/values-night/theme_dialer_light.xml
+deleted file mode 100644
+index 97133e397..000000000
+--- a/java/com/android/dialer/theme/base/res/values-night/theme_dialer_light.xml
++++ /dev/null
+@@ -1,22 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-  SPDX-FileCopyrightText: The Android Open Source Project
+-  SPDX-License-Identifier: Apache-2.0
+--->
+-<resources>
+-  <style name="Dialer.ThemeBase.ActionBar">
+-    <item name="android:windowLightStatusBar">false</item>
+-  </style>
+-
+-  <style name="Dialer.ThemeBase.NoActionBar">
+-    <!-- Copied from Theme.AppCompat.Light.NoActionBar. We can remove this and update the Dialer
+-    base style once none of our activities depend on ActionBar anymore. -->
+-    <item name="windowActionBar">false</item>
+-    <item name="windowNoTitle">true</item>
+-
+-    <item name="colorControlHighlight">@color/dialer_ripple_color</item>
+-    <item name="android:windowLightStatusBar">false</item>
+-  </style>
+-
+-  <style name="DialerActionBarBaseTheme" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+-</resources>
+diff --git a/java/com/android/dialer/theme/base/res/values/theme_dialer_dark.xml b/java/com/android/dialer/theme/base/res/values/theme_dialer_dark.xml
+index 1e92e3c95..ecb7f6a28 100644
+--- a/java/com/android/dialer/theme/base/res/values/theme_dialer_dark.xml
++++ b/java/com/android/dialer/theme/base/res/values/theme_dialer_dark.xml
+@@ -25,8 +25,8 @@
+   <!-- Activities and Applications should inherit from one of the themes above. -->
+   <style name="Dialer.Dark.ThemeBase">
+     <!-- These values should be used to color all backgrounds. -->
+-    <item name="android:colorBackground">@android:color/system_neutral1_900</item>
+-    <item name="android:colorBackgroundFloating">@android:color/system_neutral1_800</item>
++    <item name="android:colorBackground">#141414</item>
++    <item name="android:colorBackgroundFloating">#2E2E2E</item>
+ 
+     <!-- These values should be used to set text color. -->
+     <!-- swap text colors. -->
+@@ -50,8 +50,8 @@
+     <!-- Dialer specific attributes. -->
+     <item name="colorIcon">?android:attr/textColorSecondary</item>
+     <item name="colorIconSecondary">?android:attr/textColorSecondary</item>
+-    <item name="colorTextOnUnthemedDarkBackground">@android:color/system_neutral1_0</item>
+-    <item name="colorIconOnUnthemedDarkBackground">@android:color/system_neutral1_0</item>
+-    <item name="colorCallNotificationBackground">@android:color/system_accent2_700</item>
++    <item name="colorTextOnUnthemedDarkBackground">#FFFFFF</item>
++    <item name="colorIconOnUnthemedDarkBackground">#FFFFFF</item>
++    <item name="colorCallNotificationBackground">#2E2E2E</item>
+   </style>
+ </resources>
+diff --git a/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml b/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
+index b9ea10c95..a1d54ec23 100644
+--- a/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
++++ b/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
+@@ -23,13 +23,13 @@
+     <item name="actionBarSize">@dimen/action_bar_height</item>
+ 
+     <!-- Pulled from Theme.AppCompat.Light.DarkActionbar-->
+-    <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
++    <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.DayNight</item>
+     <item name="actionBarWidgetTheme">@null</item>
+     <item name="actionBarTheme">@style/DialerActionBarBaseTheme</item>
+     <item name="listChoiceBackgroundIndicator">@drawable/abc_list_selector_holo_dark</item>
+ 
+     <item name="colorControlHighlight">@color/dialer_ripple_color</item>
+-    <item name="android:windowLightStatusBar">true</item>
++    <item name="android:windowLightStatusBar">@bool/n9_light_bars</item>
+   </style>
+ 
+   <style name="Dialer.ThemeBase.NoActionBar">
+@@ -39,12 +39,14 @@
+     <item name="windowNoTitle">true</item>
+ 
+     <item name="colorControlHighlight">@color/dialer_ripple_color</item>
+-    <item name="android:windowLightStatusBar">true</item>
++    <item name="android:windowLightStatusBar">@bool/n9_light_bars</item>
+   </style>
+ 
+   <!-- Activities and Applications should inherit from one of the themes above. -->
+   <style name="Dialer.ThemeBase">
+-    <item name="android:forceDarkAllowed">true</item>
++    <item name="android:forceDarkAllowed">false</item>
++    <item name="android:fontFamily">etesian-text</item>
++    <item name="android:listDivider">@color/dialer_divider_line_color</item>
+     <!-- These values should be used to color all backgrounds. -->
+     <item name="android:colorBackground">@color/dialer_background_color</item>
+     <item name="android:colorBackgroundFloating">@color/dialer_background_floating</item>
+@@ -69,11 +71,11 @@
+     <item name="colorControlActivated">?android:attr/colorAccent</item>
+ 
+     <!-- Dialer specific attributes. -->
+-    <item name="colorIcon">@color/google_grey_700</item>
+-    <item name="colorIconSecondary">@color/google_grey_400</item>
+-    <item name="colorTextOnUnthemedDarkBackground">@android:color/system_neutral1_0</item>
+-    <item name="colorIconOnUnthemedDarkBackground">@android:color/system_neutral1_0</item>
+-    <item name="colorCallNotificationBackground">@android:color/system_accent2_200</item>
++    <item name="colorIcon">@color/n9_icon</item>
++    <item name="colorIconSecondary">@color/n9_icon_secondary</item>
++    <item name="colorTextOnUnthemedDarkBackground">#FFFFFF</item>
++    <item name="colorIconOnUnthemedDarkBackground">#FFFFFF</item>
++    <item name="colorCallNotificationBackground">@color/n9_call_notification_background</item>
+   </style>
+ 
+   <!-- TODO(a bug): investigate making this style's parent Dialer.ThemeBase.NoActionBar -->
+@@ -91,6 +93,8 @@
+   <style name="DialerActionBarBaseStyle" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+     <item name="android:background">?android:attr/colorPrimary</item>
+     <item name="background">?android:attr/colorPrimary</item>
++    <item name="elevation">0dp</item>
++    <item name="android:elevation">0dp</item>
+   </style>
+   <style name="DialerActionBarBaseTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar" />
+ 
+diff --git a/java/com/android/dialer/theme/common/res/values-night/colors.xml b/java/com/android/dialer/theme/common/res/values-night/colors.xml
+index 41b308d20..dd27843f2 100644
+--- a/java/com/android/dialer/theme/common/res/values-night/colors.xml
++++ b/java/com/android/dialer/theme/common/res/values-night/colors.xml
+@@ -1,24 +1,10 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <!--
+-  ~ Copyright (C) 2012 The Android Open Source Project
+-  ~
+-  ~ Licensed under the Apache License, Version 2.0 (the "License");
+-  ~ you may not use this file except in compliance with the License.
+-  ~ You may obtain a copy of the License at
+-  ~
+-  ~      http://www.apache.org/licenses/LICENSE-2.0
+-  ~
+-  ~ Unless required by applicable law or agreed to in writing, software
+-  ~ distributed under the License is distributed on an "AS IS" BASIS,
+-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-  ~ See the License for the specific language governing permissions and
+-  ~ limitations under the License
+-  -->
+-<!-- The colors in this file aren't configured at the theme level. -->
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 (Etesian) look: night resources are only used for the dark Etesian backgrounds. -->
+ <resources>
+-  <color name="dialer_call_green">#3ee0a0</color>
+-  <color name="dialer_end_call_button_color">#e46962</color>
+-  <color name="dialer_link_color">#b5c4ff</color>
+-  <color name="dialer_snackbar_action_text_color">@android:color/system_accent1_600</color>
+-  <color name="dialer_call_icon_color">@android:color/black</color>
++  <color name="dialer_divider_line_color">#333333</color>
++  <color name="cardBackgroundColor">#CC1E1E1E</color>
+ </resources>
+diff --git a/java/com/android/dialer/theme/common/res/values/colors.xml b/java/com/android/dialer/theme/common/res/values/colors.xml
+index 2e9e3b631..5cc2fd7e7 100644
+--- a/java/com/android/dialer/theme/common/res/values/colors.xml
++++ b/java/com/android/dialer/theme/common/res/values/colors.xml
+@@ -16,11 +16,11 @@
+   -->
+ <!-- The colors in this file aren't configured at the theme level. -->
+ <resources>
+-  <color name="dialer_call_green">#006c49</color>
+-  <color name="dialer_end_call_button_color">#dc362e</color>
+-  <color name="dialer_divider_line_color">#D8D8D8</color>
+-  <color name="dialer_link_color">#2A56C6</color>
+-  <color name="dialer_snackbar_action_text_color">@android:color/system_accent1_600</color>
++  <color name="dialer_call_green">#62AE2E</color>
++  <color name="dialer_end_call_button_color">#D42D2A</color>
++  <color name="dialer_divider_line_color">#D6D6D6</color>
++  <color name="dialer_link_color">#00A5E5</color>
++  <color name="dialer_snackbar_action_text_color">#00A5E5</color>
+   <color name="dialer_call_icon_color">@android:color/white</color>
+ 
+   <!-- Colors for the notification actions -->
+@@ -33,5 +33,5 @@
+   <!-- Legacy -->
+   <color name="blue_grey_100">#CFD8DC</color>
+ 
+-  <color name="cardBackgroundColor">@android:color/system_neutral1_50</color>
++  <color name="cardBackgroundColor">#F4F4F4</color>
+ </resources>
+diff --git a/java/com/android/dialer/theme/common/res/values/styles.xml b/java/com/android/dialer/theme/common/res/values/styles.xml
+index 70c91d7ad..f6eaa8e3d 100644
+--- a/java/com/android/dialer/theme/common/res/values/styles.xml
++++ b/java/com/android/dialer/theme/common/res/values/styles.xml
+@@ -20,10 +20,11 @@
+   <style name="CallLogCardStyle" parent="CardView">
+     <item name="android:layout_width">match_parent</item>
+     <item name="android:layout_height">wrap_content</item>
+-    <item name="android:layout_margin">4dp</item>
++    <!-- N9 look: flat rows on the page, separated by engraved rules -->
++    <item name="android:layout_margin">0dp</item>
+     <item name="android:baselineAligned">false</item>
+-    <item name="cardCornerRadius">28dp</item>
+-    <item name="cardBackgroundColor">?android:attr/colorBackground</item>
++    <item name="cardCornerRadius">0dp</item>
++    <item name="cardBackgroundColor">@android:color/transparent</item>
+     <item name="cardElevation">0dp</item>
+   </style>
+ 
+diff --git a/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml
+index ef8c996e7..9979238b8 100644
+--- a/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml
++++ b/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml
+@@ -16,6 +16,6 @@
+   -->
+ <!-- Primary text color in the Phone app -->
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+-  <item android:state_enabled="false" android:color="@color/google_grey_900"/>
+-  <item android:color="@color/google_grey_900"/>
++  <item android:state_enabled="false" android:color="#8C8C8C"/>
++  <item android:color="#191919"/>
+ </selector>
+diff --git a/java/com/android/dialer/theme/hidden/res/color/dialer_secondary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color/dialer_secondary_text_color.xml
+index 20dfd3528..dbea6fe50 100644
+--- a/java/com/android/dialer/theme/hidden/res/color/dialer_secondary_text_color.xml
++++ b/java/com/android/dialer/theme/hidden/res/color/dialer_secondary_text_color.xml
+@@ -16,6 +16,6 @@
+   -->
+ <!-- Secondary text color in the Phone app -->
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+-  <item android:state_enabled="false" android:color="@color/google_grey_400"/>
+-  <item android:color="@color/google_grey_700"/>
++  <item android:state_enabled="false" android:color="#BDBDBD"/>
++  <item android:color="#8C8C8C"/>
+ </selector>
+\ No newline at end of file
+diff --git a/java/com/android/dialer/theme/hidden/res/values-night/colors_dialer_light.xml b/java/com/android/dialer/theme/hidden/res/values-night/colors_dialer_light.xml
+index 99fda0728..a4233194e 100644
+--- a/java/com/android/dialer/theme/hidden/res/values-night/colors_dialer_light.xml
++++ b/java/com/android/dialer/theme/hidden/res/values-night/colors_dialer_light.xml
+@@ -1,24 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
+ <!--
+-  ~ Copyright (C) 2018 The Android Open Source Project
+-  ~
+-  ~ Licensed under the Apache License, Version 2.0 (the "License");
+-  ~ you may not use this file except in compliance with the License.
+-  ~ You may obtain a copy of the License at
+-  ~
+-  ~      http://www.apache.org/licenses/LICENSE-2.0
+-  ~
+-  ~ Unless required by applicable law or agreed to in writing, software
+-  ~ distributed under the License is distributed on an "AS IS" BASIS,
+-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-  ~ See the License for the specific language governing permissions and
+-  ~ limitations under the License
+-  -->
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 (Etesian) look: night resources are only used for the dark Etesian backgrounds. The
++     page comes from the window background (black, grey or wallpaper), so pages and bars are
++     transparent over it; the dial pad sheet stays opaque so the list does not show through. -->
+ <resources>
+-    <!-- Essential theme colors -->
+-    <color name="dialer_theme_color_dark">@color/dialer_background_color</color>
+-    <color name="dialer_background_color">@android:color/system_neutral1_900</color>
+-    <color name="dialer_background_floating">@android:color/system_neutral1_800</color>
+-    <color name="dialer_search_bar_color">@android:color/system_neutral1_800</color>
+-    <color name="rounded_dialpad_bg_color">@android:color/system_neutral1_800</color>
+-    <color name="dialer_theme_color_light">@android:color/system_accent1_100</color>
++  <color name="dialer_theme_color_dark">@color/dialer_background_color</color>
++  <color name="dialer_primary_color">@android:color/transparent</color>
++  <color name="dialer_ripple_color">#33FFFFFF</color>
++  <color name="dialer_background_color">@android:color/transparent</color>
++  <color name="dialer_background_floating">#1E1E1E</color>
++  <color name="dialer_search_bar_color">#2A2A2A</color>
++  <color name="rounded_dialpad_bg_color">#F2101010</color>
++  <color name="searchbar_icon_color">#FFFFFF</color>
+ </resources>
+diff --git a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
+index 41c5fd1c5..3f8396740 100644
+--- a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
++++ b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
+@@ -15,7 +15,7 @@
+   -->
+ <resources>
+   <!-- Essential theme colors -->
+-  <color name="dialer_dark_theme_color">#5195EA</color>
+-  <color name="dialer_dark_theme_color_20pct">#335195EA</color>
+-  <color name="dialer_dark_theme_color_dark">#2374CE</color>
++  <color name="dialer_dark_theme_color">#00A5E5</color>
++  <color name="dialer_dark_theme_color_20pct">#3300A5E5</color>
++  <color name="dialer_dark_theme_color_dark">#141414</color>
+ </resources>
+diff --git a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_light.xml b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_light.xml
+index c894da3ff..df609f6b6 100644
+--- a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_light.xml
++++ b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_light.xml
+@@ -15,15 +15,15 @@
+   -->
+ <resources>
+   <!-- Essential theme colors -->
+-  <color name="dialer_theme_color">@android:color/system_accent1_600</color>
+-  <color name="dialer_theme_color_20pct">#332A56C6</color>
++  <color name="dialer_theme_color">#00A5E5</color>
++  <color name="dialer_theme_color_20pct">#3300A5E5</color>
+   <color name="dialer_theme_color_dark">@color/dialer_background_color</color>
+-  <color name="dialer_primary_color">@android:color/system_neutral2_50</color>
++  <color name="dialer_primary_color">#E9E9E9</color>
+   <color name="dialer_ripple_color">#1f000000</color>
+-  <color name="dialer_background_color">@android:color/system_neutral1_10</color>
+-  <color name="dialer_background_floating">@android:color/system_neutral1_50</color>
+-  <color name="dialer_search_bar_color">@android:color/system_neutral1_50</color>
+-  <color name="rounded_dialpad_bg_color">@android:color/system_neutral1_100</color>
+-  <color name="searchbar_icon_color">@android:color/system_neutral1_900</color>
+-  <color name="dialer_theme_color_light">@android:color/system_accent1_600</color>
++  <color name="dialer_background_color">#E9E9E9</color>
++  <color name="dialer_background_floating">#F4F4F4</color>
++  <color name="dialer_search_bar_color">#FFFFFF</color>
++  <color name="rounded_dialpad_bg_color">#E9E9E9</color>
++  <color name="searchbar_icon_color">#191919</color>
++  <color name="dialer_theme_color_light">#00A5E5</color>
+ </resources>
+diff --git a/java/com/android/dialer/util/DrawableConverter.java b/java/com/android/dialer/util/DrawableConverter.java
+index 22fe22c8b..e3365b0c0 100644
+--- a/java/com/android/dialer/util/DrawableConverter.java
++++ b/java/com/android/dialer/util/DrawableConverter.java
+@@ -89,11 +89,8 @@ public class DrawableConverter {
+     Bitmap bitmap = drawableToBitmap(photo);
+     if (bitmap != null) {
+       Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+-      RoundedBitmapDrawable drawable =
+-          RoundedBitmapDrawableFactory.create(context.getResources(), scaledBitmap);
+-      drawable.setAntiAlias(true);
+-      drawable.setCornerRadius(drawable.getIntrinsicHeight() / 2);
+-      return drawable;
++      // N9 look: Etesian squircle instead of a circle
++      return new N9Squircle.BitmapDrawable(scaledBitmap);
+     }
+     return null;
+   }
+diff --git a/java/com/android/dialer/widget/DialerFloatingActionButton.java b/java/com/android/dialer/widget/DialerFloatingActionButton.java
+index 22df64802..a3b3e489f 100644
+--- a/java/com/android/dialer/widget/DialerFloatingActionButton.java
++++ b/java/com/android/dialer/widget/DialerFloatingActionButton.java
+@@ -47,18 +47,35 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
+  */
+ public class DialerFloatingActionButton extends FloatingActionButton {
+ 
++  // N9 look: hidden for good when the Etesian system toolbar offers its action instead.
++  private boolean suppressed;
++
+   public DialerFloatingActionButton(Context context, AttributeSet attributeSet) {
+     super(context, attributeSet);
+   }
+ 
++  /** Hides the button and ignores later {@link #show()} calls while suppressed. */
++  public void setSuppressed(boolean suppressed) {
++    this.suppressed = suppressed;
++    if (suppressed) {
++      hide();
++    }
++  }
++
+   @Override
+   public void show() {
++    if (suppressed) {
++      return;
++    }
+     super.show();
+     setClickable(true);
+   }
+ 
+   @Override
+   public void show(@Nullable OnVisibilityChangedListener onVisibilityChangedListener) {
++    if (suppressed) {
++      return;
++    }
+     super.show(onVisibilityChangedListener);
+     setClickable(true);
+   }
+diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
+index 7ad802073..dd7fac240 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="@color/dialer_call_green"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#7BBF45" android:endColor="#55A32A"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
+index abfd56ecf..89ca007ff 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="#DF0000"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
+index 3caa1fb15..89ca007ff 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="@color/dialer_end_call_button_color"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/values-night/colors.xml b/java/com/android/incallui/commontheme/res/values-night/colors.xml
+deleted file mode 100644
+index c3f722851..000000000
+--- a/java/com/android/incallui/commontheme/res/values-night/colors.xml
++++ /dev/null
+@@ -1,5 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<resources>
+-    <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
+-    <color name="incall_end_call_icon_color">@android:color/black</color>
+-</resources>
+diff --git a/java/com/android/incallui/commontheme/res/values/colors.xml b/java/com/android/incallui/commontheme/res/values/colors.xml
+index 3c328b6cf..dee2986ff 100644
+--- a/java/com/android/incallui/commontheme/res/values/colors.xml
++++ b/java/com/android/incallui/commontheme/res/values/colors.xml
+@@ -22,6 +22,6 @@
+   <!-- Background color for spam. This color must match one of background_colors_dark in call UI. -->
+   <color name="incall_call_spam_background_color">@color/blocked_contact_background</color>
+ 
+-  <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
++  <color name="incall_button_background_color">#E6FFFFFF</color>
+   <color name="incall_end_call_icon_color">@android:color/white</color>
+ </resources>
+diff --git a/java/com/android/incallui/commontheme/res/values/styles.xml b/java/com/android/incallui/commontheme/res/values/styles.xml
+index 637827301..d30103e77 100644
+--- a/java/com/android/incallui/commontheme/res/values/styles.xml
++++ b/java/com/android/incallui/commontheme/res/values/styles.xml
+@@ -20,12 +20,14 @@
+   <style name="Dialer.Incall.TextAppearance" parent="android:TextAppearance.Material">
+     <item name="android:textColor">?android:attr/textColorSecondary</item>
+     <item name="android:textSize">18sp</item>
++    <item name="android:fontFamily">etesian-text</item>
+   </style>
+ 
+   <style name="Dialer.Incall.TextAppearance.Large">
+-    <item name="android:textColor">?android:attr/textColorPrimary</item>
++    <item name="android:textColor">@android:color/white</item>
+     <item name="android:textSize">36sp</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
++    <item name="android:textFontWeight">300</item>
+   </style>
+ 
+   <style name="Dialer.Incall.TextAppearance.Label">
+@@ -43,7 +45,7 @@
+ 
+   <style name="Incall.Button.End" parent="android:Widget.Material.Button">
+     <item name="android:background">@drawable/incall_end_call_background</item>
+-    <item name="android:elevation">8dp</item>
++    <item name="android:elevation">0dp</item>
+     <item name="android:layout_height">@dimen/incall_end_call_button_size</item>
+     <item name="android:layout_width">@dimen/incall_end_call_button_size</item>
+     <item name="android:padding">8dp</item>
+diff --git a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
+index 73db41314..d74087613 100644
+--- a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
++++ b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
+@@ -69,6 +69,8 @@
+         android:layout_gravity="center_horizontal"
+         android:singleLine="true"
+         android:textAppearance="@style/Dialer.Incall.TextAppearance"
++        android:textSize="24sp"
++        android:textFontWeight="300"
+         tools:gravity="center"/>
+   </ViewAnimator>
+ </LinearLayout>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
+index c8bd29568..ba20fd0da 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
+@@ -13,7 +13,8 @@
+       <item
+         android:id="@android:id/mask"
+         android:gravity="center">
+-        <shape android:shape="oval">
++        <shape android:shape="rectangle">
++      <corners android:radius="16dp"/>
+           <solid android:color="@android:color/white"/>
+         </shape>
+       </item>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
+index b0f310b40..7e6a8a6e1 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
+@@ -1,5 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+-  android:shape="oval">
++  android:shape="rectangle">
++      <corners android:radius="16dp"/>
+   <solid android:color="@color/incall_button_background"/>
+ </shape>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
+index 10fe29731..56b79769e 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
+@@ -27,7 +27,8 @@
+       <item
+         android:id="@android:id/mask"
+         android:gravity="center">
+-        <shape android:shape="oval">
++        <shape android:shape="rectangle">
++      <corners android:radius="16dp"/>
+           <solid android:color="@android:color/white"/>
+         </shape>
+       </item>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
+index f7ffa4d50..82a3eae20 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
+@@ -1,5 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+-  android:shape="oval">
+-  <solid android:color="@android:color/transparent"/>
++  android:shape="rectangle">
++      <corners android:radius="16dp"/>
++  <solid android:color="#26FFFFFF"/>
+ </shape>
+diff --git a/java/com/android/incallui/theme/res/values-night/colors.xml b/java/com/android/incallui/theme/res/values-night/colors.xml
+deleted file mode 100644
+index d6522b152..000000000
+--- a/java/com/android/incallui/theme/res/values-night/colors.xml
++++ /dev/null
+@@ -1,15 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<resources>
+-    <color name="incall_background_gradient_top">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_gradient_middle">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_gradient_bottom">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_multiwindow">@color/dialer_theme_color_dark</color>
+-    <color name="incall_button_icon_color">@android:color/black</color>
+-    <!-- There is a nearby, more-convenient universe in which the following neutral colors are
+-         automatically adapted and do not need to be specified separately in this -night variant.
+-         If the RTT banner items become invisible again in the future, try changing these to
+-         _900 and _800 respectively, or just removing them.
+-         (That more-convenient behavior is already seen with searchbar_icon_color elsewhere.) -->
+-    <color name="incall_banner_icon_color">@android:color/system_neutral1_100</color>
+-    <color name="incall_banner_timer_color">@android:color/system_neutral1_200</color>
+-</resources>
+diff --git a/java/com/android/incallui/theme/res/values/colors.xml b/java/com/android/incallui/theme/res/values/colors.xml
+index a1e586374..ffad9981a 100644
+--- a/java/com/android/incallui/theme/res/values/colors.xml
++++ b/java/com/android/incallui/theme/res/values/colors.xml
+@@ -51,11 +51,11 @@
+     <item>#841F10</item>
+   </array>
+ 
+-  <color name="incall_background_gradient_top">@android:color/system_accent1_600</color>
+-  <color name="incall_background_gradient_middle">@android:color/system_accent1_500</color>
+-  <color name="incall_background_gradient_bottom">@android:color/system_accent1_400</color>
++  <color name="incall_background_gradient_top">#2E2E2E</color>
++  <color name="incall_background_gradient_middle">#212121</color>
++  <color name="incall_background_gradient_bottom">#141414</color>
+ 
+-  <color name="incall_background_multiwindow">@android:color/system_accent1_500</color>
++  <color name="incall_background_multiwindow">#1E1E1E</color>
+ 
+   <color name="incall_background_gradient_spam_top">#E5A30B0B</color>
+   <color name="incall_background_gradient_spam_middle">#D6C01111</color>
+@@ -65,6 +65,6 @@
+ 
+   <color name="incall_button_icon_color">@android:color/black</color>
+ 
+-  <color name="incall_banner_icon_color">@android:color/system_neutral1_900</color>
+-  <color name="incall_banner_timer_color">@android:color/system_neutral1_800</color>
++  <color name="incall_banner_icon_color">#E0E0E0</color>
++  <color name="incall_banner_timer_color">#BDBDBD</color>
+ </resources>
+diff --git a/java/com/android/incallui/theme/res/values/styles.xml b/java/com/android/incallui/theme/res/values/styles.xml
+index bfedd14d6..488cd54b9 100644
+--- a/java/com/android/incallui/theme/res/values/styles.xml
++++ b/java/com/android/incallui/theme/res/values/styles.xml
+@@ -27,7 +27,8 @@
+     <item name="dialpad_style">@style/InCallDialpad</item>
+     <item name="android:windowAnimationStyle">@null</item>
+     <item name="android:windowBackground">@color/dialer_theme_color_dark</item>
+-    <item name="android:windowShowWallpaper">true</item>
++    <item name="android:windowShowWallpaper">false</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="bottomSheetDialogTheme">@style/TransparentBottomSheetDialogTheme</item>
+   </style>
+ 
+@@ -42,10 +43,10 @@
+     <item name="dialpad_key_letters_size_for_single_alphabet">@dimen/incall_dialpad_key_letters_size_for_single_alphabet</item>
+     <item name="dialpad_key_numbers_size">@dimen/incall_dialpad_key_numbers_size</item>
+     <item name="dialpad_end_key_spacing">@dimen/incall_end_call_spacing</item>
+-    <item name="dialpad_elevation">10dp</item>
+-    <item name="dialpad_text_color">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_primary">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_secondary">@color/dialer_secondary_text_color</item>
++    <item name="dialpad_elevation">0dp</item>
++    <item name="dialpad_text_color">#191919</item>
++    <item name="dialpad_text_color_primary">#191919</item>
++    <item name="dialpad_text_color_secondary">#8C8C8C</item>
+   </style>
+ 
+   <style name="AfterCallNotificationTheme" parent="Dialer.ThemeBase.NoActionBar">
+diff --git a/java/com/android/incallui/video/impl/VideoCallFragment.java b/java/com/android/incallui/video/impl/VideoCallFragment.java
+index 3b11743d9..9311a8897 100644
+--- a/java/com/android/incallui/video/impl/VideoCallFragment.java
++++ b/java/com/android/incallui/video/impl/VideoCallFragment.java
+@@ -122,7 +122,9 @@ public class VideoCallFragment extends Fragment
+           int x = view.getWidth() / 2;
+           int y = view.getHeight() / 2;
+           int radius = Math.min(x, y);
+-          outline.setOval(x - radius, y - radius, x + radius, y + radius);
++          // N9 look: self-preview thumbnail is a Etesian squircle, not a circle
++          outline.setPath(
++              com.android.dialer.util.N9Squircle.path(x - radius, y - radius, x + radius, y + radius));
+         }
+       };
+ 
+diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
+new file mode 100644
+index 000000000..0617c037d
+--- /dev/null
++++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) style number display field: white to light grey vertical gradient. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++  <item>
++    <shape android:shape="rectangle">
++      <gradient android:angle="270" android:startColor="@color/n9_dialpad_digits_top" android:endColor="@color/n9_dialpad_digits_bottom"/>
++    </shape>
++  </item>
++  <item android:gravity="bottom" android:height="1dp">
++    <shape android:shape="rectangle">
++      <solid android:color="@color/n9_dialpad_digits_rule"/>
++    </shape>
++  </item>
++</layer-list>
+diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
+new file mode 100644
+index 000000000..58fa6630e
+--- /dev/null
++++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) style dialpad key: white rounded square inset on the grey page,
++     light grey when pressed. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="@color/n9_dialpad_key_ripple">
++  <item>
++    <inset android:inset="3dp">
++      <shape android:shape="rectangle">
++        <solid android:color="@color/n9_dialpad_key"/>
++        <corners android:radius="14dp"/>
++        <stroke android:width="1dp" android:color="@color/n9_dialpad_key_stroke"/>
++      </shape>
++    </inset>
++  </item>
++</ripple>
+diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
+new file mode 100644
+index 000000000..0d402f6e4
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: white text on the dark Etesian backgrounds. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++  <item android:state_enabled="false" android:color="#8C8C8C"/>
++  <item android:color="#FFFFFF"/>
++</selector>
+diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
+new file mode 100644
+index 000000000..853004bd4
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: grey text on the dark Etesian backgrounds. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++  <item android:state_enabled="false" android:color="#6E6E6E"/>
++  <item android:color="#B0B0B0"/>
++</selector>
+diff --git a/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
+new file mode 100644
+index 000000000..ea4fba998
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 (Etesian) palette for the dark Etesian backgrounds: white and grey text, dark grey
++     dial pad keys. Only used when the user picks a dark background (see app/BaseActivity). -->
++<resources>
++  <bool name="n9_light_bars">false</bool>
++  <color name="n9_icon">#DDDDDD</color>
++  <color name="n9_icon_secondary">#B0B0B0</color>
++  <color name="n9_call_notification_background">#1E1E1E</color>
++  <color name="n9_dialpad_text">#FFFFFF</color>
++  <color name="n9_dialpad_text_secondary">#B0B0B0</color>
++  <color name="n9_dialpad_key">#2A2A2A</color>
++  <color name="n9_dialpad_key_stroke">#3A3A3A</color>
++  <color name="n9_dialpad_key_ripple">#33FFFFFF</color>
++  <color name="n9_dialpad_digits_top">#2A2A2A</color>
++  <color name="n9_dialpad_digits_bottom">#141414</color>
++  <color name="n9_dialpad_digits_rule">#000000</color>
++</resources>
+diff --git a/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml
+new file mode 100644
+index 000000000..c8d31892d
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 (Etesian) palette for the light N9 page; values-night holds the one for the dark
++     Etesian backgrounds (black, dark grey, wallpaper). -->
++<resources>
++  <bool name="n9_light_bars">true</bool>
++  <color name="n9_icon">#5A5A5A</color>
++  <color name="n9_icon_secondary">#8C8C8C</color>
++  <color name="n9_call_notification_background">#F4F4F4</color>
++  <color name="n9_dialpad_text">#191919</color>
++  <color name="n9_dialpad_text_secondary">#8C8C8C</color>
++  <color name="n9_dialpad_key">#FFFFFF</color>
++  <color name="n9_dialpad_key_stroke">#D6D6D6</color>
++  <color name="n9_dialpad_key_ripple">#26000000</color>
++  <color name="n9_dialpad_digits_top">#FFFFFF</color>
++  <color name="n9_dialpad_digits_bottom">#DCDCDC</color>
++  <color name="n9_dialpad_digits_rule">#C8C8C8</color>
++</resources>
+diff --git a/java/com/android/dialer/util/N9Squircle.java b/java/com/android/dialer/util/N9Squircle.java
+new file mode 100644
+index 000000000..c696856f7
+--- /dev/null
++++ b/java/com/android/dialer/util/N9Squircle.java
+@@ -0,0 +1,185 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.dialer.util;
++
++import android.graphics.Bitmap;
++import android.graphics.BitmapShader;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.Matrix;
++import android.graphics.Outline;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.Shader;
++import android.graphics.drawable.Drawable;
++import android.view.View;
++import android.view.ViewOutlineProvider;
++
++/**
++ * N9 look: every thumb-sized image (avatars, icons, thumbnails) is a Etesian squircle, never a
++ * circle or a rounded rectangle. Shape is the AOSP squircle on a 100x100 box.
++ */
++public final class N9Squircle {
++    // "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++    private static final Path UNIT = new Path();
++    static {
++        // Superellipse |x|^n + |y|^n = 1 with n = 2.8: the N9 icon shape, measured from the
++        // N9's own icons. (n = 4 or more reads as a rounded square.)
++        final double n = 2.8;
++        final int steps = 96;
++        for (int i = 0; i < steps; i++) {
++            final double t = 2 * Math.PI * i / steps;
++            final double c = Math.cos(t), s = Math.sin(t);
++            final float x = (float) (50 + 50 * Math.signum(c) * Math.pow(Math.abs(c), 2 / n));
++            final float y = (float) (50 + 50 * Math.signum(s) * Math.pow(Math.abs(s), 2 / n));
++            if (i == 0) UNIT.moveTo(x, y); else UNIT.lineTo(x, y);
++        }
++        UNIT.close();
++    }
++
++    private N9Squircle() {}
++
++    /** Writes the squircle filling the given box into {@code out}. */
++    public static Path path(float left, float top, float right, float bottom, Path out) {
++        final Matrix m = new Matrix();
++        m.setScale((right - left) / 100f, (bottom - top) / 100f);
++        m.postTranslate(left, top);
++        out.reset();
++        UNIT.transform(m, out);
++        return out;
++    }
++
++    /** The squircle filling the given box. */
++    public static Path path(float left, float top, float right, float bottom) {
++        return path(left, top, right, bottom, new Path());
++    }
++
++    /** The largest squircle centred in {@code bounds}. */
++    public static Path centered(Rect bounds) {
++        final float half = Math.min(bounds.width(), bounds.height()) / 2f;
++        return path(bounds.exactCenterX() - half, bounds.exactCenterY() - half,
++                bounds.exactCenterX() + half, bounds.exactCenterY() + half);
++    }
++
++    /** Draws a squircle centred in {@code bounds} with {@code paint}. */
++    public static void draw(Canvas canvas, Rect bounds, Paint paint) {
++        canvas.drawPath(centered(bounds), paint);
++    }
++
++    /** Outline provider that clips a view to a squircle filling its bounds. */
++    public static final ViewOutlineProvider OUTLINE = new ViewOutlineProvider() {
++        @Override
++        public void getOutline(View view, Outline outline) {
++            final int w = view.getWidth(), h = view.getHeight();
++            if (w <= 0 || h <= 0) {
++                return;
++            }
++            outline.setPath(path(0, 0, w, h));
++        }
++    };
++
++    /** Clips {@code view} (and its content) to a squircle. */
++    public static void clip(View view) {
++        view.setOutlineProvider(OUTLINE);
++        view.setClipToOutline(true);
++    }
++
++    /** Returns {@code src} center-cropped to a {@code w}x{@code h} squircle bitmap. */
++    public static Bitmap bitmap(Bitmap src, int w, int h) {
++        if (src == null) {
++            return null;
++        }
++        final Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
++        final Drawable d = new BitmapDrawable(src);
++        d.setBounds(0, 0, w, h);
++        d.draw(new Canvas(out));
++        return out;
++    }
++
++    /** A bitmap drawable, center-cropped and clipped to a squircle (replaces circular ones). */
++    public static final class BitmapDrawable extends Drawable {
++        private final Bitmap mBitmap;
++        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
++        private final Matrix mMatrix = new Matrix();
++        private Path mPath = new Path();
++
++        public BitmapDrawable(Bitmap bitmap) {
++            mBitmap = bitmap;
++            mPaint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP,
++                    Shader.TileMode.CLAMP));
++        }
++
++        public Bitmap getBitmap() {
++            return mBitmap;
++        }
++
++        @Override
++        protected void onBoundsChange(Rect bounds) {
++            mPath = centered(bounds);
++            final float side = Math.min(bounds.width(), bounds.height());
++            final float scale = side / Math.min(mBitmap.getWidth(), mBitmap.getHeight());
++            mMatrix.setScale(scale, scale);
++            mMatrix.postTranslate(bounds.exactCenterX() - mBitmap.getWidth() * scale / 2f,
++                    bounds.exactCenterY() - mBitmap.getHeight() * scale / 2f);
++            mPaint.getShader().setLocalMatrix(mMatrix);
++        }
++
++        @Override
++        public void draw(Canvas canvas) {
++            canvas.drawPath(mPath, mPaint);
++        }
++
++        @Override
++        public void getOutline(Outline outline) {
++            outline.setPath(mPath);
++        }
++
++        @Override
++        public int getIntrinsicWidth() {
++            return mBitmap.getWidth();
++        }
++
++        @Override
++        public int getIntrinsicHeight() {
++            return mBitmap.getHeight();
++        }
++
++        @Override
++        public void setAlpha(int alpha) {
++            mPaint.setAlpha(alpha);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getAlpha() {
++            return mPaint.getAlpha();
++        }
++
++        @Override
++        public void setColorFilter(ColorFilter cf) {
++            mPaint.setColorFilter(cf);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getOpacity() {
++            return PixelFormat.TRANSLUCENT;
++        }
++    }
++}

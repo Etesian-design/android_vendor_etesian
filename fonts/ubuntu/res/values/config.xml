@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_bodyFontFamily" translatable="false">ubuntu-sans</string>
+    <string name="config_bodyFontFamilyMedium" translatable="false">ubuntu-sans</string>
+    <string name="config_headlineFontFamily" translatable="false">ubuntu-sans</string>
+    <string name="config_headlineFontFamilyMedium" translatable="false">ubuntu-sans</string>
+</resources>

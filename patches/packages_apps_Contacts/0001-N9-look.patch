@@ -1,0 +1,2069 @@
+diff --git a/Android.bp b/Android.bp
+index a1baa309a..325f1ff68 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -44,6 +44,9 @@ android_app {
+         "com.android.vcard",
+         "guava",
+         "libphonenumber",
++        "etesian-toolbar",
++        "etesian-theme",
++        "etesian-fastscroll",
+     ],
+ 
+     certificate: "shared",
+@@ -56,7 +59,7 @@ android_app {
+     },
+ 
+     sdk_version: "system_current",
+-    min_sdk_version: "21",
++    min_sdk_version: "34",
+     lint: {
+         baseline_filename: "lint-baseline.xml",
+     },
+diff --git a/res/drawable-night/quantum_launchscreen_contacts.xml b/res/drawable-night/quantum_launchscreen_contacts.xml
+index 14aaaf05e..8ae2de46e 100644
+--- a/res/drawable-night/quantum_launchscreen_contacts.xml
++++ b/res/drawable-night/quantum_launchscreen_contacts.xml
+@@ -16,7 +16,7 @@
+ 
+ <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+     android:opacity="opaque">
+-  <item android:drawable="@android:color/system_neutral1_900" />
++  <item android:drawable="@color/n9_window_background" />
+   <item
+       android:id="@+id/launchscreens_product_logo"
+       android:bottom="@dimen/launchscreens_product_logo_bottom">
+diff --git a/res/drawable/fab_bg.xml b/res/drawable/fab_bg.xml
+index a6526789b..fff962502 100644
+--- a/res/drawable/fab_bg.xml
++++ b/res/drawable/fab_bg.xml
+@@ -4,6 +4,8 @@
+   SPDX-License-Identifier: Apache-2.0
+ -->
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:shape="oval">
++    android:shape="rectangle">
++    <!-- N9 squircle: radius ~28% of the 56dp button -->
++    <corners android:radius="16dp" />
+     <solid android:color="@color/fab_color"/>
+ </shape>
+diff --git a/res/drawable/floating_action_button.xml b/res/drawable/floating_action_button.xml
+index 796920e20..afada50da 100644
+--- a/res/drawable/floating_action_button.xml
++++ b/res/drawable/floating_action_button.xml
+@@ -17,7 +17,9 @@
+ <ripple xmlns:android="http://schemas.android.com/apk/res/android"
+         android:color="@color/contacts_accent_color">
+      <item android:id="@android:id/mask">
+-          <shape android:shape="oval">
++          <shape android:shape="rectangle">
++    <!-- N9 squircle: radius ~28% of the 56dp button -->
++    <corners android:radius="16dp" />
+                <solid android:color="@android:color/white" />
+           </shape>
+      </item>
+diff --git a/res/drawable/quantum_launchscreen_contacts.xml b/res/drawable/quantum_launchscreen_contacts.xml
+index 4cb718c7b..8ae2de46e 100755
+--- a/res/drawable/quantum_launchscreen_contacts.xml
++++ b/res/drawable/quantum_launchscreen_contacts.xml
+@@ -16,7 +16,7 @@
+ 
+ <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+     android:opacity="opaque">
+-  <item android:drawable="@android:color/system_neutral1_0" />
++  <item android:drawable="@color/n9_window_background" />
+   <item
+       android:id="@+id/launchscreens_product_logo"
+       android:bottom="@dimen/launchscreens_product_logo_bottom">
+diff --git a/res/layout/expanding_entry_card_item.xml b/res/layout/expanding_entry_card_item.xml
+index dbbeee5fa..af0082e9d 100644
+--- a/res/layout/expanding_entry_card_item.xml
++++ b/res/layout/expanding_entry_card_item.xml
+@@ -40,11 +40,11 @@
+         android:textSize="@dimen/expanding_entry_card_title_text_size"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:layout_alignParentTop="true"
+-        android:paddingTop="5dp"
++        android:layout_below="@+id/sub_header"
++        android:layout_alignWithParentIfMissing="true"
+         android:layout_toEndOf="@+id/icon"
+         android:layout_toStartOf="@+id/third_icon"
+-        android:textColor="@color/quickcontact_entry_header_text_color"
++        android:textColor="@color/n9_text_primary"
+         android:textAlignment="viewStart"
+         android:layout_marginBottom="@dimen/expanding_entry_card_header_margin_bottom" />
+ 
+@@ -52,17 +52,20 @@
+         android:id="@+id/sub_header"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:layout_below="@+id/header"
++        android:layout_alignParentTop="true"
++        android:paddingTop="5dp"
++        android:textSize="14sp"
+         android:layout_toEndOf="@+id/icon_sub_header"
+         android:layout_toStartOf="@+id/third_icon"
+         android:textAlignment="viewStart"
+-        android:textColor="@color/quickcontact_entry_sub_header_text_color" />
++        android:textColor="@color/n9_text_secondary" />
+ 
+     <ImageView
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:id="@+id/icon_sub_header"
+-        android:layout_below="@+id/header"
++        android:layout_alignParentTop="true"
++        android:layout_marginTop="5dp"
+         android:layout_toEndOf="@+id/icon"
+         android:layout_marginEnd="@dimen/expanding_entry_card_item_sub_header_icon_margin_right"
+         android:layout_marginBottom="@dimen/expanding_entry_card_item_sub_header_icon_margin_bottom" />
+@@ -71,7 +74,8 @@
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:id="@+id/text"
+-        android:layout_below="@+id/sub_header"
++        android:layout_below="@+id/header"
++        android:layout_alignWithParentIfMissing="true"
+         android:layout_toEndOf="@+id/icon_text"
+         android:layout_toStartOf="@+id/third_icon"
+         android:textAlignment="viewStart"
+@@ -82,7 +86,8 @@
+         android:layout_height="wrap_content"
+         android:id="@+id/icon_text"
+         android:layout_toEndOf="@+id/icon"
+-        android:layout_below="@+id/sub_header"
++        android:layout_below="@+id/header"
++        android:layout_alignWithParentIfMissing="true"
+         android:layout_marginTop="@dimen/expanding_entry_card_item_text_icon_margin_top"
+         android:layout_marginEnd="@dimen/expanding_entry_card_item_text_icon_margin_right" />
+ 
+diff --git a/res/layout/people_activity_toolbar.xml b/res/layout/people_activity_toolbar.xml
+index 4e8ea2f7e..8327c0ae7 100644
+--- a/res/layout/people_activity_toolbar.xml
++++ b/res/layout/people_activity_toolbar.xml
+@@ -25,7 +25,7 @@
+         android:id="@+id/toolbar_frame"
+         android:layout_width="match_parent"
+         android:layout_height="?attr/actionBarSize"
+-        android:background="?attr/colorPrimary">
++        android:background="@color/n9_contacts_header">
+ 
+         <!-- the attribute padding removes the gap between this Toolbar and its parent FrameLayout on tablet -->
+         <androidx.appcompat.widget.Toolbar
+@@ -33,7 +33,7 @@
+             android:layout_height="?attr/actionBarSize"
+             android:id="@+id/toolbar"
+             android:padding="0dp"
+-            style="@style/ContactsToolbarStyle" />
++            style="@style/N9MainToolbarStyle" />
+ 
+     </FrameLayout>
+ </LinearLayout>
+\ No newline at end of file
+diff --git a/res/layout/search_bar_expanded.xml b/res/layout/search_bar_expanded.xml
+index 9f90bc7d0..c7105b2d6 100644
+--- a/res/layout/search_bar_expanded.xml
++++ b/res/layout/search_bar_expanded.xml
+@@ -30,7 +30,7 @@
+         android:src="@drawable/quantum_ic_arrow_back_vd_theme_24"
+         android:background="?attr/selectableItemBackgroundBorderless"
+         android:contentDescription="@string/action_menu_back_from_search"
+-        android:tint="@color/actionbar_background_color" />
++        android:tint="@color/n9_text_primary" />
+ 
+     <android.widget.AutoCompleteTextView
+         android:id="@+id/search_view"
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+index fc5bb3017..c635f759a 100644
+--- a/res/values-night/colors.xml
++++ b/res/values-night/colors.xml
+@@ -3,16 +3,49 @@
+  * SPDX-License-Identifier: Apache-2.0
+  * Copyright (C) 2020 The LineageOS Project
+ -->
++<!-- N9 (Etesian) look: night resources are only used for the dark Etesian backgrounds
++     (black, dark grey, wallpaper; see util/N9Theme). The page comes from the window background,
++     so lists and rows are transparent over it and text is white and grey. The light N9 default
++     never uses these, whatever the system dark theme says. -->
+ <resources>
+-    <!-- Background color of pinned header items. -->
+-    <color name="list_item_pinned_header_color">@*android:color/system_neutral1_900</color>
++    <color name="list_item_pinned_header_color">@android:color/transparent</color>
++    <color name="background_primary">@android:color/transparent</color>
++    <color name="contact_all_list_background_color">@android:color/transparent</color>
++    <color name="fab_color">#00A5E5</color>
+ 
+-    <!-- Color of contact name in list. -->
+-    <color name="contact_list_name_text_color">#dadada</color>
++    <color name="n9_window_background">#000000</color>
++    <color name="n9_list_background">@android:color/transparent</color>
++    <color name="n9_text_primary">#FFFFFF</color>
++    <color name="n9_text_secondary">#B0B0B0</color>
++    <color name="n9_separator">#333333</color>
++    <color name="n9_section_rule">#000000</color>
++    <color name="n9_section_rule_highlight">#3A3A3A</color>
+ 
+-    <!-- Color of the background of the contact detail and editor pages -->
+-    <color name="background_primary">@*android:color/system_neutral1_900</color>
+-    <color name="contact_all_list_background_color">@*android:color/system_neutral1_900</color>
+-
+-    <color name="fab_color">@android:color/system_accent1_100</color>
++    <color name="quickcontact_entry_sub_header_text_color">#B0B0B0</color>
++    <color name="quickcontact_entry_header_text_color">#FFFFFF</color>
++    <color name="action_bar_background">@android:color/transparent</color>
++    <color name="action_bar_button_text_color">#FFFFFF</color>
++    <color name="actionbar_background_color">@android:color/transparent</color>
++    <color name="primary_color_dark">@android:color/transparent</color>
++    <color name="group_primary_color_dark">@android:color/transparent</color>
++    <color name="group_primary_color">@android:color/transparent</color>
++    <color name="divider_line_color_light">#333333</color>
++    <color name="expanding_entry_card_background_color">#CC161616</color>
++    <color name="card_margin_color">@android:color/transparent</color>
++    <color name="empty_state_background">@android:color/transparent</color>
++    <color name="primary_text_color">#FFFFFF</color>
++    <color name="people_app_theme_color">#B0B0B0</color>
++    <color name="dialtacts_primary_text_color">#FFFFFF</color>
++    <color name="dialtacts_secondary_text_color">#B0B0B0</color>
++    <color name="actionbar_icon_color">#FFFFFF</color>
++    <color name="frequently_contacted_title_color">#B0B0B0</color>
++    <color name="actionbar_text_color">#FFFFFF</color>
++    <color name="searchbox_text_color">#FFFFFF</color>
++    <color name="custom_filter_divider">#333333</color>
++    <color name="contacts_text_color">#FFFFFF</color>
++    <color name="drawer_divider_color">#333333</color>
++    <color name="navigation_drawer_background_color">#161616</color>
++    <color name="drawer_selected_color">#1F3A45</color>
++    <!-- N9 look: fill of the pull-down search pill -->
++    <color name="n9_search_box_fill">#33FFFFFF</color>
+ </resources>
+diff --git a/res/values-v27/styles.xml b/res/values-v27/styles.xml
+index 3702fb209..a7b67195e 100644
+--- a/res/values-v27/styles.xml
++++ b/res/values-v27/styles.xml
+@@ -50,7 +50,7 @@
+         <!-- Popup menu -->
+         <item name="android:popupMenuStyle">@style/PopupMenuStyle</item>
+         <item name="android:navigationBarColor">@color/navigation_bar_bg</item>
+-        <item name="android:windowLightNavigationBar">true</item>
++        <item name="android:windowLightNavigationBar">@bool/n9_light_bars</item>
+     </style>
+ 
+     <style name="PeopleThemeAppCompat" parent="Theme.AppCompat.Light.DarkActionBar">
+@@ -118,7 +118,7 @@
+         <item name="android:popupMenuStyle">@style/PopupMenuStyleAppCompat</item>
+         <item name="popupMenuStyle">@style/PopupMenuStyleAppCompat</item>
+         <item name="android:navigationBarColor">@color/navigation_bar_bg</item>
+-        <item name="android:windowLightNavigationBar">true</item>
++        <item name="android:windowLightNavigationBar">@bool/n9_light_bars</item>
+     </style>
+ 
+ </resources>
+diff --git a/res/values/bools.xml b/res/values/bools.xml
+index 175aeb1b4..d4ed7652f 100644
+--- a/res/values/bools.xml
++++ b/res/values/bools.xml
+@@ -18,4 +18,7 @@
+     <bool name="quickcontact_two_panel">false</bool>
+     <bool name="contacteditor_two_panel">false</bool>
+ 
++    <!-- N9 look: dark status and navigation bar icons on the light N9 page; light icons on
++         the dark Etesian backgrounds (values-night). -->
++    <bool name="n9_light_bars">true</bool>
+ </resources>
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 429695ec7..6848fefa2 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -14,6 +14,9 @@
+      limitations under the License.
+ -->
+ <resources>
++    <!-- N9 look: Contacts brand colour, the main page header. -->
++    <color name="n9_contacts_header">#FF1086D6</color>
++    <color name="contact_list_name_text_color">#FF292829</color>
+     <color name="ic_add_contact_shortcut_background">#F5F5F5</color>
+ 
+     <!-- 87% black -->
+@@ -25,47 +28,47 @@
+     <!-- 38% black -->
+     <color name="quantum_black_hint_text">#61000000</color>
+ 
+-    <color name="quickcontact_entry_sub_header_text_color">#737373</color>
+-    <color name="quickcontact_entry_header_text_color">#202020</color>
++    <color name="quickcontact_entry_sub_header_text_color">#8C8C8C</color>
++    <color name="quickcontact_entry_header_text_color">#191919</color>
+ 
+-    <color name="action_bar_background">@*android:color/system_accent1_600</color>
++    <color name="action_bar_background">#E9E9E9</color>
+ 
+     <color name="nav_item_selected_background">#0f000000</color>
+ 
+-    <color name="action_bar_button_text_color">#FFFFFF</color>
++    <color name="action_bar_button_text_color">#191919</color>
+ 
+-    <color name="actionbar_background_color">@color/primary_color</color>
++    <color name="actionbar_background_color">#E9E9E9</color>
+ 
+     <color name="contextual_selection_bar_color">#f6f6f6</color>
+     <!-- Color of the status bar above the contextual selection bar. -->
+     <color name="contextual_selection_bar_status_bar_color">#bababa</color>
+ 
+-    <color name="primary_color_dark">@*android:color/system_accent1_700</color>
+-    <color name="primary_color">@*android:color/system_accent1_600</color>
++    <color name="primary_color_dark">#E9E9E9</color>
++    <color name="primary_color">#00A5E5</color>
+ 
+-    <color name="group_primary_color_dark">@*android:color/system_neutral1_900</color>
+-    <color name="group_primary_color">@*android:color/system_neutral1_800</color>
++    <color name="group_primary_color_dark">#E9E9E9</color>
++    <color name="group_primary_color">#E9E9E9</color>
+ 
+     <!-- Color of the selected tab underline -->
+-    <color name="contacts_accent_color">@*android:color/system_neutral1_0</color>
++    <color name="contacts_accent_color">#FFFFFF</color>
+ 
+     <color name="floating_action_button_icon_color">@color/contacts_accent_color</color>
+-    <color name="fab_color">@android:color/system_accent1_600</color>
++    <color name="fab_color">#00A5E5</color>
+ 
+     <!-- Horizontal separator line should be 12% dark in the light theme. -->
+-    <color name="divider_line_color_light">@*android:color/transparent</color>
++    <color name="divider_line_color_light">#D6D6D6</color>
+ 
+     <!-- Color of the text on an ExpandingEntryCard button -->
+     <color name="expanding_entry_card_button_text_color">@android:color/black</color>
+ 
+     <!-- Background color for an ExpandingEntryCard -->
+-    <color name="expanding_entry_card_background_color">#ffffff</color>
++    <color name="expanding_entry_card_background_color">#F4F4F4</color>
+ 
+     <!-- Color of the margin for cards -->
+-    <color name="card_margin_color">#f4f4f4</color>
++    <color name="card_margin_color">#E9E9E9</color>
+ 
+-    <color name="call_arrow_green">#2aad6f</color>
+-    <color name="call_arrow_red">#ff2e58</color>
++    <color name="call_arrow_green">#62AE2E</color>
++    <color name="call_arrow_red">#D42D2A</color>
+ 
+     <!-- Background color of pinned header items. -->
+     <color name="list_item_pinned_header_color">@color/background_primary</color>
+@@ -86,13 +89,13 @@
+     <color name="disabled_contact_list_name_text">#4D000000</color>
+ 
+     <!-- Color of background of all empty states. -->
+-    <color name="empty_state_background">#efefef</color>
++    <color name="empty_state_background">#E9E9E9</color>
+ 
+     <!-- Color of ripples used for views with dark backgrounds -->
+     <color name="ripple_material_dark">#a0ffffff</color>
+ 
+     <!-- Divider color for header separator -->
+-    <color name="primary_text_color">#363636</color>
++    <color name="primary_text_color">#191919</color>
+ 
+     <color name="secondary_text_color">@color/dialtacts_secondary_text_color</color>
+ 
+@@ -100,19 +103,19 @@
+     <color name="section_header_text_color">@color/dialtacts_theme_color</color>
+ 
+     <!-- Color of the theme of the People app -->
+-    <color name="people_app_theme_color">@*android:color/system_neutral1_800</color>
++    <color name="people_app_theme_color">#8C8C8C</color>
+ 
+     <!-- Color of the theme of the Dialer app -->
+-    <color name="dialtacts_theme_color">@*android:color/system_accent1_600</color>
++    <color name="dialtacts_theme_color">#00A5E5</color>
+ 
+     <!-- Color of image view placeholder. -->
+     <color name="image_placeholder">#DDDDDD</color>
+ 
+     <!-- Primary text color in the Phone app -->
+-    <color name="dialtacts_primary_text_color">#333333</color>
++    <color name="dialtacts_primary_text_color">#191919</color>
+ 
+     <!-- Secondary text color in the Phone app -->
+-    <color name="dialtacts_secondary_text_color">#737373</color>
++    <color name="dialtacts_secondary_text_color">#8C8C8C</color>
+ 
+     <color name="shortcut_overlay_text_background">#7f000000</color>
+ 
+@@ -127,43 +130,43 @@
+         These colors are also used by MaterialColorMapUtils to generate primary activity colors.
+     -->
+     <array name="letter_tile_colors">
+-        <item>@*android:color/system_accent1_300</item>
+-        <item>@*android:color/system_accent2_300</item>
+-        <item>@*android:color/system_accent3_300</item>
+-        <item>@*android:color/system_accent1_400</item>
+-        <item>@*android:color/system_accent2_400</item>
+-        <item>@*android:color/system_accent3_400</item>
+-        <item>@*android:color/system_accent1_500</item>
+-        <item>@*android:color/system_accent2_500</item>
+-        <item>@*android:color/system_accent3_500</item>
+-        <item>@*android:color/system_accent1_600</item>
+-        <item>@*android:color/system_accent2_600</item>
+-        <item>@*android:color/system_accent3_600</item>
++        <item>#00A5E5</item>
++        <item>#62AE2E</item>
++        <item>#8C8C8C</item>
++        <item>#E07B1F</item>
++        <item>#7A5BB5</item>
++        <item>#D42D2A</item>
++        <item>#2D8FB8</item>
++        <item>#4E8F2A</item>
++        <item>#6E6E6E</item>
++        <item>#C2609A</item>
++        <item>#3D6DB5</item>
++        <item>#A88A1E</item>
+     </array>
+ 
+     <!-- Darker versions of letter_tile_colors, two shades darker. These colors are used
+         for settings secondary activity colors. -->
+     <array name="letter_tile_colors_dark">
+-        <item>@*android:color/system_accent1_500</item>
+-        <item>@*android:color/system_accent2_500</item>
+-        <item>@*android:color/system_accent3_500</item>
+-        <item>@*android:color/system_accent1_600</item>
+-        <item>@*android:color/system_accent2_600</item>
+-        <item>@*android:color/system_accent3_600</item>
+-        <item>@*android:color/system_accent1_700</item>
+-        <item>@*android:color/system_accent2_700</item>
+-        <item>@*android:color/system_accent3_700</item>
+-        <item>@*android:color/system_accent1_800</item>
+-        <item>@*android:color/system_accent2_800</item>
+-        <item>@*android:color/system_accent3_800</item>
++        <item>#0086BA</item>
++        <item>#4E8F24</item>
++        <item>#6E6E6E</item>
++        <item>#B86418</item>
++        <item>#5F4790</item>
++        <item>#A82320</item>
++        <item>#22708F</item>
++        <item>#3B6E1F</item>
++        <item>#4F4F4F</item>
++        <item>#9A4C7A</item>
++        <item>#2F548C</item>
++        <item>#866E18</item>
+     </array>
+ 
+     <!-- The default color used for tinting photos when no color can be extracted via Palette,
+             this is Blue Grey 500 -->
+-    <color name="quickcontact_default_photo_tint_color">#607D8B</color>
++    <color name="quickcontact_default_photo_tint_color">#2E2E2E</color>
+     <!-- The default secondary color when no color can be extracted via Palette,
+             this is Blue Grey 700 -->
+-    <color name="quickcontact_default_photo_tint_color_dark">#455A64</color>
++    <color name="quickcontact_default_photo_tint_color_dark">#141414</color>
+ 
+ 
+     <color name="letter_tile_default_color">#cccccc</color>
+@@ -171,14 +174,14 @@
+     <color name="letter_tile_font_color">#ffffff</color>
+ 
+     <!-- Color for icons in the actionbar -->
+-    <color name="actionbar_icon_color">#ffffff</color>
++    <color name="actionbar_icon_color">#191919</color>
+ 
+     <!-- Color of the title to the Frequently Contacted section -->
+-    <color name="frequently_contacted_title_color">@color/actionbar_background_color</color>
++    <color name="frequently_contacted_title_color">#8C8C8C</color>
+ 
+     <!-- Color of action bar text. Ensure this stays in sync with packages/Telephony
+     phone_settings_actionbar_text_color-->
+-    <color name="actionbar_text_color">#ffffff</color>
++    <color name="actionbar_text_color">#191919</color>
+     <!-- 54% black for icons -->
+     <color name="actionbar_icon_color_grey">#8C000000</color>
+     <!-- 87% black for actionbar text -->
+@@ -187,7 +190,7 @@
+     <color name="actionbar_color_grey_solid">#777777</color>
+ 
+     <!-- Text color of the search box text as entered by user  -->
+-    <color name="searchbox_text_color">#000000</color>
++    <color name="searchbox_text_color">#191919</color>
+     <!-- Background color of the search box -->
+     <color name="searchbox_background_color">#ffffff</color>
+ 
+@@ -196,8 +199,8 @@
+     <color name="search_shortcut_icon_color">@color/dialtacts_theme_color</color>
+ 
+     <!-- Color of the background of the contact detail and editor pages -->
+-    <color name="background_primary">@*android:color/system_neutral1_50</color>
+-    <color name="contact_all_list_background_color">@*android:color/system_neutral1_0</color>
++    <color name="background_primary">#F4F4F4</color>
++    <color name="contact_all_list_background_color">#F4F4F4</color>
+ 
+     <!-- Text color used for character counter when the max limit has been exceeded -->
+     <color name="call_subject_limit_exceeded">#d1041c</color>
+@@ -209,7 +212,7 @@
+     <color name="call_subject_divider">#d8d8d8</color>
+ 
+     <!-- Text color for the SEND & CALL button on the call subject dialog. -->
+-    <color name="call_subject_button">#00c853</color>
++    <color name="call_subject_button">#62AE2E</color>
+ 
+     <!-- Background color for the call subject history view. -->
+     <color name="call_subject_history_background">#ffffff</color>
+@@ -222,12 +225,12 @@
+ 
+     <!-- Color of account/custom filters -->
+     <color name="account_filter_text_color">@color/actionbar_text_color_black</color>
+-    <color name="custom_filter_divider">#dbdbdb</color>
++    <color name="custom_filter_divider">#D6D6D6</color>
+ 
+-    <color name="material_star_pink">@color/primary_color</color>
++    <color name="material_star_pink">#00A5E5</color>
+ 
+     <!-- Primary text color in Contacts app -->
+-    <color name="contacts_text_color">#333333</color>
++    <color name="contacts_text_color">#191919</color>
+ 
+     <!-- tint color for device account icons -->
+     <color name="device_account_tint_color">#7f7f7f</color>
+@@ -236,15 +239,30 @@
+     <color name="alert_background">#e0e0e0</color>
+ 
+     <!-- Divider color in navigation drawer -->
+-    <color name="drawer_divider_color">#E5E5E5</color>
++    <color name="drawer_divider_color">#D6D6D6</color>
+ 
+     <!-- Background color for the navigation drawer -->
+-    <color name="navigation_drawer_background_color">#FAFAFA</color>
++    <color name="navigation_drawer_background_color">#F4F4F4</color>
+ 
+     <!-- Background color for the current selected item in the navigation drawer -->
+-    <color name="drawer_selected_color">#E8E8E8</color>
++    <color name="drawer_selected_color">#D6EFF9</color>
+ 
+     <!-- Highlight color used in places such as ripples -->
+     <color name="control_highlight_color">#1A000000</color>
+ 
++    <!-- N9 (Etesian) palette -->
++    <color name="n9_window_background">#E9E9E9</color>
++    <color name="n9_list_background">#F4F4F4</color>
++    <color name="n9_text_primary">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_green">#62AE2E</color>
++    <color name="n9_card_header_top">#2E2E2E</color>
++    <color name="n9_card_header_bottom">#141414</color>
++    <!-- Engraved section rule: a dark line over a light one -->
++    <color name="n9_section_rule">#C8C8C8</color>
++    <color name="n9_section_rule_highlight">#FFFFFF</color>
++    <!-- N9 look: fill of the pull-down search pill -->
++    <color name="n9_search_box_fill">#FFFFFF</color>
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index 9bd8bbe2b..f2fc14c2e 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -130,7 +130,7 @@
+     <dimen name="quick_contact_toolbar_elevation">4.5dp</dimen>
+ 
+     <!-- Size of the title text for a ExpandingEntryCardView -->
+-    <dimen name="expanding_entry_card_title_text_size">16sp</dimen>
++    <dimen name="expanding_entry_card_title_text_size">18sp</dimen>
+     <!-- Padding for the title text for a ExpandingEntryCardView -->
+     <dimen name="expanding_entry_card_title_padding">16dp</dimen>
+     <!-- Extra top padding if the title is set to null -->
+@@ -302,7 +302,7 @@
+     <dimen name="detail_network_icon_size">40dp</dimen>
+ 
+     <!-- contact browser list margins -->
+-    <dimen name="contact_browser_list_item_text_size">16sp</dimen>
++    <dimen name="contact_browser_list_item_text_size">18sp</dimen>
+     <dimen name="contact_browser_list_item_photo_size">40dp</dimen>
+     <dimen name="contact_browser_list_item_gap_between_image_and_text">15dp</dimen>
+     <dimen name="contact_browser_list_item_gap_between_indexer_and_image">16dp</dimen>
+@@ -382,4 +382,9 @@
+     <!-- Side padding within the navigation drawer -->
+     <dimen name="drawer_label_header_end_padding">24dp</dimen>
+ 
++    <!-- N9 look: the band above a section's first contact holding its rule and letter -->
++    <dimen name="n9_contact_list_section_band_height">28dp</dimen>
++    <!-- N9 look: space between the section rule and its letter -->
++    <dimen name="n9_contact_list_section_gap">8dp</dimen>
++
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index a4c10b809..bd7228859 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -23,6 +23,8 @@
+     </style>
+ 
+     <style name="Theme.QuickContact" parent="@style/PeopleTheme">
++        <!-- N9 look: light status bar icons over the dark contact card header -->
++        <item name="android:windowLightStatusBar">false</item>
+         <item name="android:windowBackground">@android:color/transparent</item>
+         <item name="android:colorBackgroundCacheHint">@null</item>
+         <item name="android:windowFrame">@null</item>
+@@ -40,6 +42,15 @@
+     </style>
+ 
+     <style name="PeopleTheme" parent="@android:style/Theme.Material.Light.DarkActionBar">
++        <!-- N9 (Etesian) look: static light palette, Nokia Pure font, light status bar -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:windowLightStatusBar">@bool/n9_light_bars</item>
++        <item name="android:windowLightNavigationBar">@bool/n9_light_bars</item>
++        <item name="android:navigationBarColor">@color/n9_window_background</item>
++        <item name="android:statusBarColor">@color/n9_window_background</item>
++        <item name="android:colorControlActivated">@color/n9_blue</item>
++        <item name="android:listDivider">@color/n9_separator</item>
++        <item name="android:fastScrollStyle">@style/N9FastScrollStyle</item>
+         <item name="android:actionBarStyle">@style/ContactsActionBarStyle</item>
+         <!-- Style for the overflow button in the actionbar. -->
+         <item name="android:actionOverflowButtonStyle">@style/ContactsActionBarOverflowQP</item>
+@@ -50,7 +61,7 @@
+         <item name="android:listViewStyle">@style/ListViewStyle</item>
+         <item name="android:windowBackground">@color/background_primary</item>
+         <item name="android:colorPrimaryDark">@color/primary_color_dark</item>
+-        <item name="android:colorPrimary">@color/primary_color</item>
++        <item name="android:colorPrimary">@color/actionbar_background_color</item>
+         <item name="android:colorAccent">@color/primary_color</item>
+         <item name="android:alertDialogTheme">@style/ContactsAlertDialogTheme</item>
+         <item name="list_item_height">@dimen/contact_browser_list_item_height</item>
+@@ -89,20 +100,29 @@
+         <item name="android:popupMenuStyle">@style/PopupMenuStyle</item>
+     </style>
+ 
+-    <style name="LaunchScreenTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
++    <style name="LaunchScreenTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+         <item name="android:windowBackground">@drawable/quantum_launchscreen_contacts</item>
+         <item name="colorPrimaryDark">@color/primary_color_dark</item>
+-        <item name="colorPrimary">@color/primary_color</item>
++        <item name="colorPrimary">@color/actionbar_background_color</item>
+     </style>
+ 
+     <style name="PeopleActivityTheme" parent="@style/PeopleThemeAppCompat">
+-        <item name="android:forceDarkAllowed">true</item>
++        <item name="android:forceDarkAllowed">false</item>
+         <item name="windowActionBar">false</item>
+         <item name="windowNoTitle">true</item>
+         <item name="android:listSelector">?android:attr/listChoiceBackgroundIndicator</item>
+     </style>
+ 
+     <style name="PeopleThemeAppCompat" parent="Theme.AppCompat.Light.DarkActionBar">
++        <!-- N9 (Etesian) look: static light palette, Nokia Pure font, light status bar -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:windowLightStatusBar">@bool/n9_light_bars</item>
++        <item name="android:windowLightNavigationBar">@bool/n9_light_bars</item>
++        <item name="android:navigationBarColor">@color/n9_window_background</item>
++        <item name="android:statusBarColor">@color/n9_window_background</item>
++        <item name="android:colorControlActivated">@color/n9_blue</item>
++        <item name="android:listDivider">@color/n9_separator</item>
++        <item name="android:fastScrollStyle">@style/N9FastScrollStyle</item>
+         <!-- Styles that require AppCompat compatibility, remember to update both sets -->
+         <item name="android:actionBarStyle">@style/ContactsActionBarStyleAppCompat</item>
+         <item name="actionBarStyle">@style/ContactsActionBarStyleAppCompat</item>
+@@ -118,10 +138,11 @@
+         <item name="android:icon">@android:color/transparent</item>
+         <item name="android:listViewStyle">@style/ListViewStyle</item>
+         <item name="android:windowBackground">@color/background_primary</item>
++        <item name="colorControlActivated">@color/n9_blue</item>
+         <item name="android:colorPrimaryDark">@color/primary_color_dark</item>
+         <item name="colorPrimaryDark">@color/primary_color_dark</item>
+-        <item name="android:colorPrimary">@color/primary_color</item>
+-        <item name="colorPrimary">@color/primary_color</item>
++        <item name="android:colorPrimary">@color/actionbar_background_color</item>
++        <item name="colorPrimary">@color/actionbar_background_color</item>
+         <item name="android:colorAccent">@color/primary_color</item>
+         <item name="colorAccent">@color/primary_color</item>
+         <item name="android:alertDialogTheme">@style/ContactsAlertDialogThemeAppCompat</item>
+@@ -182,8 +203,9 @@
+ 
+     <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+         <item name="spinBars">false</item>
+-        <item name="color">@android:color/white</item>
+-        <item name="android:color">@android:color/white</item>
++        <!-- N9 look: dark on the light toolbar. -->
++        <item name="color">@color/actionbar_icon_color</item>
++        <item name="android:color">@color/actionbar_icon_color</item>
+     </style>
+ 
+     <!-- Use the non-light style so that the up button & icons aren't black. If we use the
+@@ -192,6 +214,7 @@
+         <item name="android:background">@color/actionbar_background_color</item>
+         <item name="android:titleTextStyle">@style/ContactsActionBarTitleText</item>
+         <item name="android:backgroundStacked">@color/actionbar_background_color</item>
++        <item name="android:elevation">0dp</item>
+         <!-- Empty icon -->
+         <item name="android:icon">@android:color/transparent</item>
+     </style>
+@@ -205,6 +228,7 @@
+         <item name="titleTextStyle">@style/ContactsActionBarTitleTextAppCompat</item>
+         <item name="android:backgroundStacked">@color/actionbar_background_color</item>
+         <item name="backgroundStacked">@color/actionbar_background_color</item>
++        <item name="elevation">0dp</item>
+         <!-- Empty icon -->
+         <item name="android:icon">@android:color/transparent</item>
+         <item name="icon">@android:color/transparent</item>
+@@ -219,11 +243,26 @@
+     <!-- When this style was added, android:toolbarStyle was private. Therefore, this style
+          must be directly applied to every toolbar -->
+     <style name="ContactsToolbarStyle" parent="@style/Widget.AppCompat.Toolbar">
++        <!-- N9 look: dark navigation/overflow icons on the light toolbar. -->
++        <item name="android:theme">@style/ThemeOverlay.AppCompat.Light</item>
++        <item name="theme">@style/ThemeOverlay.AppCompat.Light</item>
+         <!-- Styles that require AppCompat compatibility, remember to update both sets -->
+         <item name="android:titleTextAppearance">@style/ContactsActionBarTitleTextAppCompat</item>
+         <item name="titleTextAppearance">@style/ContactsActionBarTitleTextAppCompat</item>
+     </style>
+ 
++    <!-- N9 look: the main list's header is Contacts blue with white title and icons. -->
++    <style name="N9MainToolbarStyle" parent="@style/Widget.AppCompat.Toolbar">
++        <item name="android:theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
++        <item name="theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
++        <item name="android:titleTextAppearance">@style/N9MainToolbarTitle</item>
++        <item name="titleTextAppearance">@style/N9MainToolbarTitle</item>
++    </style>
++
++    <style name="N9MainToolbarTitle" parent="@style/ContactsActionBarTitleTextAppCompat">
++        <item name="android:textColor">#FFFFFF</item>
++    </style>
++
+     <style name="LightToolbarNavigationButtonStyle" parent="@style/Widget.AppCompat.Toolbar.Button.Navigation">
+         <item name="android:tint">?android:textColorSecondary</item>
+     </style>
+@@ -242,12 +281,20 @@
+     <!-- Text in the action bar at the top of the screen -->
+     <style name="ContactsActionBarTitleText"
+         parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
+-        <item name="android:textSize">20dp</item>
++        <!-- N9 look: page titles are light, never bold. -->
++        <item name="android:textSize">30sp</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">normal</item>
++        <item name="android:textFontWeight">300</item>
+         <item name="android:textColor">@color/actionbar_text_color</item>
+     </style>
+ 
+     <style name="ContactsActionBarTitleTextAppCompat" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+-        <item name="android:textSize">20dp</item>
++        <!-- N9 look: page titles are light, never bold. -->
++        <item name="android:textSize">30sp</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">normal</item>
++        <item name="android:textFontWeight">300</item>
+         <item name="android:textColor">@color/actionbar_text_color</item>
+     </style>
+ 
+@@ -401,11 +448,17 @@
+         <item name="android:textAllCaps">true</item>
+     </style>
+ 
++    <!-- N9 look: grey fast-scroll letters (the preview background attrs are private) -->
++    <style name="N9FastScrollStyle" parent="@android:style/Widget.Material.FastScroll">
++        <item name="android:textColor">@color/n9_text_secondary</item>
++    </style>
++
+     <style name="SectionHeaderStyle" parent="@android:style/TextAppearance.Large">
+-        <item name="android:textSize">16sp</item>
++        <item name="android:textSize">13sp</item>
+         <item name="android:textAllCaps">true</item>
+-        <item name="android:textColor">@color/section_header_text_color</item>
++        <item name="android:textColor">@color/n9_text_secondary</item>
+         <item name="android:textStyle">bold</item>
++        <item name="android:fontFamily">etesian-text</item>
+     </style>
+ 
+     <style name="DirectoryHeaderStyle" parent="@android:style/TextAppearance.Small">
+diff --git a/src/com/android/contacts/AppCompatContactsActivity.java b/src/com/android/contacts/AppCompatContactsActivity.java
+index 27fbec957..151ed1acc 100644
+--- a/src/com/android/contacts/AppCompatContactsActivity.java
++++ b/src/com/android/contacts/AppCompatContactsActivity.java
+@@ -20,6 +20,7 @@ import android.app.Fragment;
+ import android.app.FragmentManager;
+ import android.app.FragmentTransaction;
+ import android.content.ContentResolver;
++import android.content.Context;
+ import android.content.Intent;
+ import android.content.SharedPreferences;
+ import android.os.Bundle;
+@@ -38,6 +39,34 @@ public abstract class AppCompatContactsActivity extends AppCompatTransactionSafe
+ 
+     private ContentResolver mContentResolver;
+ 
++    // N9 look: the Etesian background this activity was created with.
++    private com.bompotis.etesian.theme.EtesianBackground.Style mN9Style;
++
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        // N9 look: night resources hold the palette for the dark Etesian backgrounds; force the
++        // mode both ways so the system dark theme never changes the light N9 look.
++        mN9Style = com.android.contacts.util.N9Theme.style(newBase);
++        getDelegate().setLocalNightMode(mN9Style.dark
++                ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
++                : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
++        super.attachBaseContext(newBase);
++    }
++
++    /** N9 look: the Etesian background (light N9 by default). */
++    protected com.bompotis.etesian.theme.EtesianBackground.Style getN9Style() {
++        return mN9Style;
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mN9Style != null && mN9Style != com.android.contacts.util.N9Theme.style(this)) {
++            recreate();
++        }
++    }
++
+     @Override
+     public ContentResolver getContentResolver() {
+         if (mContentResolver == null) {
+diff --git a/src/com/android/contacts/ContactPhotoManager.java b/src/com/android/contacts/ContactPhotoManager.java
+index 1468ed791..ea42f83a9 100644
+--- a/src/com/android/contacts/ContactPhotoManager.java
++++ b/src/com/android/contacts/ContactPhotoManager.java
+@@ -996,11 +996,8 @@ class ContactPhotoManagerImpl extends ContactPhotoManager implements Callback {
+      */
+     private Drawable getDrawableForBitmap(Resources resources, Bitmap bitmap, Request request) {
+         if (request.mIsCircular) {
+-            final RoundedBitmapDrawable drawable =
+-                    RoundedBitmapDrawableFactory.create(resources, bitmap);
+-            drawable.setAntiAlias(true);
+-            drawable.setCornerRadius(bitmap.getHeight() / 2);
+-            return drawable;
++            // N9 look: Etesian squircle instead of a circle
++            return new com.android.contacts.util.N9Squircle.BitmapDrawable(bitmap);
+         } else {
+             return new BitmapDrawable(resources, bitmap);
+         }
+diff --git a/src/com/android/contacts/ContactsActivity.java b/src/com/android/contacts/ContactsActivity.java
+index 87c0d625c..9bbeb07e1 100644
+--- a/src/com/android/contacts/ContactsActivity.java
++++ b/src/com/android/contacts/ContactsActivity.java
+@@ -20,6 +20,7 @@ import android.app.Fragment;
+ import android.app.FragmentManager;
+ import android.app.FragmentTransaction;
+ import android.content.ContentResolver;
++import android.content.Context;
+ import android.content.Intent;
+ import android.content.SharedPreferences;
+ import android.os.Bundle;
+@@ -74,6 +75,22 @@ public abstract class ContactsActivity extends TransactionSafeActivity
+         return getApplicationContext().getSystemService(name);
+     }
+ 
++    // N9 look: the Etesian background this activity was created with.
++    private com.bompotis.etesian.theme.EtesianBackground.Style mN9Style;
++
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        // N9 look: night resources hold the palette for the dark Etesian backgrounds; force the
++        // mode both ways so the system dark theme never changes the light N9 look.
++        mN9Style = com.android.contacts.util.N9Theme.style(newBase);
++        super.attachBaseContext(com.android.contacts.util.N9Theme.wrap(newBase, mN9Style));
++    }
++
++    /** N9 look: the Etesian background (light N9 by default). */
++    protected com.bompotis.etesian.theme.EtesianBackground.Style getN9Style() {
++        return mN9Style;
++    }
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         ContactSaveService.registerListener(this);
+diff --git a/src/com/android/contacts/ShortcutIntentBuilder.java b/src/com/android/contacts/ShortcutIntentBuilder.java
+index 5ea6b7edd..eb2a6b801 100644
+--- a/src/com/android/contacts/ShortcutIntentBuilder.java
++++ b/src/com/android/contacts/ShortcutIntentBuilder.java
+@@ -382,10 +382,9 @@ public class ShortcutIntentBuilder {
+         }
+ 
+         // Draw the icon with a rounded border
+-        RoundedBitmapDrawable roundedDrawable =
+-                RoundedBitmapDrawableFactory.create(mResources, bitmap);
+-        roundedDrawable.setAntiAlias(true);
+-        roundedDrawable.setCornerRadius(mIconSize / 2);
++        // N9 look: Etesian squircle instead of a circle
++        com.android.contacts.util.N9Squircle.BitmapDrawable roundedDrawable =
++                new com.android.contacts.util.N9Squircle.BitmapDrawable(bitmap);
+         Bitmap roundedBitmap = Bitmap.createBitmap(mIconSize, mIconSize, Bitmap.Config.ARGB_8888);
+         canvas.setBitmap(roundedBitmap);
+         roundedDrawable.setBounds(dst);
+diff --git a/src/com/android/contacts/activities/ActionBarAdapter.java b/src/com/android/contacts/activities/ActionBarAdapter.java
+index e6f29a4ab..06469f2b1 100644
+--- a/src/com/android/contacts/activities/ActionBarAdapter.java
++++ b/src/com/android/contacts/activities/ActionBarAdapter.java
+@@ -148,8 +148,8 @@ public class ActionBarAdapter implements OnCloseListener {
+                 /* attachToRoot = */ false);
+         mSearchContainer.setVisibility(View.VISIBLE);
+         mToolbar.addView(mSearchContainer);
+-        mSearchContainer.setBackgroundColor(mActivity.getResources().getColor(
+-                R.color.searchbox_background_color));
++        // N9 look: search field as a white rounded box with a thin grey border
++        mSearchContainer.setBackgroundResource(R.drawable.n9_search_box);
+         mSearchView = (EditText) mSearchContainer.findViewById(R.id.search_view);
+         mSearchView.setHint(mActivity.getString(mSearchHintResId));
+         mSearchView.addTextChangedListener(new SearchTextWatcher());
+diff --git a/src/com/android/contacts/activities/PeopleActivity.java b/src/com/android/contacts/activities/PeopleActivity.java
+index 62dc48ef4..028e904c4 100644
+--- a/src/com/android/contacts/activities/PeopleActivity.java
++++ b/src/com/android/contacts/activities/PeopleActivity.java
+@@ -97,6 +97,8 @@ import com.android.contacts.util.SyncUtil;
+ import com.android.contacts.util.ViewUtil;
+ import com.android.contacts.widget.FloatingActionButtonController;
+ import com.android.contactsbind.FeatureHighlightHelper;
++
++import com.bompotis.etesian.toolbar.EtesianToolbar;
+ import com.android.contactsbind.HelpUtils;
+ import com.android.contactsbind.ObjectFactory;
+ 
+@@ -149,6 +151,8 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+     private FloatingActionButtonController mFloatingActionButtonController;
+     private View mFloatingActionButtonContainer;
+     private boolean wasLastFabAnimationScaleIn = false;
++    // N9 look: whether the Etesian system toolbar replaces the floating action button.
++    private boolean mUseN9Toolbar;
+ 
+     private ProviderStatusWatcher mProviderStatusWatcher;
+     private Integer mProviderStatus;
+@@ -365,6 +369,9 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+ 
+         mContactListFilterController.checkFilterValidity(false);
+ 
++        // N9 look: actions live on the Etesian system toolbar when there is one.
++        mUseN9Toolbar = EtesianToolbar.isAvailable(this);
++
+         super.setContentView(R.layout.contacts_drawer_activity);
+ 
+         // Set up the action bar.
+@@ -418,7 +425,13 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+         if (Log.isLoggable(Constants.PERFORMANCE_TAG, Log.DEBUG)) {
+             Log.d(Constants.PERFORMANCE_TAG, "PeopleActivity.onCreate finish");
+         }
+-        getWindow().setBackgroundDrawable(null);
++        // N9 look: the dark Etesian backgrounds (black, grey, wallpaper) fill the window; the
++        // light N9 page is drawn by the views.
++        if (getN9Style().dark) {
++            com.android.contacts.util.N9Theme.applyBackground(this, getN9Style());
++        } else {
++            getWindow().setBackgroundDrawable(null);
++        }
+     }
+ 
+     @SuppressWarnings("MissingSuperCall") // TODO: Fix me
+@@ -634,6 +647,7 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+ 
+         initializeFabVisibility();
+         initializeHomeVisibility();
++        updateN9Toolbar();
+ 
+         mSaveServiceListener = new SaveServiceListener();
+         LocalBroadcastManager.getInstance(this).registerReceiver(mSaveServiceListener,
+@@ -654,6 +668,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+         }
+         mDrawerLayout.invalidate();
+         getWindow().setStatusBarColor(Color.TRANSPARENT);
++        // N9 look: dark status bar icons over the light toolbar, light ones on dark backgrounds.
++        getWindow().getInsetsController().setSystemBarsAppearance(
++                getN9Style().dark
++                        ? 0 : android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
++                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+     }
+ 
+     @Override
+@@ -663,7 +682,42 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+         super.onDestroy();
+     }
+ 
++    /**
++     * N9 look: puts the list's actions (add contact, menu) on the Etesian system toolbar, or
++     * Back and the menu on second-level, search and selection screens.
++     */
++    private void updateN9Toolbar() {
++        if (!mUseN9Toolbar) {
++            return;
++        }
++        final boolean mainList = !shouldHideFab();
++        final java.util.List<EtesianToolbar.Item> items = new java.util.ArrayList<>();
++        if (mainList) {
++            items.add(EtesianToolbar.Item.action("add",
++                    R.drawable.quantum_ic_person_add_vd_theme_24,
++                    getString(R.string.action_menu_add_new_contact_button)));
++        }
++        items.add(EtesianToolbar.Item.action("menu",
++                R.drawable.quantum_ic_more_vert_vd_theme_24,
++                getString(R.string.abc_action_menu_overflow_description)));
++        EtesianToolbar.of(this).setBack(!mainList).setItems(items, id -> {
++            if ("add".equals(id)) {
++                AccountFilterUtil.startEditorIntent(PeopleActivity.this, getIntent(),
++                        mContactListFilterController.getFilter());
++            } else if ("menu".equals(id)) {
++                if (mToolbar != null) {
++                    mToolbar.showOverflowMenu();
++                }
++            }
++        });
++    }
++
+     private void initializeFabVisibility() {
++        if (mUseN9Toolbar) {
++            // The system toolbar's add button replaces the floating action button.
++            mFloatingActionButtonContainer.setVisibility(View.GONE);
++            return;
++        }
+         mFloatingActionButtonContainer.setVisibility(shouldHideFab() ? View.GONE : View.VISIBLE);
+         mFloatingActionButtonController.resetIn();
+         wasLastFabAnimationScaleIn = !shouldHideFab();
+@@ -691,6 +745,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+         if (mFloatingActionButtonContainer == null) {
+             return;
+         }
++        if (mUseN9Toolbar) {
++            mFloatingActionButtonContainer.setVisibility(View.GONE);
++            updateN9Toolbar();
++            return;
++        }
+         if (showFab) {
+             if (!wasLastFabAnimationScaleIn) {
+                 mFloatingActionButtonContainer.setVisibility(View.VISIBLE);
+@@ -1040,9 +1099,10 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+ 
+     // Reset toolbar and status bar color to Contacts theme color.
+     private void resetToolBarStatusBarColor() {
++        // N9 look: the blue main page header, light status bar.
+         findViewById(R.id.toolbar_frame).setBackgroundColor(
+-                ContextCompat.getColor(this, R.color.primary_color));
+-        updateStatusBarBackground(ContextCompat.getColor(this, R.color.primary_color_dark));
++                ContextCompat.getColor(this, R.color.n9_contacts_header));
++        updateStatusBarBackground(ContextCompat.getColor(this, R.color.actionbar_background_color));
+     }
+ 
+     protected DefaultContactBrowseListFragment getListFragment() {
+diff --git a/src/com/android/contacts/editor/AggregationSuggestionView.java b/src/com/android/contacts/editor/AggregationSuggestionView.java
+index d391c400a..ea969fba5 100644
+--- a/src/com/android/contacts/editor/AggregationSuggestionView.java
++++ b/src/com/android/contacts/editor/AggregationSuggestionView.java
+@@ -62,13 +62,13 @@ public class AggregationSuggestionView extends LinearLayout {
+         mSuggestion = suggestion;
+         final ContactPhotoManager.DefaultImageRequest
+                 request = new ContactPhotoManager.DefaultImageRequest(
+-                suggestion.name, String.valueOf(suggestion.rawContactId), /* isCircular = */ false);
++                suggestion.name, String.valueOf(suggestion.rawContactId), /* isCircular = */ true); // N9: squircle
+         final ImageView photoView = (ImageView) findViewById(
+                 R.id.aggregation_suggestion_photo);
+         ContactPhotoManager.getInstance(getContext()).loadThumbnail(photoView,
+                 suggestion.photoId,
+                 /* darkTheme = */ false,
+-                /* isCircular = */ false,
++                /* isCircular = */ true, // N9 look: squircle thumbnail
+                 request);
+ 
+         final TextView name = (TextView) findViewById(R.id.aggregation_suggestion_name);
+diff --git a/src/com/android/contacts/lettertiles/LetterTileDrawable.java b/src/com/android/contacts/lettertiles/LetterTileDrawable.java
+index fd299bf6e..deaf0c72d 100644
+--- a/src/com/android/contacts/lettertiles/LetterTileDrawable.java
++++ b/src/com/android/contacts/lettertiles/LetterTileDrawable.java
+@@ -74,6 +74,8 @@ public class LetterTileDrawable extends Drawable {
+ 
+     private int mColor;
+     private Character mLetter = null;
++    /** N9 look: up to two initials ("KD") drawn instead of [mLetter]. */
++    private String mInitials = null;
+ 
+     public LetterTileDrawable(final Resources res) {
+         if (sColors == null) {
+@@ -136,18 +138,32 @@ public class LetterTileDrawable extends Drawable {
+     }
+ 
+     private void drawLetterTile(final Canvas canvas) {
+-        // Draw background color.
+-        sPaint.setColor(mColor);
+-
+-        sPaint.setAlpha(mPaint.getAlpha());
++        // N9 look: a dark squircle with white initials, the same for every contact.
+         final Rect bounds = getBounds();
+         final int minDimension = Math.min(bounds.width(), bounds.height());
++        sPaint.setColor(0xFF000000);
++        sPaint.setShader(new android.graphics.LinearGradient(0, bounds.top, 0, bounds.bottom,
++                0xFF3C3C3C, 0xFF0E0E0E, android.graphics.Shader.TileMode.CLAMP));
++        sPaint.setAlpha(mPaint.getAlpha());
+ 
+         if (mIsCircle) {
+-            canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2, sPaint);
++            // N9 look: Etesian squircle instead of a circle
++            com.android.contacts.util.N9Squircle.draw(canvas, bounds, sPaint);
+         } else {
+             canvas.drawRect(bounds, sPaint);
+         }
++        sPaint.setShader(null);
++
++        if (mLetter != null && mInitials != null) {
++            sPaint.setTextSize(mScale * minDimension * (mInitials.length() > 1 ? 0.42f : 0.5f));
++            sPaint.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
++            sPaint.setColor(0xFFFFFFFF);
++            sPaint.setAlpha(mPaint.getAlpha());
++            sPaint.getTextBounds(mInitials, 0, mInitials.length(), sRect);
++            canvas.drawText(mInitials, bounds.centerX(),
++                    bounds.centerY() + mOffset * bounds.height() - sRect.exactCenterY(), sPaint);
++            return;
++        }
+ 
+         // Draw letter/digit only if the first character is an english letter or there's a override
+ 
+@@ -251,6 +267,7 @@ public class LetterTileDrawable extends Drawable {
+ 
+     public LetterTileDrawable setLetter(Character letter){
+         mLetter = letter;
++        mInitials = null;
+         return this;
+     }
+ 
+@@ -264,8 +281,16 @@ public class LetterTileDrawable extends Drawable {
+         if (displayName != null && !TextUtils.isEmpty(displayName)
+                 && Character.isLetter(displayName.charAt(0))) {
+             mLetter = Character.toUpperCase(displayName.charAt(0));
++            final StringBuilder b = new StringBuilder();
++            for (String w : displayName.trim().split("\\s+")) {
++                if (!w.isEmpty() && Character.isLetter(w.charAt(0)) && b.length() < 2) {
++                    b.append(Character.toUpperCase(w.charAt(0)));
++                }
++            }
++            mInitials = b.length() > 0 ? b.toString() : null;
+         } else {
+             mLetter = null;
++            mInitials = null;
+         }
+         mColor = pickColor(identifier);
+         return this;
+diff --git a/src/com/android/contacts/list/ContactListItemView.java b/src/com/android/contacts/list/ContactListItemView.java
+index aafe5b188..8225701dd 100644
+--- a/src/com/android/contacts/list/ContactListItemView.java
++++ b/src/com/android/contacts/list/ContactListItemView.java
+@@ -99,6 +99,12 @@ public class ContactListItemView extends ViewGroup
+     private int mAvatarOffsetTop;
+     private int mNameTextViewTextSize;
+     private int mHeaderWidth;
++    // N9 look: the section letter sits small and right-aligned on a thin rule above the first
++    // contact of its section, instead of in a column on the left.
++    private int mN9HeaderHeight;
++    private int mN9HeaderGap;
++    private final android.graphics.Paint mN9RulePaint = new android.graphics.Paint();
++    private final android.graphics.Paint mN9RuleHighlightPaint = new android.graphics.Paint();
+     private Drawable mActivatedBackgroundDrawable;
+     private int mVideoCallIconSize = 32;
+     private int mVideoCallIconMargin = 16;
+@@ -348,8 +354,13 @@ public class ContactListItemView extends ViewGroup
+             a.recycle();
+         }
+ 
+-        mHeaderWidth =
+-                getResources().getDimensionPixelSize(R.dimen.contact_list_section_header_width);
++        // N9 look: no letter column; the header is a band above the row (see isN9HeaderShown).
++        mHeaderWidth = 0;
++        mN9HeaderHeight =
++                getResources().getDimensionPixelSize(R.dimen.n9_contact_list_section_band_height);
++        mN9HeaderGap = getResources().getDimensionPixelSize(R.dimen.n9_contact_list_section_gap);
++        mN9RulePaint.setColor(getContext().getColor(R.color.n9_section_rule));
++        mN9RuleHighlightPaint.setColor(getContext().getColor(R.color.n9_section_rule_highlight));
+ 
+         if (mActivatedBackgroundDrawable != null) {
+             mActivatedBackgroundDrawable.setCallback(this);
+@@ -597,10 +608,15 @@ public class ContactListItemView extends ViewGroup
+         // Measure the header if it is visible.
+         if (mHeaderView != null && mHeaderView.getVisibility() == VISIBLE) {
+             mHeaderView.measure(
+-                    MeasureSpec.makeMeasureSpec(mHeaderWidth, MeasureSpec.EXACTLY),
++                    MeasureSpec.makeMeasureSpec(specWidth, MeasureSpec.AT_MOST),
+                     MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+         }
+ 
++        // N9 look: room for the section rule above the row.
++        if (isN9HeaderShown()) {
++            height += mN9HeaderHeight;
++        }
++
+         setMeasuredDimension(specWidth, height);
+     }
+ 
+@@ -617,23 +633,17 @@ public class ContactListItemView extends ViewGroup
+ 
+         final boolean isLayoutRtl = ViewUtil.isViewLayoutRtl(this);
+ 
+-        // Put the section header on the left side of the contact view.
+-        if (mIsSectionHeaderEnabled) {
+-            if (mHeaderView != null) {
+-                int headerHeight = mHeaderView.getMeasuredHeight();
+-                int headerTopBound = (bottomBound + topBound - headerHeight) / 2 + mTextOffsetTop;
+-
+-                mHeaderView.layout(
+-                        isLayoutRtl ? rightBound - mHeaderWidth : leftBound,
+-                        headerTopBound,
+-                        isLayoutRtl ? rightBound : leftBound + mHeaderWidth,
+-                        headerTopBound + headerHeight);
+-            }
+-            if (isLayoutRtl) {
+-                rightBound -= mHeaderWidth;
+-            } else {
+-                leftBound += mHeaderWidth;
+-            }
++        // N9 look: the section letter at the end of a rule in a band above the contact.
++        if (isN9HeaderShown()) {
++            final int headerWidth = mHeaderView.getMeasuredWidth();
++            final int headerHeight = mHeaderView.getMeasuredHeight();
++            final int headerTopBound = (mN9HeaderHeight - headerHeight) / 2;
++            mHeaderView.layout(
++                    isLayoutRtl ? leftBound : rightBound - headerWidth,
++                    headerTopBound,
++                    isLayoutRtl ? leftBound + headerWidth : rightBound,
++                    headerTopBound + headerHeight);
++            topBound += mN9HeaderHeight;
+         }
+ 
+         mBoundsWithoutHeader.set(left + leftBound, topBound, left + rightBound, bottomBound);
+@@ -972,6 +982,24 @@ public class ContactListItemView extends ViewGroup
+         }
+ 
+         super.dispatchDraw(canvas);
++
++        // N9 look: an engraved rule leading to the section letter.
++        if (isN9HeaderShown()) {
++            final boolean isLayoutRtl = ViewUtil.isViewLayoutRtl(this);
++            final float y = mN9HeaderHeight / 2f;
++            final float start = isLayoutRtl
++                    ? mHeaderView.getRight() + mN9HeaderGap : getPaddingLeft();
++            final float end = isLayoutRtl
++                    ? getWidth() - getPaddingRight() : mHeaderView.getLeft() - mN9HeaderGap;
++            final float line = Math.max(1f, getResources().getDisplayMetrics().density);
++            canvas.drawRect(start, y - line, end, y, mN9RulePaint);
++            canvas.drawRect(start, y, end, y + line, mN9RuleHighlightPaint);
++        }
++    }
++
++    private boolean isN9HeaderShown() {
++        return mIsSectionHeaderEnabled && mHeaderView != null
++                && mHeaderView.getVisibility() == VISIBLE;
+     }
+ 
+     /**
+@@ -1008,7 +1036,7 @@ public class ContactListItemView extends ViewGroup
+         mHeaderView = new TextView(getContext());
+         final TextView headerTextView = (TextView) mHeaderView;
+         headerTextView.setTextAppearance(getContext(), R.style.SectionHeaderStyle);
+-        headerTextView.setGravity(Gravity.CENTER_HORIZONTAL);
++        headerTextView.setGravity(Gravity.END);
+         updateHeaderText(headerTextView, title);
+         addView(headerTextView);
+     }
+diff --git a/src/com/android/contacts/list/IndexerListAdapter.java b/src/com/android/contacts/list/IndexerListAdapter.java
+index 969e6a2df..b932b1c4c 100644
+--- a/src/com/android/contacts/list/IndexerListAdapter.java
++++ b/src/com/android/contacts/list/IndexerListAdapter.java
+@@ -114,6 +114,9 @@ public abstract class IndexerListAdapter extends PinnedHeaderListAdapter impleme
+         return mIndexer.getPositionForSection(sectionIndex);
+     }
+ 
++    // N9 look: no pinned section header over the list.
++    private static final boolean N9_PINNED_SECTION_HEADER = false;
++
+     /**
+      * @param position relative position in the indexed partition
+      */
+@@ -127,7 +130,8 @@ public abstract class IndexerListAdapter extends PinnedHeaderListAdapter impleme
+ 
+     @Override
+     public int getPinnedHeaderCount() {
+-        if (isSectionHeaderDisplayEnabled()) {
++        // N9 look: the section letters scroll with their rules; nothing is pinned.
++        if (isSectionHeaderDisplayEnabled() && N9_PINNED_SECTION_HEADER) {
+             return super.getPinnedHeaderCount() + 1;
+         } else {
+             return super.getPinnedHeaderCount();
+@@ -136,7 +140,8 @@ public abstract class IndexerListAdapter extends PinnedHeaderListAdapter impleme
+ 
+     @Override
+     public View getPinnedHeaderView(int viewIndex, View convertView, ViewGroup parent) {
+-        if (isSectionHeaderDisplayEnabled() && viewIndex == getPinnedHeaderCount() - 1) {
++        if (isSectionHeaderDisplayEnabled() && N9_PINNED_SECTION_HEADER
++                && viewIndex == getPinnedHeaderCount() - 1) {
+             if (mHeader == null) {
+                 mHeader = createPinnedSectionHeaderView(mContext, parent);
+             }
+@@ -150,7 +155,7 @@ public abstract class IndexerListAdapter extends PinnedHeaderListAdapter impleme
+     public void configurePinnedHeaders(PinnedHeaderListView listView) {
+         super.configurePinnedHeaders(listView);
+ 
+-        if (!isSectionHeaderDisplayEnabled()) {
++        if (!isSectionHeaderDisplayEnabled() || !N9_PINNED_SECTION_HEADER) {
+             return;
+         }
+ 
+diff --git a/src/com/android/contacts/list/PinnedHeaderListView.java b/src/com/android/contacts/list/PinnedHeaderListView.java
+index e17866422..cbc012cab 100644
+--- a/src/com/android/contacts/list/PinnedHeaderListView.java
++++ b/src/com/android/contacts/list/PinnedHeaderListView.java
+@@ -27,11 +27,15 @@ import android.widget.AbsListView;
+ import android.widget.AbsListView.OnScrollListener;
+ import android.widget.AdapterView;
+ import android.widget.AdapterView.OnItemSelectedListener;
++import android.widget.HeaderViewListAdapter;
+ import android.widget.ListAdapter;
++import android.widget.SectionIndexer;
+ import android.widget.TextView;
+ 
+ import com.android.contacts.util.ViewUtil;
+ 
++import com.bompotis.etesian.fastscroll.EtesianListFastScroller;
++
+ /**
+  * A ListView that maintains a header pinned at the top of the list. The
+  * pinned header can be pushed up and dissolved as needed.
+@@ -112,6 +116,11 @@ public class PinnedHeaderListView extends AutoScrollListView
+     private int mHeaderPaddingStart;
+     private int mHeaderWidth;
+ 
++    // N9 look: the Etesian letter-jump strip instead of the platform fast scroller. Not
++    // initialised in a field initialiser: AbsListView's constructor already calls
++    // setFastScrollEnabled.
++    private EtesianListFastScroller mN9FastScroller;
++
+     public PinnedHeaderListView(Context context) {
+         this(context, null, android.R.attr.listViewStyle);
+     }
+@@ -126,6 +135,53 @@ public class PinnedHeaderListView extends AutoScrollListView
+         super.setOnItemSelectedListener(this);
+     }
+ 
++    @Override
++    public void setFastScrollEnabled(boolean enabled) {
++        if (mN9FastScroller == null) {
++            mN9FastScroller = new EtesianListFastScroller(this, this::getN9Section);
++        }
++        mN9FastScroller.setEnabled(enabled);
++        super.setFastScrollEnabled(false);
++    }
++
++    @Override
++    public void setFastScrollAlwaysVisible(boolean alwaysShow) {
++        super.setFastScrollAlwaysVisible(false);
++    }
++
++    /** The section letter of a list position, from the adapter's SectionIndexer. */
++    private String getN9Section(int position) {
++        ListAdapter adapter = getAdapter();
++        int offset = 0;
++        if (adapter instanceof HeaderViewListAdapter) {
++            offset = ((HeaderViewListAdapter) adapter).getHeadersCount();
++            adapter = ((HeaderViewListAdapter) adapter).getWrappedAdapter();
++        }
++        if (!(adapter instanceof SectionIndexer)) {
++            return null;
++        }
++        final int adapterPosition = position - offset;
++        if (adapterPosition < 0 || adapterPosition >= adapter.getCount()) {
++            return null;
++        }
++        final SectionIndexer indexer = (SectionIndexer) adapter;
++        final Object[] sections = indexer.getSections();
++        final int section = indexer.getSectionForPosition(adapterPosition);
++        if (sections == null || section < 0 || section >= sections.length
++                || sections[section] == null) {
++            return null;
++        }
++        return sections[section].toString().trim();
++    }
++
++    @Override
++    public boolean dispatchTouchEvent(MotionEvent ev) {
++        if (mN9FastScroller != null && mN9FastScroller.onTouchEvent(ev)) {
++            return true;
++        }
++        return super.dispatchTouchEvent(ev);
++    }
++
+     @Override
+     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+         super.onLayout(changed, l, t, r, b);
+@@ -182,6 +238,9 @@ public class PinnedHeaderListView extends AutoScrollListView
+             mAdapter.configurePinnedHeaders(this);
+             invalidateIfAnimating();
+         }
++        if (mN9FastScroller != null && mScrollState != SCROLL_STATE_IDLE) {
++            mN9FastScroller.onListScrolled();
++        }
+         if (mOnScrollListener != null) {
+             mOnScrollListener.onScroll(this, firstVisibleItem, visibleItemCount, totalItemCount);
+         }
+@@ -196,6 +255,9 @@ public class PinnedHeaderListView extends AutoScrollListView
+     @Override
+     public void onScrollStateChanged(AbsListView view, int scrollState) {
+         mScrollState = scrollState;
++        if (mN9FastScroller != null && scrollState != SCROLL_STATE_IDLE) {
++            mN9FastScroller.onListScrolled();
++        }
+         if (mOnScrollListener != null) {
+             mOnScrollListener.onScrollStateChanged(this, scrollState);
+         }
+@@ -548,6 +610,10 @@ public class PinnedHeaderListView extends AutoScrollListView
+             }
+         }
+ 
++        if (mN9FastScroller != null) {
++            mN9FastScroller.draw(canvas);
++        }
++
+         invalidateIfAnimating();
+     }
+ 
+diff --git a/src/com/android/contacts/quickcontact/ExpandingEntryCardView.java b/src/com/android/contacts/quickcontact/ExpandingEntryCardView.java
+index d462a0ee0..7ad78f860 100644
+--- a/src/com/android/contacts/quickcontact/ExpandingEntryCardView.java
++++ b/src/com/android/contacts/quickcontact/ExpandingEntryCardView.java
+@@ -600,7 +600,14 @@ public class ExpandingEntryCardView extends CardView {
+             if (mEntries != null) {
+                 for (List<Entry> entryList : mEntries) {
+                     for (Entry entry : entryList) {
+-                        if (entry.shouldApplyColor()) {
++                        if (isN9CallEntry(entry)) {
++                            // N9 look: white glyph on the green call squircle
++                            Drawable icon = entry.getIcon();
++                            if (icon != null) {
++                                icon.mutate();
++                                icon.setColorFilter(N9_WHITE_FILTER);
++                            }
++                        } else if (entry.shouldApplyColor()) {
+                             Drawable icon = entry.getIcon();
+                             if (icon != null) {
+                                 icon.mutate();
+@@ -609,8 +616,9 @@ public class ExpandingEntryCardView extends CardView {
+                         }
+                         Drawable alternateIcon = entry.getAlternateIcon();
+                         if (alternateIcon != null) {
++                            // N9 look: white glyph on the blue message squircle
+                             alternateIcon.mutate();
+-                            alternateIcon.setColorFilter(mThemeColorFilter);
++                            alternateIcon.setColorFilter(N9_WHITE_FILTER);
+                         }
+                         Drawable thirdIcon = entry.getThirdIcon();
+                         if (thirdIcon != null && entry.shouldApplyThirdIconColor()) {
+@@ -627,6 +635,16 @@ public class ExpandingEntryCardView extends CardView {
+         }
+     }
+ 
++    /** N9 look: white tint for glyphs drawn on the coloured action squircles. */
++    private static final ColorFilter N9_WHITE_FILTER =
++            new android.graphics.PorterDuffColorFilter(android.graphics.Color.WHITE,
++                    android.graphics.PorterDuff.Mode.SRC_ATOP);
++
++    private static boolean isN9CallEntry(Entry entry) {
++        final Intent intent = entry.getIntent();
++        return intent != null && Intent.ACTION_CALL.equals(intent.getAction());
++    }
++
+     private View createEntryView(LayoutInflater layoutInflater, final Entry entry,
+             int iconVisibility) {
+         final EntryView view = (EntryView) layoutInflater.inflate(
+@@ -642,6 +660,23 @@ public class ExpandingEntryCardView extends CardView {
+         if (entry.getIcon() != null) {
+             icon.setImageDrawable(entry.getIcon());
+         }
++        if (isN9CallEntry(entry) && entry.getIcon() != null) {
++            // N9 look: call action as a 40dp green squircle, text column kept aligned.
++            final float density = getResources().getDisplayMetrics().density;
++            final int size = (int) (40 * density);
++            final int pad = (int) (8 * density);
++            final int grow = (int) (16 * density);
++            final RelativeLayout.LayoutParams lp =
++                    (RelativeLayout.LayoutParams) icon.getLayoutParams();
++            lp.width = size;
++            lp.height = size;
++            lp.topMargin = Math.max(0, lp.topMargin - grow / 2);
++            lp.setMarginEnd(Math.max(0, lp.getMarginEnd() - grow));
++            icon.setLayoutParams(lp);
++            icon.setPadding(pad, pad, pad, pad);
++            icon.setBackgroundResource(R.drawable.n9_action_call);
++            icon.setColorFilter(android.graphics.Color.WHITE);
++        }
+         final TextView header = (TextView) view.findViewById(R.id.header);
+         if (!TextUtils.isEmpty(entry.getHeader())) {
+             header.setText(entry.getHeader());
+@@ -720,6 +755,8 @@ public class ExpandingEntryCardView extends CardView {
+ 
+         if (entry.getAlternateIcon() != null && entry.getAlternateIntent() != null) {
+             alternateIcon.setImageDrawable(entry.getAlternateIcon());
++            // N9 look: message action as an N9-blue squircle
++            alternateIcon.setBackgroundResource(R.drawable.n9_action_message);
+             alternateIcon.setOnClickListener(mOnClickListener);
+             alternateIcon.setTag(new EntryTag(entry.getId(), entry.getAlternateIntent()));
+             alternateIcon.setVisibility(View.VISIBLE);
+diff --git a/src/com/android/contacts/quickcontact/QuickContactActivity.java b/src/com/android/contacts/quickcontact/QuickContactActivity.java
+index eeaf1154b..c373d26b5 100644
+--- a/src/com/android/contacts/quickcontact/QuickContactActivity.java
++++ b/src/com/android/contacts/quickcontact/QuickContactActivity.java
+@@ -185,6 +185,8 @@ import java.util.List;
+ import java.util.Locale;
+ import java.util.Map;
+ 
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
+ /**
+  * Mostly translucent {@link Activity} that shows QuickContact dialog. It loads data asynchronously,
+  * and then shows a popup with details centered around {@link Intent#getSourceBounds()}.
+@@ -768,6 +770,7 @@ public class QuickContactActivity extends ContactsActivity {
+         ViewUtil.addRectangularOutlineProvider(findViewById(R.id.toolbar_parent), getResources());
+ 
+         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
++        mN9Toolbar = toolbar;
+         MoreContactUtils.setupEdgeToEdge(
+                 this, new EdgeToEdgeInsetHandler(findViewById(R.id.toolbar_parent)));
+         setActionBar(toolbar);
+@@ -1011,6 +1014,88 @@ public class QuickContactActivity extends ContactsActivity {
+     /** Handle the result from the ContactLoader */
+     private void bindContactData(final Contact data) {
+         Trace.beginSection("bindContactData");
++        try {
++            bindContactDataInternal(data);
++        } finally {
++            updateN9Toolbar();
++        }
++    }
++
++    /**
++     * N9 look: the contact card's actions on the Etesian system toolbar: Back, call and
++     * message the primary number, edit, and the menu.
++     */
++    private void updateN9Toolbar() {
++        if (!EtesianToolbar.isAvailable(this)) {
++            return;
++        }
++        final String number = getN9PrimaryNumber();
++        final List<EtesianToolbar.Item> items = new ArrayList<>();
++        items.add(EtesianToolbar.Item.action("call", R.drawable.quantum_ic_phone_vd_theme_24,
++                getString(R.string.call_other)).setEnabled(number != null));
++        items.add(EtesianToolbar.Item.action("message",
++                R.drawable.quantum_ic_message_vd_theme_24,
++                getString(R.string.sms_other)).setEnabled(number != null));
++        items.add(EtesianToolbar.Item.action("edit", R.drawable.quantum_ic_create_vd_theme_24,
++                getString(R.string.menu_editContact)).setEnabled(mContactData != null));
++        items.add(EtesianToolbar.Item.action("menu", R.drawable.quantum_ic_more_vert_vd_theme_24,
++                getString(R.string.abc_action_menu_overflow_description)));
++        EtesianToolbar.of(this).setBack(true).setItems(items, id -> {
++            final String primary = getN9PrimaryNumber();
++            if ("call".equals(id)) {
++                if (primary != null) {
++                    ImplicitIntentsUtil.startActivityOutsideApp(this,
++                            CallUtil.getCallIntent(primary));
++                }
++            } else if ("message".equals(id)) {
++                if (primary != null) {
++                    ImplicitIntentsUtil.startActivityOutsideApp(this, new Intent(
++                            Intent.ACTION_SENDTO,
++                            Uri.fromParts(ContactsUtils.SCHEME_SMSTO, primary, null)));
++                }
++            } else if ("edit".equals(id)) {
++                final MenuItem edit = mN9Toolbar != null
++                        ? mN9Toolbar.getMenu().findItem(R.id.menu_edit) : null;
++                if (edit != null) {
++                    onOptionsItemSelected(edit);
++                } else if (mContactData != null && isContactEditable()) {
++                    editContact();
++                }
++            } else if ("menu".equals(id)) {
++                if (mN9Toolbar != null) {
++                    mN9Toolbar.showOverflowMenu();
++                }
++            }
++        });
++    }
++
++    /** The contact's default phone number, else its first one, or null. */
++    private String getN9PrimaryNumber() {
++        if (mContactData == null || mContactData.getRawContacts() == null) {
++            return null;
++        }
++        String first = null;
++        for (RawContact raw : mContactData.getRawContacts()) {
++            for (DataItem item : raw.getDataItems()) {
++                if (!(item instanceof PhoneDataItem)) {
++                    continue;
++                }
++                final String number = ((PhoneDataItem) item).getNumber();
++                if (TextUtils.isEmpty(number)) {
++                    continue;
++                }
++                if (item.isSuperPrimary()) {
++                    return number;
++                }
++                if (first == null) {
++                    first = number;
++                }
++            }
++        }
++        return first;
++    }
++
++    private void bindContactDataInternal(final Contact data) {
+ 
+         final int actionType = mContactData == null ? ActionType.START : ActionType.UNKNOWN_ACTION;
+         mContactData = data;
+@@ -1137,6 +1222,7 @@ public class QuickContactActivity extends ContactsActivity {
+         }
+ 
+         maybeShowProgressDialog();
++        updateN9Toolbar();
+     }
+ 
+     @Override
+@@ -2310,9 +2396,11 @@ public class QuickContactActivity extends ContactsActivity {
+ 
+     private void setThemeColor(MaterialPalette palette) {
+         // If the color is invalid, use the predefined default
+-        mColorFilterColor = palette.mPrimaryColor;
++        // N9 look: the contact card header is always the dark Etesian card colour
++        // (#2E2E2E -> #141414), never a colour extracted from the photo.
++        mColorFilterColor = getColor(R.color.n9_card_header_top);
+         mScroller.setHeaderTintColor(mColorFilterColor);
+-        mStatusBarColor = palette.mSecondaryColor;
++        mStatusBarColor = getColor(R.color.n9_card_header_bottom);
+         updateStatusBarColor();
+ 
+         mColorFilter = new PorterDuffColorFilter(mColorFilterColor, PorterDuff.Mode.SRC_ATOP);
+@@ -2491,6 +2579,9 @@ public class QuickContactActivity extends ContactsActivity {
+                 mContactData.getPhotoId());
+     }
+ 
++    // N9 look: the action bar, for the Etesian system toolbar's edit and menu buttons.
++    private Toolbar mN9Toolbar;
++
+     private void editContact() {
+         mHasIntentLaunched = true;
+         mContactLoader.cacheResult();
+diff --git a/src/com/android/contacts/util/BitmapUtil.java b/src/com/android/contacts/util/BitmapUtil.java
+index 0bc4aef1a..63b5b52d5 100644
+--- a/src/com/android/contacts/util/BitmapUtil.java
++++ b/src/com/android/contacts/util/BitmapUtil.java
+@@ -135,7 +135,8 @@ public class BitmapUtil {
+         canvas.drawARGB(0, 0, 0, 0);
+         paint.setAntiAlias(true);
+         final RectF dst = new RectF(0, 0, targetWidth, targetHeight);
+-        canvas.drawOval(dst, paint);
++        // N9 look: Etesian squircle instead of an oval
++        canvas.drawPath(N9Squircle.path(dst.left, dst.top, dst.right, dst.bottom), paint);
+ 
+         // Specifies that only pixels present in the destination (i.e. the drawn oval) should
+         // be overwritten with pixels from the input bitmap.
+diff --git a/src/com/android/contacts/util/MaterialColorMapUtils.java b/src/com/android/contacts/util/MaterialColorMapUtils.java
+index c1616cec7..f25a95694 100644
+--- a/src/com/android/contacts/util/MaterialColorMapUtils.java
++++ b/src/com/android/contacts/util/MaterialColorMapUtils.java
+@@ -185,21 +185,18 @@ public class MaterialColorMapUtils {
+      * Returns status bar color for group view and non-group views.
+      */
+     public static int getStatusBarColor(Activity activity) {
+-        final boolean isGroupView = activity instanceof PeopleActivity
+-                && ((PeopleActivity) activity).isGroupView();
+-        return isGroupView
+-                ? ContextCompat.getColor(activity, R.color.group_primary_color_dark)
+-                : ContextCompat.getColor(activity, R.color.primary_color_dark);
++        // N9 look: one light bar colour everywhere.
++        return ContextCompat.getColor(activity, R.color.actionbar_background_color);
+     }
+ 
+     /**
+      * Returns toolbar color for group view and non-group views.
+      */
+     public static int getToolBarColor(Activity activity) {
+-        final boolean isGroupView = activity instanceof PeopleActivity
+-                && ((PeopleActivity) activity).isGroupView();
+-        return isGroupView
+-                ? ContextCompat.getColor(activity, R.color.group_primary_color)
+-                : ContextCompat.getColor(activity, R.color.primary_color);
++        // N9 look: the main list's header is Contacts blue, every other bar light.
++        if (activity instanceof com.android.contacts.activities.PeopleActivity) {
++            return ContextCompat.getColor(activity, R.color.n9_contacts_header);
++        }
++        return ContextCompat.getColor(activity, R.color.actionbar_background_color);
+     }
+ }
+diff --git a/src/com/android/contacts/util/ViewUtil.java b/src/com/android/contacts/util/ViewUtil.java
+index ccb8a82ec..f7be650d1 100644
+--- a/src/com/android/contacts/util/ViewUtil.java
++++ b/src/com/android/contacts/util/ViewUtil.java
+@@ -63,7 +63,9 @@ public class ViewUtil {
+             OVAL_OUTLINE_PROVIDER = new ViewOutlineProvider() {
+                 @Override
+                 public void getOutline(View view, Outline outline) {
+-                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
++                    // N9 look: squircle outline (radius ~28% of the short side)
++                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
++                            Math.min(view.getWidth(), view.getHeight()) * 0.28f);
+                 }
+             };
+         } else {
+diff --git a/src/com/android/contacts/widget/QuickContactImageView.java b/src/com/android/contacts/widget/QuickContactImageView.java
+index 2943912c4..fb82f93a8 100644
+--- a/src/com/android/contacts/widget/QuickContactImageView.java
++++ b/src/com/android/contacts/widget/QuickContactImageView.java
+@@ -41,7 +41,8 @@ public class QuickContactImageView extends ImageView {
+     public void setTint(int color) {
+         if (mBitmapDrawable == null || mBitmapDrawable.getBitmap() == null
+                 || mBitmapDrawable.getBitmap().hasAlpha()) {
+-            setBackgroundColor(color);
++            // N9 look: dark contact-card gradient behind placeholder avatars
++            setBackgroundResource(R.drawable.n9_contact_card_header);
+         } else {
+             setBackground(null);
+         }
+diff --git a/res/drawable/n9_action_call.xml b/res/drawable/n9_action_call.xml
+new file mode 100644
+index 000000000..e0b0d4635
+--- /dev/null
++++ b/res/drawable/n9_action_call.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) call action: green squircle (radius ~28% of the 40dp side). -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33FFFFFF">
++    <item>
++        <shape android:shape="rectangle">
++            <corners android:radius="11dp" />
++            <gradient
++                android:angle="270"
++                android:startColor="#7BBF45"
++                android:endColor="#55A32A" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_action_message.xml b/res/drawable/n9_action_message.xml
+new file mode 100644
+index 000000000..560c95c0a
+--- /dev/null
++++ b/res/drawable/n9_action_message.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) message action: N9-blue squircle (radius ~28% of the 40dp side),
++     inset 4dp inside the 48dp touch target. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33FFFFFF">
++    <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="11dp" />
++            <solid android:color="@color/n9_blue" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_contact_card_header.xml b/res/drawable/n9_contact_card_header.xml
+new file mode 100644
+index 000000000..db6c0c204
+--- /dev/null
++++ b/res/drawable/n9_contact_card_header.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) contact card header: dark vertical gradient. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:startColor="@color/n9_card_header_top"
++        android:endColor="@color/n9_card_header_bottom" />
++</shape>
+diff --git a/res/drawable/n9_fastscroll_preview.xml b/res/drawable/n9_fastscroll_preview.xml
+new file mode 100644
+index 000000000..fa672c97f
+--- /dev/null
++++ b/res/drawable/n9_fastscroll_preview.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) fast-scroll letter preview: light squircle with a thin grey border. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <solid android:color="@color/n9_list_background" />
++    <corners android:radius="22dp" />
++    <stroke android:width="1dp" android:color="@color/n9_separator" />
++    <size android:width="80dp" android:height="80dp" />
++</shape>
+diff --git a/res/drawable/n9_search_box.xml b/res/drawable/n9_search_box.xml
+new file mode 100644
+index 000000000..7f63dadfd
+--- /dev/null
++++ b/res/drawable/n9_search_box.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) search field: white rounded box with a 1dp separator-grey border,
++     inset so it floats inside the light toolbar. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:insetTop="8dp"
++    android:insetBottom="8dp"
++    android:insetRight="8dp">
++    <shape android:shape="rectangle">
++        <solid android:color="@color/n9_search_box_fill" />
++        <corners android:radius="10dp" />
++        <stroke android:width="1dp" android:color="@color/n9_separator" />
++    </shape>
++</inset>
+diff --git a/res/values-night/bools.xml b/res/values-night/bools.xml
+new file mode 100644
+index 000000000..4c2050966
+--- /dev/null
++++ b/res/values-night/bools.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++ * SPDX-License-Identifier: Apache-2.0
++ * Copyright (C) 2026 The LineageOS Project
++-->
++<!-- N9 look: night resources are the palette for the dark Etesian backgrounds. -->
++<resources>
++    <bool name="n9_light_bars">false</bool>
++</resources>
+diff --git a/src/com/android/contacts/util/N9Squircle.java b/src/com/android/contacts/util/N9Squircle.java
+new file mode 100644
+index 000000000..16c606fca
+--- /dev/null
++++ b/src/com/android/contacts/util/N9Squircle.java
+@@ -0,0 +1,185 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.contacts.util;
++
++import android.graphics.Bitmap;
++import android.graphics.BitmapShader;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.Matrix;
++import android.graphics.Outline;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.Shader;
++import android.graphics.drawable.Drawable;
++import android.view.View;
++import android.view.ViewOutlineProvider;
++
++/**
++ * N9 look: every thumb-sized image (avatars, icons, thumbnails) is a Etesian squircle, never a
++ * circle or a rounded rectangle. Shape is the AOSP squircle on a 100x100 box.
++ */
++public final class N9Squircle {
++    // "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++    private static final Path UNIT = new Path();
++    static {
++        // Superellipse |x|^n + |y|^n = 1 with n = 2.8: the N9 icon shape, measured from the
++        // N9's own icons. (n = 4 or more reads as a rounded square.)
++        final double n = 2.8;
++        final int steps = 96;
++        for (int i = 0; i < steps; i++) {
++            final double t = 2 * Math.PI * i / steps;
++            final double c = Math.cos(t), s = Math.sin(t);
++            final float x = (float) (50 + 50 * Math.signum(c) * Math.pow(Math.abs(c), 2 / n));
++            final float y = (float) (50 + 50 * Math.signum(s) * Math.pow(Math.abs(s), 2 / n));
++            if (i == 0) UNIT.moveTo(x, y); else UNIT.lineTo(x, y);
++        }
++        UNIT.close();
++    }
++
++    private N9Squircle() {}
++
++    /** Writes the squircle filling the given box into {@code out}. */
++    public static Path path(float left, float top, float right, float bottom, Path out) {
++        final Matrix m = new Matrix();
++        m.setScale((right - left) / 100f, (bottom - top) / 100f);
++        m.postTranslate(left, top);
++        out.reset();
++        UNIT.transform(m, out);
++        return out;
++    }
++
++    /** The squircle filling the given box. */
++    public static Path path(float left, float top, float right, float bottom) {
++        return path(left, top, right, bottom, new Path());
++    }
++
++    /** The largest squircle centred in {@code bounds}. */
++    public static Path centered(Rect bounds) {
++        final float half = Math.min(bounds.width(), bounds.height()) / 2f;
++        return path(bounds.exactCenterX() - half, bounds.exactCenterY() - half,
++                bounds.exactCenterX() + half, bounds.exactCenterY() + half);
++    }
++
++    /** Draws a squircle centred in {@code bounds} with {@code paint}. */
++    public static void draw(Canvas canvas, Rect bounds, Paint paint) {
++        canvas.drawPath(centered(bounds), paint);
++    }
++
++    /** Outline provider that clips a view to a squircle filling its bounds. */
++    public static final ViewOutlineProvider OUTLINE = new ViewOutlineProvider() {
++        @Override
++        public void getOutline(View view, Outline outline) {
++            final int w = view.getWidth(), h = view.getHeight();
++            if (w <= 0 || h <= 0) {
++                return;
++            }
++            outline.setPath(path(0, 0, w, h));
++        }
++    };
++
++    /** Clips {@code view} (and its content) to a squircle. */
++    public static void clip(View view) {
++        view.setOutlineProvider(OUTLINE);
++        view.setClipToOutline(true);
++    }
++
++    /** Returns {@code src} center-cropped to a {@code w}x{@code h} squircle bitmap. */
++    public static Bitmap bitmap(Bitmap src, int w, int h) {
++        if (src == null) {
++            return null;
++        }
++        final Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
++        final Drawable d = new BitmapDrawable(src);
++        d.setBounds(0, 0, w, h);
++        d.draw(new Canvas(out));
++        return out;
++    }
++
++    /** A bitmap drawable, center-cropped and clipped to a squircle (replaces circular ones). */
++    public static final class BitmapDrawable extends Drawable {
++        private final Bitmap mBitmap;
++        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
++        private final Matrix mMatrix = new Matrix();
++        private Path mPath = new Path();
++
++        public BitmapDrawable(Bitmap bitmap) {
++            mBitmap = bitmap;
++            mPaint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP,
++                    Shader.TileMode.CLAMP));
++        }
++
++        public Bitmap getBitmap() {
++            return mBitmap;
++        }
++
++        @Override
++        protected void onBoundsChange(Rect bounds) {
++            mPath = centered(bounds);
++            final float side = Math.min(bounds.width(), bounds.height());
++            final float scale = side / Math.min(mBitmap.getWidth(), mBitmap.getHeight());
++            mMatrix.setScale(scale, scale);
++            mMatrix.postTranslate(bounds.exactCenterX() - mBitmap.getWidth() * scale / 2f,
++                    bounds.exactCenterY() - mBitmap.getHeight() * scale / 2f);
++            mPaint.getShader().setLocalMatrix(mMatrix);
++        }
++
++        @Override
++        public void draw(Canvas canvas) {
++            canvas.drawPath(mPath, mPaint);
++        }
++
++        @Override
++        public void getOutline(Outline outline) {
++            outline.setPath(mPath);
++        }
++
++        @Override
++        public int getIntrinsicWidth() {
++            return mBitmap.getWidth();
++        }
++
++        @Override
++        public int getIntrinsicHeight() {
++            return mBitmap.getHeight();
++        }
++
++        @Override
++        public void setAlpha(int alpha) {
++            mPaint.setAlpha(alpha);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getAlpha() {
++            return mPaint.getAlpha();
++        }
++
++        @Override
++        public void setColorFilter(ColorFilter cf) {
++            mPaint.setColorFilter(cf);
++            invalidateSelf();
++        }
++
++        @Override
++        public int getOpacity() {
++            return PixelFormat.TRANSLUCENT;
++        }
++    }
++}
+diff --git a/src/com/android/contacts/util/N9Theme.java b/src/com/android/contacts/util/N9Theme.java
+new file mode 100644
+index 000000000..094b02d70
+--- /dev/null
++++ b/src/com/android/contacts/util/N9Theme.java
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.contacts.util;
++
++import android.app.Activity;
++import android.content.Context;
++import android.content.res.Configuration;
++
++import com.bompotis.etesian.theme.EtesianBackground;
++
++/**
++ * N9 look: follows the user's Etesian background. Night resources hold the palette for the
++ * dark backgrounds (black, dark grey, wallpaper); the light N9 default uses the day resources
++ * whatever the system dark theme says.
++ */
++public final class N9Theme {
++
++    private N9Theme() {}
++
++    /** The user's background for this content app. */
++    public static EtesianBackground.Style style(Context context) {
++        return EtesianBackground.content(context);
++    }
++
++    /**
++     * For a platform (non-AppCompat) activity's attachBaseContext: [base] with the night mode
++     * forced to match [style].
++     */
++    public static Context wrap(Context base, EtesianBackground.Style style) {
++        final Configuration config = new Configuration(base.getResources().getConfiguration());
++        config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK)
++                | (style.dark ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
++        return base.createConfigurationContext(config);
++    }
++
++    /** Puts the dark background (colour or wallpaper) behind the window; nothing for light. */
++    public static void applyBackground(Activity activity, EtesianBackground.Style style) {
++        if (style.dark) {
++            EtesianBackground.apply(activity, style);
++        }
++    }
++}

@@ -1,0 +1,3516 @@
+diff --git a/Android.bp b/Android.bp
+index 7b36dbb3e..911bdc90b 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -34,7 +34,10 @@ android_app {
+         "androidx.appcompat_appcompat",
+         "androidx.gridlayout_gridlayout",
+         "androidx.recyclerview_recyclerview",
+-        "androidx-constraintlayout_constraintlayout"
++        "androidx-constraintlayout_constraintlayout",
++        "etesian-toolbar",
++        "etesian-theme",
++        "etesian-fastscroll"
+     ],
+     required: [
+         "com.android.deskclock_allowlist",
+diff --git a/res/color/tab_tint_color.xml b/res/color/tab_tint_color.xml
+index ef013a321..23e3048bc 100644
+--- a/res/color/tab_tint_color.xml
++++ b/res/color/tab_tint_color.xml
+@@ -17,5 +17,5 @@
+ <selector xmlns:android="http://schemas.android.com/apk/res/android">
+     <item android:state_focused="true" android:color="?attr/colorPrimary" />
+     <item android:state_selected="true" android:color="?attr/colorPrimary" />
+-    <item android:color="@color/white_50p" />
++    <item android:color="@color/n9_text_secondary" />
+ </selector>
+diff --git a/res/drawable/clock_analog_dial.xml b/res/drawable/clock_analog_dial.xml
+index 2a5f148d4..ee8d3bf7c 100644
+--- a/res/drawable/clock_analog_dial.xml
++++ b/res/drawable/clock_analog_dial.xml
+@@ -1,25 +1,30 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2016 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
++<!-- N9 (Etesian) style analog clock, recreated as a vector. -->
+ <vector xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:aapt="http://schemas.android.com/aapt"
+         android:width="@dimen/analog_clock_size"
+         android:height="@dimen/analog_clock_size"
+         android:viewportHeight="1176.0"
+         android:viewportWidth="1176.0">
+-    <path
+-        android:fillColor="#FFFFFFFF"
+-        android:pathData="M588,104.9c65.2,0 128.5,12.8 188,38c57.5,24.3 109.2,59.2 153.6,103.5c44.4,44.4 79.2,96 103.5,153.6c25.2,59.5 38,122.8 38,188s-12.8,128.5 -38,188c-24.3,57.5 -59.2,109.2 -103.5,153.6c-44.4,44.4 -96,79.2 -153.6,103.5c-59.5,25.2 -122.8,38 -188,38s-128.5,-12.8 -188,-38c-57.5,-24.3 -109.2,-59.2 -153.6,-103.5c-44.4,-44.4 -79.2,-96 -103.5,-153.6c-25.2,-59.5 -38,-122.8 -38,-188s12.8,-128.5 38,-188c24.3,-57.5 59.2,-109.2 103.5,-153.6s96,-79.2 153.6,-103.5C459.5,117.7 522.8,104.9 588,104.9M588,78.9C306.8,78.9 78.9,306.8 78.9,588s227.9,509.1 509.1,509.1s509.1,-227.9 509.1,-509.1S869.2,78.9 588,78.9L588,78.9z" />
++    <!-- soft drop shadow -->
++    <path android:fillColor="#0D000000"
++        android:pathData="M588,52a548,548 0 1,1 0,1096a548,548 0 1,1 0,-1096z" />
++    <path android:fillColor="#14000000"
++        android:pathData="M588,60a536,536 0 1,1 0,1072a536,536 0 1,1 0,-1072z" />
++    <!-- rim -->
++    <path android:fillColor="@color/n9_dial_rim"
++        android:pathData="M588,48a534,534 0 1,1 0,1068a534,534 0 1,1 0,-1068z" />
++    <!-- light grey face with subtle vertical gradient -->
++    <path android:pathData="M588,52a530,530 0 1,1 0,1060a530,530 0 1,1 0,-1060z">
++        <aapt:attr name="android:fillColor">
++            <gradient android:type="linear"
++                android:startX="588" android:startY="52"
++                android:endX="588" android:endY="1112"
++                android:startColor="@color/n9_dial_face_top"
++                android:endColor="@color/n9_dial_face_bottom" />
++        </aapt:attr>
++    </path>
++    <!-- centre cap -->
++    <path android:fillColor="@color/n9_dial_hand"
++        android:pathData="M588,566a22,22 0 1,1 0,44a22,22 0 1,1 0,-44z" />
+ </vector>
+diff --git a/res/drawable/clock_analog_hour.xml b/res/drawable/clock_analog_hour.xml
+index 525dae9be..25f1da732 100644
+--- a/res/drawable/clock_analog_hour.xml
++++ b/res/drawable/clock_analog_hour.xml
+@@ -1,25 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2016 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
++<!-- N9 (Etesian) style analog clock, recreated as a vector. -->
+ <vector xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:aapt="http://schemas.android.com/aapt"
+         android:width="@dimen/analog_clock_size"
+         android:height="@dimen/analog_clock_size"
+         android:viewportHeight="1176.0"
+         android:viewportWidth="1176.0">
+-    <path
+-        android:fillColor="#FFFFFFFF"
+-        android:pathData="M588,648.2L588,648.2c-4.4,0 -8,-3.6 -8,-8v-256c0,-4.4 3.6,-8 8,-8l0,0c4.4,0 8,3.6 8,8v256C596,644.6 592.4,648.2 588,648.2z" />
++    <path android:fillColor="@color/n9_dial_hand"
++        android:pathData="M574,640L578,330Q588,318 598,330L602,640Q588,652 574,640z" />
+ </vector>
+diff --git a/res/drawable/clock_analog_minute.xml b/res/drawable/clock_analog_minute.xml
+index 8f63be392..c011b95d3 100644
+--- a/res/drawable/clock_analog_minute.xml
++++ b/res/drawable/clock_analog_minute.xml
+@@ -1,25 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2016 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
++<!-- N9 (Etesian) style analog clock, recreated as a vector. -->
+ <vector xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:aapt="http://schemas.android.com/aapt"
+         android:width="@dimen/analog_clock_size"
+         android:height="@dimen/analog_clock_size"
+         android:viewportHeight="1176.0"
+         android:viewportWidth="1176.0">
+-    <path
+-        android:fillColor="#FFFFFFFF"
+-        android:pathData="M588,647.9L588,647.9c-4.4,0 -8,-3.6 -8,-8v-448c0,-4.4 3.6,-8 8,-8l0,0c4.4,0 8,3.6 8,8v448C596,644.3 592.4,647.9 588,647.9z" />
++    <path android:fillColor="@color/n9_dial_hand"
++        android:pathData="M577,648L581,170Q588,160 595,170L599,648Q588,658 577,648z" />
+ </vector>
+diff --git a/res/drawable/clock_analog_second.xml b/res/drawable/clock_analog_second.xml
+index bd5359340..f13d69528 100644
+--- a/res/drawable/clock_analog_second.xml
++++ b/res/drawable/clock_analog_second.xml
+@@ -1,26 +1,13 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2016 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-
++<!-- N9 (Etesian) style analog clock, recreated as a vector. -->
+ <vector xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:aapt="http://schemas.android.com/aapt"
+         android:width="@dimen/analog_clock_size"
+         android:height="@dimen/analog_clock_size"
+         android:viewportHeight="1176.0"
+-        android:viewportWidth="1176.0"
+-        android:tint="?attr/colorAccent">
+-    <path
+-        android:fillColor="#FF000000"
+-        android:pathData="M588,739.3L588,739.3c-2.2,0 -4,-1.8 -4,-4v-544c0,-2.2 1.8,-4 4,-4l0,0c2.2,0 4,1.8 4,4v544C592,737.5 590.2,739.3 588,739.3z" />
++        android:viewportWidth="1176.0">
++    <path android:fillColor="@color/n9_dial_second"
++        android:pathData="M585,700L585,140Q588,134 591,140L591,700z" />
++    <path android:fillColor="@color/n9_dial_second"
++        android:pathData="M588,576a12,12 0 1,1 0,24a12,12 0 1,1 0,-24z" />
+ </vector>
+diff --git a/res/layout-land/desk_clock.xml b/res/layout-land/desk_clock.xml
+index 148f568f0..e772881c2 100644
+--- a/res/layout-land/desk_clock.xml
++++ b/res/layout-land/desk_clock.xml
+@@ -77,10 +77,11 @@
+             app:layout_behavior="com.android.deskclock.widget.toast.SnackbarSlidingBehavior"
+             app:layout_constraintEnd_toEndOf="parent">
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <!-- N9: the shared fab and side buttons are pills (orange primary, light secondary). -->
++            <ImageButton
+                 android:id="@+id/left_button"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="88dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:contentDescription="@null"
+                 app:layout_constraintBottom_toBottomOf="parent"
+@@ -88,29 +89,31 @@
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toBottomOf="@+id/fab"
+                 app:layout_constraintVertical_bias="0.35"
+-                android:backgroundTint="?attr/colorSecondary"
+-                android:tint="?attr/colorOnSecondary"/>
++                android:background="@drawable/n9_pill_light"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/n9_text" />
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <ImageButton
+                 android:id="@+id/fab"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="88dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:layout_margin="@dimen/fab_margin"
+                 android:contentDescription="@null"
+-                app:borderWidth="0dp"
+-                app:fabCustomSize="@dimen/fab_height"
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:backgroundTint="?attr/colorPrimary"
+-                app:tint="?attr/colorOnPrimary"/>
++                android:background="@drawable/n9_pill_orange"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/white" />
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <ImageButton
+                 android:id="@+id/right_button"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="88dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:contentDescription="@null"
+                 app:layout_constraintBottom_toTopOf="@+id/fab"
+@@ -118,8 +121,10 @@
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+                 app:layout_constraintVertical_bias="0.65"
+-                android:backgroundTint="?attr/colorSecondary"
+-                android:tint="?attr/colorOnSecondary"/>
++                android:background="@drawable/n9_pill_light"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/n9_text" />
+ 
+         </androidx.constraintlayout.widget.ConstraintLayout>
+ 
+diff --git a/res/layout-land/timer_item.xml b/res/layout-land/timer_item.xml
+index de5acef6a..569b4216a 100644
+--- a/res/layout-land/timer_item.xml
++++ b/res/layout-land/timer_item.xml
+@@ -14,7 +14,7 @@
+     android:layout_marginStart="8dp"
+     android:layout_marginEnd="8dp"
+     android:layout_marginBottom="8dp"
+-    android:background="@drawable/alarm_background"
++    android:background="@drawable/n9_alarm_row"
+     android:padding="8dp">
+ 
+     <TextView
+@@ -43,7 +43,7 @@
+         android:layout_height="wrap_content"
+         android:contentDescription="@string/timer_delete"
+         app:icon="@drawable/ic_close_circle"
+-        app:iconTint="@null"
++        app:iconTint="@color/n9_text"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
+ 
+@@ -89,7 +89,7 @@
+             app:layout_constraintStart_toStartOf="parent"
+             app:layout_constraintTop_toBottomOf="@+id/timer_time_text"
+             app:icon="@drawable/ic_reset"
+-            app:iconTint="?attr/colorPrimary" />
++            app:iconTint="@color/n9_text" />
+ 
+     </androidx.constraintlayout.widget.ConstraintLayout>
+ 
+@@ -111,9 +111,11 @@
+         android:padding="16dp"
+         android:text="@string/timer_add_minute"
+         android:textSize="20sp"
+-        android:fontFamily="sans-serif-medium"
+-        app:backgroundTint="?attr/colorTertiary"
+-        app:tint="?attr/colorOnTertiaryContainer"
++        android:fontFamily="etesian-text"
++        android:textStyle="bold"
++        android:textColor="@color/n9_text"
++        android:background="@drawable/n9_pill_light"
++        app:backgroundTint="@null"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintBottom_toTopOf="@id/space_after_add_one_min"
+         app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.Medium"/>
+@@ -132,9 +134,10 @@
+         android:layout_height="wrap_content"
+         android:contentDescription="@string/timer_start"
+         android:padding="16dp"
+-        app:backgroundTint="?attr/colorPrimary"
++        android:background="@drawable/n9_pill_orange"
++        app:backgroundTint="@null"
+         app:icon="@drawable/ic_play_pause"
+-        app:iconTint="?attr/colorOnPrimary"
++        app:iconTint="@color/white"
+         app:iconGravity="textStart"
+         app:iconPadding="0dp"
+         app:iconSize="24dp"
+diff --git a/res/layout-land/world_clock_item.xml b/res/layout-land/world_clock_item.xml
+index 77a162039..35a75e5b4 100644
+--- a/res/layout-land/world_clock_item.xml
++++ b/res/layout-land/world_clock_item.xml
+@@ -16,14 +16,13 @@
+ 
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:tools="http://schemas.android.com/tools"
+-    style="@style/MaterialCardViewStyle"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    android:background="@drawable/alarm_background"
++    android:background="@drawable/n9_alarm_row"
+     android:paddingTop="22.0dip"
+     android:paddingBottom="22.0dip"
+-    android:paddingStart="16.0dip"
+-    android:paddingEnd="16.0dip">
++    android:paddingStart="24dp"
++    android:paddingEnd="24dp">
+ 
+     <LinearLayout
+         android:layout_width="match_parent"
+diff --git a/res/layout/alarm_clock.xml b/res/layout/alarm_clock.xml
+index 627ffa617..3959861aa 100644
+--- a/res/layout/alarm_clock.xml
++++ b/res/layout/alarm_clock.xml
+@@ -20,29 +20,81 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent">
+ 
+-    <com.android.deskclock.AlarmRecyclerView
+-        android:id="@+id/alarms_recycler_view"
++    <!-- N9: the clock face above the alarm list, as one page. -->
++    <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+-        android:clipToPadding="false"
+-        android:descendantFocusability="beforeDescendants"
+-        android:fadingEdgeLength="0dp"
+-        android:paddingBottom="@dimen/fab_height"
+-        android:scrollbarStyle="outsideOverlay"
+-        android:scrollbars="vertical"
+-        android:splitMotionEvents="false" />
+-
+-    <TextView
+-        android:id="@+id/alarms_empty_view"
+-        style="@style/no_alarms"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:layout_gravity="center"
+-        android:contentDescription="@string/no_alarms"
+-        android:gravity="center_horizontal"
+-        android:paddingBottom="@dimen/fab_height"
+-        android:text="@string/no_alarms"
+-        android:textColor="@color/no_alarms"
+-        android:visibility="gone" />
++        android:orientation="vertical">
++
++        <com.android.deskclock.widget.N9AnalogClock
++            android:id="@+id/n9_clock"
++            android:layout_width="match_parent"
++            android:layout_height="0dp"
++            android:layout_weight="1" />
++
++        <View
++            android:layout_width="match_parent"
++            android:layout_height="1dp"
++            android:background="@color/n9_divider" />
++
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="72dp"
++            android:background="@color/n9_page"
++            android:gravity="center_vertical"
++            android:orientation="horizontal"
++            android:paddingStart="16dp"
++            android:paddingEnd="16dp">
++
++            <TextView
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:fontFamily="etesian-text"
++                android:textFontWeight="300"
++                android:text="@string/n9_alarms_header"
++                android:textColor="@color/n9_text_dark"
++                android:textSize="30sp" />
++
++            <ImageButton
++                android:id="@+id/n9_add_alarm"
++                android:layout_width="44dp"
++                android:layout_height="44dp"
++                android:background="@drawable/n9_add_button"
++                android:contentDescription="@string/button_alarms"
++                android:src="@drawable/ic_add_24dp"
++                android:tint="@color/n9_icon" />
++        </LinearLayout>
++
++        <FrameLayout
++            android:layout_width="match_parent"
++            android:layout_height="0dp"
++            android:layout_weight="1.15"
++            android:background="@color/n9_page">
++
++            <com.android.deskclock.AlarmRecyclerView
++                android:id="@+id/alarms_recycler_view"
++                android:layout_width="match_parent"
++                android:layout_height="match_parent"
++                android:clipToPadding="false"
++                android:descendantFocusability="beforeDescendants"
++                android:fadingEdgeLength="0dp"
++                android:scrollbarStyle="outsideOverlay"
++                android:scrollbars="vertical"
++                android:splitMotionEvents="false" />
++
++            <TextView
++                android:id="@+id/alarms_empty_view"
++                style="@style/no_alarms"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_gravity="center"
++                android:contentDescription="@string/no_alarms"
++                android:gravity="center_horizontal"
++                android:text="@string/no_alarms"
++                android:textColor="@color/no_alarms"
++                android:visibility="gone" />
++        </FrameLayout>
++    </LinearLayout>
+ 
+ </FrameLayout>
+diff --git a/res/layout/alarm_time_collapsed.xml b/res/layout/alarm_time_collapsed.xml
+index 1e03f7bae..c8a6b92db 100644
+--- a/res/layout/alarm_time_collapsed.xml
++++ b/res/layout/alarm_time_collapsed.xml
+@@ -14,84 +14,74 @@
+   limitations under the License.
+   -->
+ 
++<!-- N9 alarm row: toggle, time over title, chevron; a hairline between rows. -->
+ <androidx.constraintlayout.widget.ConstraintLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+-    style="@style/MaterialCardViewStyle"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    android:background="@drawable/alarm_background"
++    android:minHeight="100dp"
++    android:background="@drawable/n9_alarm_row"
+     android:importantForAccessibility="no">
+ 
+-    <include layout="@layout/centered_guidelines" />
+-
+-    <TextView
+-        android:id="@+id/label"
+-        android:layout_width="0.0dip"
+-        android:layout_height="@dimen/touch_target_min_size"
+-        android:background="?selectableItemBackground"
+-        android:drawablePadding="@dimen/alarm_horizontal_padding"
+-        android:ellipsize="end"
++    <com.google.android.material.materialswitch.MaterialSwitch
++        android:id="@+id/onoff"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="12dp"
+         android:focusable="true"
+-        android:gravity="start|center"
+-        android:hint="@string/add_label"
+-        android:paddingStart="4.0dip"
+-        android:paddingEnd="4.0dip"
+-        android:singleLine="true"
+-        android:textAlignment="viewStart"
+-        android:textAppearance="@style/body"
+-        app:layout_constraintEnd_toStartOf="@id/arrow"
+-        app:layout_constraintStart_toEndOf="@id/start_guide_thin"
++        android:minWidth="@dimen/touch_target_min_size"
++        android:minHeight="@dimen/touch_target_min_size"
++        android:text=""
++        android:textOff=""
++        android:textOn=""
++        app:thumbIcon="@null"
++        app:thumbIconTint="@null"
++        app:thumbTint="@color/n9_switch_thumb_white"
++        app:trackDecorationTint="@color/n9_switch_track"
++        app:trackTint="@color/n9_switch_track"
++        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
+ 
+     <include
+         layout="@layout/alarm_time_summary"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        app:layout_constraintEnd_toStartOf="@id/end_guide_thin"
+-        app:layout_constraintHorizontal_bias="0"
+-        app:layout_constraintStart_toEndOf="@id/start_guide_thin"
+-        app:layout_constraintTop_toBottomOf="@id/label" />
+-
+-    <com.google.android.material.button.MaterialButton
+-        style="?attr/materialIconButtonStyle"
+-        android:id="@+id/arrow"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:contentDescription="@string/expand_alarm"
+-        android:focusable="true"
+-        app:layout_constraintEnd_toEndOf="@id/end_guide_extreme_thin"
+-        app:layout_constraintTop_toTopOf="parent"
+-        app:icon="@drawable/ic_caret_down"
+-        app:iconTint="@null" />
++        android:layout_marginStart="16dp"
++        android:layout_marginTop="16dp"
++        app:layout_constraintStart_toEndOf="@id/onoff"
++        app:layout_constraintTop_toTopOf="parent" />
+ 
+-    <com.google.android.material.materialswitch.MaterialSwitch
+-        android:id="@+id/onoff"
+-        android:theme="@style/Theme.DeskClock.MaterialSwitch"
++    <TextView
++        android:id="@+id/label"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:layout_marginEnd="6.0dip"
+-        android:focusable="true"
+-        android:minWidth="@dimen/touch_target_min_size"
+-        android:minHeight="@dimen/touch_target_min_size"
+-        android:text=""
+-        android:textOn=""
+-        android:textOff=""
+-        app:layout_constraintEnd_toStartOf="@id/end_guide_thin"
++        android:layout_marginStart="16dp"
++        android:ellipsize="end"
++        android:hint="@string/n9_default_alarm_title"
++        android:singleLine="true"
++        android:textColor="@color/n9_text_grey"
++        android:textColorHint="@color/n9_text_grey"
++        android:textSize="18sp"
++        app:layout_constrainedWidth="true"
++        app:layout_constraintEnd_toStartOf="@id/ellipse_layout"
++        app:layout_constraintHorizontal_bias="0"
++        app:layout_constraintHorizontal_chainStyle="packed"
++        app:layout_constraintStart_toEndOf="@id/onoff"
+         app:layout_constraintTop_toBottomOf="@id/digital_clock" />
+ 
+     <com.android.deskclock.widget.EllipsizeLayout
+         android:id="@+id/ellipse_layout"
+-        android:layout_width="0.0dip"
+-        android:layout_height="@dimen/touch_target_min_size"
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
+         android:background="@android:color/transparent"
+         android:focusable="false"
+-        android:gravity="center_vertical"
+-        app:layout_constraintBottom_toTopOf="@id/repeat_days"
+-        app:layout_constraintEnd_toStartOf="@id/onoff"
+-        app:layout_constraintStart_toEndOf="@id/start_guide_thin"
+-        app:layout_constraintTop_toBottomOf="@id/digital_clock">
++        app:layout_constraintBottom_toBottomOf="@id/label"
++        app:layout_constraintTop_toTopOf="@id/label"
++        app:layout_constraintEnd_toStartOf="@id/arrow"
++        app:layout_constraintStart_toEndOf="@id/label">
+ 
+         <TextView
+             android:id="@+id/days_of_week"
+@@ -100,12 +90,10 @@
+             android:ellipsize="none"
+             android:focusable="false"
+             android:maxLines="1"
+-            android:paddingHorizontal="@dimen/icon_margin"
+-            android:paddingLeft="@dimen/icon_margin"
+-            android:paddingRight="@dimen/icon_margin"
+-            android:textAppearance="@style/body"
+-            android:visibility="visible"
+-            tools:text="Mo.,Tue.,Wed." />
++            android:paddingStart="8dp"
++            android:textColor="@color/n9_text_dim"
++            android:textSize="16sp"
++            tools:text="Mon, Tue" />
+     </com.android.deskclock.widget.EllipsizeLayout>
+ 
+     <Button
+@@ -113,18 +101,27 @@
+         style="?borderlessButtonStyle"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:drawablePadding="@dimen/alarm_horizontal_padding"
+-        android:focusable="true"
+-        android:gravity="center_vertical"
++        android:layout_marginStart="8dp"
+         android:minHeight="@dimen/touch_target_min_size"
+-        android:paddingStart="@dimen/icon_margin"
+-        android:paddingEnd="0dp"
+         android:textAllCaps="false"
+-        android:textAppearance="@style/body"
+-        android:textColor="?attr/colorPrimary"
++        android:textColor="#FFF07A1E"
+         android:visibility="gone"
+-        app:layout_constraintStart_toEndOf="@id/start_guide_thin"
+-        app:layout_constraintTop_toBottomOf="@id/ellipse_layout"
++        app:layout_constraintStart_toEndOf="@id/onoff"
++        app:layout_constraintTop_toBottomOf="@id/label"
+         tools:text="Dismiss"
+         tools:visibility="visible" />
++
++    <com.google.android.material.button.MaterialButton
++        android:id="@+id/arrow"
++        style="?attr/materialIconButtonStyle"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginEnd="4dp"
++        android:contentDescription="@string/expand_alarm"
++        android:focusable="true"
++        app:icon="@drawable/ic_n9_chevron"
++        app:iconTint="@null"
++        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintTop_toTopOf="parent" />
+ </androidx.constraintlayout.widget.ConstraintLayout>
+diff --git a/res/layout/alarm_time_expanded.xml b/res/layout/alarm_time_expanded.xml
+index 22a7e9523..138c210b4 100644
+--- a/res/layout/alarm_time_expanded.xml
++++ b/res/layout/alarm_time_expanded.xml
+@@ -71,6 +71,7 @@
+     <com.google.android.material.materialswitch.MaterialSwitch
+         android:id="@+id/onoff"
+         android:theme="@style/Theme.DeskClock.MaterialSwitch"
++        style="@style/Theme.DeskClock.MaterialSwitch"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_marginEnd="6.0dip"
+diff --git a/res/layout/cities_activity.xml b/res/layout/cities_activity.xml
+index 722e087ce..ce89734dd 100644
+--- a/res/layout/cities_activity.xml
++++ b/res/layout/cities_activity.xml
+@@ -23,7 +23,7 @@
+ 
+     <include layout="@layout/drop_shadow" />
+ 
+-    <ListView
++    <com.bompotis.etesian.fastscroll.EtesianFastScrollListView
+         android:id="@+id/cities_list"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+diff --git a/res/layout/city_list_header.xml b/res/layout/city_list_header.xml
+index 2db78efff..5a3662657 100644
+--- a/res/layout/city_list_header.xml
++++ b/res/layout/city_list_header.xml
+@@ -25,5 +25,5 @@
+     android:paddingStart="20dp"
+     android:text="@string/selected_cities_label"
+     android:textAlignment="viewStart"
+-    android:textColor="@color/white"
++    android:textColor="@color/n9_text"
+     android:textSize="20sp" />
+diff --git a/res/layout/city_list_item.xml b/res/layout/city_list_item.xml
+index 520ab328d..80042195b 100644
+--- a/res/layout/city_list_item.xml
++++ b/res/layout/city_list_item.xml
+@@ -19,7 +19,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:gravity="center_vertical"
+-    android:background="?attr/selectableItemBackground"
++    android:background="@drawable/n9_alarm_row"
+     android:minHeight="@dimen/cities_list_item_height"
+     android:orientation="horizontal">
+     <TextView
+@@ -29,11 +29,12 @@
+         android:gravity="center"
+         android:textStyle="bold"
+         android:textSize="@dimen/label_text_size"
+-        android:textColor="@color/white" />
++        android:textColor="@color/n9_text" />
+     <CheckBox
+         android:id="@+id/city_onoff"
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
++        android:buttonTint="@color/n9_check_tint"
+         android:clickable="false" />
+     <TextView
+         android:id="@+id/city_name"
+@@ -44,11 +45,11 @@
+         android:paddingEnd="10dip"
+         android:ellipsize="end"
+         android:singleLine="true"
+-        android:textAppearance="@style/PrimaryLabelTextAppearance" />
++        android:textAppearance="@style/N9RowTitle" />
+     <TextView
+         android:id="@+id/city_time"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_marginEnd="8dip"
+-        android:textAppearance="@style/SecondaryLabelTextAppearance" />
++        android:textAppearance="@style/N9RowSecondary" />
+ </LinearLayout>
+diff --git a/res/layout/desk_clock.xml b/res/layout/desk_clock.xml
+index 9d45b560b..6e4459c06 100644
+--- a/res/layout/desk_clock.xml
++++ b/res/layout/desk_clock.xml
+@@ -25,9 +25,11 @@
+     app:statusBarBackground="@null"
+     android:fitsSystemWindows="true">
+ 
++    <!-- N9: no title bar; the toolbar is kept (hidden) for the options menu plumbing. -->
+     <com.google.android.material.appbar.AppBarLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
++        android:visibility="gone"
+         android:background="@null"
+         app:elevation="0dp">
+ 
+@@ -72,10 +74,11 @@
+             app:layout_constraintBottom_toBottomOf="parent"
+             app:layout_behavior="@string/appbar_scrolling_view_behavior">
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <!-- N9: the shared fab and side buttons are pills (orange primary, light secondary). -->
++            <ImageButton
+                 android:id="@+id/left_button"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="88dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:contentDescription="@null"
+                 app:layout_constraintBottom_toBottomOf="parent"
+@@ -83,28 +86,31 @@
+                 app:layout_constraintHorizontal_bias="0.6"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:backgroundTint="?attr/colorSecondary"
+-                app:tint="?attr/colorOnSecondary" />
++                android:background="@drawable/n9_pill_light"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/n9_text" />
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <ImageButton
+                 android:id="@+id/fab"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="120dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:layout_margin="@dimen/fab_margin"
+                 android:contentDescription="@null"
+-                app:fabCustomSize="@dimen/fab_height"
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:backgroundTint="?attr/colorPrimary"
+-                app:tint="?attr/colorOnPrimary" />
++                android:background="@drawable/n9_pill_orange"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/white" />
+ 
+-            <com.google.android.material.floatingactionbutton.FloatingActionButton
++            <ImageButton
+                 android:id="@+id/right_button"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
++                android:layout_width="88dp"
++                android:layout_height="48dp"
+                 android:layout_gravity="center"
+                 android:contentDescription="@null"
+                 app:layout_constraintBottom_toBottomOf="parent"
+@@ -112,8 +118,10 @@
+                 app:layout_constraintHorizontal_bias="0.4"
+                 app:layout_constraintStart_toEndOf="@id/fab"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:backgroundTint="?attr/colorSecondary"
+-                app:tint="?attr/colorOnSecondary" />
++                android:background="@drawable/n9_pill_light"
++                android:scaleType="center"
++                android:stateListAnimator="@null"
++                android:tint="@color/n9_text" />
+         </androidx.constraintlayout.widget.ConstraintLayout>
+     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+ 
+@@ -127,5 +135,12 @@
+         app:itemTextColor="@color/tab_tint_color"
+         app:itemTextAppearanceActive="@style/navText"
+         app:itemTextAppearanceInactive="@style/navText"
+-        app:labelVisibilityMode="labeled" />
++        app:labelVisibilityMode="labeled"
++        android:visibility="gone" />
++
++    <!-- N9 toolbar: back, the pages as icons, settings last. -->
++    <com.android.deskclock.widget.N9TabBar
++        android:id="@+id/n9_tab_bar"
++        android:layout_width="match_parent"
++        android:layout_height="64dp" />
+ </LinearLayout>
+diff --git a/res/layout/lap_view.xml b/res/layout/lap_view.xml
+index e05df2144..3096602a5 100644
+--- a/res/layout/lap_view.xml
++++ b/res/layout/lap_view.xml
+@@ -19,20 +19,24 @@
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:layoutDirection="ltr"
+-    android:paddingTop="@dimen/body_font_padding"
+-    android:paddingBottom="@dimen/body_font_padding"
+-    android:gravity="center"
++    android:paddingTop="12dp"
++    android:paddingBottom="12dp"
++    android:paddingStart="24dp"
++    android:paddingEnd="24dp"
++    android:background="@drawable/n9_alarm_row"
++    android:gravity="center_vertical"
+     android:orientation="horizontal">
+ 
+     <TextView
+         android:id="@+id/lap_number"
+-        android:layout_width="wrap_content"
++        android:layout_width="0dp"
+         android:layout_height="wrap_content"
++        android:layout_weight="1"
+         android:layout_marginEnd="16dp"
+         android:fontFeatureSettings="tnum"
+         android:gravity="start"
+         android:textAllCaps="false"
+-        android:textAppearance="@style/SecondaryLabelTextAppearance" />
++        android:textAppearance="@style/N9LapNumber" />
+ 
+     <TextView
+         android:id="@+id/lap_time"
+@@ -42,7 +46,7 @@
+         android:fontFeatureSettings="tnum"
+         android:gravity="end"
+         android:textAllCaps="false"
+-        android:textAppearance="@style/PrimaryLabelTextAppearance" />
++        android:textAppearance="@style/N9LapTime" />
+ 
+     <TextView
+         android:id="@+id/lap_total"
+@@ -51,6 +55,6 @@
+         android:fontFeatureSettings="tnum"
+         android:gravity="end"
+         android:textAllCaps="false"
+-        android:textAppearance="@style/PrimaryLabelTextAppearance" />
++        android:textAppearance="@style/N9LapTime" />
+ 
+ </LinearLayout>
+diff --git a/res/layout/preference_widget_switch_compat.xml b/res/layout/preference_widget_switch_compat.xml
+index 535452352..1686d9200 100644
+--- a/res/layout/preference_widget_switch_compat.xml
++++ b/res/layout/preference_widget_switch_compat.xml
+@@ -21,4 +21,5 @@
+     android:layout_height="wrap_content"
+     android:clickable="false"
+     android:focusable="false"
+-    android:theme="@style/Theme.DeskClock.MaterialSwitch" />
++    android:theme="@style/Theme.DeskClock.MaterialSwitch"
++    style="@style/Theme.DeskClock.MaterialSwitch" />
+diff --git a/res/layout/stopwatch_time.xml b/res/layout/stopwatch_time.xml
+index d71498b77..fea352aa3 100644
+--- a/res/layout/stopwatch_time.xml
++++ b/res/layout/stopwatch_time.xml
+@@ -42,7 +42,6 @@
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:duplicateParentState="true"
+-        android:fontFamily="sans-serif"
+         android:includeFontPadding="false"
+         android:paddingEnd="30dp"
+         android:paddingStart="3dp"
+diff --git a/res/layout/timer_item.xml b/res/layout/timer_item.xml
+index f9c6a9fe9..e1327c533 100644
+--- a/res/layout/timer_item.xml
++++ b/res/layout/timer_item.xml
+@@ -23,7 +23,7 @@
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:layout_marginBottom="8dp"
+-    android:background="@drawable/alarm_background"
++    android:background="@drawable/n9_alarm_row"
+     android:padding="16dp">
+ 
+     <include layout="@layout/centered_guidelines" />
+@@ -53,7 +53,7 @@
+         android:layout_height="wrap_content"
+         android:contentDescription="@string/timer_delete"
+         app:icon="@drawable/ic_close_circle"
+-        app:iconTint="@null"
++        app:iconTint="@color/n9_text"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
+ 
+@@ -97,7 +97,7 @@
+             android:layout_gravity="bottom|center_horizontal"
+             android:contentDescription="@string/timer_reset"
+             app:icon="@drawable/ic_reset"
+-            app:iconTint="?attr/colorPrimary" />
++            app:iconTint="@color/n9_text" />
+ 
+     </com.android.deskclock.CircleButtonsLayout>
+ 
+@@ -120,9 +120,11 @@
+         android:padding="24dp"
+         android:text="@string/timer_add_minute"
+         android:textSize="20sp"
+-        android:fontFamily="sans-serif-medium"
+-        app:backgroundTint="?attr/colorTertiary"
+-        app:tint="?attr/colorOnTertiaryContainer"
++        android:fontFamily="etesian-text"
++        android:textStyle="bold"
++        android:textColor="@color/n9_text"
++        android:background="@drawable/n9_pill_light"
++        app:backgroundTint="@null"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintBottom_toTopOf="@id/space_after_add_one_min"
+         app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.Medium"/>
+@@ -140,9 +142,10 @@
+         android:layout_height="wrap_content"
+         android:contentDescription="@string/timer_start"
+         android:padding="24dp"
+-        app:backgroundTint="?attr/colorPrimary"
++        android:background="@drawable/n9_pill_orange"
++        app:backgroundTint="@null"
+         app:icon="@drawable/ic_play_pause"
+-        app:iconTint="?colorOnPrimary"
++        app:iconTint="@color/white"
+         app:iconGravity="textStart"
+         app:iconPadding="0dp"
+         app:layout_constraintStart_toStartOf="@id/add_one_min"
+diff --git a/res/layout/timer_setup_digits.xml b/res/layout/timer_setup_digits.xml
+index 74c0017fd..30a4565f1 100644
+--- a/res/layout/timer_setup_digits.xml
++++ b/res/layout/timer_setup_digits.xml
+@@ -162,9 +162,8 @@
+             android:layout_width="0dp"
+             android:layout_height="0dp"
+             android:contentDescription="@string/delete"
+-            app:backgroundTint="?attr/colorTertiaryContainer"
+             app:icon="@drawable/ic_backspace"
+-            app:iconTint="?attr/colorOnTertiaryContainer"
++            app:iconTint="@color/n9_text"
+             app:iconSize="40dp"
+             app:iconGravity="textStart"
+             app:layout_constraintStart_toEndOf="@id/column_1_right"
+diff --git a/res/layout/timer_setup_view.xml b/res/layout/timer_setup_view.xml
+index e45117cd7..fdb9fe8ec 100644
+--- a/res/layout/timer_setup_view.xml
++++ b/res/layout/timer_setup_view.xml
+@@ -60,8 +60,9 @@
+         android:layout_height="0dp"
+         android:ellipsize="none"
+         android:gravity="center"
+-        android:fontFamily="sans-serif"
+-        android:textColor="?android:attr/textColorPrimary"
++        android:fontFamily="etesian-text"
++        android:textFontWeight="300"
++        android:textColor="@color/n9_text_secondary"
+         android:textSize="@dimen/timer_setup_digit_font_size"
+         tools:text="12h34m56s"
+         tools:ignore="MissingConstraints" />
+diff --git a/res/layout/world_clock_city_container.xml b/res/layout/world_clock_city_container.xml
+index daa3ef6bf..93769c14d 100644
+--- a/res/layout/world_clock_city_container.xml
++++ b/res/layout/world_clock_city_container.xml
+@@ -26,7 +26,7 @@
+         android:layout_height="wrap_content"
+         android:ellipsize="end"
+         android:singleLine="true"
+-        android:textAppearance="@style/body"
++        android:textAppearance="@style/N9RowTitle"
+         tools:text="Fictive city"/>
+ 
+     <TextView
+@@ -37,7 +37,7 @@
+         android:ellipsize="end"
+         android:maxLines="2"
+         android:scrollHorizontally="true"
+-        android:textAppearance="@style/SecondaryLabelTextAppearance"
++        android:textAppearance="@style/N9RowSecondary"
+         tools:text="1 hour ahead"/>
+ 
+ </LinearLayout>
+diff --git a/res/layout/world_clock_item.xml b/res/layout/world_clock_item.xml
+index d7dca6bef..127e80e37 100644
+--- a/res/layout/world_clock_item.xml
++++ b/res/layout/world_clock_item.xml
+@@ -17,15 +17,14 @@
+ <LinearLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:tools="http://schemas.android.com/tools"
+-    style="@style/MaterialCardViewStyle"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:orientation="horizontal"
+-    android:background="@drawable/alarm_background"
++    android:background="@drawable/n9_alarm_row"
+     android:paddingTop="24.0dip"
+     android:paddingBottom="24.0dip"
+-    android:paddingStart="16.0dip"
+-    android:paddingEnd="16.0dip">
++    android:paddingStart="24dp"
++    android:paddingEnd="24dp">
+ 
+     <LinearLayout
+         android:layout_width="match_parent"
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 0cf8067f2..8ca99bf68 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -24,7 +24,7 @@
+     <color name="white_08p">#14FFFFFF</color>
+     <color name="white_63p">#A0FFFFFF</color>
+     <color name="white_50p">#80FFFFFF</color>
+-    <color name="no_alarms">#4CFFFFFF</color>
++    <color name="no_alarms">#668C8C8C</color>
+ 
+     <color name="transparent">#00000000</color>
+ 
+@@ -32,4 +32,69 @@
+ 
+     <color name="widget_label_color">@color/white</color>
+     <color name="widget_label_color_dark">@color/black</color>
++
++    <!-- N9 (Etesian blanco) palette -->
++    <!-- N9 orange accent (timer/stopwatch progress, primary pills) and light track. -->
++    <color name="n9_orange">#FFF07010</color>
++    <color name="n9_track">#FFD2D4D7</color>
++    <color name="n9_window">#FFE9E9E9</color>
++    <color name="n9_surface">#FFF4F4F4</color>
++    <color name="n9_text">#FF191919</color>
++    <color name="n9_text_secondary">#FF8C8C8C</color>
++    <color name="n9_separator">#FFD6D6D6</color>
++    <color name="n9_blue">#FF00A5E5</color>
++    <color name="n9_blue_container">#FFCCEDFA</color>
++    <color name="n9_navy_top">#FF1E2A38</color>
++    <color name="n9_navy_bottom">#FF0E1A28</color>
++    <color name="n9_neg_top">#FFF4F4F4</color>
++    <color name="n9_neg_bottom">#FFD9D9D9</color>
++
++    <!-- N9 content palette; values-night holds the dark-background ("Apps" black, dark grey or
++         wallpaper) counterparts, applied through a forced night uiMode. -->
++    <color name="n9_page">#FFE6E6E6</color>
++    <color name="n9_clock_page">#FFEDEFF0</color>
++    <color name="n9_editor_page">#FFDDE1E6</color>
++    <color name="n9_row">#FFE6E6E6</color>
++    <color name="n9_hairline">#FFCBCBCB</color>
++    <color name="n9_hairline_highlight">#FFF6F6F6</color>
++    <color name="n9_divider">#FFC4C6C8</color>
++    <color name="n9_text_dark">#FF2A2A2A</color>
++    <color name="n9_text_alarm_time">#FF1E1E1E</color>
++    <color name="n9_text_grey">#FF6E6E6E</color>
++    <color name="n9_text_dim">#FF9A9A9A</color>
++    <color name="n9_icon">#FF1A1A1A</color>
++    <color name="n9_chevron">#FF111111</color>
++    <color name="n9_pill_light_top">#FFF7F7F7</color>
++    <color name="n9_pill_light_bottom">#FFD2D4D7</color>
++    <color name="n9_pill_light_stroke">#FFB4B6B9</color>
++    <color name="n9_key_top">#FFFFFFFF</color>
++    <color name="n9_key_bottom">#FFDCDCDC</color>
++    <color name="n9_key_stroke">#FFB0B0B0</color>
++    <color name="n9_field">#FFFFFFFF</color>
++    <color name="n9_field_stroke">#FFB9BCC0</color>
++    <color name="n9_switch_off">#FFD3D8DA</color>
++    <!-- What lists fade into at the bottom (the stopwatch laps). -->
++    <color name="n9_fade">#FFE9E9E9</color>
++    <color name="n9_editor_switch_off">#FFB9BEC2</color>
++    <color name="n9_check_off">#FF8C8C8C</color>
++    <!-- N9AnalogClock (alarm page) and the AnalogClock vectors. -->
++    <color name="n9_aclock_label">#FF6A6A6A</color>
++    <color name="n9_aclock_day">#FF4A4A4A</color>
++    <color name="n9_aclock_date">#FF2A2A2A</color>
++    <color name="n9_aclock_dial_top">#FFE6E6E7</color>
++    <color name="n9_aclock_dial_mid">#FFCFCFD1</color>
++    <color name="n9_aclock_dial_bottom">#FFBDBDC0</color>
++    <color name="n9_aclock_dial_highlight">#FFF8F8F8</color>
++    <color name="n9_dial_rim">#FFB4B4B4</color>
++    <color name="n9_dial_face_top">#FFE6E6E6</color>
++    <color name="n9_dial_face_bottom">#FFCACACA</color>
++    <color name="n9_dial_hand">#FF2B2B2B</color>
++    <color name="n9_dial_second">#FF4A4A4A</color>
++    <!-- N9AlarmDialView (alarm editor): the silver outer ring. -->
++    <color name="n9_editor_ring_rim">#FFFFFFFF</color>
++    <color name="n9_editor_ring_top">#FFF2F2F2</color>
++    <color name="n9_editor_ring_bottom">#FFC8C8C8</color>
++    <color name="n9_editor_ring_tick">#FF9A9A9A</color>
++    <!-- Light status/navigation bar icons on the N9 light look; night turns them off. -->
++    <bool name="n9_light_bars">true</bool>
+ </resources>
+diff --git a/res/values/donottranslate.xml b/res/values/donottranslate.xml
+index 1cbd61deb..289699307 100644
+--- a/res/values/donottranslate.xml
++++ b/res/values/donottranslate.xml
+@@ -26,7 +26,7 @@
+     <!-- Format for describing the date, for accessibility. -->
+     <string name="full_wday_month_day_no_year">EEEEMMMMd</string>
+     <!-- Default clock style. -->
+-    <string name="default_clock_style">digital</string>
++    <string name="default_clock_style">analog</string>
+     <!-- Default screensaver clock color. -->
+     <string name="default_clock_color">FFFFFF</string>
+     <!-- Default screensaver night mode. -->
+@@ -43,4 +43,15 @@
+     <string name="clock_emoji">A</string>
+     <!-- String for the date in the DigitalAppWidget preview -->
+     <string name="abbrev_wday_month_day_no_year_preview">EEE MMM d</string>
++    <string name="n9_alarm_save" translatable="false">Save</string>
++    <string name="n9_alarm_title_hint" translatable="false">Alarm title</string>
++    <string name="n9_more_options" translatable="false">More options &gt;</string>
++    <string name="n9_back" translatable="false">Back</string>
++    <string name="n9_alarms_header" translatable="false">Alarms</string>
++    <string name="n9_world_clock" translatable="false">World clock</string>
++    <string name="n9_default_alarm_title" translatable="false">Alarm</string>
++    <string name="n9_repeat" translatable="false">Repeat</string>
++    <string name="n9_alarm_sound" translatable="false">Alarm sound</string>
++    <string name="n9_vibrate" translatable="false">Vibrate</string>
++    <string name="n9_delete_alarm" translatable="false">Delete alarm</string>
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 33a71dda4..369fe4acf 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -19,25 +19,27 @@
+ 
+     <style name="no_alarms">
+         <item name="android:textSize">@dimen/no_alarm_font_size</item>
+-        <item name="android:textColor">@color/white_63p</item>
++        <item name="android:textColor">@color/n9_text_secondary</item>
+     </style>
+ 
+     <style name="display_time">
+         <item name="android:textSize">56sp</item>
+-        <item name="android:textColor">@color/white</item>
+-        <item name="android:fontFamily">sans-serif</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
+         <item name="android:fontFeatureSettings">tnum</item>
+     </style>
+ 
+     <style name="world_clock_time">
+         <item name="android:textSize">48sp</item>
+-        <item name="android:textColor">@color/white</item>
+-        <item name="android:fontFamily">sans-serif-light</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
+     </style>
+ 
+     <style name="body">
+         <item name="android:textSize">14sp</item>
+-        <item name="android:textColor">@color/white</item>
++        <item name="android:textColor">@color/n9_text</item>
+         <item name="android:fontFamily">sans-serif-medium</item>
+     </style>
+ 
+@@ -52,7 +54,7 @@
+     </style>
+ 
+     <style name="PrimaryLabelTextParentAppearance">
+-        <item name="android:textColor">@color/white</item>
++        <item name="android:textColor">@color/n9_text</item>
+         <item name="android:textSize">@dimen/label_text_size</item>
+     </style>
+ 
+@@ -97,8 +99,15 @@
+         <item name="layout_constraintDimensionRatio">1:1</item>
+         <item name="autoSizeMaxTextSize">36sp</item>
+         <item name="autoSizeTextType">uniform</item>
+-        <item name="backgroundTint">?attr/colorSurfaceVariant</item>
+-        <item name="android:textColor">?attr/colorOnSurface</item>
++        <!-- N9: light round keys with light-weight dark digits. -->
++        <item name="android:background">@drawable/n9_key_round</item>
++        <item name="backgroundTint">@null</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="rippleColor">@null</item>
++        <item name="strokeWidth">0dp</item>
++        <item name="android:elevation">0dp</item>
+     </style>
+ 
+     <style name="Widget.Button.TimerSetupDigit.CircleOverlay">
+@@ -114,6 +123,12 @@
+     </style>
+ 
+     <style name="AlertDialogTheme" parent="@style/ThemeOverlay.AppCompat.Dialog.Alert">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="buttonBarPositiveButtonStyle">@style/N9DialogButton.Positive</item>
++        <item name="buttonBarNegativeButtonStyle">@style/N9DialogButton.Negative</item>
++        <item name="buttonBarNeutralButtonStyle">@style/N9DialogButton.Negative</item>
+         <item name="android:background">@drawable/popup_background</item>
+         <item name="dialogCornerRadius">28dp</item>
+     </style>
+@@ -124,6 +139,11 @@
+ 
+     <style name="TimerLabelTextAppearance" parent="SecondaryLabelTextAppearance">
+         <item name="android:textSize">20sp</item>
++        <!-- N9: bold dark row title. -->
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:textColorHint">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">bold</item>
+     </style>
+ 
+     <style name="MaterialCardViewStyle">
+@@ -310,4 +330,60 @@
+         <item name="appWidgetThemeTransparent">@style/Theme.DeskClock.DigitalWidgetTransparentLightBg</item>
+         <item name="appWidgetThemeSolid">@style/Theme.DeskClock.DigitalWidgetLightBg</item>
+     </style>
++
++    <!-- N9 clock dialog buttons: navy positive, light grey negative rounded squares -->
++    <style name="N9DialogButton" parent="@style/Widget.AppCompat.Button.Borderless">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textAllCaps">false</item>
++        <item name="android:textSize">16sp</item>
++        <item name="android:minHeight">48dp</item>
++        <item name="android:minWidth">96dp</item>
++        <item name="android:layout_marginStart">8dp</item>
++        <item name="android:paddingStart">20dp</item>
++        <item name="android:paddingEnd">20dp</item>
++    </style>
++    <style name="N9DialogButton.Positive">
++        <item name="android:background">@drawable/n9_button_positive</item>
++        <item name="android:textColor">@color/white</item>
++    </style>
++    <style name="N9DialogButton.Negative">
++        <item name="android:background">@drawable/n9_button_negative</item>
++        <item name="android:textColor">@color/n9_text</item>
++    </style>
++
++    <!-- N9 list rows (world clock, city picker): bold title, grey secondary line. -->
++    <style name="N9RowTitle">
++        <item name="android:textSize">20sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">bold</item>
++    </style>
++    <style name="N9RowSecondary">
++        <item name="android:textSize">14sp</item>
++        <item name="android:textColor">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
++
++    <!-- N9 stopwatch lap rows: bold lap number, light-weight times. -->
++    <style name="N9LapNumber">
++        <item name="android:textSize">20sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">bold</item>
++    </style>
++    <style name="N9LapTime">
++        <item name="android:textSize">20sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++    </style>
++
++    <style name="N9.BottomNavigation.ActiveIndicator" parent="@style/Widget.Material3.BottomNavigationView.ActiveIndicator">
++        <item name="android:color">@color/transparent</item>
++    </style>
++    <!-- N9 alarm editor: slides up on open, down on Save/Cancel. -->
++    <style name="N9EditorAnimation">
++        <item name="android:windowEnterAnimation">@anim/n9_editor_enter</item>
++        <item name="android:windowExitAnimation">@anim/n9_editor_exit</item>
++    </style>
+ </resources>
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 9c481b7e7..722feb40a 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -17,7 +17,40 @@
+ 
+ <resources>
+ 
+-    <style name="Theme.DeskClock" parent="Theme.Material3Expressive.DynamicColors.Dark.NoActionBar">
++    <style name="Theme.DeskClock" parent="Theme.Material3Expressive.DayNight.NoActionBar">
++        <!-- N9 (Etesian blanco) static light palette; no dynamic colour. DayNight resolves to
++             Light unless a dark Etesian background forces night mode, so Material dialogs,
++             pickers, chips, menus and sheets follow the dark palette in values-night. -->
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnPrimaryContainer">@color/n9_text</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorOnSecondary">@color/white</item>
++        <item name="colorSecondaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnSecondaryContainer">@color/n9_text</item>
++        <item name="colorTertiary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorSurfaceVariant">@color/n9_surface</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorSurfaceContainerLow">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_surface</item>
++        <item name="colorOutline">@color/n9_separator</item>
++        <item name="colorOutlineVariant">@color/n9_separator</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:windowLightStatusBar">@bool/n9_light_bars</item>
++        <item name="android:windowLightNavigationBar">@bool/n9_light_bars</item>
++        <item name="android:statusBarColor">@color/n9_window</item>
++        <item name="materialSwitchStyle">@style/Theme.DeskClock.MaterialSwitch</item>
++        <item name="bottomNavigationStyle">@style/Widget.DeskClock.BottomNavigation</item>
+         <item name="android:colorBackgroundFloating">?attr/colorBackgroundFloating</item>
+         <item name="android:navigationBarColor">?attr/colorSurfaceVariant</item>
+         <item name="popupMenuBackground">@drawable/popup_background</item>
+@@ -57,12 +90,30 @@
+     <style name="Widget.DeskClock.FloatingActionButton"
+         parent="Widget.Material3Expressive.FloatingActionButton">
+         <item name="shapeAppearanceOverlay">
+-            @style/ShapeAppearance.Material3.Corner.Full
+-        </item>
++@style/ShapeAppearance.DeskClock.N9Squircle</item>
++        <item name="backgroundTint">@color/n9_blue</item>
++        <item name="tint">@color/white</item>
++        <item name="elevation">2dp</item>
++    </style>
++
++    <!-- Etesian rounded square: radius ~28% of the short side. -->
++    <style name="ShapeAppearance.DeskClock.N9Squircle" parent="">
++        <item name="cornerFamily">rounded</item>
++        <item name="cornerSize">28%</item>
++    </style>
++
++    <!-- Flat, light bottom navigation with N9-blue selection (no pill). -->
++    <style name="Widget.DeskClock.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
++        <item name="backgroundTint">@color/n9_surface</item>
++        <item name="elevation">0dp</item>
++        <item name="itemActiveIndicatorStyle">@style/N9.BottomNavigation.ActiveIndicator</item>
++        <item name="itemRippleColor">@color/n9_blue_container</item>
+     </style>
+ 
+     <style name="Theme.DeskClock.MaterialSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+         <item name="thumbIcon">@drawable/switch_thumb_icon</item>
+         <item name="thumbIconTint">@color/switch_thumb_icon</item>
++        <item name="trackTint">@color/n9_switch_track</item>
++        <item name="thumbTint">@color/n9_switch_thumb</item>
+     </style>
+ </resources>
+diff --git a/res/values/themes_settingslib.xml b/res/values/themes_settingslib.xml
+index cd9facc9e..7bbd3d3f6 100644
+--- a/res/values/themes_settingslib.xml
++++ b/res/values/themes_settingslib.xml
+@@ -15,7 +15,12 @@
+   limitations under the License.
+ -->
+ <resources>
+-    <style name="Theme.Toolbar.Settings" parent="Theme.Material3Expressive.DynamicColors.Dark.NoActionBar">
++    <style name="Theme.Toolbar.Settings" parent="Theme.Material3Expressive.DayNight.NoActionBar">
++        <!-- N9: flat light toolbar -->
++        <item name="colorSurface">@color/n9_window</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
+         <item name="colorPrimary">?attr/colorSurface</item>
+         <item name="colorSecondary">?attr/colorPrimary</item>
+     </style>
+diff --git a/src/com/android/deskclock/AlarmClockFragment.java b/src/com/android/deskclock/AlarmClockFragment.java
+index fcb74854e..69ad50379 100644
+--- a/src/com/android/deskclock/AlarmClockFragment.java
++++ b/src/com/android/deskclock/AlarmClockFragment.java
+@@ -181,6 +181,10 @@ public final class AlarmClockFragment extends DeskClockFragment implements
+         itemAnimator.setChangeDuration(150L);
+         itemAnimator.setMoveDuration(150L);
+         mRecyclerView.setItemAnimator(itemAnimator);
++        v.findViewById(R.id.n9_add_alarm).setOnClickListener(view -> {
++            mAlarmUpdateHandler.hideUndoBar();
++            startCreatingAlarm();
++        });
+         return v;
+     }
+ 
+@@ -392,7 +396,8 @@ public final class AlarmClockFragment extends DeskClockFragment implements
+ 
+     @Override
+     public void onUpdateFab(@NonNull ImageView fab) {
+-        fab.setVisibility(View.VISIBLE);
++        // N9: alarms are added with the "+" in the Alarms header instead.
++        fab.setVisibility(View.INVISIBLE);
+         fab.setImageResource(R.drawable.ic_add_24dp);
+         fab.setContentDescription(fab.getResources().getString(R.string.button_alarms));
+     }
+@@ -405,7 +410,7 @@ public final class AlarmClockFragment extends DeskClockFragment implements
+ 
+     @Override
+     public int getFabTargetVisibility() {
+-        return View.VISIBLE;
++        return View.INVISIBLE;
+     }
+ 
+     private void startCreatingAlarm() {
+@@ -415,8 +420,23 @@ public final class AlarmClockFragment extends DeskClockFragment implements
+     }
+ 
+     @Override
+-    public void onTimeSet(int hourOfDay, int minute) {
+-        mAlarmTimeClickHandler.onTimeSet(hourOfDay, minute);
++    public void onTimeSet(int hourOfDay, int minute, String label) {
++        mAlarmTimeClickHandler.onTimeSet(hourOfDay, minute, label);
++    }
++
++    @Override
++    public void onOptionsSet(int days, boolean vibrate) {
++        mAlarmTimeClickHandler.setPendingOptions(days, vibrate);
++    }
++
++    @Override
++    public void onRingtoneRequested() {
++        mAlarmTimeClickHandler.onSelectedRingtoneClicked();
++    }
++
++    @Override
++    public void onDeleteRequested() {
++        mAlarmTimeClickHandler.deleteSelectedAlarm();
+     }
+ 
+     public void removeItem(AlarmItemHolder itemHolder) {
+diff --git a/src/com/android/deskclock/BaseActivity.java b/src/com/android/deskclock/BaseActivity.java
+index cf785bde4..55b594a00 100644
+--- a/src/com/android/deskclock/BaseActivity.java
++++ b/src/com/android/deskclock/BaseActivity.java
+@@ -16,12 +16,16 @@
+ 
+ package com.android.deskclock;
+ 
++import android.content.Context;
+ import android.graphics.drawable.ColorDrawable;
+ import android.os.Bundle;
+ import android.view.View;
+ 
+ import androidx.annotation.ColorInt;
+ import androidx.appcompat.app.AppCompatActivity;
++import androidx.appcompat.app.AppCompatDelegate;
++
++import com.bompotis.etesian.theme.EtesianBackground;
+ 
+ /**
+  * Base activity class that changes the app window's color based on the current hour.
+@@ -31,6 +35,35 @@ public abstract class BaseActivity extends AppCompatActivity {
+     /** Draws the app window's color. */
+     private ColorDrawable mBackground;
+ 
++    /** The Etesian "Apps" background read at creation; null when not followed. */
++    private EtesianBackground.Style mEtesianStyle;
++
++    /**
++     * Whether this activity follows the user's Etesian background for apps that are light on
++     * the N9. Activities with their own look (screensaver, firing alarm) return false and stay in
++     * the light N9 palette.
++     */
++    protected boolean followsEtesianBackground() {
++        return true;
++    }
++
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        // Night resources hold the N9 palette for dark backgrounds; force the mode both ways so
++        // the system dark theme never changes the light N9 look. Set before the delegate attaches,
++        // so it applies without a recreate.
++        mEtesianStyle = followsEtesianBackground()
++                ? EtesianBackground.content(newBase) : null;
++        getDelegate().setLocalNightMode(mEtesianStyle != null && mEtesianStyle.dark
++                ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
++        super.attachBaseContext(newBase);
++    }
++
++    /** Whether the window shows a dark Etesian background instead of the N9 light grey. */
++    private boolean isEtesianDark() {
++        return mEtesianStyle != null && mEtesianStyle.dark;
++    }
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+@@ -41,8 +74,13 @@ public abstract class BaseActivity extends AppCompatActivity {
+                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+ 
+-        final @ColorInt int color = ThemeUtils.resolveColor(this, android.R.attr.windowBackground);
+-        adjustAppColor(color);
++        if (isEtesianDark()) {
++            EtesianBackground.apply(this, mEtesianStyle);
++        } else {
++            final @ColorInt int color =
++                    ThemeUtils.resolveColor(this, android.R.attr.windowBackground);
++            adjustAppColor(color);
++        }
+     }
+ 
+     @Override
+@@ -50,8 +88,21 @@ public abstract class BaseActivity extends AppCompatActivity {
+         super.onStart();
+ 
+         // Ensure the app window color is up-to-date.
+-        final @ColorInt int color = ThemeUtils.resolveColor(this, android.R.attr.windowBackground);
+-        adjustAppColor(color);
++        if (!isEtesianDark()) {
++            final @ColorInt int color =
++                    ThemeUtils.resolveColor(this, android.R.attr.windowBackground);
++            adjustAppColor(color);
++        }
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != null && mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
+     }
+ 
+     /**
+diff --git a/src/com/android/deskclock/ClockFragment.java b/src/com/android/deskclock/ClockFragment.java
+index bb271b756..8e27a428e 100644
+--- a/src/com/android/deskclock/ClockFragment.java
++++ b/src/com/android/deskclock/ClockFragment.java
+@@ -189,7 +189,8 @@ public final class ClockFragment extends DeskClockFragment {
+     @Override
+     public void onUpdateFab(@NonNull ImageView fab) {
+         fab.setVisibility(VISIBLE);
+-        fab.setImageResource(R.drawable.ic_public);
++        // N9: add-city is a "+" on the orange pill.
++        fab.setImageResource(R.drawable.ic_add_24dp);
+         fab.setContentDescription(fab.getResources().getString(R.string.button_cities));
+     }
+ 
+diff --git a/src/com/android/deskclock/DeskClock.java b/src/com/android/deskclock/DeskClock.java
+index d1e95ad6a..ac9df1cdc 100644
+--- a/src/com/android/deskclock/DeskClock.java
++++ b/src/com/android/deskclock/DeskClock.java
+@@ -115,6 +115,41 @@ public class DeskClock extends BaseActivity
+     /** The bottom navigation bar */
+     private BottomNavigationView mBottomNavigation;
+ 
++    /** Whether the system N9 toolbar shows Clock's buttons (instead of {@link #mN9TabBar}). */
++    private boolean mUseSystemToolbar;
++
++    /** Clock's pages and settings on the system toolbar, with Back first. */
++    private void updateSystemToolbar(int selectedPage) {
++        com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setBack(true).setItems(id -> {
++            if ("settings".equals(id)) {
++                startActivityForResult(new Intent(this,
++                                com.android.deskclock.settings.SettingsActivity.class),
++                        com.android.deskclock.actionbarmenu.SettingsMenuItemController
++                                .REQUEST_CHANGE_SETTINGS);
++            } else {
++                mBottomNavigation.setSelectedItemId(Integer.parseInt(id));
++            }
++        },
++                tab(R.id.page_alarm, R.drawable.ic_tab_alarm_static, R.string.menu_alarm,
++                        selectedPage),
++                tab(R.id.page_clock, R.drawable.ic_public, R.string.n9_world_clock, selectedPage),
++                tab(R.id.page_timer, R.drawable.ic_tab_timer_static, R.string.menu_timer,
++                        selectedPage),
++                tab(R.id.page_stopwatch, R.drawable.ic_tab_stopwatch_static,
++                        R.string.menu_stopwatch, selectedPage),
++                com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("settings",
++                        R.drawable.ic_settings, getString(R.string.menu_item_settings)));
++    }
++
++    private com.bompotis.etesian.toolbar.EtesianToolbar.Item tab(int page, int icon, int label,
++            int selectedPage) {
++        return com.bompotis.etesian.toolbar.EtesianToolbar.Item.tab(String.valueOf(page), icon,
++                getString(label), page == selectedPage);
++    }
++
++    /** N9 toolbar shown in place of {@link #mBottomNavigation}. */
++    private com.android.deskclock.widget.N9TabBar mN9TabBar;
++
+     private FragmentUtils mFragmentUtils;
+ 
+     /** {@code true} when a settings change necessitates recreating this activity. */
+@@ -143,6 +178,12 @@ public class DeskClock extends BaseActivity
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
++        // N9 look: light page, so dark status and navigation bar icons.
++        getWindow().getInsetsController().setSystemBarsAppearance(
++                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
++                        | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
++                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
++                        | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+ 
+         setContentView(R.layout.desk_clock);
+         mSnackbarAnchor = findViewById(R.id.content);
+@@ -233,6 +274,25 @@ public class DeskClock extends BaseActivity
+         mBottomNavigation = findViewById(R.id.bottom_view);
+         mBottomNavigation.setOnItemSelectedListener(mNavigationListener);
+ 
++        // N9 toolbar: back first, the pages as icons (alarms share a page with the clock),
++        // settings last. It drives the hidden bottom navigation, which stays the source of tabs.
++        mN9TabBar = findViewById(R.id.n9_tab_bar);
++        mN9TabBar.addBackButton(v -> getOnBackPressedDispatcher().onBackPressed());
++        mN9TabBar.addTab(R.id.page_alarm, R.drawable.ic_tab_alarm_static, R.string.menu_alarm);
++        mN9TabBar.addTab(R.id.page_clock, R.drawable.ic_public, R.string.n9_world_clock);
++        mN9TabBar.addTab(R.id.page_timer, R.drawable.ic_tab_timer_static, R.string.menu_timer);
++        mN9TabBar.addTab(R.id.page_stopwatch, R.drawable.ic_tab_stopwatch_static,
++                R.string.menu_stopwatch);
++        mN9TabBar.addAction(R.drawable.ic_settings, R.string.menu_item_settings, v ->
++                startActivityForResult(new Intent(this,
++                                com.android.deskclock.settings.SettingsActivity.class),
++                        com.android.deskclock.actionbarmenu.SettingsMenuItemController
++                                .REQUEST_CHANGE_SETTINGS));
++        mN9TabBar.setOnTabSelectedListener(id -> mBottomNavigation.setSelectedItemId(id));
++        // With the system N9 toolbar on, Clock's buttons go there instead of its own bar.
++        mUseSystemToolbar = com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this);
++        mN9TabBar.setVisibility(mUseSystemToolbar ? View.GONE : View.VISIBLE);
++
+         // Honor changes to the selected tab from outside entities.
+         UiDataModel.getUiDataModel().addTabListener(mTabChangeWatcher);
+ 
+@@ -541,6 +601,10 @@ public class DeskClock extends BaseActivity
+         final UiDataModel.Tab selectedTab = UiDataModel.getUiDataModel().getSelectedTab();
+         // Update the selected tab in the mBottomNavigation if it does not agree with UiDataModel.
+         mBottomNavigation.setSelectedItemId(selectedTab.getPageResId());
++        mN9TabBar.setSelectedTab(selectedTab.getPageResId());
++        if (mUseSystemToolbar) {
++            updateSystemToolbar(selectedTab.getPageResId());
++        }
+         mFragmentUtils.showFragment(selectedTab);
+         mTitleView.setText(selectedTab.getLabelResId());
+     }
+diff --git a/src/com/android/deskclock/DeskClockApplication.java b/src/com/android/deskclock/DeskClockApplication.java
+index 28854ebcb..b83eab0cb 100644
+--- a/src/com/android/deskclock/DeskClockApplication.java
++++ b/src/com/android/deskclock/DeskClockApplication.java
+@@ -26,7 +26,6 @@ import com.android.deskclock.controller.Controller;
+ import com.android.deskclock.data.DataModel;
+ import com.android.deskclock.events.LogEventTracker;
+ import com.android.deskclock.uidata.UiDataModel;
+-import com.google.android.material.color.DynamicColors;
+ 
+ public class DeskClockApplication extends Application {
+ 
+@@ -41,7 +40,8 @@ public class DeskClockApplication extends Application {
+         UiDataModel.getUiDataModel().init(applicationContext, prefs);
+         Controller.getController().setContext(applicationContext);
+         Controller.getController().addEventTracker(new LogEventTracker(applicationContext));
+-        DynamicColors.applyToActivitiesIfAvailable(this);
++        // N9 look: static light palette, no Material You dynamic colour.
++        // DynamicColors.applyToActivitiesIfAvailable(this);
+     }
+ 
+     /**
+diff --git a/src/com/android/deskclock/ScreensaverActivity.java b/src/com/android/deskclock/ScreensaverActivity.java
+index f19931d57..d59216043 100644
+--- a/src/com/android/deskclock/ScreensaverActivity.java
++++ b/src/com/android/deskclock/ScreensaverActivity.java
+@@ -89,6 +89,12 @@ public class ScreensaverActivity extends BaseActivity {
+ 
+     private boolean mAlreadyActive;
+ 
++    /** Keeps its own look rather than the Etesian app background. */
++    @Override
++    protected boolean followsEtesianBackground() {
++        return false;
++    }
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+diff --git a/src/com/android/deskclock/alarms/AlarmActivity.java b/src/com/android/deskclock/alarms/AlarmActivity.java
+index 00091abb4..659225d0f 100644
+--- a/src/com/android/deskclock/alarms/AlarmActivity.java
++++ b/src/com/android/deskclock/alarms/AlarmActivity.java
+@@ -154,6 +154,12 @@ public class AlarmActivity extends BaseActivity
+ 
+     private int mInitialPointerIndex = MotionEvent.INVALID_POINTER_ID;
+ 
++    /** Keeps its own look rather than the Etesian app background. */
++    @Override
++    protected boolean followsEtesianBackground() {
++        return false;
++    }
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+diff --git a/src/com/android/deskclock/alarms/AlarmTimeClickHandler.java b/src/com/android/deskclock/alarms/AlarmTimeClickHandler.java
+index f74974b2c..39af38a65 100644
+--- a/src/com/android/deskclock/alarms/AlarmTimeClickHandler.java
++++ b/src/com/android/deskclock/alarms/AlarmTimeClickHandler.java
+@@ -30,6 +30,7 @@ import com.android.deskclock.LogUtils;
+ import com.android.deskclock.R;
+ import com.android.deskclock.alarms.dataadapter.AlarmItemHolder;
+ import com.android.deskclock.data.DataModel;
++import com.android.deskclock.data.Weekdays;
+ import com.android.deskclock.events.Events;
+ import com.android.deskclock.provider.Alarm;
+ import com.android.deskclock.provider.AlarmInstance;
+@@ -132,7 +133,42 @@ public final class AlarmTimeClickHandler {
+     public void onClockClicked(Alarm alarm) {
+         mSelectedAlarm = alarm;
+         Events.sendAlarmEvent(R.string.action_set_time, R.string.label_deskclock);
+-        TimePickerDialogFragment.show(mFragment, alarm.hour, alarm.minutes);
++        TimePickerDialogFragment.show(mFragment, alarm.hour, alarm.minutes, alarm.label,
++                alarm.daysOfWeek.getBits(), alarm.vibrate, true,
++                DataModel.getDataModel().getRingtoneTitle(alarm.alert));
++    }
++
++    /** N9 editor: repeat days and vibrate to apply with the next {@link #onTimeSet}. */
++    private Integer mPendingDays;
++    private Boolean mPendingVibrate;
++
++    public void setPendingOptions(int days, boolean vibrate) {
++        mPendingDays = days;
++        mPendingVibrate = vibrate;
++    }
++
++    /** N9 editor: "Delete alarm" for the alarm being edited. */
++    public void deleteSelectedAlarm() {
++        if (mSelectedAlarm == null) return;
++        Events.sendAlarmEvent(R.string.action_delete, R.string.label_deskclock);
++        mAlarmUpdateHandler.asyncDeleteAlarm(mSelectedAlarm);
++        mSelectedAlarm = null;
++    }
++
++    /** N9 editor: "Alarm sound" for the alarm being edited (the editor stays open). */
++    public void onSelectedRingtoneClicked() {
++        if (mSelectedAlarm != null && mFragment.getContext() != null) {
++            final Alarm editing = mSelectedAlarm;
++            onRingtoneClicked(mFragment.getContext(), editing);
++            mSelectedAlarm = editing;
++        }
++    }
++
++    private void applyPendingOptions(Alarm alarm) {
++        if (mPendingDays != null) alarm.daysOfWeek = Weekdays.fromBits(mPendingDays);
++        if (mPendingVibrate != null) alarm.vibrate = mPendingVibrate;
++        mPendingDays = null;
++        mPendingVibrate = null;
+     }
+ 
+     public void dismissAlarmInstance(AlarmInstance alarmInstance) {
+@@ -159,18 +195,25 @@ public final class AlarmTimeClickHandler {
+         LabelDialogFragment.show(mFragment.getParentFragmentManager(), fragment);
+     }
+ 
+-    public void onTimeSet(int hourOfDay, int minute) {
++    public void onTimeSet(int hourOfDay, int minute, String label) {
+         if (mSelectedAlarm == null) {
+             // If mSelectedAlarm is null then we're creating a new alarm.
+             final Alarm a = new Alarm();
+             a.hour = hourOfDay;
+             a.minutes = minute;
++            a.label = label == null ? "" : label;
+             a.enabled = true;
++            applyPendingOptions(a);
+             mAlarmUpdateHandler.asyncAddAlarm(a);
+         } else {
+             mSelectedAlarm.hour = hourOfDay;
+             mSelectedAlarm.minutes = minute;
++            mSelectedAlarm.label = label == null ? "" : label;
+             mSelectedAlarm.enabled = true;
++            applyPendingOptions(mSelectedAlarm);
++            // The sound may have been changed from the editor meanwhile; keep it.
++            final Alarm stored = Alarm.getAlarm(mContext.getContentResolver(), mSelectedAlarm.id);
++            if (stored != null) mSelectedAlarm.alert = stored.alert;
+             mScrollHandler.setSmoothScrollStableId(mSelectedAlarm.id);
+             mAlarmUpdateHandler.asyncUpdateAlarm(mSelectedAlarm, true, false);
+             mSelectedAlarm = null;
+diff --git a/src/com/android/deskclock/alarms/TimePickerDialogFragment.java b/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
+index 582fff5dd..10410b477 100644
+--- a/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
++++ b/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
+@@ -17,20 +17,37 @@
+ package com.android.deskclock.alarms;
+ 
+ import android.app.Dialog;
+-import android.app.TimePickerDialog;
+ import android.content.Context;
++import android.graphics.Color;
++import android.graphics.Typeface;
++import android.graphics.drawable.ColorDrawable;
++import android.graphics.drawable.GradientDrawable;
+ import android.os.Bundle;
+ import android.text.format.DateFormat;
++import android.util.TypedValue;
++import android.view.Gravity;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.Window;
++import android.widget.EditText;
++import android.widget.LinearLayout;
++import android.widget.ScrollView;
++import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.fragment.app.DialogFragment;
+ import androidx.fragment.app.Fragment;
+ import androidx.fragment.app.FragmentManager;
+ 
++import com.android.deskclock.R;
++
++import com.bompotis.etesian.theme.EtesianBackground;
++
+ import java.util.Calendar;
++import java.util.Locale;
+ 
+ /**
+- * DialogFragment used to show TimePicker.
++ * DialogFragment showing the N9 (Etesian) style full screen alarm editor.
+  */
+ public class TimePickerDialogFragment extends DialogFragment {
+ 
+@@ -41,28 +58,390 @@ public class TimePickerDialogFragment extends DialogFragment {
+ 
+     private static final String ARG_HOUR = TAG + "_hour";
+     private static final String ARG_MINUTE = TAG + "_minute";
++    private static final String ARG_LABEL = TAG + "_label";
++    private static final String ARG_DAYS = TAG + "_days";
++    private static final String ARG_VIBRATE = TAG + "_vibrate";
++    private static final String ARG_EXISTING = TAG + "_existing";
++    private static final String ARG_RINGTONE = TAG + "_ringtone";
++    private static final String STATE_DAYS = TAG + "_state_days";
++    private static final String STATE_VIBRATE = TAG + "_state_vibrate";
++    private static final String STATE_MORE = TAG + "_state_more";
++    private static final String STATE_HOUR = TAG + "_state_hour";
++    private static final String STATE_MINUTE = TAG + "_state_minute";
++
++    private N9AlarmDialView mDial;
++    private TextView mTimeText;
++    private EditText mTitle;
++    private boolean m24Hour;
++    /** Repeat days (Weekdays bits) and vibrate, applied with the time on Save. */
++    private int mDays;
++    private boolean mVibrate;
++    private boolean mMoreShown;
+ 
+     @NonNull
+     @Override
+     public Dialog onCreateDialog(Bundle savedInstanceState) {
+-        final OnTimeSetListener listener = ((OnTimeSetListener) getParentFragment());
+-
+         final Calendar now = Calendar.getInstance();
+         final Bundle args = getArguments() == null ? Bundle.EMPTY : getArguments();
+-        final int hour = args.getInt(ARG_HOUR, now.get(Calendar.HOUR_OF_DAY));
+-        final int minute = args.getInt(ARG_MINUTE, now.get(Calendar.MINUTE));
++        int hour = args.getInt(ARG_HOUR, now.get(Calendar.HOUR_OF_DAY));
++        int minute = args.getInt(ARG_MINUTE, now.get(Calendar.MINUTE));
++        mDays = args.getInt(ARG_DAYS, 0);
++        mVibrate = args.getBoolean(ARG_VIBRATE, true);
++        if (savedInstanceState != null) {
++            hour = savedInstanceState.getInt(STATE_HOUR, hour);
++            minute = savedInstanceState.getInt(STATE_MINUTE, minute);
++            mDays = savedInstanceState.getInt(STATE_DAYS, mDays);
++            mVibrate = savedInstanceState.getBoolean(STATE_VIBRATE, mVibrate);
++            mMoreShown = savedInstanceState.getBoolean(STATE_MORE, false);
++        }
++
++        final Context context = requireActivity();
++        m24Hour = DateFormat.is24HourFormat(context);
++
++        // On a dark Etesian background (the activity is in night mode then) the editor
++        // shows the same black, grey or wallpaper background as the app, with dark widgets.
++        final EtesianBackground.Style style = EtesianBackground.content(context);
++        final Dialog dialog = new Dialog(context, style.dark
++                ? android.R.style.Theme_DeviceDefault_NoActionBar
++                : android.R.style.Theme_DeviceDefault_Light_NoActionBar);
++        dialog.setContentView(buildContent(context, hour, minute, args.getString(ARG_LABEL)));
++        final Window w = dialog.getWindow();
++        if (w != null) {
++            final int bars = style.dark ? Color.BLACK : 0xFFDDE1E6;
++            w.setBackgroundDrawable(style.dark
++                    ? EtesianBackground.drawable(context, style, "light")
++                    : new ColorDrawable(0xFFDDE1E6));
++            w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
++            w.setStatusBarColor(bars);
++            w.setNavigationBarColor(bars);
++            w.setWindowAnimations(com.android.deskclock.R.style.N9EditorAnimation);
++        }
++        return dialog;
++    }
++
++    @Override
++    public void onSaveInstanceState(@NonNull Bundle outState) {
++        super.onSaveInstanceState(outState);
++        if (mDial != null) {
++            outState.putInt(STATE_HOUR, mDial.getHour());
++            outState.putInt(STATE_MINUTE, mDial.getMinute());
++        }
++        outState.putInt(STATE_DAYS, mDays);
++        outState.putBoolean(STATE_VIBRATE, mVibrate);
++        outState.putBoolean(STATE_MORE, mMoreShown);
++    }
++
++    /** A palette colour; values-night holds its dark-background variant. */
++    private static int col(Context c, int id) {
++        return c.getColor(id);
++    }
++
++    private int dp(Context c, float v) {
++        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v,
++                c.getResources().getDisplayMetrics()));
++    }
+ 
+-        final Context context = getActivity();
+-        return new TimePickerDialog(context, (view, hourOfDay, minute1) ->
+-                listener.onTimeSet(hourOfDay, minute1),
+-                hour, minute, DateFormat.is24HourFormat(context));
++    private TextView pill(Context c, String text, int top, int bottom, int textColor,
++            int stroke) {
++        final TextView b = new TextView(c);
++        b.setText(text);
++        b.setTextColor(textColor);
++        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
++        b.setTypeface(Typeface.create("etesian-text", Typeface.BOLD));
++        b.setGravity(Gravity.CENTER);
++        b.setMinWidth(dp(c, 104));
++        b.setPadding(dp(c, 20), dp(c, 10), dp(c, 20), dp(c, 10));
++        final GradientDrawable bg = new GradientDrawable(
++                GradientDrawable.Orientation.TOP_BOTTOM, new int[] {top, bottom});
++        bg.setCornerRadius(dp(c, 24));
++        bg.setStroke(dp(c, 1), stroke);
++        b.setBackground(bg);
++        b.setClickable(true);
++        b.setFocusable(true);
++        return b;
++    }
++
++    private View buildContent(Context c, int hour, int minute, String label) {
++        final ScrollView scroll = new ScrollView(c);
++        scroll.setFillViewport(true);
++        scroll.setBackgroundColor(col(c, R.color.n9_editor_page));
++
++        final LinearLayout root = new LinearLayout(c);
++        root.setOrientation(LinearLayout.VERTICAL);
++        root.setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 12));
++        scroll.addView(root, new ViewGroup.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
++
++        // Top row: Cancel / Save.
++        final LinearLayout top = new LinearLayout(c);
++        top.setOrientation(LinearLayout.HORIZONTAL);
++        final TextView cancel = pill(c, c.getString(android.R.string.cancel),
++                col(c, R.color.n9_pill_light_top), col(c, R.color.n9_pill_light_bottom),
++                col(c, R.color.n9_text_dark), col(c, R.color.n9_pill_light_stroke));
++        final TextView save = pill(c, c.getString(com.android.deskclock.R.string.n9_alarm_save),
++                0xFFFF9A3C, 0xFFF07010, Color.WHITE, 0xFFD06008);
++        top.addView(cancel);
++        final View spacer = new View(c);
++        top.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
++        top.addView(save);
++        root.addView(top);
++
++        // Alarm title.
++        mTitle = new EditText(c);
++        mTitle.setHint(com.android.deskclock.R.string.n9_alarm_title_hint);
++        mTitle.setSingleLine(true);
++        mTitle.setTextColor(col(c, R.color.n9_text));
++        mTitle.setHintTextColor(col(c, R.color.n9_text_secondary));
++        mTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
++        mTitle.setPadding(dp(c, 14), dp(c, 10), dp(c, 14), dp(c, 10));
++        final GradientDrawable field = new GradientDrawable();
++        field.setColor(col(c, R.color.n9_field));
++        field.setCornerRadius(dp(c, 10));
++        field.setStroke(dp(c, 1), col(c, R.color.n9_field_stroke));
++        mTitle.setBackground(field);
++        if (label != null) {
++            mTitle.setText(label);
++        }
++        final LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
++        titleLp.topMargin = dp(c, 16);
++        root.addView(mTitle, titleLp);
++
++        // Big time text.
++        mTimeText = new TextView(c);
++        mTimeText.setTextColor(col(c, R.color.n9_text_dark));
++        mTimeText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 56);
++        // Nokia Pure Text Light (weight 300 of the N9 font family).
++        mTimeText.setTypeface(Typeface.create(Typeface.create("etesian-text", Typeface.NORMAL),
++                300, false));
++        mTimeText.setGravity(Gravity.CENTER);
++        final LinearLayout.LayoutParams timeLp = new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
++        timeLp.topMargin = dp(c, 8);
++        root.addView(mTimeText, timeLp);
++
++        // Dial.
++        mDial = new N9AlarmDialView(c);
++        mDial.set24Hour(m24Hour);
++        mDial.setTime(hour, minute);
++        mDial.setOnTimeChangedListener((h, m) -> updateTimeText());
++        // Smaller than full width, so the options below fit with it on screen.
++        final LinearLayout.LayoutParams dialLp = new LinearLayout.LayoutParams(
++                Math.round(c.getResources().getDisplayMetrics().widthPixels * 0.74f),
++                ViewGroup.LayoutParams.WRAP_CONTENT);
++        dialLp.gravity = Gravity.CENTER_HORIZONTAL;
++        dialLp.topMargin = dp(c, 4);
++        root.addView(mDial, dialLp);
++        if (!m24Hour) {
++            // In 12 hour mode tapping the time toggles AM/PM.
++            mTimeText.setOnClickListener(v -> {
++                mDial.setTime((mDial.getHour() + 12) % 24, mDial.getMinute());
++                updateTimeText();
++            });
++        }
++        updateTimeText();
++
++        // More options row.
++        final TextView more = new TextView(c);
++        more.setText(c.getString(com.android.deskclock.R.string.n9_more_options));
++        more.setTextColor(col(c, R.color.n9_text));
++        more.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
++        more.setPadding(dp(c, 4), dp(c, 16), dp(c, 4), dp(c, 16));
++        more.setClickable(true);
++        final LinearLayout.LayoutParams moreLp = new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
++        moreLp.topMargin = dp(c, 8);
++        root.addView(more, moreLp);
++
++        // More options: repeat days, sound, vibrate and (for an existing alarm) delete, shown
++        // in place under the dial.
++        final Bundle args = getArguments() == null ? Bundle.EMPTY : getArguments();
++        final View options = buildOptions(c, args.getBoolean(ARG_EXISTING),
++                args.getString(ARG_RINGTONE));
++        root.addView(options);
++        options.setVisibility(mMoreShown ? View.VISIBLE : View.GONE);
++        more.setVisibility(mMoreShown ? View.GONE : View.VISIBLE);
++        more.setOnClickListener(v -> {
++            mMoreShown = true;
++            more.setVisibility(View.GONE);
++            options.setVisibility(View.VISIBLE);
++            scroll.post(() -> scroll.smoothScrollTo(0, options.getTop()));
++        });
++
++        cancel.setOnClickListener(v -> dismiss());
++        save.setOnClickListener(v -> deliver());
++        return scroll;
++    }
++
++    private View buildOptions(Context c, boolean existing, String ringtone) {
++        final LinearLayout box = new LinearLayout(c);
++        box.setOrientation(LinearLayout.VERTICAL);
++
++        box.addView(sectionLabel(c, c.getString(com.android.deskclock.R.string.n9_repeat)));
++        final LinearLayout days = new LinearLayout(c);
++        days.setOrientation(LinearLayout.HORIZONTAL);
++        final com.android.deskclock.data.Weekdays.Order order =
++                com.android.deskclock.data.DataModel.getDataModel().getWeekdayOrder();
++        final String[] names = new java.text.DateFormatSymbols().getShortWeekdays();
++        for (int calendarDay : order.getCalendarDays()) {
++            final TextView d = new TextView(c);
++            d.setText(names[calendarDay].substring(0, 1).toUpperCase(Locale.getDefault()));
++            d.setGravity(Gravity.CENTER);
++            d.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++            d.setTypeface(Typeface.create("etesian-text", Typeface.BOLD));
++            d.setContentDescription(names[calendarDay]);
++            final Runnable paint = () -> {
++                final boolean on = com.android.deskclock.data.Weekdays.fromBits(mDays)
++                        .isBitOn(calendarDay);
++                final GradientDrawable bg = new GradientDrawable();
++                bg.setShape(GradientDrawable.OVAL);
++                if (on) {
++                    bg.setColors(new int[] {0xFFFF9A3C, 0xFFF07010});
++                    bg.setStroke(dp(c, 1), 0xFFD06008);
++                } else {
++                    bg.setColors(new int[] {col(c, R.color.n9_key_top),
++                            col(c, R.color.n9_key_bottom)});
++                    bg.setStroke(dp(c, 1), col(c, R.color.n9_pill_light_stroke));
++                }
++                d.setBackground(bg);
++                d.setTextColor(on ? Color.WHITE : col(c, R.color.n9_text_dark));
++            };
++            paint.run();
++            d.setOnClickListener(v -> {
++                final boolean on = com.android.deskclock.data.Weekdays.fromBits(mDays)
++                        .isBitOn(calendarDay);
++                mDays = com.android.deskclock.data.Weekdays.fromBits(mDays)
++                        .setBit(calendarDay, !on).getBits();
++                paint.run();
++            });
++            // A round button centred in an equal share of the row.
++            final android.widget.FrameLayout cell = new android.widget.FrameLayout(c);
++            cell.addView(d, new android.widget.FrameLayout.LayoutParams(dp(c, 42), dp(c, 42),
++                    Gravity.CENTER));
++            days.addView(cell, new LinearLayout.LayoutParams(0, dp(c, 46), 1f));
++        }
++        box.addView(days);
++
++        if (existing) {
++            final LinearLayout sound = row(c, c.getString(com.android.deskclock.R.string.n9_alarm_sound),
++                    ringtone);
++            sound.setOnClickListener(v -> {
++                final Fragment parent = getParentFragment();
++                if (parent instanceof OnTimeSetListener) {
++                    ((OnTimeSetListener) parent).onRingtoneRequested();
++                }
++            });
++            box.addView(sound);
++        }
++
++        final LinearLayout vibrate = row(c, c.getString(com.android.deskclock.R.string.n9_vibrate),
++                null);
++        final android.widget.Switch toggle = new android.widget.Switch(c);
++        toggle.setChecked(mVibrate);
++        toggle.setThumbTintList(android.content.res.ColorStateList.valueOf(Color.WHITE));
++        toggle.setTrackTintList(new android.content.res.ColorStateList(
++                new int[][] {{android.R.attr.state_checked}, {}},
++                new int[] {0xFFF07A1E,
++                        col(c, R.color.n9_editor_switch_off)}));
++        toggle.setOnCheckedChangeListener((b, on) -> mVibrate = on);
++        vibrate.removeViewAt(vibrate.getChildCount() - 1); // no chevron
++        vibrate.addView(toggle);
++        vibrate.setOnClickListener(v -> toggle.toggle());
++        box.addView(vibrate);
++
++        if (existing) {
++            final TextView delete = pill(c, c.getString(com.android.deskclock.R.string.n9_delete_alarm),
++                    col(c, R.color.n9_pill_light_top), col(c, R.color.n9_pill_light_bottom),
++                    0xFFC8201E, col(c, R.color.n9_pill_light_stroke));
++            final LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
++                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
++            lp.topMargin = dp(c, 24);
++            lp.bottomMargin = dp(c, 16);
++            delete.setOnClickListener(v -> {
++                final Fragment parent = getParentFragment();
++                if (parent instanceof OnTimeSetListener) {
++                    ((OnTimeSetListener) parent).onDeleteRequested();
++                }
++                dismiss();
++            });
++            box.addView(delete, lp);
++        }
++        return box;
++    }
++
++    private TextView sectionLabel(Context c, String text) {
++        final TextView t = new TextView(c);
++        t.setText(text);
++        t.setTextColor(col(c, R.color.n9_text_grey));
++        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++        t.setPadding(dp(c, 4), dp(c, 16), dp(c, 4), dp(c, 10));
++        return t;
++    }
++
++    /** An N9 list row: title (and grey value) on the left, a chevron on the right. */
++    private LinearLayout row(Context c, String title, String value) {
++        final LinearLayout row = new LinearLayout(c);
++        row.setOrientation(LinearLayout.HORIZONTAL);
++        row.setGravity(Gravity.CENTER_VERTICAL);
++        row.setMinimumHeight(dp(c, 64));
++        row.setPadding(dp(c, 4), dp(c, 8), dp(c, 4), dp(c, 8));
++        row.setClickable(true);
++        final LinearLayout texts = new LinearLayout(c);
++        texts.setOrientation(LinearLayout.VERTICAL);
++        final TextView t = new TextView(c);
++        t.setText(title);
++        t.setTextColor(col(c, R.color.n9_text));
++        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
++        t.setTypeface(Typeface.create("etesian-text", Typeface.BOLD));
++        texts.addView(t);
++        if (value != null) {
++            final TextView v = new TextView(c);
++            v.setText(value);
++            v.setTextColor(col(c, R.color.n9_text_grey));
++            v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++            texts.addView(v);
++        }
++        row.addView(texts, new LinearLayout.LayoutParams(0,
++                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
++        final android.widget.ImageView chevron = new android.widget.ImageView(c);
++        chevron.setImageResource(com.android.deskclock.R.drawable.ic_n9_chevron);
++        row.addView(chevron);
++        return row;
++    }
++
++    private void updateTimeText() {
++        final int h = mDial.getHour();
++        final int m = mDial.getMinute();
++        if (m24Hour) {
++            mTimeText.setText(String.format(Locale.getDefault(), "%02d:%02d", h, m));
++        } else {
++            final int h12 = h % 12 == 0 ? 12 : h % 12;
++            mTimeText.setText(String.format(Locale.getDefault(), "%d:%02d %s", h12, m,
++                    h < 12 ? "AM" : "PM"));
++        }
++    }
++
++    private void deliver() {
++        final Fragment parent = getParentFragment();
++        if (parent instanceof OnTimeSetListener) {
++            ((OnTimeSetListener) parent).onOptionsSet(mDays, mVibrate);
++            ((OnTimeSetListener) parent).onTimeSet(mDial.getHour(), mDial.getMinute(),
++                    mTitle.getText().toString());
++        }
++        dismiss();
+     }
+ 
+     public static void show(Fragment fragment) {
+-        show(fragment, -1 /* hour */, -1 /* minute */);
++        show(fragment, -1 /* hour */, -1 /* minute */, null);
++    }
++
++    public static void show(Fragment parentFragment, int hourOfDay, int minute, String label) {
++        show(parentFragment, hourOfDay, minute, label, 0, true, false, null);
+     }
+ 
+-    public static void show(Fragment parentFragment, int hourOfDay, int minute) {
++    /** Editing an existing alarm (or a new one when {@code existing} is false). */
++    public static void show(Fragment parentFragment, int hourOfDay, int minute, String label,
++            int days, boolean vibrate, boolean existing, String ringtone) {
+         if (!(parentFragment instanceof OnTimeSetListener)) {
+             throw new IllegalArgumentException("Fragment must implement OnTimeSetListener");
+         }
+@@ -85,6 +464,11 @@ public class TimePickerDialogFragment extends DialogFragment {
+             args.putInt(ARG_MINUTE, minute);
+         }
+ 
++        args.putString(ARG_LABEL, label);
++        args.putInt(ARG_DAYS, days);
++        args.putBoolean(ARG_VIBRATE, vibrate);
++        args.putBoolean(ARG_EXISTING, existing);
++        args.putString(ARG_RINGTONE, ringtone);
+         fragment.setArguments(args);
+         fragment.show(manager, TAG);
+     }
+@@ -107,7 +491,17 @@ public class TimePickerDialogFragment extends DialogFragment {
+          * Called when the user is done setting a new time and the dialog has closed.
+          * @param hourOfDay the hour that was set
+          * @param minute    the minute that was set
++         * @param label     the alarm title entered in the editor
+          */
+-        void onTimeSet(int hourOfDay, int minute);
++        void onTimeSet(int hourOfDay, int minute, String label);
++
++        /** Repeat days (Weekdays bits) and vibrate chosen in the editor; precedes onTimeSet. */
++        default void onOptionsSet(int days, boolean vibrate) {}
++
++        /** "Alarm sound" was tapped while editing an existing alarm. */
++        default void onRingtoneRequested() {}
++
++        /** "Delete alarm" was tapped while editing an existing alarm. */
++        default void onDeleteRequested() {}
+     }
+ }
+diff --git a/src/com/android/deskclock/alarms/dataadapter/CollapsedAlarmViewHolder.java b/src/com/android/deskclock/alarms/dataadapter/CollapsedAlarmViewHolder.java
+index 02e47ffa5..14616157f 100644
+--- a/src/com/android/deskclock/alarms/dataadapter/CollapsedAlarmViewHolder.java
++++ b/src/com/android/deskclock/alarms/dataadapter/CollapsedAlarmViewHolder.java
+@@ -49,25 +49,20 @@ public final class CollapsedAlarmViewHolder extends AlarmItemViewHolder {
+ 
+         alarmLabel = itemView.findViewById(R.id.label);
+ 
+-        // Expand handler
+-        itemView.setOnClickListener(v -> {
+-            Events.sendAlarmEvent(R.string.action_expand_implied, R.string.label_deskclock);
+-            getItemHolder().expand();
+-        });
+-        alarmLabel.setOnClickListener(v -> {
+-            Events.sendAlarmEvent(R.string.action_expand_implied, R.string.label_deskclock);
+-            getItemHolder().expand();
+-        });
+-        arrow.setOnClickListener(v -> {
+-            Events.sendAlarmEvent(R.string.action_expand, R.string.label_deskclock);
+-            getItemHolder().expand();
+-        });
+-        // Edit time handler
+-        clock.setOnClickListener(v -> {
+-            getItemHolder().getAlarmTimeClickHandler().onClockClicked(getItemHolder().item);
+-            Events.sendAlarmEvent(R.string.action_expand_implied, R.string.label_deskclock);
+-            getItemHolder().expand();
+-        });
++        // N9: the row (and its chevron) opens the alarm editor, which holds every option.
++        final View.OnClickListener edit = v ->
++                getItemHolder().getAlarmTimeClickHandler().onClockClicked(getItemHolder().item);
++        itemView.setOnClickListener(edit);
++        alarmLabel.setOnClickListener(edit);
++        arrow.setOnClickListener(edit);
++        clock.setOnClickListener(edit);
++        // N9 row: bold time, smaller than the stock display time.
++        clock.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 24);
++        clock.setTypeface(android.graphics.Typeface.create(clock.getTypeface(),
++                android.graphics.Typeface.BOLD));
++        clock.setTextColor(clock.getContext().getColor(R.color.n9_text_alarm_time));
++        // Flat, but keep a background: the expand animation reads its padding.
++        clock.setBackground(new android.graphics.drawable.ColorDrawable(0));
+ 
+         itemView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+     }
+@@ -75,6 +70,10 @@ public final class CollapsedAlarmViewHolder extends AlarmItemViewHolder {
+     @Override
+     protected void onBindItemView(AlarmItemHolder itemHolder) {
+         super.onBindItemView(itemHolder);
++        // N9 row: the time stays bold and black whether or not the alarm is on.
++        clock.setAlpha(CLOCK_ENABLED_ALPHA);
++        clock.setTypeface(android.graphics.Typeface.create(clock.getTypeface(),
++                android.graphics.Typeface.BOLD));
+         final Alarm alarm = itemHolder.item;
+         final AlarmInstance alarmInstance = itemHolder.getAlarmInstance();
+         final Context context = itemView.getContext();
+@@ -101,12 +100,15 @@ public final class CollapsedAlarmViewHolder extends AlarmItemViewHolder {
+             alarmLabel.setContentDescription(context.getString(R.string.label_description)
+                     + " " + alarm.label);
+         } else {
+-            alarmLabel.setVisibility(View.GONE);
++            // N9: untitled alarms read "Alarm" (the hint).
++            alarmLabel.setText(null);
++            alarmLabel.setVisibility(View.VISIBLE);
+         }
+     }
+ 
+     private void bindAnnotations(Alarm alarm) {
+-        annotationsAlpha = alarm.enabled ? CLOCK_ENABLED_ALPHA : CLOCK_DISABLED_ALPHA;
++        // N9: switched-off alarms are not dimmed; the toggle shows the state.
++        annotationsAlpha = CLOCK_ENABLED_ALPHA;
+         setChangingViewsAlpha(annotationsAlpha);
+     }
+ 
+diff --git a/src/com/android/deskclock/stopwatch/StopwatchCircleView.java b/src/com/android/deskclock/stopwatch/StopwatchCircleView.java
+index 0a3e39c66..e43a3c600 100644
+--- a/src/com/android/deskclock/stopwatch/StopwatchCircleView.java
++++ b/src/com/android/deskclock/stopwatch/StopwatchCircleView.java
+@@ -19,14 +19,12 @@ package com.android.deskclock.stopwatch;
+ import android.content.Context;
+ import android.content.res.Resources;
+ import android.graphics.Canvas;
+-import android.graphics.Color;
+ import android.graphics.Paint;
+ import android.graphics.RectF;
+ import android.util.AttributeSet;
+ import android.view.View;
+ 
+ import com.android.deskclock.R;
+-import com.android.deskclock.ThemeUtils;
+ import com.android.deskclock.data.DataModel;
+ import com.android.deskclock.data.Lap;
+ import com.android.deskclock.data.Stopwatch;
+@@ -73,9 +71,10 @@ public final class StopwatchCircleView extends View {
+         mStrokeSize = resources.getDimension(R.dimen.stopwatch_circle_size);
+         mDotRadius = mStrokeSize / 2;
+ 
+-        mCompletedColor = ThemeUtils.resolveColor(context, R.attr.colorPrimary);
+-        mCircleColor = ThemeUtils.resolveColor(context, R.attr.colorSurfaceVariant);
+-        mMarkerColor = Color.WHITE;
++        // N9: orange progress on a light grey track.
++        mCompletedColor = context.getColor(R.color.n9_orange);
++        mCircleColor = context.getColor(R.color.n9_track);
++        mMarkerColor = context.getColor(R.color.n9_text);
+ 
+         mPaint.setAntiAlias(true);
+         mPaint.setStyle(Paint.Style.STROKE);
+diff --git a/src/com/android/deskclock/stopwatch/StopwatchFragment.java b/src/com/android/deskclock/stopwatch/StopwatchFragment.java
+index 8de47f226..2c43f5d33 100644
+--- a/src/com/android/deskclock/stopwatch/StopwatchFragment.java
++++ b/src/com/android/deskclock/stopwatch/StopwatchFragment.java
+@@ -56,7 +56,6 @@ import com.android.deskclock.DeskClockFragment;
+ import com.android.deskclock.LogUtils;
+ import com.android.deskclock.R;
+ import com.android.deskclock.StopwatchTextController;
+-import com.android.deskclock.ThemeUtils;
+ import com.android.deskclock.Utils;
+ import com.android.deskclock.data.DataModel;
+ import com.android.deskclock.data.Lap;
+@@ -157,8 +156,9 @@ public final class StopwatchFragment extends DeskClockFragment {
+         }
+ 
+         final Context c = mMainTimeText.getContext();
+-        final int colorAccent = ThemeUtils.resolveColor(c, R.attr.colorAccent);
+-        final int textColorPrimary = ThemeUtils.resolveColor(c, android.R.attr.textColorPrimary);
++        // N9: dark time, orange while paused/blinking.
++        final int colorAccent = c.getColor(R.color.n9_orange);
++        final int textColorPrimary = c.getColor(R.color.n9_text);
+         final ColorStateList timeTextColor = new ColorStateList(
+                 new int[][] { { -state_activated, -state_pressed }, {} },
+                 new int[] { textColorPrimary, colorAccent });
+@@ -690,7 +690,7 @@ public final class StopwatchFragment extends DeskClockFragment {
+ 
+         GradientItemDecoration(Context context) {
+             mGradient.setOrientation(TOP_BOTTOM);
+-            updateGradientColors(ThemeUtils.resolveColor(context, android.R.attr.windowBackground));
++            updateGradientColors(context.getColor(R.color.n9_fade));
+ 
+             final Resources resources = context.getResources();
+             mGradientHeight = resources.getDimensionPixelSize(R.dimen.fab_container_height);
+diff --git a/src/com/android/deskclock/timer/TimerCircleView.java b/src/com/android/deskclock/timer/TimerCircleView.java
+index 34c8cca95..0ca1bffd5 100644
+--- a/src/com/android/deskclock/timer/TimerCircleView.java
++++ b/src/com/android/deskclock/timer/TimerCircleView.java
+@@ -25,7 +25,6 @@ import android.util.AttributeSet;
+ import android.view.View;
+ 
+ import com.android.deskclock.R;
+-import com.android.deskclock.ThemeUtils;
+ import com.android.deskclock.data.Timer;
+ 
+ /**
+@@ -63,8 +62,9 @@ public final class TimerCircleView extends View {
+         mStrokeSize = resources.getDimension(R.dimen.circletimer_circle_size);
+         mDotRadius = mStrokeSize / 2;
+ 
+-        mRemainderColor = ThemeUtils.resolveColor(context, R.attr.colorPrimary);
+-        mCompletedColor = ThemeUtils.resolveColor(context, android.R.attr.colorBackground);
++        // N9: orange progress on a light grey track.
++        mRemainderColor = context.getColor(R.color.n9_orange);
++        mCompletedColor = context.getColor(R.color.n9_track);
+ 
+         mPaint.setAntiAlias(true);
+         mPaint.setStyle(Paint.Style.STROKE);
+diff --git a/src/com/android/deskclock/timer/TimerItem.java b/src/com/android/deskclock/timer/TimerItem.java
+index e53e68373..68e175866 100644
+--- a/src/com/android/deskclock/timer/TimerItem.java
++++ b/src/com/android/deskclock/timer/TimerItem.java
+@@ -31,7 +31,6 @@ import android.widget.TextView;
+ import androidx.constraintlayout.widget.ConstraintLayout;
+ 
+ import com.android.deskclock.R;
+-import com.android.deskclock.ThemeUtils;
+ import com.android.deskclock.TimerTextController;
+ import com.android.deskclock.data.Timer;
+ 
+@@ -86,8 +85,9 @@ public class TimerItem extends ConstraintLayout {
+         mTimerTextController = new TimerTextController(mTimerText);
+ 
+         final Context c = mTimerText.getContext();
+-        final int colorAccent = ThemeUtils.resolveColor(c, R.attr.colorAccent);
+-        final int textColorPrimary = ThemeUtils.resolveColor(c, android.R.attr.textColorPrimary);
++        // N9: dark countdown, orange while paused/blinking.
++        final int colorAccent = c.getColor(R.color.n9_orange);
++        final int textColorPrimary = c.getColor(R.color.n9_text);
+         mTimerText.setTextColor(new ColorStateList(
+                 new int[][] { { -state_activated, -state_pressed }, {} },
+                 new int[] { textColorPrimary, colorAccent }));
+diff --git a/src/com/android/deskclock/timer/TimerSetupView.java b/src/com/android/deskclock/timer/TimerSetupView.java
+index 5bdc52ad2..f906b48e4 100644
+--- a/src/com/android/deskclock/timer/TimerSetupView.java
++++ b/src/com/android/deskclock/timer/TimerSetupView.java
+@@ -39,7 +39,6 @@ import androidx.annotation.IdRes;
+ import com.android.deskclock.FabContainer;
+ import com.android.deskclock.FormattedTextUtils;
+ import com.android.deskclock.R;
+-import com.android.deskclock.ThemeUtils;
+ import com.android.deskclock.uidata.UiDataModel;
+ 
+ import java.io.Serializable;
+@@ -208,10 +207,8 @@ public class TimerSetupView extends LinearLayout implements View.OnClickListener
+         startIdx = minutes > 0 ? 4 : startIdx;
+         startIdx = hours > 0 ? 0 : startIdx;
+         if (startIdx != endIdx) {
+-            int highlightColor = ThemeUtils.resolveColor(
+-                    mTimeView.getContext(),
+-                    R.attr.colorPrimary
+-            );
++            // N9: entered digits in the dark text colour, the rest stays grey.
++            int highlightColor = mTimeView.getContext().getColor(R.color.n9_text);
+             text.setSpan(new ForegroundColorSpan(highlightColor), startIdx, endIdx, 0);
+         }
+         mTimeView.setText(text);
+diff --git a/src/com/android/deskclock/widget/ToolbarBaseActivity.java b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
+index 2aed7e95e..61570beb2 100644
+--- a/src/com/android/deskclock/widget/ToolbarBaseActivity.java
++++ b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
+@@ -17,6 +17,8 @@
+ package com.android.deskclock.widget;
+ 
+ import android.app.ActionBar;
++import android.content.Context;
++import android.content.res.Configuration;
+ import android.graphics.BlendMode;
+ import android.graphics.BlendModeColorFilter;
+ import android.os.Bundle;
+@@ -31,15 +33,37 @@ import androidx.fragment.app.FragmentActivity;
+ import com.android.deskclock.R;
+ import com.android.deskclock.ThemeUtils;
+ 
++import com.bompotis.etesian.theme.EtesianBackground;
++
+ /**
+  * A base Activity that has a toolbar layout
+  */
+ public class ToolbarBaseActivity extends FragmentActivity {
+ 
++    /** The Etesian "Apps" background read at creation. */
++    private EtesianBackground.Style mEtesianStyle;
++
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        super.attachBaseContext(newBase);
++        // Night resources hold the N9 palette for dark backgrounds; force the uiMode both ways
++        // (before any inflation) so the system dark theme never changes the light N9 look.
++        mEtesianStyle = EtesianBackground.content(newBase);
++        final Configuration override = new Configuration();
++        override.uiMode = (newBase.getResources().getConfiguration().uiMode
++                & ~Configuration.UI_MODE_NIGHT_MASK)
++                | (mEtesianStyle.dark
++                        ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
++        applyOverrideConfiguration(override);
++    }
++
+     @Override
+     protected void onCreate(@Nullable Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         super.setContentView(R.layout.toolbar_base_layout);
++        if (mEtesianStyle.dark) {
++            EtesianBackground.apply(this, mEtesianStyle);
++        }
+ 
+         final Toolbar toolbar = findViewById(R.id.action_bar);
+         setActionBar(toolbar);
+@@ -87,6 +111,15 @@ public class ToolbarBaseActivity extends FragmentActivity {
+         }
+     }
+ 
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
++    }
++
+     @Override
+     public boolean onNavigateUp() {
+         if (!super.onNavigateUp()) {
+diff --git a/res/anim/n9_editor_enter.xml b/res/anim/n9_editor_enter.xml
+new file mode 100644
+index 000000000..3d9afd5ef
+--- /dev/null
++++ b/res/anim/n9_editor_enter.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9: the alarm editor slides up from the bottom of the screen. -->
++<translate xmlns:android="http://schemas.android.com/apk/res/android"
++    android:duration="320"
++    android:fromYDelta="100%p"
++    android:interpolator="@android:interpolator/decelerate_cubic"
++    android:toYDelta="0" />
+diff --git a/res/anim/n9_editor_exit.xml b/res/anim/n9_editor_exit.xml
+new file mode 100644
+index 000000000..6a9a8067f
+--- /dev/null
++++ b/res/anim/n9_editor_exit.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9: the alarm editor slides back down, revealing the clock behind it. -->
++<translate xmlns:android="http://schemas.android.com/apk/res/android"
++    android:duration="280"
++    android:fromYDelta="0"
++    android:interpolator="@android:interpolator/accelerate_cubic"
++    android:toYDelta="100%p" />
+diff --git a/res/color/n9_check_tint.xml b/res/color/n9_check_tint.xml
+new file mode 100644
+index 000000000..a655aa1f0
+--- /dev/null
++++ b/res/color/n9_check_tint.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 checkbox: orange when checked, mid grey outline otherwise. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="#FFF07A1E" />
++    <item android:color="@color/n9_check_off" />
++</selector>
+diff --git a/res/color/n9_switch_thumb.xml b/res/color/n9_switch_thumb.xml
+new file mode 100644
+index 000000000..92913332e
+--- /dev/null
++++ b/res/color/n9_switch_thumb.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="@color/white" />
++    <item android:color="@color/n9_text_secondary" />
++</selector>
+diff --git a/res/color/n9_switch_thumb_white.xml b/res/color/n9_switch_thumb_white.xml
+new file mode 100644
+index 000000000..006c0ab91
+--- /dev/null
++++ b/res/color/n9_switch_thumb_white.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:color="#FFFFFFFF" />
++</selector>
+diff --git a/res/color/n9_switch_track.xml b/res/color/n9_switch_track.xml
+new file mode 100644
+index 000000000..529b8f076
+--- /dev/null
++++ b/res/color/n9_switch_track.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 toggle: orange when on, pale grey when off. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="#FFF07A1E" />
++    <item android:color="@color/n9_switch_off" />
++</selector>
+diff --git a/res/drawable/ic_n9_back.xml b/res/drawable/ic_n9_back.xml
+new file mode 100644
+index 000000000..3bc07ea51
+--- /dev/null
++++ b/res/drawable/ic_n9_back.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 toolbar back arrow. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp"
++    android:height="28dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M20,10.6H7.6l5,-5L10.6,3.6 2.2,12l8.4,8.4 2,-2 -5,-5H20z" />
++</vector>
+diff --git a/res/drawable/ic_n9_chevron.xml b/res/drawable/ic_n9_chevron.xml
+new file mode 100644
+index 000000000..424108570
+--- /dev/null
++++ b/res/drawable/ic_n9_chevron.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 list chevron. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@color/n9_chevron"
++        android:pathData="M8.6,4.4l2.1,-2.1 9.7,9.7 -9.7,9.7 -2.1,-2.1 7.6,-7.6z" />
++</vector>
+diff --git a/res/drawable/n9_add_button.xml b/res/drawable/n9_add_button.xml
+new file mode 100644
+index 000000000..3798b43b2
+--- /dev/null
++++ b/res/drawable/n9_add_button.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 small rounded "+" button: white to light grey, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <shape android:shape="rectangle">
++            <corners android:radius="12dp" />
++            <gradient
++                android:angle="270"
++                android:endColor="@color/n9_key_bottom"
++                android:startColor="@color/n9_key_top" />
++            <stroke
++                android:width="1dp"
++                android:color="@color/n9_key_stroke" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_alarm_row.xml b/res/drawable/n9_alarm_row.xml
+new file mode 100644
+index 000000000..e43682477
+--- /dev/null
++++ b/res/drawable/n9_alarm_row.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 list row: flat, with a light hairline under a darker one at the bottom. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#22000000">
++    <item>
++        <layer-list>
++            <item>
++                <color android:color="@color/n9_row" />
++            </item>
++            <item android:gravity="bottom" android:height="2dp">
++                <shape android:shape="rectangle">
++                    <solid android:color="@color/n9_hairline_highlight" />
++                </shape>
++            </item>
++            <item android:gravity="bottom" android:height="1dp" android:bottom="1dp">
++                <shape android:shape="rectangle">
++                    <solid android:color="@color/n9_hairline" />
++                </shape>
++            </item>
++        </layer-list>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_button_negative.xml b/res/drawable/n9_button_negative.xml
+new file mode 100644
+index 000000000..4a3de7e4b
+--- /dev/null
++++ b/res/drawable/n9_button_negative.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 style rounded-square ("squircle") button background. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="12dp" />
++            <solid android:color="@color/n9_separator" />
++        </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="12dp" />
++            <gradient android:angle="270" android:startColor="@color/n9_neg_top" android:endColor="@color/n9_neg_bottom" />
++            <stroke android:width="1dp" android:color="@color/n9_separator" />
++        </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_button_positive.xml b/res/drawable/n9_button_positive.xml
+new file mode 100644
+index 000000000..1ec9e9f2b
+--- /dev/null
++++ b/res/drawable/n9_button_positive.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 style rounded-square ("squircle") button background. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="12dp" />
++            <solid android:color="@color/n9_navy_bottom" />
++        </shape>
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="12dp" />
++            <gradient android:angle="270" android:startColor="@color/n9_navy_top" android:endColor="@color/n9_navy_bottom" />
++            <stroke android:width="1dp" android:color="@color/n9_navy_bottom" />
++        </shape>
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_key_round.xml b/res/drawable/n9_key_round.xml
+new file mode 100644
+index 000000000..c58435560
+--- /dev/null
++++ b/res/drawable/n9_key_round.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 round keypad key: white to light grey circle, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <shape android:shape="oval">
++            <gradient
++                android:angle="270"
++                android:endColor="@color/n9_key_bottom"
++                android:startColor="@color/n9_key_top" />
++            <stroke
++                android:width="1dp"
++                android:color="@color/n9_key_stroke" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_pill_light.xml b/res/drawable/n9_pill_light.xml
+new file mode 100644
+index 000000000..c8ef3f045
+--- /dev/null
++++ b/res/drawable/n9_pill_light.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 secondary pill button: light grey gradient, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <shape android:shape="rectangle">
++            <corners android:radius="24dp" />
++            <gradient
++                android:angle="270"
++                android:endColor="@color/n9_pill_light_bottom"
++                android:startColor="@color/n9_pill_light_top" />
++            <stroke
++                android:width="1dp"
++                android:color="@color/n9_pill_light_stroke" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_pill_orange.xml b/res/drawable/n9_pill_orange.xml
+new file mode 100644
+index 000000000..561021857
+--- /dev/null
++++ b/res/drawable/n9_pill_orange.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 primary pill button: orange gradient, darker orange border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <shape android:shape="rectangle">
++            <corners android:radius="24dp" />
++            <gradient
++                android:angle="270"
++                android:endColor="#FFF07010"
++                android:startColor="#FFFF9A3C" />
++            <stroke
++                android:width="1dp"
++                android:color="#FFD06008" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+new file mode 100644
+index 000000000..f1516113f
+--- /dev/null
++++ b/res/values-night/colors.xml
+@@ -0,0 +1,66 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 palette on a dark Etesian background (black, dark grey or wallpaper). Clock forces night
++     mode only for those backgrounds, so the light N9 look never comes from here. -->
++<resources>
++    <!-- Theme surfaces stay opaque: dialogs and popups draw on them. -->
++    <color name="n9_window">#FF161616</color>
++    <color name="n9_surface">#FF1E1E1E</color>
++    <color name="n9_text">#FFFFFFFF</color>
++    <color name="n9_text_secondary">#FFB0B0B0</color>
++    <color name="n9_separator">#33FFFFFF</color>
++    <color name="n9_blue_container">#FF0B3A4C</color>
++    <color name="n9_neg_top">#33FFFFFF</color>
++    <color name="n9_neg_bottom">#1FFFFFFF</color>
++    <color name="n9_track">#33FFFFFF</color>
++
++    <!-- Pages are transparent so the window background shows. -->
++    <color name="n9_page">#00000000</color>
++    <color name="n9_clock_page">#00000000</color>
++    <color name="n9_editor_page">#00000000</color>
++    <color name="n9_row">#14FFFFFF</color>
++    <color name="n9_hairline">#33FFFFFF</color>
++    <color name="n9_hairline_highlight">#00000000</color>
++    <color name="n9_divider">#33FFFFFF</color>
++    <color name="n9_text_dark">#FFFFFFFF</color>
++    <color name="n9_text_alarm_time">#FFFFFFFF</color>
++    <color name="n9_text_grey">#FFB0B0B0</color>
++    <color name="n9_text_dim">#FF909090</color>
++    <color name="n9_icon">#FFFFFFFF</color>
++    <color name="n9_chevron">#FFFFFFFF</color>
++    <color name="n9_pill_light_top">#33FFFFFF</color>
++    <color name="n9_pill_light_bottom">#1FFFFFFF</color>
++    <color name="n9_pill_light_stroke">#40FFFFFF</color>
++    <color name="n9_key_top">#33FFFFFF</color>
++    <color name="n9_key_bottom">#1FFFFFFF</color>
++    <color name="n9_key_stroke">#40FFFFFF</color>
++    <color name="n9_field">#14FFFFFF</color>
++    <color name="n9_field_stroke">#40FFFFFF</color>
++    <color name="n9_switch_off">#40FFFFFF</color>
++    <color name="n9_fade">#00000000</color>
++    <color name="n9_editor_switch_off">#40FFFFFF</color>
++    <color name="n9_check_off">#FFB0B0B0</color>
++
++    <color name="n9_aclock_label">#FFB0B0B0</color>
++    <color name="n9_aclock_day">#FFD0D0D0</color>
++    <color name="n9_aclock_date">#FFFFFFFF</color>
++    <color name="n9_aclock_dial_top">#FF3A3A3A</color>
++    <color name="n9_aclock_dial_mid">#FF2C2C2C</color>
++    <color name="n9_aclock_dial_bottom">#FF1E1E1E</color>
++    <color name="n9_aclock_dial_highlight">#FF4A4A4A</color>
++    <color name="n9_dial_rim">#FF555555</color>
++    <color name="n9_dial_face_top">#FF3A3A3A</color>
++    <color name="n9_dial_face_bottom">#FF1E1E1E</color>
++    <color name="n9_dial_hand">#FFFFFFFF</color>
++    <color name="n9_dial_second">#FFD0D0D0</color>
++
++    <color name="n9_editor_ring_rim">#FF5A5A5A</color>
++    <color name="n9_editor_ring_top">#FF4A4A4A</color>
++    <color name="n9_editor_ring_bottom">#FF2A2A2A</color>
++    <color name="n9_editor_ring_tick">#FF8A8A8A</color>
++
++    <bool name="n9_light_bars">false</bool>
++</resources>
+diff --git a/src/com/android/deskclock/alarms/N9AlarmDialView.java b/src/com/android/deskclock/alarms/N9AlarmDialView.java
+new file mode 100644
+index 000000000..ab515ff89
+--- /dev/null
++++ b/src/com/android/deskclock/alarms/N9AlarmDialView.java
+@@ -0,0 +1,199 @@
++/*
++ * N9 (Etesian) style alarm time dial: outer silver ring carries the minute knob,
++ * inner black disc carries the hour knob.
++ */
++package com.android.deskclock.alarms;
++
++import android.content.Context;
++import android.graphics.Canvas;
++import android.graphics.Color;
++import android.graphics.Paint;
++import android.graphics.RadialGradient;
++import android.graphics.Shader;
++import android.graphics.Typeface;
++import android.util.AttributeSet;
++import android.view.MotionEvent;
++import android.view.View;
++
++import com.android.deskclock.R;
++
++public class N9AlarmDialView extends View {
++
++    public interface OnTimeChangedListener {
++        void onTimeChanged(int hourOfDay, int minute);
++    }
++
++    private static final int DRAG_NONE = 0;
++    private static final int DRAG_MINUTE = 1;
++    private static final int DRAG_HOUR = 2;
++
++    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Paint mText = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final float mDp;
++
++    private int mHour;
++    private int mMinute;
++    private boolean m24Hour = true;
++    private int mDrag = DRAG_NONE;
++    private OnTimeChangedListener mListener;
++
++    private float mCx, mCy, mOuterR, mInnerR, mKnobR;
++    private RadialGradient mOuterShader, mInnerShader;
++
++    public N9AlarmDialView(Context context) {
++        this(context, null);
++    }
++
++    public N9AlarmDialView(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        mDp = getResources().getDisplayMetrics().density;
++        mText.setTextAlign(Paint.Align.CENTER);
++        mText.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
++    }
++
++    public void setOnTimeChangedListener(OnTimeChangedListener l) {
++        mListener = l;
++    }
++
++    public void set24Hour(boolean is24) {
++        m24Hour = is24;
++        invalidate();
++    }
++
++    public void setTime(int hourOfDay, int minute) {
++        mHour = ((hourOfDay % 24) + 24) % 24;
++        mMinute = ((minute % 60) + 60) % 60;
++        invalidate();
++    }
++
++    public int getHour() { return mHour; }
++    public int getMinute() { return mMinute; }
++
++    @Override
++    protected void onMeasure(int widthSpec, int heightSpec) {
++        int w = MeasureSpec.getSize(widthSpec);
++        int h = MeasureSpec.getMode(heightSpec) == MeasureSpec.UNSPECIFIED
++                ? w : MeasureSpec.getSize(heightSpec);
++        int s = Math.min(w, h);
++        setMeasuredDimension(w, s);
++    }
++
++    @Override
++    protected void onSizeChanged(int w, int h, int ow, int oh) {
++        mCx = w / 2f;
++        mCy = h / 2f;
++        mOuterR = Math.min(w, h) / 2f - 4 * mDp;
++        mInnerR = mOuterR * 0.58f;
++        mKnobR = mOuterR * 0.13f;
++        mOuterShader = new RadialGradient(mCx, mCy - mOuterR * 0.3f, mOuterR * 1.3f,
++                getContext().getColor(R.color.n9_editor_ring_top),
++                getContext().getColor(R.color.n9_editor_ring_bottom), Shader.TileMode.CLAMP);
++        mInnerShader = new RadialGradient(mCx, mCy - mInnerR * 0.3f, mInnerR * 1.3f,
++                0xFF3A3A3A, 0xFF141414, Shader.TileMode.CLAMP);
++    }
++
++    private float minuteTrackR() { return (mOuterR + mInnerR) / 2f; }
++    private float hourTrackR() { return mInnerR - mKnobR - 6 * mDp; }
++
++    @Override
++    protected void onDraw(Canvas c) {
++        if (mOuterR <= 0) return;
++        mPaint.setStyle(Paint.Style.FILL);
++        mPaint.setShader(null);
++        // soft shadow + white rim
++        mPaint.setColor(0x33000000);
++        c.drawCircle(mCx, mCy + 2 * mDp, mOuterR + 2 * mDp, mPaint);
++        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_rim));
++        c.drawCircle(mCx, mCy, mOuterR + 1.5f * mDp, mPaint);
++        mPaint.setShader(mOuterShader);
++        c.drawCircle(mCx, mCy, mOuterR, mPaint);
++        mPaint.setShader(mInnerShader);
++        c.drawCircle(mCx, mCy, mInnerR, mPaint);
++        mPaint.setShader(null);
++
++        // minute ticks on silver ring
++        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_tick));
++        mPaint.setStrokeWidth(1.5f * mDp);
++        for (int i = 0; i < 60; i += 5) {
++            double a = Math.toRadians(i * 6 - 90);
++            float r1 = mOuterR - 3 * mDp, r2 = mOuterR - 8 * mDp;
++            c.drawLine(mCx + (float) Math.cos(a) * r1, mCy + (float) Math.sin(a) * r1,
++                    mCx + (float) Math.cos(a) * r2, mCy + (float) Math.sin(a) * r2, mPaint);
++        }
++
++        // minute knob
++        double ma = Math.toRadians(mMinute * 6 - 90);
++        float mx = mCx + (float) Math.cos(ma) * minuteTrackR();
++        float my = mCy + (float) Math.sin(ma) * minuteTrackR();
++        drawKnob(c, mx, my, 0xFF2A1E18, 0xFF0A0706, Color.WHITE,
++                String.format(java.util.Locale.US, "%02d", mMinute));
++
++        // hour knob
++        int positions = m24Hour ? 24 : 12;
++        int hourPos = mHour % positions;
++        double ha = Math.toRadians(hourPos * (360.0 / positions) - 90);
++        float hx = mCx + (float) Math.cos(ha) * hourTrackR();
++        float hy = mCy + (float) Math.sin(ha) * hourTrackR();
++        int shown = m24Hour ? mHour : (mHour % 12 == 0 ? 12 : mHour % 12);
++        drawKnob(c, hx, hy, 0xFFF2F2F2, 0xFFBEBEBE, 0xFF2A2A2A,
++                String.format(java.util.Locale.US, m24Hour ? "%02d" : "%d", shown));
++    }
++
++    private void drawKnob(Canvas c, float x, float y, int top, int bottom, int textColor,
++            String label) {
++        mPaint.setShader(null);
++        mPaint.setColor(0x55000000);
++        c.drawCircle(x, y + 1.5f * mDp, mKnobR, mPaint);
++        mPaint.setShader(new RadialGradient(x, y - mKnobR * 0.4f, mKnobR * 1.4f,
++                top, bottom, Shader.TileMode.CLAMP));
++        c.drawCircle(x, y, mKnobR, mPaint);
++        mPaint.setShader(null);
++        mText.setColor(textColor);
++        mText.setTextSize(mKnobR * 0.85f);
++        c.drawText(label, x, y - (mText.descent() + mText.ascent()) / 2f, mText);
++    }
++
++    @Override
++    public boolean onTouchEvent(MotionEvent e) {
++        float dx = e.getX() - mCx, dy = e.getY() - mCy;
++        float dist = (float) Math.hypot(dx, dy);
++        switch (e.getActionMasked()) {
++            case MotionEvent.ACTION_DOWN:
++                if (dist > mOuterR + mKnobR) return false;
++                mDrag = dist > mInnerR ? DRAG_MINUTE : DRAG_HOUR;
++                getParent().requestDisallowInterceptTouchEvent(true);
++                // fall through
++            case MotionEvent.ACTION_MOVE:
++                if (mDrag == DRAG_NONE) return false;
++                double deg = Math.toDegrees(Math.atan2(dy, dx)) + 90;
++                if (deg < 0) deg += 360;
++                if (mDrag == DRAG_MINUTE) {
++                    int m = (int) Math.round(deg / 6.0) % 60;
++                    if (m != mMinute) { mMinute = m; changed(); }
++                } else {
++                    int positions = m24Hour ? 24 : 12;
++                    int p = (int) Math.round(deg / (360.0 / positions)) % positions;
++                    int h = m24Hour ? p : (mHour >= 12 ? p + 12 : p);
++                    if (h != mHour) { mHour = h; changed(); }
++                }
++                return true;
++            case MotionEvent.ACTION_UP:
++                if (mDrag != DRAG_NONE) performClick();
++                // fall through
++            case MotionEvent.ACTION_CANCEL:
++                mDrag = DRAG_NONE;
++                return true;
++        }
++        return super.onTouchEvent(e);
++    }
++
++    @Override
++    public boolean performClick() {
++        return super.performClick();
++    }
++
++    private void changed() {
++        invalidate();
++        if (mListener != null) mListener.onTimeChanged(mHour, mMinute);
++    }
++}
+diff --git a/src/com/android/deskclock/widget/N9AnalogClock.java b/src/com/android/deskclock/widget/N9AnalogClock.java
+new file mode 100644
+index 000000000..466923da9
+--- /dev/null
++++ b/src/com/android/deskclock/widget/N9AnalogClock.java
+@@ -0,0 +1,211 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.deskclock.widget;
++
++import android.content.Context;
++import android.graphics.BlurMaskFilter;
++import android.graphics.Canvas;
++import android.graphics.Paint;
++import android.graphics.RadialGradient;
++import android.graphics.Shader;
++import android.graphics.Typeface;
++import android.util.AttributeSet;
++import android.util.TypedValue;
++import android.view.View;
++
++import androidx.annotation.NonNull;
++
++import com.android.deskclock.R;
++
++import java.text.SimpleDateFormat;
++import java.util.Calendar;
++import java.util.Locale;
++import java.util.TimeZone;
++
++/**
++ * The N9 Clock application's analog clock: a brushed light-grey dial, white hour and minute
++ * hands, a thin orange second hand, the weekday and date on the left, and the home time zone
++ * ("London GMT+1:00") above it.
++ */
++public class N9AnalogClock extends View {
++
++    private static final int ORANGE = 0xFFF26B1D;
++
++    // Night-aware palette (values-night for the dark Etesian backgrounds).
++    private final int mBackground;
++    private final int mLabelColor;
++    private final int mDayColor;
++    private final int mDateColor;
++    private final int[] mDialColors;
++    private final int mDialHighlight;
++
++    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Paint mShadow = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Paint mText = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Calendar mTime = Calendar.getInstance();
++
++    private final Runnable mTick = new Runnable() {
++        @Override
++        public void run() {
++            invalidate();
++            final long now = System.currentTimeMillis();
++            postDelayed(this, 1000 - (now % 1000));
++        }
++    };
++
++    public N9AnalogClock(Context context) {
++        this(context, null);
++    }
++
++    public N9AnalogClock(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        mBackground = context.getColor(R.color.n9_clock_page);
++        mLabelColor = context.getColor(R.color.n9_aclock_label);
++        mDayColor = context.getColor(R.color.n9_aclock_day);
++        mDateColor = context.getColor(R.color.n9_aclock_date);
++        mDialColors = new int[] {context.getColor(R.color.n9_aclock_dial_top),
++                context.getColor(R.color.n9_aclock_dial_mid),
++                context.getColor(R.color.n9_aclock_dial_bottom)};
++        mDialHighlight = context.getColor(R.color.n9_aclock_dial_highlight);
++        mShadow.setColor(0x40000000);
++        mShadow.setMaskFilter(new BlurMaskFilter(dp(3), BlurMaskFilter.Blur.NORMAL));
++        setLayerType(LAYER_TYPE_SOFTWARE, null); // for the blurred shadows
++    }
++
++    @Override
++    protected void onAttachedToWindow() {
++        super.onAttachedToWindow();
++        post(mTick);
++    }
++
++    @Override
++    protected void onDetachedFromWindow() {
++        removeCallbacks(mTick);
++        super.onDetachedFromWindow();
++    }
++
++    @Override
++    protected void onDraw(@NonNull Canvas canvas) {
++        final int w = getWidth();
++        final int h = getHeight();
++        canvas.drawColor(mBackground);
++
++        // Home time zone label.
++        final TimeZone tz = TimeZone.getDefault();
++        mText.setTypeface(Typeface.DEFAULT);
++        mText.setColor(mLabelColor);
++        mText.setTextSize(sp(15));
++        mText.setTextAlign(Paint.Align.CENTER);
++        final float labelY = dp(14) - mText.ascent();
++        canvas.drawText(zoneLabel(tz), w / 2f, labelY, mText);
++
++        // Dial.
++        final float top = labelY + dp(14);
++        final float r = Math.min(w * 0.40f, (h - top - dp(14)) / 2f);
++        if (r <= 0) {
++            return;
++        }
++        final float cx = w / 2f;
++        final float cy = top + r;
++        canvas.drawCircle(cx, cy + dp(2), r + dp(1), mShadow);
++        mPaint.setShader(new RadialGradient(cx, cy - r * 0.5f, r * 1.6f,
++                mDialColors, new float[] {0f, 0.6f, 1f},
++                Shader.TileMode.CLAMP));
++        canvas.drawCircle(cx, cy, r, mPaint);
++        mPaint.setShader(null);
++        mPaint.setStyle(Paint.Style.STROKE);
++        mPaint.setStrokeWidth(dp(1));
++        mPaint.setColor(mDialHighlight);
++        canvas.drawCircle(cx, cy, r - dp(1), mPaint);
++        mPaint.setStyle(Paint.Style.FILL);
++
++        mTime.setTimeInMillis(System.currentTimeMillis());
++        mTime.setTimeZone(tz);
++
++        // Weekday and date on the left of the dial.
++        mText.setTextAlign(Paint.Align.LEFT);
++        mText.setColor(mDayColor);
++        mText.setTextSize(r * 0.085f);
++        final String day = new SimpleDateFormat("EEE", Locale.getDefault())
++                .format(mTime.getTime()).toUpperCase(Locale.getDefault());
++        final float textX = cx - r * 0.85f;
++        canvas.drawText(day, textX, cy - r * 0.27f, mText);
++        mText.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
++        mText.setColor(mDateColor);
++        mText.setTextSize(r * 0.23f);
++        canvas.drawText(String.valueOf(mTime.get(Calendar.DAY_OF_MONTH)), textX,
++                cy - r * 0.02f, mText);
++
++        final float seconds = mTime.get(Calendar.SECOND);
++        final float minutes = mTime.get(Calendar.MINUTE) + seconds / 60f;
++        final float hours = mTime.get(Calendar.HOUR) + minutes / 60f;
++
++        // Minute hand: long, slim, a slightly greyer white.
++        hand(canvas, cx, cy, minutes * 6f, r * 0.80f, r * 0.045f, 0xFFF1F1F1, 0xFFB4B4B4);
++        // Hour hand: shorter and wider, bright white.
++        hand(canvas, cx, cy, hours * 30f, r * 0.62f, r * 0.075f, 0xFFFFFFFF, 0xFFC4C4C4);
++
++        // Second hand: thin orange line with a short tail.
++        canvas.save();
++        canvas.rotate(seconds * 6f, cx, cy);
++        mPaint.setColor(ORANGE);
++        mPaint.setStrokeWidth(Math.max(dp(1), r * 0.012f));
++        mPaint.setStrokeCap(Paint.Cap.ROUND);
++        canvas.drawLine(cx, cy + r * 0.12f, cx, cy - r * 0.92f, mPaint);
++        canvas.restore();
++    }
++
++    /** A rounded hand pointing at {@code degrees} (0 = 12 o'clock), with a soft shadow. */
++    private void hand(Canvas canvas, float cx, float cy, float degrees, float length,
++            float width, int color, int edge) {
++        canvas.save();
++        canvas.rotate(degrees, cx, cy);
++        final float left = cx - width / 2f;
++        final float right = cx + width / 2f;
++        final float tail = width;
++        canvas.drawRoundRect(left, cy - length + dp(3), right, cy + tail + dp(3), width / 2f,
++                width / 2f, mShadow);
++        mPaint.setColor(edge);
++        canvas.drawRoundRect(left, cy - length, right, cy + tail, width / 2f, width / 2f, mPaint);
++        mPaint.setColor(color);
++        canvas.drawRoundRect(left + dp(1), cy - length + dp(1), right - dp(1), cy + tail - dp(1),
++                width / 2f, width / 2f, mPaint);
++        canvas.restore();
++    }
++
++    /** "London GMT+1:00": the city of the time zone and its current offset. */
++    private static String zoneLabel(TimeZone tz) {
++        final String id = tz.getID();
++        final int slash = id.lastIndexOf('/');
++        final String city = (slash >= 0 ? id.substring(slash + 1) : id).replace('_', ' ');
++        final int offset = tz.getOffset(System.currentTimeMillis()) / 60000;
++        final String sign = offset < 0 ? "-" : "+";
++        final int abs = Math.abs(offset);
++        return String.format(Locale.getDefault(), "%s GMT%s%d:%02d", city, sign, abs / 60,
++                abs % 60);
++    }
++
++    private float dp(float value) {
++        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
++                getResources().getDisplayMetrics());
++    }
++
++    private float sp(float value) {
++        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value,
++                getResources().getDisplayMetrics());
++    }
++}
+diff --git a/src/com/android/deskclock/widget/N9TabBar.java b/src/com/android/deskclock/widget/N9TabBar.java
+new file mode 100644
+index 000000000..acd86f9b3
+--- /dev/null
++++ b/src/com/android/deskclock/widget/N9TabBar.java
+@@ -0,0 +1,192 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.deskclock.widget;
++
++import android.content.Context;
++import android.content.res.ColorStateList;
++import android.graphics.Canvas;
++import android.graphics.Color;
++import android.graphics.LinearGradient;
++import android.graphics.Paint;
++import android.graphics.Shader;
++import android.graphics.drawable.GradientDrawable;
++import android.provider.Settings;
++import android.util.AttributeSet;
++import android.util.TypedValue;
++import android.view.Gravity;
++import android.view.View;
++import android.widget.FrameLayout;
++import android.widget.ImageView;
++import android.widget.LinearLayout;
++
++import androidx.annotation.DrawableRes;
++import androidx.annotation.IdRes;
++import androidx.annotation.NonNull;
++import androidx.annotation.StringRes;
++
++import java.util.ArrayList;
++import java.util.List;
++
++/**
++ * The N9 (Etesian) application toolbar: icon-only tabs on a grey gradient, a rounded back
++ * button first, the selected tab drawn as a lighter block. As in the N9 Store.
++ *
++ * <p>Colours follow Settings.Secure {@code etesian_toolbar_style}: 0 light (default), 1 dark.
++ */
++public class N9TabBar extends LinearLayout {
++
++    public static final String SETTING_STYLE = "etesian_toolbar_style";
++
++    /** One colour set for the bar. */
++    private static final class Palette {
++        final int top, bottom, highlight, edge, selected, icon, buttonTop, buttonBottom,
++                buttonStroke;
++
++        Palette(int top, int bottom, int highlight, int edge, int selected, int icon,
++                int buttonTop, int buttonBottom, int buttonStroke) {
++            this.top = top;
++            this.bottom = bottom;
++            this.highlight = highlight;
++            this.edge = edge;
++            this.selected = selected;
++            this.icon = icon;
++            this.buttonTop = buttonTop;
++            this.buttonBottom = buttonBottom;
++            this.buttonStroke = buttonStroke;
++        }
++    }
++
++    private static final Palette LIGHT = new Palette(0xFFD6D6D8, 0xFFADADB0, 0xFFF4F4F4,
++            0xFF8E8E90, 0x66FFFFFF, 0xFF262626, 0xFFF2F2F2, 0xFFCDCDCF, 0xFF9C9C9E);
++    /** Symbian Belle: charcoal gradient, white glyphs. */
++    private static final Palette DARK = new Palette(0xFF3C3D40, 0xFF141416, 0xFF5C5E62,
++            0xFF000000, 0x30FFFFFF, 0xFFFFFFFF, 0xFF4A4B4F, 0xFF26272A, 0xFF66686C);
++
++    /** Called when a tab (not the back button or an action) is chosen. */
++    public interface OnTabSelectedListener {
++        void onTabSelected(@IdRes int id);
++    }
++
++    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final List<View> mTabs = new ArrayList<>();
++    private Palette mPalette = LIGHT;
++    private OnTabSelectedListener mListener;
++    private int mSelectedId = View.NO_ID;
++
++    public N9TabBar(Context context) {
++        this(context, null);
++    }
++
++    public N9TabBar(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        setOrientation(HORIZONTAL);
++        setWillNotDraw(false);
++        setMinimumHeight(dp(64));
++        readStyle();
++    }
++
++    private void readStyle() {
++        mPalette = Settings.Secure.getInt(getContext().getContentResolver(), SETTING_STYLE, 0)
++                == 1 ? DARK : LIGHT;
++    }
++
++    public void setOnTabSelectedListener(OnTabSelectedListener listener) {
++        mListener = listener;
++    }
++
++    /** The rounded back button, always first. */
++    public void addBackButton(@NonNull OnClickListener onClick) {
++        final FrameLayout cell = new FrameLayout(getContext());
++        final ImageView button = new ImageView(getContext());
++        button.setImageResource(com.android.deskclock.R.drawable.ic_n9_back);
++        button.setScaleType(ImageView.ScaleType.CENTER);
++        button.setContentDescription(getResources().getString(
++                com.android.deskclock.R.string.n9_back));
++        final GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
++                new int[] {mPalette.buttonTop, mPalette.buttonBottom});
++        bg.setCornerRadius(dp(14));
++        bg.setStroke(dp(1), mPalette.buttonStroke);
++        button.setBackground(bg);
++        button.setImageTintList(ColorStateList.valueOf(mPalette.icon));
++        button.setOnClickListener(onClick);
++        cell.addView(button, new FrameLayout.LayoutParams(dp(50), dp(50), Gravity.CENTER));
++        addView(cell, new LayoutParams(dp(72), LayoutParams.MATCH_PARENT));
++    }
++
++    /** A selectable tab. */
++    public void addTab(@IdRes int id, @DrawableRes int icon, @StringRes int label) {
++        final ImageView tab = cell(icon, label);
++        tab.setId(id);
++        tab.setOnClickListener(v -> {
++            setSelectedTab(id);
++            if (mListener != null) {
++                mListener.onTabSelected(id);
++            }
++        });
++        mTabs.add(tab);
++        addView(tab, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
++    }
++
++    /** A button that runs an action without becoming selected (e.g. settings). */
++    public void addAction(@DrawableRes int icon, @StringRes int label, OnClickListener onClick) {
++        final ImageView action = cell(icon, label);
++        action.setOnClickListener(onClick);
++        addView(action, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
++    }
++
++    private ImageView cell(@DrawableRes int icon, @StringRes int label) {
++        final ImageView view = new ImageView(getContext());
++        view.setImageResource(icon);
++        view.setScaleType(ImageView.ScaleType.CENTER);
++        view.setImageTintList(ColorStateList.valueOf(mPalette.icon));
++        view.setContentDescription(getResources().getString(label));
++        final TypedValue ripple = new TypedValue();
++        getContext().getTheme().resolveAttribute(
++                android.R.attr.selectableItemBackground, ripple, true);
++        view.setForeground(getContext().getDrawable(ripple.resourceId));
++        return view;
++    }
++
++    public void setSelectedTab(@IdRes int id) {
++        mSelectedId = id;
++        for (View tab : mTabs) {
++            tab.setSelected(tab.getId() == id);
++            tab.setBackgroundColor(tab.getId() == id ? mPalette.selected : Color.TRANSPARENT);
++        }
++    }
++
++    @Override
++    protected void onDraw(@NonNull Canvas canvas) {
++        final int w = getWidth();
++        final int h = getHeight();
++        mPaint.setShader(new LinearGradient(0, 0, 0, h, mPalette.top, mPalette.bottom,
++                Shader.TileMode.CLAMP));
++        canvas.drawRect(0, 0, w, h, mPaint);
++        mPaint.setShader(null);
++        // A dark edge with a light line under it, as at the top of the N9 toolbar.
++        mPaint.setColor(mPalette.edge);
++        canvas.drawRect(0, 0, w, dp(1), mPaint);
++        mPaint.setColor(mPalette.highlight);
++        canvas.drawRect(0, dp(1), w, dp(2), mPaint);
++        super.onDraw(canvas);
++    }
++
++    private int dp(int value) {
++        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
++                getResources().getDisplayMetrics());
++    }
++}

@@ -1,0 +1,3333 @@
+diff --git a/NOTICE b/NOTICE
+index a415c81..2782ecd 100644
+--- a/NOTICE
++++ b/NOTICE
+@@ -1,3 +1,17 @@
+ K-9 Mail
+ Copyright 2008-2016, K-9 Mail Developers
+ Copyright 2005-2016, The Android Open Source Project
++
++----------------------------------------------------------------------
++Modifications for the Etesian (N9) LineageOS ROM ("Mail")
++
++This build was modified from Thunderbird for Android (tag THUNDERBIRD_24_0).
++It is not an official Mozilla product and does not use the Thunderbird name or
++logo. Modified files: app-thunderbird (application id, name, launcher icon),
++components/ui/bolt (theme colours, Nokia Pure typography, shapes, logo),
++core/ui/legacy/theme2 (View theme colours, fonts, logo), core/preference/api
++(defaults), feature/mail/message/list/api (row colours), legacy/ui/legacy
++(message list rows, message header, compose fields, Etesian system toolbar
++integration; adds com/bompotis/etesian/toolbar/EtesianToolbar.java, Apache-2.0,
++The LineageOS Project). The full list is in the patch
++vendor/etesian/mail/patches/0001-N9-mail.patch.
+diff --git a/app-thunderbird/build.gradle.kts b/app-thunderbird/build.gradle.kts
+index efe1e94..273ddcb 100644
+--- a/app-thunderbird/build.gradle.kts
++++ b/app-thunderbird/build.gradle.kts
+@@ -213,6 +213,16 @@ androidComponents {
+     }
+ }
+ 
++// N9 Mail (Etesian ROM): the foss release build is a rebranded app with its own package name, so it does not
++// clash with (or claim to be) Mozilla's Thunderbird. Other variants keep the upstream ids.
++androidComponents {
++    onVariants(selector().withBuildType("release")) { variant ->
++        if (variant.flavorName == "foss") {
++            variant.applicationId.set("com.bompotis.etesian.mail")
++        }
++    }
++}
++
+ // Initialize placeholders for the product flavor and build type combinations needed for dependency declarations.
+ // They are required to avoid "Unresolved configuration" errors.
+ val fullDebugImplementation = configurations.create("fullDebugImplementation")
+diff --git a/app-thunderbird/src/main/res/drawable/ic_n9_mail_foreground.xml b/app-thunderbird/src/main/res/drawable/ic_n9_mail_foreground.xml
+new file mode 100644
+index 0000000..83d9815
+--- /dev/null
++++ b/app-thunderbird/src/main/res/drawable/ic_n9_mail_foreground.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: adaptive launcher icon layer (envelope in the 72dp safe zone). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <group
++        android:translateX="32"
++        android:translateY="32"
++        android:scaleX="1.8333"
++        android:scaleY="1.8333">
++        <path
++            android:fillColor="#FFFFFFFF"
++            android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
++    </group>
++</vector>
+diff --git a/app-thunderbird/src/main/res/drawable/ic_n9_mail_monochrome.xml b/app-thunderbird/src/main/res/drawable/ic_n9_mail_monochrome.xml
+new file mode 100644
+index 0000000..054d417
+--- /dev/null
++++ b/app-thunderbird/src/main/res/drawable/ic_n9_mail_monochrome.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: adaptive launcher icon layer (envelope in the 72dp safe zone). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <group
++        android:translateX="32"
++        android:translateY="32"
++        android:scaleX="1.8333"
++        android:scaleY="1.8333">
++        <path
++            android:fillColor="#FF000000"
++            android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
++    </group>
++</vector>
+diff --git a/app-thunderbird/src/main/res/mipmap-anydpi-v26/ic_launcher.xml b/app-thunderbird/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+index 7d53d26..5ea43e3 100644
+--- a/app-thunderbird/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
++++ b/app-thunderbird/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+@@ -1,17 +1,8 @@
+ <?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: white envelope on light blue (replaces the Thunderbird launcher icon). -->
+ <adaptive-icon
+     xmlns:android="http://schemas.android.com/apk/res/android">
+     <background android:drawable="@color/launcher_icon_background" />
+-    <foreground>
+-        <inset
+-            android:drawable="@drawable/ic_app_logo"
+-            android:inset="22%"
+-            />
+-    </foreground>
+-    <monochrome>
+-        <inset
+-            android:drawable="@drawable/ic_app_logo_monochrome"
+-            android:inset="22%"
+-            />
+-    </monochrome>
++    <foreground android:drawable="@drawable/ic_n9_mail_foreground" />
++    <monochrome android:drawable="@drawable/ic_n9_mail_monochrome" />
+ </adaptive-icon>
+diff --git a/app-thunderbird/src/main/res/mipmap-hdpi/ic_launcher.png b/app-thunderbird/src/main/res/mipmap-hdpi/ic_launcher.png
+deleted file mode 100644
+index 275755b8e37b0f5fd5aee909c3eb5b85d2f8dc53..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 5238
+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
+zWlJ9%revBN?!VrI1cH-vQ~%sdzH#;a;Pi9O%0A~Xnasa1d_d+5(58ky=P)?r9MRku
+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
+
+diff --git a/app-thunderbird/src/main/res/mipmap-mdpi/ic_launcher.png b/app-thunderbird/src/main/res/mipmap-mdpi/ic_launcher.png
+deleted file mode 100644
+index 3d96975e7d2998f3efbe58778b6fdc3a5bc01300..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 2661
+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
+Tn{j`<00000NkvXXu0mjfl95gy
+
+diff --git a/app-thunderbird/src/main/res/mipmap-xhdpi/ic_launcher.png b/app-thunderbird/src/main/res/mipmap-xhdpi/ic_launcher.png
+deleted file mode 100644
+index 3510d7ff6268070bb9a89d0dbfe91ac4c8c05f2b..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 6597
+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
+Db~3}R
+
+diff --git a/app-thunderbird/src/main/res/mipmap-xxhdpi/ic_launcher.png b/app-thunderbird/src/main/res/mipmap-xxhdpi/ic_launcher.png
+deleted file mode 100644
+index c5a8915f34acae120b294f3141e7e7133eb87751..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 11117
+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
+
+diff --git a/app-thunderbird/src/main/res/mipmap-xxxhdpi/ic_launcher.png b/app-thunderbird/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+deleted file mode 100644
+index 0cec819e181624ece2cfab366188c61f53339357..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 16002
+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
+JCN;;n{{t8nleYi>
+
+diff --git a/app-thunderbird/src/main/res/mipmap/ic_launcher.xml b/app-thunderbird/src/main/res/mipmap/ic_launcher.xml
+new file mode 100644
+index 0000000..c88a982
+--- /dev/null
++++ b/app-thunderbird/src/main/res/mipmap/ic_launcher.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: white envelope on a light-blue rounded square (replaces the Thunderbird logo). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="48dp"
++    android:height="48dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF4FC3F7"
++        android:pathData="M5,0h14a5,5 0,0 1,5 5v14a5,5 0,0 1,-5 5h-14a5,5 0,0 1,-5 -5v-14a5,5 0,0 1,5 -5z" />
++    <group
++        android:pivotX="12"
++        android:pivotY="12"
++        android:scaleX="0.62"
++        android:scaleY="0.62">
++        <path
++            android:fillColor="#FFFFFFFF"
++            android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
++    </group>
++</vector>
+diff --git a/app-thunderbird/src/main/res/values/strings.xml b/app-thunderbird/src/main/res/values/strings.xml
+index 12a1780..83090a7 100644
+--- a/app-thunderbird/src/main/res/values/strings.xml
++++ b/app-thunderbird/src/main/res/values/strings.xml
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+-    <string name="app_name" translatable="false">Thunderbird</string>
+-    <string name="brand_name" translatable="false">Thunderbird</string>
++    <string name="app_name" translatable="false">Mail</string>
++    <string name="brand_name" translatable="false">Mail</string>
+ </resources>
+diff --git a/components/ui/bolt/src/androidMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.android.kt b/components/ui/bolt/src/androidMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.android.kt
+new file mode 100644
+index 0000000..dbe9d8b
+--- /dev/null
++++ b/components/ui/bolt/src/androidMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.android.kt
+@@ -0,0 +1,8 @@
++package net.thunderbird.components.ui.bolt.theme.default
++
++import android.graphics.Typeface
++import androidx.compose.ui.text.font.FontFamily
++
++// Typeface.create() returns the default sans-serif typeface when the family is not installed.
++internal actual val nokiaPureFontFamily: FontFamily =
++    FontFamily(Typeface.create("etesian-text", Typeface.NORMAL))
+diff --git a/components/ui/bolt/src/commonMain/composeResources/drawable/bolt_thunderbird_logo.xml b/components/ui/bolt/src/commonMain/composeResources/drawable/bolt_thunderbird_logo.xml
+index 734bd5a..d52a78d 100644
+--- a/components/ui/bolt/src/commonMain/composeResources/drawable/bolt_thunderbird_logo.xml
++++ b/components/ui/bolt/src/commonMain/composeResources/drawable/bolt_thunderbird_logo.xml
+@@ -1,252 +1,20 @@
+-<vector
+-    xmlns:android="http://schemas.android.com/apk/res/android"
+-    xmlns:aapt="http://schemas.android.com/aapt"
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: white envelope on a light-blue rounded square (replaces the Thunderbird logo). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="72dp"
+     android:height="72dp"
+-    android:viewportWidth="1024"
+-    android:viewportHeight="1024"
+-    >
+-    <path android:pathData="M424.4,189.7L424.5,189.7C456.7,77 597.2,22 740.4,22C839.3,22 928.1,53.3 989,103C951.3,104.9 915.4,112.3 882.6,124.2C931.8,142.5 974,170.6 1005.3,205.4C984.6,201.8 963,199.9 940.9,199.9C938.5,199.9 936.1,200 933.8,200C990.7,282.5 1024,382.5 1024,490.4C1024,773.1 794.8,1002.3 512,1002.3C233.6,1002.3 0,769.2 0,490.4C0,446.3 5.9,400.8 17.2,358.2C20.2,349.2 24.4,340.6 29.9,337.5C36.8,333.6 43.1,345.3 44.1,349.1C51.6,377.3 61.7,404.5 74.2,430.6C73.1,372.2 98,318.9 132.4,272.9C155.3,242.2 176.5,213.7 186.3,131.6C187,126.1 192.2,122.1 197.5,123.8C272,148.2 311.9,272.4 305.7,376.2C346.9,382.1 346.7,339 346.7,339C333.5,298.6 342.3,223.4 424.2,189.7L424.4,189.7Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="899.5"
+-                android:endY="864"
+-                android:startX="177.7"
+-                android:startY="190.8"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FF1B91F3"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FF0B68CB"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:fillAlpha="0.9"
+-        android:pathData="M1007.3,360C1019.7,641.6 788.2,884.4 505.9,884.4C241.6,884.4 25.1,680.1 5.5,420.9C2.1,444.8 0.2,469.3 0,494.1C2,771.6 235,1002.3 512,1002.3C794.8,1002.3 1024,773.1 1024,490.4C1024,445.3 1018.2,401.6 1007.3,360Z"
+-        android:strokeAlpha="0.9"
+-        >
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="176.4"
+-                android:centerY="422.4"
+-                android:gradientRadius="432.9"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:color="#000B4186"
+-                    android:offset="0.5"
+-                    />
+-                <item
+-                    android:color="#720B4186"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M499.5,227.1C494,217.3 468.5,202.9 457.4,200.3C499.5,65.4 714.2,24 845.5,47.8C900.2,57.8 968.3,87.6 989,103C928.1,53.3 839.3,22 740.4,22C597.2,22 456.7,77 424.5,189.7L424.4,189.7L424.2,189.7C342.3,223.4 333.5,298.6 346.7,339.1C359.3,290.8 419.5,231.5 499.5,227.1Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="525.2"
+-                android:centerY="244.6"
+-                android:gradientRadius="92.6"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:color="#00A29CF6"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FFA39BF6"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M648.3,133.9C533.3,156.5 495.7,163.9 457.2,200.5C500.5,86 610.8,62.8 742.3,115C706.1,122.5 675.1,128.6 648.3,133.9Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="638.3"
+-                android:endY="74"
+-                android:startX="378.5"
+-                android:startY="363.1"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FF0F5DB0"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#000F5DB0"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M27.8,342.5C-3.6,471.1 20.7,622.3 163.4,749.2C120.9,702.8 69,531.2 183.5,408.6C191.2,400.3 204.5,406.4 204.9,417.7C214.3,672.5 419.9,828.1 656.9,799C583.5,794.8 340.6,709.8 521.3,676.1C615.7,658.5 763.8,630.9 763.8,498.1C763.8,282.7 597.3,219.8 496.3,229.1C427.2,235.5 365.7,279.4 346.7,339C354,362.5 325,379 305.7,376.2C311.9,272.4 272,148.2 197.5,123.8C192.2,122.1 187,126.1 186.3,131.6C176.5,213.7 155.3,242.2 132.4,272.9C98,318.9 73.1,372.2 74.2,430.6C61.7,404.5 51.6,377.3 44.1,349.1C43.2,345.9 38.7,337.1 33.1,336.7C30.1,336.5 28.5,339.4 27.8,342.5Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="318.9"
+-                android:centerY="769.3"
+-                android:gradientRadius="675.4"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:color="#FF094188"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#000B4186"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M457.9,689.2C596.9,802 876.5,717.4 876.5,442.9C763.6,614 619.8,732 457.9,689.2Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="750.4"
+-                android:endY="805.6"
+-                android:startX="833.7"
+-                android:startY="572.4"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#007B8BE9"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FF7B8BE9"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M183.5,408.6C186.4,405.4 190.2,404.4 193.7,404.8C91.2,529.8 173.9,749.4 230.6,803.3C233.8,812.3 176.8,765.6 169,754.6C125.8,718 64,536.6 183.5,408.6Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="184.2"
+-                android:endY="737.4"
+-                android:startX="114.1"
+-                android:startY="404"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FFC59FF9"
+-                    android:offset="0.1"
+-                    />
+-                <item
+-                    android:color="#00C59FF9"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M512,699.5C651.1,699.5 763.8,607.5 763.8,494C763.8,380.6 651.1,288.6 512,288.6C393.4,288.6 260.2,365.8 260.2,497C260.3,699.9 474.6,816.6 657.2,798.9C643.5,797.3 557.9,792.8 500.1,727.3C494.8,721.4 485.8,711.2 489.9,704.5C494,697.8 505.3,699.5 512,699.5Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="512"
+-                android:endY="796.8"
+-                android:startX="512"
+-                android:startY="363.8"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FFFFFFFF"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FFBEE1FE"
+-                    android:offset="0.9"
+-                    />
+-                <item
+-                    android:color="#FF96CEFD"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:fillAlpha="0.7"
+-        android:pathData="M512,699.5C651.1,699.5 763.8,607.5 763.8,494C763.8,459.4 753.3,426.7 734.7,398.1L534.9,579.6C520.9,592.3 497.4,592.3 483.5,579.6L287.3,401.5C270.2,428.9 260.2,460.9 260.2,497C260.3,699.9 474.6,816.6 657.2,798.9C656.4,798.8 655.3,798.7 654,798.6L654,798.6C633.3,796.6 554.4,788.8 500.1,727.3C494.8,721.4 485.8,711.2 489.9,704.5C493.3,698.8 501.9,699.2 508.5,699.4C509.7,699.5 510.9,699.5 512,699.5Z"
+-        android:strokeAlpha="0.7"
+-        >
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="520.1"
+-                android:endY="790.2"
+-                android:startX="520.1"
+-                android:startY="608.8"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FFBCE0FD"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FF88CCFC"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:fillColor="#B5DBF9"
+-        android:fillType="evenOdd"
+-        android:pathData="M433,604C386.9,554.2 287.7,401.1 287.7,401.1L288.9,398.6L482.9,562.5C495.9,571.9 514.5,571.8 527.4,562.2L715.8,401.3H735.7C735.7,401.3 633.2,546.9 580.5,604C527.9,661 479.1,653.7 433,604Z"
+-        />
+-    <path
+-        android:fillColor="#A8D3F6"
+-        android:fillType="evenOdd"
+-        android:pathData="M453.9,598.8C416.8,560.2 287.5,401.1 287.5,401.1L294,397.5L488.2,562.2C501.2,571.7 519.8,571.6 532.7,562L721.2,401.1H735.8C735.8,401.1 604.8,557 563.7,598.3C522.5,639.5 491,637.4 453.9,598.8Z"
+-        />
+-    <path
+-        android:fillColor="#93C5ED"
+-        android:fillType="evenOdd"
+-        android:pathData="M453.9,593C416.8,554.4 299.2,412.8 299.2,412.8L314.3,426.5L488.2,556.4C501.2,565.9 519.8,565.8 532.7,556.2L703.2,426.7L718.3,417.9C718.3,417.9 604.8,551.2 563.7,592.4C522.5,633.6 491,631.6 453.9,593Z"
+-        />
+-    <path
+-        android:fillColor="#7DB6E4"
+-        android:fillType="evenOdd"
+-        android:pathData="M453.5,580.8C416.5,542.2 305.4,414 305.4,414L314,414.4L487.9,544.3C500.9,553.7 519.5,553.6 532.4,544L702.9,414.6L711.9,413.9C711.9,413.9 604.5,539 563.3,580.3C522.2,621.5 490.6,619.4 453.5,580.8Z"
+-        />
+-    <path android:pathData="M536.7,591.4L736.2,400.9C693.9,335.8 616,288.6 512.1,288.6C426.1,288.6 332.4,329.1 287.3,401.5L480.5,591.4C494.5,604 522.8,604 536.7,591.4Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:endX="511.8"
+-                android:endY="807.9"
+-                android:startX="511.2"
+-                android:startY="332.7"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:color="#FFFFFFFF"
+-                    android:offset="0"
+-                    />
+-                <item
+-                    android:color="#FFBEE1FE"
+-                    android:offset="0.9"
+-                    />
+-                <item
+-                    android:color="#FF96CEFD"
+-                    android:offset="1"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:fillAlpha="0.6"
+-        android:fillColor="#ffffff"
+-        android:pathData="M736.4,400.7L537.4,591.1C519.7,603.6 500.9,604.6 482.4,593.2L287.2,401.4C292.7,392.5 299,384 305.9,376C312.9,382.5 319.7,388.9 326.4,395.1C377.7,443.2 419.1,482 477.5,531.8C503.9,554.3 512.1,553.9 537.9,531.8C604.8,474.8 653.6,431.6 717.2,374.9C724.3,383.1 730.7,391.7 736.4,400.7Z"
+-        android:strokeAlpha="0.6"
+-        />
+-    <path
+-        android:fillColor="#ffffff"
+-        android:pathData="M547.3,185.8C574.3,177.3 571.9,150.6 571.9,150.6C571.9,150.6 558.4,134.8 531.7,143.6C506.7,151.8 502.9,169.6 502.9,169.6C502.9,169.6 516.5,195.5 547.3,185.8Z"
+-        />
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF4FC3F7"
++        android:pathData="M5,0h14a5,5 0,0 1,5 5v14a5,5 0,0 1,-5 5h-14a5,5 0,0 1,-5 -5v-14a5,5 0,0 1,5 -5z" />
++    <group
++        android:pivotX="12"
++        android:pivotY="12"
++        android:scaleX="0.62"
++        android:scaleY="0.62">
++        <path
++            android:fillColor="#FFFFFFFF"
++            android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
++    </group>
+ </vector>
+diff --git a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeShapes.kt b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeShapes.kt
+index b8851f0..6260ecb 100644
+--- a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeShapes.kt
++++ b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeShapes.kt
+@@ -4,10 +4,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.ui.unit.dp
+ import net.thunderbird.components.ui.bolt.theme.ThemeShapes
+ 
++// N9 Mail: flat, almost square corners.
+ val defaultThemeShapes = ThemeShapes(
+-    extraSmall = RoundedCornerShape(4.dp),
+-    small = RoundedCornerShape(8.dp),
+-    medium = RoundedCornerShape(12.dp),
+-    large = RoundedCornerShape(16.dp),
+-    extraLarge = RoundedCornerShape(28.dp),
++    extraSmall = RoundedCornerShape(2.dp),
++    small = RoundedCornerShape(2.dp),
++    medium = RoundedCornerShape(2.dp),
++    large = RoundedCornerShape(2.dp),
++    extraLarge = RoundedCornerShape(2.dp),
+ )
+diff --git a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeTypography.kt b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeTypography.kt
+index db89fff..ea9a320 100644
+--- a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeTypography.kt
++++ b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/DefaultThemeTypography.kt
+@@ -1,113 +1,113 @@
+ package net.thunderbird.components.ui.bolt.theme.default
+ 
+ import androidx.compose.ui.text.TextStyle
+-import androidx.compose.ui.text.font.FontFamily
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.unit.sp
+ import net.thunderbird.components.ui.bolt.theme.ThemeTypography
+ 
++// N9 Mail: Nokia Pure everywhere; large titles use the light (300) weight as on the N9.
+ @Suppress("MagicNumber")
+ val defaultTypography = ThemeTypography(
+     displayLarge = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 57.sp,
+         lineHeight = 64.sp,
+         letterSpacing = (-0.2).sp,
+     ),
+     displayMedium = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 45.sp,
+         lineHeight = 52.sp,
+         letterSpacing = 0.sp,
+     ),
+     displaySmall = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 36.sp,
+         lineHeight = 44.sp,
+         letterSpacing = 0.sp,
+     ),
+     headlineLarge = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 32.sp,
+         lineHeight = 40.sp,
+         letterSpacing = 0.sp,
+     ),
+     headlineMedium = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 28.sp,
+         lineHeight = 36.sp,
+         letterSpacing = 0.sp,
+     ),
+     headlineSmall = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 24.sp,
+         lineHeight = 32.sp,
+         letterSpacing = 0.sp,
+     ),
+     titleLarge = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
+-        fontWeight = FontWeight.Normal,
++        fontFamily = nokiaPureFontFamily,
++        fontWeight = FontWeight.Light,
+         fontSize = 22.sp,
+         lineHeight = 28.sp,
+         letterSpacing = 0.sp,
+     ),
+     titleMedium = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Medium,
+         fontSize = 16.sp,
+         lineHeight = 24.sp,
+         letterSpacing = 0.2.sp,
+     ),
+     titleSmall = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Medium,
+         fontSize = 14.sp,
+         lineHeight = 20.sp,
+         letterSpacing = 0.1.sp,
+     ),
+     bodyLarge = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Normal,
+         fontSize = 16.sp,
+         lineHeight = 24.sp,
+         letterSpacing = 0.5.sp,
+     ),
+     bodyMedium = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Normal,
+         fontSize = 14.sp,
+         lineHeight = 20.sp,
+         letterSpacing = 0.2.sp,
+     ),
+     bodySmall = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Normal,
+         fontSize = 12.sp,
+         lineHeight = 16.sp,
+         letterSpacing = 0.4.sp,
+     ),
+     labelLarge = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.SemiBold,
+         fontSize = 14.sp,
+         lineHeight = 20.sp,
+         letterSpacing = 0.1.sp,
+     ),
+     labelMedium = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Bold,
+         fontSize = 12.sp,
+         lineHeight = 16.sp,
+         letterSpacing = 0.5.sp,
+     ),
+     labelSmall = TextStyle(
+-        fontFamily = FontFamily.SansSerif,
++        fontFamily = nokiaPureFontFamily,
+         fontWeight = FontWeight.Bold,
+         fontSize = 11.sp,
+         lineHeight = 16.sp,
+diff --git a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.kt b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.kt
+new file mode 100644
+index 0000000..f4670a6
+--- /dev/null
++++ b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.kt
+@@ -0,0 +1,9 @@
++package net.thunderbird.components.ui.bolt.theme.default
++
++import androidx.compose.ui.text.font.FontFamily
++
++/**
++ * N9 Mail: the Nokia Pure system font family ("etesian-text"). Falls back to sans-serif where it is
++ * not available.
++ */
++internal expect val nokiaPureFontFamily: FontFamily
+diff --git a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/thunderbird/ThemeColors.kt b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/thunderbird/ThemeColors.kt
+index c64f3d5..f9d9e1a 100644
+--- a/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/thunderbird/ThemeColors.kt
++++ b/components/ui/bolt/src/commonMain/kotlin/net/thunderbird/components/ui/bolt/theme/thunderbird/ThemeColors.kt
+@@ -3,52 +3,53 @@ package net.thunderbird.components.ui.bolt.theme.thunderbird
+ import androidx.compose.ui.graphics.Color
+ import net.thunderbird.components.ui.bolt.theme.ThemeColorScheme
+ 
++// N9 Mail: light grey pages, N9 blue (#00A5E5) accent, orange (#FF8600) tertiary for links.
+ internal val lightThemeColorScheme = ThemeColorScheme(
+-    primary = Color(color = 0xFF004F9B),
++    primary = Color(color = 0xFF00A5E5),
+     onPrimary = Color(color = 0xFFFFFFFF),
+-    primaryContainer = Color(color = 0xFF1373D9),
+-    onPrimaryContainer = Color(color = 0xFFFFFFFF),
++    primaryContainer = Color(color = 0xFFD5F0FB),
++    onPrimaryContainer = Color(color = 0xFF004A68),
+ 
+-    secondary = Color(color = 0xFF003D75),
++    secondary = Color(color = 0xFF0083B8),
+     onSecondary = Color(color = 0xFFFFFFFF),
+-    secondaryContainer = Color(color = 0xFF2E61A0),
+-    onSecondaryContainer = Color(color = 0xFFFFFFFF),
++    secondaryContainer = Color(color = 0xFFE1F3FA),
++    onSecondaryContainer = Color(color = 0xFF003B54),
+ 
+-    tertiary = Color(color = 0xFF54008E),
++    tertiary = Color(color = 0xFFFF8600),
+     onTertiary = Color(color = 0xFFFFFFFF),
+-    tertiaryContainer = Color(color = 0xFF7B35B8),
+-    onTertiaryContainer = Color(color = 0xFFFFFFFF),
++    tertiaryContainer = Color(color = 0xFFFFE6CC),
++    onTertiaryContainer = Color(color = 0xFF663500),
+ 
+     error = Color(color = 0xFF7F1D1D),
+     onError = Color(color = 0xFFFFFFFF),
+     errorContainer = Color(color = 0xFFFEF2F2),
+     onErrorContainer = Color(color = 0xFF7F1D1D),
+ 
+-    surfaceDim = Color(color = 0xFFDCD9D9),
+-    surface = Color(color = 0xFFFCF8F8),
+-    surfaceBright = Color(color = 0xFFFCF8F8),
+-    onSurface = Color(color = 0xFF1C1B1B),
+-    onSurfaceVariant = Color(color = 0xFF45474A),
++    surfaceDim = Color(color = 0xFFE0E0E0),
++    surface = Color(color = 0xFFF4F4F4),
++    surfaceBright = Color(color = 0xFFFFFFFF),
++    onSurface = Color(color = 0xFF191919),
++    onSurfaceVariant = Color(color = 0xFF8C8C8C),
+ 
+     surfaceContainerLowest = Color(color = 0xFFFFFFFF),
+-    surfaceContainerLow = Color(color = 0xFFF6F3F2),
+-    surfaceContainer = Color(color = 0xFFF1EDEC),
+-    surfaceContainerHigh = Color(color = 0xFFEBE7E7),
+-    surfaceContainerHighest = Color(color = 0xFFE5E2E1),
++    surfaceContainerLow = Color(color = 0xFFF4F4F4),
++    surfaceContainer = Color(color = 0xFFEEEEEE),
++    surfaceContainerHigh = Color(color = 0xFFE9E9E9),
++    surfaceContainerHighest = Color(color = 0xFFE2E2E2),
+ 
+-    inverseSurface = Color(color = 0xFF313030),
+-    inverseOnSurface = Color(color = 0xFFF3F0EF),
+-    inversePrimary = Color(color = 0xFFA9C7FF),
++    inverseSurface = Color(color = 0xFF191919),
++    inverseOnSurface = Color(color = 0xFFF4F4F4),
++    inversePrimary = Color(color = 0xFF7FD3F3),
+ 
+-    outline = Color(color = 0xFF75777A),
+-    outlineVariant = Color(color = 0xFFC5C6CA),
++    outline = Color(color = 0xFFB4B4B4),
++    outlineVariant = Color(color = 0xFFD6D6D6),
+ 
+     scrim = Color.Black,
+ 
+-    info = Color(color = 0xFF004F9B),
++    info = Color(color = 0xFF00A5E5),
+     onInfo = Color(color = 0xFFFFFFFF),
+-    infoContainer = Color(color = 0xFFF0F8FF),
+-    onInfoContainer = Color(color = 0xFF004F9B),
++    infoContainer = Color(color = 0xFFE1F3FA),
++    onInfoContainer = Color(color = 0xFF004A68),
+ 
+     success = Color(color = 0xFF194E2C),
+     onSuccess = Color(color = 0xFFFFFFFF),
+@@ -61,52 +62,53 @@ internal val lightThemeColorScheme = ThemeColorScheme(
+     onWarningContainer = Color(color = 0xFF713F12),
+ )
+ 
++// N9 Mail: the N9's black palette with the same accents.
+ internal val darkThemeColorScheme = ThemeColorScheme(
+-    primary = Color(color = 0xFFBEE6FF),
+-    onPrimary = Color(color = 0xFF003549),
+-    primaryContainer = Color(color = 0xFF50C2F8),
+-    onPrimaryContainer = Color(color = 0xFF002E41),
++    primary = Color(color = 0xFF00A5E5),
++    onPrimary = Color(color = 0xFFFFFFFF),
++    primaryContainer = Color(color = 0xFF004A68),
++    onPrimaryContainer = Color(color = 0xFFD5F0FB),
+ 
+-    secondary = Color(color = 0xFF96CDFF),
+-    onSecondary = Color(color = 0xFF003352),
+-    secondaryContainer = Color(color = 0xFF24A7F7),
+-    onSecondaryContainer = Color(color = 0xFF001423),
++    secondary = Color(color = 0xFF33B7EA),
++    onSecondary = Color(color = 0xFF00131C),
++    secondaryContainer = Color(color = 0xFF003B54),
++    onSecondaryContainer = Color(color = 0xFFD5F0FB),
+ 
+-    tertiary = Color(color = 0xFFFFFFFF),
+-    onTertiary = Color(color = 0xFF352D3E),
+-    tertiaryContainer = Color(color = 0xFFDCD0E6),
+-    onTertiaryContainer = Color(color = 0xFF443C4E),
++    tertiary = Color(color = 0xFFFF8600),
++    onTertiary = Color(color = 0xFF000000),
++    tertiaryContainer = Color(color = 0xFF663500),
++    onTertiaryContainer = Color(color = 0xFFFFE6CC),
+ 
+     error = Color(color = 0xFFFCA5A5),
+     onError = Color(color = 0xFF450A0A),
+     errorContainer = Color(color = 0xFF7F1D1D),
+     onErrorContainer = Color(color = 0xFFFEF2F2),
+ 
+-    surfaceDim = Color(color = 0xFF131314),
+-    surface = Color(color = 0xFF131314),
+-    surfaceBright = Color(color = 0xFF39393A),
+-    onSurface = Color(color = 0xFFE5E2E3),
+-    onSurfaceVariant = Color(color = 0xFFC5C6CC),
++    surfaceDim = Color(color = 0xFF000000),
++    surface = Color(color = 0xFF000000),
++    surfaceBright = Color(color = 0xFF2A2A2A),
++    onSurface = Color(color = 0xFFFFFFFF),
++    onSurfaceVariant = Color(color = 0xFF8C8C8C),
+ 
+-    surfaceContainerLowest = Color(color = 0xFF0E0E0F),
+-    surfaceContainerLow = Color(color = 0xFF1B1B1C),
+-    surfaceContainer = Color(color = 0xFF201F20),
+-    surfaceContainerHigh = Color(color = 0xFF2A2A2B),
+-    surfaceContainerHighest = Color(color = 0xFF353436),
++    surfaceContainerLowest = Color(color = 0xFF000000),
++    surfaceContainerLow = Color(color = 0xFF0E0E0E),
++    surfaceContainer = Color(color = 0xFF141414),
++    surfaceContainerHigh = Color(color = 0xFF1E1E1E),
++    surfaceContainerHighest = Color(color = 0xFF282828),
+ 
+-    inverseSurface = Color(color = 0xFFE5E2E3),
+-    inverseOnSurface = Color(color = 0xFF313031),
+-    inversePrimary = Color(color = 0xFF006689),
++    inverseSurface = Color(color = 0xFFF4F4F4),
++    inverseOnSurface = Color(color = 0xFF191919),
++    inversePrimary = Color(color = 0xFF0083B8),
+ 
+-    outline = Color(color = 0xFF8F9096),
+-    outlineVariant = Color(color = 0xFF44474C),
++    outline = Color(color = 0xFF5A5A5A),
++    outlineVariant = Color(color = 0xFF2E2E2E),
+ 
+     scrim = Color.Black,
+ 
+-    info = Color(color = 0xFFBEE6FF),
+-    onInfo = Color(color = 0xFF002E41),
+-    infoContainer = Color(color = 0xFF262C40),
+-    onInfoContainer = Color(color = 0xFFBEE6FF),
++    info = Color(color = 0xFF00A5E5),
++    onInfo = Color(color = 0xFFFFFFFF),
++    infoContainer = Color(color = 0xFF003B54),
++    onInfoContainer = Color(color = 0xFFD5F0FB),
+ 
+     success = Color(color = 0xFF8EE7AA),
+     onSuccess = Color(color = 0xFF082B16),
+diff --git a/components/ui/bolt/src/jvmMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.jvm.kt b/components/ui/bolt/src/jvmMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.jvm.kt
+new file mode 100644
+index 0000000..daa665b
+--- /dev/null
++++ b/components/ui/bolt/src/jvmMain/kotlin/net/thunderbird/components/ui/bolt/theme/default/NokiaPureFontFamily.jvm.kt
+@@ -0,0 +1,5 @@
++package net.thunderbird.components.ui.bolt.theme.default
++
++import androidx.compose.ui.text.font.FontFamily
++
++internal actual val nokiaPureFontFamily: FontFamily = FontFamily.SansSerif
+diff --git a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/coreSettings/DisplayCoreSettings.kt b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/coreSettings/DisplayCoreSettings.kt
+index 9729c64..1191372 100644
+--- a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/coreSettings/DisplayCoreSettings.kt
++++ b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/coreSettings/DisplayCoreSettings.kt
+@@ -6,7 +6,8 @@ import net.thunderbird.core.preference.SubTheme
+ 
+ const val DISPLAY_SETTINGS_DEFAULT_APP_LANGUAGE = ""
+ const val DISPLAY_SETTINGS_DEFAULT_FIXED_MESSAGE_VIEW_THEME = true
+-val DISPLAY_SETTINGS_DEFAULT_APP_THEME = AppTheme.FOLLOW_SYSTEM
++// N9 Mail: the N9 mail app was light.
++val DISPLAY_SETTINGS_DEFAULT_APP_THEME = AppTheme.LIGHT
+ val DISPLAY_SETTINGS_DEFAULT_MESSAGE_COMPOSE_THEME = SubTheme.USE_GLOBAL
+ val DISPLAY_SETTINGS_DEFAULT_SPLIT_VIEW_MODE = SplitViewMode.NEVER
+ val DISPLAY_SETTINGS_DEFAULT_MESSAGE_VIEW_THEME = SubTheme.USE_GLOBAL
+diff --git a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/inboxSettings/DisplayInboxSettings.kt b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/inboxSettings/DisplayInboxSettings.kt
+index d07ffa7..5b878fd 100644
+--- a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/inboxSettings/DisplayInboxSettings.kt
++++ b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/inboxSettings/DisplayInboxSettings.kt
+@@ -3,7 +3,8 @@ package net.thunderbird.core.preference.display.inboxSettings
+ const val DISPLAY_SETTINGS_DEFAULT_IS_SHOW_UNIFIED_INBOX = false
+ const val DISPLAY_SETTINGS_DEFAULT_IS_SHOW_STAR_COUNT = false
+ const val DISPLAY_SETTINGS_DEFAULT_IS_SHOW_MESSAGE_LIST_STAR = true
+-const val DISPLAY_SETTINGS_DEFAULT_IS_MESSAGE_LIST_SENDER_ABOVE_SUBJECT = false
++// N9 Mail: sender on the first line, subject below.
++const val DISPLAY_SETTINGS_DEFAULT_IS_MESSAGE_LIST_SENDER_ABOVE_SUBJECT = true
+ const val DISPLAY_SETTINGS_DEFAULT_IS_SHOW_COMPOSE_BUTTON_ON_MESSAGE_LIST = true
+ const val DISPLAY_SETTINGS_DEFAULT_IS_THREAD_VIEW_ENABLED = true
+ 
+diff --git a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/message/list/DisplayMessageListSettings.kt b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/message/list/DisplayMessageListSettings.kt
+index df990a1..a2ea007 100644
+--- a/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/message/list/DisplayMessageListSettings.kt
++++ b/core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/message/list/DisplayMessageListSettings.kt
+@@ -2,8 +2,9 @@ package net.thunderbird.core.preference.display.visualSettings.message.list
+ 
+ const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_SHOW_CORRESPONDENT_NAMES = true
+ const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_SHOW_CONTACT_NAME = false
+-const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_SHOW_CONTACT_PICTURE = true
+-const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_CHANGE_CONTACT_NAME_COLOR = true
++// N9 Mail: plain rows without avatars.
++const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_SHOW_CONTACT_PICTURE = false
++const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_CHANGE_CONTACT_NAME_COLOR = false
+ const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_COLORIZE_MISSING_CONTACT_PICTURE = true
+ const val MESSAGE_LIST_SETTINGS_DEFAULT_IS_USE_BACKGROUND_AS_INDICATOR = false
+ const val MESSAGE_LIST_SETTINGS_DEFAULT_PREVIEW_LINES = 2
+diff --git a/core/ui/legacy/theme2/common/src/main/res/values/n9_text_appearances.xml b/core/ui/legacy/theme2/common/src/main/res/values/n9_text_appearances.xml
+new file mode 100644
+index 0000000..6b03113
+--- /dev/null
++++ b/core/ui/legacy/theme2/common/src/main/res/values/n9_text_appearances.xml
+@@ -0,0 +1,83 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: Material 3 text appearances in Nokia Pure ("etesian-text" system font family). -->
++<resources xmlns:tools="http://schemas.android.com/tools">
++    <style name="TextAppearance.N9.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.DisplayMedium" parent="TextAppearance.Material3.DisplayMedium">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">300</item>
++    </style>
++    <style name="TextAppearance.N9.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">500</item>
++    </style>
++    <style name="TextAppearance.N9.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">500</item>
++    </style>
++    <style name="TextAppearance.N9.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
++    <style name="TextAppearance.N9.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
++    <style name="TextAppearance.N9.BodySmall" parent="TextAppearance.Material3.BodySmall">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
++    <style name="TextAppearance.N9.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">500</item>
++    </style>
++    <style name="TextAppearance.N9.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">700</item>
++    </style>
++    <style name="TextAppearance.N9.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight" tools:targetApi="28">700</item>
++    </style>
++
++    <!-- N9 Mail: flat app bar without elevation or lift-on-scroll tint. -->
++    <style name="Widget.N9.AppBarLayout" parent="Widget.Material3.AppBarLayout">
++        <item name="android:elevation">0dp</item>
++        <item name="android:stateListAnimator">@null</item>
++        <item name="liftOnScroll">false</item>
++    </style>
++</resources>
+diff --git a/core/ui/legacy/theme2/common/src/main/res/values/themes.xml b/core/ui/legacy/theme2/common/src/main/res/values/themes.xml
+index 8425665..963f56a 100644
+--- a/core/ui/legacy/theme2/common/src/main/res/values/themes.xml
++++ b/core/ui/legacy/theme2/common/src/main/res/values/themes.xml
+@@ -10,24 +10,30 @@
+     <style name="Theme2.Main.Light.Common" parent="Theme2.Main.Light.Base">
+         <!-- Draw action mode above content -->
+         <item name="windowActionModeOverlay">true</item>
++        <!-- N9 Mail: Nokia Pure, orange links, flat app bar -->
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textColorLink">#FF8600</item>
++        <item name="appBarLayoutStyle">@style/Widget.N9.AppBarLayout</item>
++
+ 
+         <item name="android:textColorHighlight">?attr/colorPrimaryFixedDim</item>
+ 
+-        <item name="textAppearanceDisplayLarge">@style/TextAppearance.Material3.DisplayLarge</item>
+-        <item name="textAppearanceDisplayMedium">@style/TextAppearance.Material3.DisplayMedium</item>
+-        <item name="textAppearanceDisplaySmall">@style/TextAppearance.Material3.DisplaySmall</item>
+-        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.Material3.HeadlineLarge</item>
+-        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Material3.HeadlineMedium</item>
+-        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Material3.HeadlineSmall</item>
+-        <item name="textAppearanceTitleLarge">@style/TextAppearance.Material3.TitleLarge</item>
+-        <item name="textAppearanceTitleMedium">@style/TextAppearance.Material3.TitleMedium</item>
+-        <item name="textAppearanceTitleSmall">@style/TextAppearance.Material3.TitleSmall</item>
+-        <item name="textAppearanceBodyLarge">@style/TextAppearance.Material3.BodyLarge</item>
+-        <item name="textAppearanceBodyMedium">@style/TextAppearance.Material3.BodyMedium</item>
+-        <item name="textAppearanceBodySmall">@style/TextAppearance.Material3.BodySmall</item>
+-        <item name="textAppearanceLabelLarge">@style/TextAppearance.Material3.LabelLarge</item>
+-        <item name="textAppearanceLabelMedium">@style/TextAppearance.Material3.LabelMedium</item>
+-        <item name="textAppearanceLabelSmall">@style/TextAppearance.Material3.LabelSmall</item>
++        <item name="textAppearanceDisplayLarge">@style/TextAppearance.N9.DisplayLarge</item>
++        <item name="textAppearanceDisplayMedium">@style/TextAppearance.N9.DisplayMedium</item>
++        <item name="textAppearanceDisplaySmall">@style/TextAppearance.N9.DisplaySmall</item>
++        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.N9.HeadlineLarge</item>
++        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.N9.HeadlineMedium</item>
++        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.N9.HeadlineSmall</item>
++        <item name="textAppearanceTitleLarge">@style/TextAppearance.N9.TitleLarge</item>
++        <item name="textAppearanceTitleMedium">@style/TextAppearance.N9.TitleMedium</item>
++        <item name="textAppearanceTitleSmall">@style/TextAppearance.N9.TitleSmall</item>
++        <item name="textAppearanceBodyLarge">@style/TextAppearance.N9.BodyLarge</item>
++        <item name="textAppearanceBodyMedium">@style/TextAppearance.N9.BodyMedium</item>
++        <item name="textAppearanceBodySmall">@style/TextAppearance.N9.BodySmall</item>
++        <item name="textAppearanceLabelLarge">@style/TextAppearance.N9.LabelLarge</item>
++        <item name="textAppearanceLabelMedium">@style/TextAppearance.N9.LabelMedium</item>
++        <item name="textAppearanceLabelSmall">@style/TextAppearance.N9.LabelSmall</item>
+ 
+         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.SmallComponent</item>
+         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.MediumComponent</item>
+@@ -37,22 +43,28 @@
+     <style name="Theme2.Main.Dark.Common" parent="Theme2.Main.Dark.Base">
+         <!-- Draw action mode above content -->
+         <item name="windowActionModeOverlay">true</item>
++        <!-- N9 Mail: Nokia Pure, orange links, flat app bar -->
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textColorLink">#FF8600</item>
++        <item name="appBarLayoutStyle">@style/Widget.N9.AppBarLayout</item>
++
+ 
+-        <item name="textAppearanceDisplayLarge">@style/TextAppearance.Material3.DisplayLarge</item>
+-        <item name="textAppearanceDisplayMedium">@style/TextAppearance.Material3.DisplayMedium</item>
+-        <item name="textAppearanceDisplaySmall">@style/TextAppearance.Material3.DisplaySmall</item>
+-        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.Material3.HeadlineLarge</item>
+-        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Material3.HeadlineMedium</item>
+-        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Material3.HeadlineSmall</item>
+-        <item name="textAppearanceTitleLarge">@style/TextAppearance.Material3.TitleLarge</item>
+-        <item name="textAppearanceTitleMedium">@style/TextAppearance.Material3.TitleMedium</item>
+-        <item name="textAppearanceTitleSmall">@style/TextAppearance.Material3.TitleSmall</item>
+-        <item name="textAppearanceBodyLarge">@style/TextAppearance.Material3.BodyLarge</item>
+-        <item name="textAppearanceBodyMedium">@style/TextAppearance.Material3.BodyMedium</item>
+-        <item name="textAppearanceBodySmall">@style/TextAppearance.Material3.BodySmall</item>
+-        <item name="textAppearanceLabelLarge">@style/TextAppearance.Material3.LabelLarge</item>
+-        <item name="textAppearanceLabelMedium">@style/TextAppearance.Material3.LabelMedium</item>
+-        <item name="textAppearanceLabelSmall">@style/TextAppearance.Material3.LabelSmall</item>
++        <item name="textAppearanceDisplayLarge">@style/TextAppearance.N9.DisplayLarge</item>
++        <item name="textAppearanceDisplayMedium">@style/TextAppearance.N9.DisplayMedium</item>
++        <item name="textAppearanceDisplaySmall">@style/TextAppearance.N9.DisplaySmall</item>
++        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.N9.HeadlineLarge</item>
++        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.N9.HeadlineMedium</item>
++        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.N9.HeadlineSmall</item>
++        <item name="textAppearanceTitleLarge">@style/TextAppearance.N9.TitleLarge</item>
++        <item name="textAppearanceTitleMedium">@style/TextAppearance.N9.TitleMedium</item>
++        <item name="textAppearanceTitleSmall">@style/TextAppearance.N9.TitleSmall</item>
++        <item name="textAppearanceBodyLarge">@style/TextAppearance.N9.BodyLarge</item>
++        <item name="textAppearanceBodyMedium">@style/TextAppearance.N9.BodyMedium</item>
++        <item name="textAppearanceBodySmall">@style/TextAppearance.N9.BodySmall</item>
++        <item name="textAppearanceLabelLarge">@style/TextAppearance.N9.LabelLarge</item>
++        <item name="textAppearanceLabelMedium">@style/TextAppearance.N9.LabelMedium</item>
++        <item name="textAppearanceLabelSmall">@style/TextAppearance.N9.LabelSmall</item>
+ 
+         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.SmallComponent</item>
+         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.MediumComponent</item>
+diff --git a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo.xml b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo.xml
+index 25b474e..d52a78d 100644
+--- a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo.xml
++++ b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo.xml
+@@ -1,252 +1,20 @@
+-<vector
+-    xmlns:android="http://schemas.android.com/apk/res/android"
+-    xmlns:aapt="http://schemas.android.com/aapt"
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: white envelope on a light-blue rounded square (replaces the Thunderbird logo). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="72dp"
+     android:height="72dp"
+-    android:viewportWidth="1024"
+-    android:viewportHeight="1024"
+-    >
+-    <path android:pathData="M439.5,260.2L439.6,260.2C466.3,167 582.5,121.5 700.9,121.5C782.7,121.5 856.2,147.4 906.5,188.5C875.3,190.1 845.7,196.2 818.5,206C859.2,221.1 894.2,244.4 920.1,273.2C902.9,270.2 885,268.7 866.8,268.7C864.8,268.7 862.8,268.7 860.9,268.7C907.9,337 935.5,419.7 935.5,508.9C935.5,742.8 745.9,932.4 512,932.4C281.7,932.4 88.5,739.5 88.5,508.9C88.5,472.4 93.3,434.8 102.7,399.5C105.2,392.1 108.6,385 113.2,382.4C118.9,379.2 124.1,388.9 125,392C131.2,415.3 139.5,437.9 149.8,459.5C148.9,411.1 169.6,367.1 198,329C217,303.6 234.5,280 242.6,212.1C243.2,207.6 247.5,204.3 251.9,205.7C313.5,225.9 346.5,328.6 341.4,414.4C375.4,419.3 375.3,383.7 375.3,383.7C364.4,350.2 371.6,288 439.4,260.2L439.5,260.2Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="235.5"
+-                android:startY="261.1"
+-                android:endX="832.5"
+-                android:endY="817.9"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FF1B91F3"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FF0B68CB"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:pathData="M921.6,401C931.9,633.9 740.5,834.8 507,834.8C288.4,834.8 109.3,665.8 93.1,451.4C90.2,471.2 88.7,491.4 88.5,512C90.2,741.5 282.9,932.4 512,932.4C745.9,932.4 935.5,742.8 935.5,508.9C935.5,471.6 930.7,435.5 921.6,401Z"
+-        android:strokeAlpha="0.9"
+-        android:fillAlpha="0.9"
+-        >
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="234.4"
+-                android:centerY="452.7"
+-                android:gradientRadius="358.1"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:offset="0.5"
+-                    android:color="#000B4186"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#720B4186"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M501.7,291.1C497.1,283 476,271.1 466.8,269C501.7,157.4 679.2,123.1 787.9,142.8C833.1,151.1 889.4,175.7 906.5,188.5C856.2,147.4 782.7,121.5 700.9,121.5C582.5,121.5 466.3,167 439.6,260.2L439.5,260.2L439.4,260.2C371.6,288 364.4,350.3 375.3,383.7C385.7,343.8 435.5,294.8 501.7,291.1Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="522.9"
+-                android:centerY="305.6"
+-                android:gradientRadius="76.6"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#00A29CF6"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FFA39BF6"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M624.7,214C529.6,232.7 498.5,238.8 466.7,269.1C502.4,174.4 593.7,155.3 702.5,198.4C672.5,204.6 646.9,209.6 624.7,214Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="401.6"
+-                android:startY="403.6"
+-                android:endX="616.4"
+-                android:endY="164.5"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FF0F5DB0"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#000F5DB0"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M111.5,386.6C85.5,493 105.6,618 223.7,723C188.5,684.6 145.6,542.6 240.3,441.2C246.7,434.4 257.6,439.4 258,448.8C265.8,659.5 435.8,788.2 631.9,764.1C571.1,760.7 370.3,690.4 519.7,662.5C597.8,648 720.3,625.2 720.3,515.3C720.3,337.1 582.5,285 499,292.8C441.8,298.1 391,334.4 375.3,383.7C381.3,403.1 357.4,416.8 341.4,414.5C346.5,328.6 313.5,225.9 251.9,205.7C247.5,204.3 243.2,207.6 242.6,212.1C234.5,280 217,303.6 198,329C169.6,367.1 148.9,411.1 149.8,459.5C139.5,437.9 131.2,415.3 125,392C124.3,389.4 120.5,382.1 115.9,381.8C113.4,381.6 112.1,384 111.5,386.6Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:centerX="352.3"
+-                android:centerY="739.6"
+-                android:gradientRadius="558.7"
+-                android:type="radial"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FF094188"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#000B4186"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M467.2,673.3C582.2,766.7 813.5,696.7 813.5,469.6C720.1,611.2 601.2,708.8 467.2,673.3Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="778.1"
+-                android:startY="576.8"
+-                android:endX="709.2"
+-                android:endY="769.6"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#007B8BE9"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FF7B8BE9"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M240.3,441.2C242.7,438.6 245.8,437.7 248.7,438.1C164,541.5 232.3,723.1 279.3,767.7C281.9,775.1 234.8,736.5 228.3,727.5C192.6,697.2 141.4,547.1 240.3,441.2Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="182.9"
+-                android:startY="437.5"
+-                android:endX="240.8"
+-                android:endY="713.3"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0.1"
+-                    android:color="#FFC59FF9"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#00C59FF9"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path android:pathData="M512,681.9C627,681.9 720.3,605.8 720.3,511.9C720.3,418.1 627,342 512,342C413.9,342 303.7,405.8 303.7,514.4C303.8,682.2 481,778.7 632.1,764.1C620.8,762.8 550,759 502.1,704.9C497.8,700 490.3,691.5 493.7,686C497.1,680.4 506.5,681.9 512,681.9Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="512"
+-                android:startY="404.2"
+-                android:endX="512"
+-                android:endY="762.4"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FFFFFFFF"
+-                    />
+-                <item
+-                    android:offset="0.9"
+-                    android:color="#FFBEE1FE"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FF96CEFD"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:pathData="M512,681.9C627,681.9 720.3,605.8 720.3,511.9C720.3,483.3 711.6,456.3 696.2,432.6L530.9,582.7C519.4,593.2 499.9,593.2 488.4,582.7L326.2,435.4C312,458.1 303.7,484.5 303.7,514.4C303.8,682.2 481,778.7 632.1,764.1C631.5,764 630.6,763.9 629.5,763.8L629.5,763.8C612.3,762.2 547.1,755.8 502.1,704.9C497.8,700 490.3,691.5 493.7,686C496.6,681.3 503.6,681.6 509.1,681.8C510.1,681.8 511.1,681.9 512,681.9Z"
+-        android:strokeAlpha="0.7"
+-        android:fillAlpha="0.7"
+-        >
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="518.7"
+-                android:startY="606.9"
+-                android:endX="518.7"
+-                android:endY="756.9"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FFBCE0FD"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FF88CCFC"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:pathData="M446.7,602.8C408.5,561.7 326.5,435 326.5,435L327.5,433L487.9,568.5C498.7,576.3 514,576.3 524.7,568.3L680.6,435.2H697C697,435.2 612.2,555.6 568.7,602.8C525.1,650 484.8,644 446.7,602.8Z"
+-        android:fillColor="#B5DBF9"
+-        android:fillType="evenOdd"
+-        />
+-    <path
+-        android:pathData="M463.9,598.6C433.3,566.7 326.3,435.1 326.3,435.1L331.7,432L492.3,568.3C503.1,576.2 518.4,576.1 529.1,568.1L685,435.1H697.1C697.1,435.1 588.8,564 554.7,598.1C520.7,632.2 494.6,630.5 463.9,598.6Z"
+-        android:fillColor="#A8D3F6"
+-        android:fillType="evenOdd"
+-        />
+-    <path
+-        android:pathData="M463.9,593.7C433.3,561.8 335.9,444.7 335.9,444.7L348.5,456.1L492.3,563.5C503.1,571.3 518.4,571.2 529.1,563.3L670.1,456.2L682.6,449C682.6,449 588.8,559.2 554.7,593.3C520.7,627.4 494.6,625.7 463.9,593.7Z"
+-        android:fillColor="#93C5ED"
+-        android:fillType="evenOdd"
+-        />
+-    <path
+-        android:pathData="M463.7,583.7C433,551.8 341.1,445.7 341.1,445.7L348.2,446L492,553.5C502.8,561.3 518.2,561.2 528.8,553.3L669.9,446.2L677.4,445.6C677.4,445.6 588.5,549.1 554.5,583.2C520.4,617.4 494.3,615.6 463.7,583.7Z"
+-        android:fillColor="#7DB6E4"
+-        android:fillType="evenOdd"
+-        />
+-    <path android:pathData="M532.4,592.4L697.4,434.9C662.5,381 598.1,342 512.1,342C441,342 363.4,375.5 326.2,435.3L486,592.4C497.5,602.9 520.9,602.9 532.4,592.4Z">
+-        <aapt:attr name="android:fillColor">
+-            <gradient
+-                android:startX="511.3"
+-                android:startY="378.5"
+-                android:endX="511.8"
+-                android:endY="771.6"
+-                android:type="linear"
+-                >
+-                <item
+-                    android:offset="0"
+-                    android:color="#FFFFFFFF"
+-                    />
+-                <item
+-                    android:offset="0.9"
+-                    android:color="#FFBEE1FE"
+-                    />
+-                <item
+-                    android:offset="1"
+-                    android:color="#FF96CEFD"
+-                    />
+-            </gradient>
+-        </aapt:attr>
+-    </path>
+-    <path
+-        android:pathData="M697.6,434.7L533,592.2C518.4,602.6 502.8,603.3 487.5,593.9L326.1,435.3C330.6,427.9 335.8,420.9 341.5,414.2C347.3,419.7 353,425 358.5,430.1C400.9,469.8 435.2,501.9 483.5,543.2C505.3,561.8 512.1,561.4 533.4,543.2C588.7,496 629.1,460.3 681.7,413.4C687.6,420.1 692.9,427.3 697.6,434.7Z"
+-        android:strokeAlpha="0.6"
+-        android:fillColor="#ffffff"
+-        android:fillAlpha="0.6"
+-        />
+-    <path
+-        android:pathData="M541.2,257C563.5,249.9 561.6,227.9 561.6,227.9C561.6,227.9 550.4,214.8 528.3,222C507.7,228.8 504.4,243.6 504.4,243.6C504.4,243.6 515.7,265 541.2,257Z"
+-        android:fillColor="#ffffff"
+-        />
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF4FC3F7"
++        android:pathData="M5,0h14a5,5 0,0 1,5 5v14a5,5 0,0 1,-5 5h-14a5,5 0,0 1,-5 -5v-14a5,5 0,0 1,5 -5z" />
++    <group
++        android:pivotX="12"
++        android:pivotY="12"
++        android:scaleX="0.62"
++        android:scaleY="0.62">
++        <path
++            android:fillColor="#FFFFFFFF"
++            android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
++    </group>
+ </vector>
+diff --git a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo_monochrome.xml b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo_monochrome.xml
+index b794468..8ae0005 100644
+--- a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo_monochrome.xml
++++ b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_app_logo_monochrome.xml
+@@ -1,17 +1,11 @@
+-<vector
+-    xmlns:android="http://schemas.android.com/apk/res/android"
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: envelope glyph. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="72dp"
+     android:height="72dp"
+-    android:viewportWidth="1024"
+-    android:viewportHeight="1024"
+-    >
++    android:viewportWidth="24"
++    android:viewportHeight="24">
+     <path
+-        android:pathData="M440.1,249.7L440,249.7L439.9,249.7C372.1,277.6 364.9,339.8 375.8,373.2C375.8,373.2 375.8,373.5 375.8,374C415,346.4 465.1,331.5 512.5,331.5C627.5,331.5 720.8,407.6 720.8,501.4C720.8,595.3 627.5,671.4 512.5,671.4C511.6,671.4 510.6,671.4 509.6,671.3L509.6,671.3C504.1,671.1 497.1,670.8 494.2,675.5C490.8,681 498.3,689.5 502.6,694.4C547.6,745.3 612.8,751.7 630,753.4C631.1,753.5 632,753.6 632.6,753.6C481.5,768.3 304.3,671.7 304.2,503.9C304.2,464.4 318.8,430.8 342.1,404C342,404 342,404 341.9,404C347,318.1 314,215.4 252.4,195.2C248,193.8 243.7,197.1 243.1,201.6C235,269.6 217.5,293.1 198.5,318.5C170.1,356.6 149.4,400.6 150.3,449C140,427.4 131.7,404.9 125.5,381.6C124.6,378.4 119.4,368.7 113.7,372C109.1,374.6 105.7,381.7 103.2,389.1C93.8,424.3 89,462 89,498.4C89,729.1 282.2,921.9 512.5,921.9C746.4,921.9 936,732.3 936,498.4C936,409.2 908.4,326.5 861.4,258.2C863.3,258.2 865.3,258.2 867.3,258.2C885.5,258.2 903.4,259.7 920.6,262.7C894.7,233.9 859.7,210.7 819,195.5C846.2,185.7 875.8,179.6 907,178C856.7,136.9 783.2,111 701.4,111C583,111 466.8,156.5 440.1,249.7ZM562.1,217.4C562.1,217.4 564,239.5 541.7,246.5C516.2,254.5 504.9,233.1 504.9,233.1C504.9,233.1 508.2,218.4 528.8,211.6C550.9,204.3 562.1,217.4 562.1,217.4Z"
+-        android:fillColor="#000000"
+-        android:fillType="evenOdd"
+-        />
+-    <path
+-        android:pathData="M464.2,573.2C433.5,541.3 341.6,435.3 341.6,435.3L348.7,435.6L492.5,543C503.3,550.8 518.7,550.7 529.3,542.8L670.4,435.7L677.9,435.1C677.9,435.1 589,538.7 555,572.8C520.9,606.9 494.8,605.2 464.2,573.2Z"
+-        android:fillColor="#000000"
+-        />
++        android:fillColor="#FF000000"
++        android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
+ </vector>
+diff --git a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_logo_thunderbird_white.xml b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_logo_thunderbird_white.xml
+index a2efb44..299d6b6 100644
+--- a/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_logo_thunderbird_white.xml
++++ b/core/ui/legacy/theme2/thunderbird/src/main/res/drawable/ic_logo_thunderbird_white.xml
+@@ -1,21 +1,11 @@
+-<vector
+-    xmlns:android="http://schemas.android.com/apk/res/android"
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: envelope glyph. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
+     android:width="24dp"
+     android:height="24dp"
+-    android:viewportWidth="1024"
+-    android:viewportHeight="1024"
+-    >
+-
++    android:viewportWidth="24"
++    android:viewportHeight="24">
+     <path
+-        android:fillColor="#fff"
+-        android:fillType="evenOdd"
+-        android:pathData="M452,306.5h0.2c22,-77 118,-114.7 216,-114.7 67.5,0 128.3,21.5 169.9,55.4a249.8,249.8 0,0 0,-72.8 14.5,211.7 211.7,0 0,1 84,55.5 258.7,258.7 0,0 0,-49 -3.7A350,350 0,0 1,512 862c-190.3,0 -350,-159.4 -350,-350 0,-30.1 4,-61.2 11.8,-90.4 2,-6 4.8,-12 8.6,-14.1 4.7,-2.7 9,5.3 9.7,8 5.2,19.2 12,37.8 20.6,55.7 -0.7,-40 16.3,-76.4 39.8,-107.9 15.7,-21 30.2,-40.4 36.9,-96.6 0.4,-3.7 4,-6.4 7.6,-5.3 51,16.7 78.2,101.6 74,172.6h0.2a123.4,123.4 0,0 0,-31.3 82.6c0,138.6 146.5,218.4 271.4,206.3l-2.2,-0.2c-14.2,-1.4 -68.1,-6.7 -105.3,-48.7 -3.5,-4 -9.7,-11 -7,-15.6 2.4,-3.9 8.3,-3.7 12.8,-3.5h2.4c95,0 172.1,-62.8 172.1,-140.4 0,-77.6 -77,-140.4 -172.1,-140.4 -39.1,0 -80.6,12.3 -113,35v-0.5c-9,-27.7 -3,-79.1 53,-102.1ZM553,279.8s1.6,18.2 -16.9,24c-21,6.6 -30.3,-11 -30.3,-11s2.6,-12.2 19.7,-17.9c18.2,-6 27.5,4.9 27.5,4.9Z"
+-        />
+-
+-    <path
+-        android:fillColor="#fff"
+-        android:fillType="evenOdd"
+-        android:pathData="M492.2,551.9a24,24 0,0 0,33.6 0l113.6,-77.3 -96.9,94.5a48,48 0,0 1,-67 0l-96.9,-94.5 113.6,77.3Z"
+-        />
+-
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z" />
+ </vector>
+diff --git a/core/ui/legacy/theme2/thunderbird/src/main/res/values/app_logo_colors.xml b/core/ui/legacy/theme2/thunderbird/src/main/res/values/app_logo_colors.xml
+index 250aa60..953128f 100644
+--- a/core/ui/legacy/theme2/thunderbird/src/main/res/values/app_logo_colors.xml
++++ b/core/ui/legacy/theme2/thunderbird/src/main/res/values/app_logo_colors.xml
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="launcher_icon_background">#F0F8FF</color>
++    <color name="launcher_icon_background">#4FC3F7</color>
+ </resources>
+diff --git a/core/ui/legacy/theme2/thunderbird/src/main/res/values/colors.xml b/core/ui/legacy/theme2/thunderbird/src/main/res/values/colors.xml
+index 5220929..db51805 100644
+--- a/core/ui/legacy/theme2/thunderbird/src/main/res/values/colors.xml
++++ b/core/ui/legacy/theme2/thunderbird/src/main/res/values/colors.xml
+@@ -1,49 +1,54 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
++    <!-- N9 Mail: N9 palette (light grey pages, blue #00A5E5 accent, orange #FF8600 links). -->
++    <color name="n9Rule">#D6D6D6</color>
++    <color name="n9RuleLight">#FFFFFF</color>
++    <color name="n9Secondary">#8C8C8C</color>
++    <color name="n9Link">#FF8600</color>
+     <!-- Light Theme -->
+-    <color name="lightPrimary">#004F9B</color>
++    <color name="lightPrimary">#00A5E5</color>
+     <color name="lightOnPrimary">#FFFFFF</color>
+-    <color name="lightPrimaryContainer">#1373D9</color>
+-    <color name="lightOnPrimaryContainer">#FFFFFF</color>
++    <color name="lightPrimaryContainer">#D5F0FB</color>
++    <color name="lightOnPrimaryContainer">#004A68</color>
+ 
+-    <color name="lightSecondary">#003D75</color>
++    <color name="lightSecondary">#0083B8</color>
+     <color name="lightOnSecondary">#FFFFFF</color>
+-    <color name="lightSecondaryContainer">#2E61A0</color>
+-    <color name="lightOnSecondaryContainer">#FFFFFF</color>
++    <color name="lightSecondaryContainer">#E1F3FA</color>
++    <color name="lightOnSecondaryContainer">#003B54</color>
+ 
+-    <color name="lightTertiary">#54008E</color>
++    <color name="lightTertiary">#FF8600</color>
+     <color name="lightOnTertiary">#FFFFFF</color>
+-    <color name="lightTertiaryContainer">#7B35B8</color>
+-    <color name="lightOnTertiaryContainer">#FFFFFF</color>
++    <color name="lightTertiaryContainer">#FFE6CC</color>
++    <color name="lightOnTertiaryContainer">#663500</color>
+ 
+     <color name="lightError">#A0000E</color>
+     <color name="lightOnError">#FFFFFF</color>
+     <color name="lightErrorContainer">#DC2626</color>
+     <color name="lightOnErrorContainer">#FFFFFF</color>
+ 
+-    <color name="lightSurfaceDim">#DCD9D9</color>
+-    <color name="lightSurface">#FCF8F8</color>
+-    <color name="lightSurfaceBright">#FCF8F8</color>
+-    <color name="lightOnSurface">#1C1B1B</color>
+-    <color name="lightOnSurfaceVariant">#45474A</color>
++    <color name="lightSurfaceDim">#E0E0E0</color>
++    <color name="lightSurface">#F4F4F4</color>
++    <color name="lightSurfaceBright">#FFFFFF</color>
++    <color name="lightOnSurface">#191919</color>
++    <color name="lightOnSurfaceVariant">#8C8C8C</color>
+ 
+     <color name="lightSurfaceContainerLowest">#FFFFFF</color>
+-    <color name="lightSurfaceContainerLow">#F6F3F2</color>
+-    <color name="lightSurfaceContainer">#F1EDEC</color>
+-    <color name="lightSurfaceContainerHigh">#EBE7E7</color>
+-    <color name="lightSurfaceContainerHighest">#E5E2E1</color>
++    <color name="lightSurfaceContainerLow">#F4F4F4</color>
++    <color name="lightSurfaceContainer">#EEEEEE</color>
++    <color name="lightSurfaceContainerHigh">#E9E9E9</color>
++    <color name="lightSurfaceContainerHighest">#E2E2E2</color>
+ 
+-    <color name="lightSurfaceInverse">#313030</color>
+-    <color name="lightOnSurfaceInverse">#F3F0EF</color>
+-    <color name="lightPrimaryInverse">#A9C7FF</color>
++    <color name="lightSurfaceInverse">#191919</color>
++    <color name="lightOnSurfaceInverse">#F4F4F4</color>
++    <color name="lightPrimaryInverse">#7FD3F3</color>
+ 
+-    <color name="lightOutline">#75777A</color>
+-    <color name="lightOutlineVariant">#C5C6CA</color>
++    <color name="lightOutline">#B4B4B4</color>
++    <color name="lightOutlineVariant">#D6D6D6</color>
+ 
+-    <color name="lightPrimaryFixed">#D6E3FF</color>
+-    <color name="lightOnPrimaryFixed">#001B3D</color>
+-    <color name="lightPrimaryFixedDim">#A9C7FF</color>
+-    <color name="lightOnPrimaryFixedVariant">#00468B</color>
++    <color name="lightPrimaryFixed">#D5F0FB</color>
++    <color name="lightOnPrimaryFixed">#00202E</color>
++    <color name="lightPrimaryFixedDim">#7FD3F3</color>
++    <color name="lightOnPrimaryFixedVariant">#004A68</color>
+ 
+     <color name="lightSecondaryFixed">#D5E3FF</color>
+     <color name="lightOnSecondaryFixed">#001C3B</color>
+@@ -56,44 +61,44 @@
+     <color name="lightOnTertiaryFixedVariant">#2D0050</color>
+ 
+     <!-- Dark Theme -->
+-    <color name="darkPrimary">#BEE6FF</color>
+-    <color name="darkOnPrimary">#003549</color>
+-    <color name="darkPrimaryContainer">#50C2F8</color>
+-    <color name="darkOnPrimaryContainer">#002E41</color>
++    <color name="darkPrimary">#00A5E5</color>
++    <color name="darkOnPrimary">#FFFFFF</color>
++    <color name="darkPrimaryContainer">#004A68</color>
++    <color name="darkOnPrimaryContainer">#D5F0FB</color>
+ 
+-    <color name="darkSecondary">#96CDFF</color>
+-    <color name="darkOnSecondary">#003352</color>
+-    <color name="darkSecondaryContainer">#24A7F7</color>
+-    <color name="darkOnSecondaryContainer">#001423</color>
++    <color name="darkSecondary">#33B7EA</color>
++    <color name="darkOnSecondary">#00131C</color>
++    <color name="darkSecondaryContainer">#003B54</color>
++    <color name="darkOnSecondaryContainer">#D5F0FB</color>
+ 
+-    <color name="darkTertiary">#FFFFFF</color>
+-    <color name="darkOnTertiary">#352D3E</color>
+-    <color name="darkTertiaryContainer">#DCD0E6</color>
+-    <color name="darkOnTertiaryContainer">#443C4E</color>
++    <color name="darkTertiary">#FF8600</color>
++    <color name="darkOnTertiary">#000000</color>
++    <color name="darkTertiaryContainer">#663500</color>
++    <color name="darkOnTertiaryContainer">#FFE6CC</color>
+ 
+     <color name="darkError">#FFB4AB</color>
+     <color name="darkOnError">#690005</color>
+     <color name="darkErrorContainer">#93000A</color>
+     <color name="darkOnErrorContainer">#FFDAD6</color>
+ 
+-    <color name="darkSurfaceDim">#131314</color>
+-    <color name="darkSurface">#131314</color>
+-    <color name="darkSurfaceBright">#39393A</color>
+-    <color name="darkOnSurface">#E5E2E3</color>
+-    <color name="darkOnSurfaceVariant">#C5C6CC</color>
++    <color name="darkSurfaceDim">#000000</color>
++    <color name="darkSurface">#000000</color>
++    <color name="darkSurfaceBright">#2A2A2A</color>
++    <color name="darkOnSurface">#FFFFFF</color>
++    <color name="darkOnSurfaceVariant">#8C8C8C</color>
+ 
+-    <color name="darkSurfaceContainerLowest">#0E0E0F</color>
+-    <color name="darkSurfaceContainerLow">#1B1B1C</color>
+-    <color name="darkSurfaceContainer">#201F20</color>
+-    <color name="darkSurfaceContainerHigh">#2A2A2B</color>
+-    <color name="darkSurfaceContainerHighest">#353436</color>
++    <color name="darkSurfaceContainerLowest">#000000</color>
++    <color name="darkSurfaceContainerLow">#0E0E0E</color>
++    <color name="darkSurfaceContainer">#141414</color>
++    <color name="darkSurfaceContainerHigh">#1E1E1E</color>
++    <color name="darkSurfaceContainerHighest">#282828</color>
+ 
+-    <color name="darkSurfaceInverse">#E5E2E3</color>
+-    <color name="darkOnSurfaceInverse">#313031</color>
+-    <color name="darkPrimaryInverse">#006689</color>
++    <color name="darkSurfaceInverse">#F4F4F4</color>
++    <color name="darkOnSurfaceInverse">#191919</color>
++    <color name="darkPrimaryInverse">#0083B8</color>
+ 
+-    <color name="darkOutline">#8F9096</color>
+-    <color name="darkOutlineVariant">#44474C</color>
++    <color name="darkOutline">#5A5A5A</color>
++    <color name="darkOutlineVariant">#2E2E2E</color>
+ 
+     <color name="darkPrimaryFixed">#C3E8FF</color>
+     <color name="darkOnPrimaryFixed">#001E2C</color>
+diff --git a/feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt b/feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt
+index b78cbf5..baccf94 100644
+--- a/feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt
++++ b/feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt
+@@ -69,7 +69,7 @@ object MessageItemDefaults {
+      */
+     @Composable
+     fun newMessageItemColors(
+-        containerColor: Color = BoltTheme.colors.surfaceContainerLowest,
++        containerColor: Color = BoltTheme.colors.surface, // N9 Mail: flat page colour
+         contentColor: Color = BoltTheme.colors.onSurface,
+     ): MessageItemColors = MessageItemColors(
+         containerColor = containerColor,
+@@ -87,7 +87,7 @@ object MessageItemDefaults {
+      */
+     @Composable
+     fun defaultMessageItemColors(
+-        containerColor: Color = BoltTheme.colors.surfaceContainerLowest,
++        containerColor: Color = BoltTheme.colors.surface, // N9 Mail: flat page colour
+         contentColor: Color = BoltTheme.colors.onSurface,
+     ): MessageItemColors = MessageItemColors(
+         containerColor = containerColor,
+@@ -105,8 +105,9 @@ object MessageItemDefaults {
+      */
+     @Composable
+     fun readMessageItemColors(
+-        containerColor: Color = BoltTheme.colors.surfaceContainerLow,
+-        contentColor: Color = BoltTheme.colors.onSurfaceVariant,
++        // N9 Mail: read rows look like unread ones, only the sender is not bold.
++        containerColor: Color = BoltTheme.colors.surface,
++        contentColor: Color = BoltTheme.colors.onSurface,
+     ): MessageItemColors = MessageItemColors(
+         containerColor = containerColor,
+         contentColor = contentColor,
+@@ -140,7 +141,7 @@ object MessageItemDefaults {
+     @Composable
+     fun activeMessageItemColors(
+         // BoltTheme.colors.infoContainer == BoltTheme.colors.surfaceVariantBlue
+-        containerColor: Color = BoltTheme.colors.infoContainer,
++        containerColor: Color = BoltTheme.colors.primaryContainer, // N9 Mail: light N9 blue
+         contentColor: Color = BoltTheme.colors.onSurface,
+     ): MessageItemColors = MessageItemColors(
+         containerColor = containerColor,
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageCompose.java b/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageCompose.java
+index 72928f5..7be3b6f 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageCompose.java
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageCompose.java
+@@ -69,6 +69,7 @@ import com.fsck.k9.ui.helper.DisplayHtmlUiFactory;
+ import com.fsck.k9.view.MessageWebView;
+ import com.fsck.k9.view.WebViewConfigProvider;
+ import kotlin.Unit;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
+ import net.thunderbird.core.android.account.LegacyAccountDto;
+ import app.k9mail.legacy.di.DI;
+ import net.thunderbird.core.android.account.Identity;
+@@ -663,6 +664,31 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
+ 
+         dismissActiveInAppNotifications();
+         triggerIfNeededSentFolderNotFoundInAppNotification();
++        updateEtesianToolbar();
++    }
++
++    /** N9: Send and Attach go on the Etesian system toolbar (with Back) when it is showing. */
++    private void updateEtesianToolbar() {
++        if (isFinishing() || !EtesianToolbar.isAvailable(this)) {
++            return;
++        }
++        EtesianToolbar.of(this)
++                .setStyle(EtesianToolbar.STYLE_LIGHT)
++                .setBack(true)
++                .setItems(id -> {
++                    if (isFinishing()) {
++                        return;
++                    }
++                    if ("send".equals(id)) {
++                        checkToSendMessage();
++                    } else if ("attach".equals(id)) {
++                        attachmentPresenter.onClickAddAttachment(recipientPresenter);
++                    }
++                },
++                        EtesianToolbar.Item.action("send", Icons.Outlined.INSTANCE.getSend(),
++                                getString(R.string.etesian_toolbar_send)),
++                        EtesianToolbar.Item.action("attach", Icons.Outlined.INSTANCE.getAttachment(),
++                                getString(R.string.etesian_toolbar_attach)));
+     }
+ 
+     private void triggerIfNeededSentFolderNotFoundInAppNotification() {
+@@ -1274,6 +1300,12 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
+ 
+         getMenuInflater().inflate(R.menu.message_compose_option, menu);
+ 
++        if (EtesianToolbar.isAvailable(this)) {
++            // N9: these are on the system toolbar.
++            menu.findItem(R.id.send).setVisible(false);
++            menu.findItem(R.id.add_attachment).setVisible(false);
++        }
++
+         // Disable the 'Save' menu option if Drafts folder is set to -NONE-
+         if (!account.hasDraftsFolder()) {
+             menu.findItem(R.id.save).setEnabled(false);
+@@ -1971,7 +2003,7 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
+ 
+     private void initializeActionBar() {
+         ActionBar actionBar = getSupportActionBar();
+-        actionBar.setDisplayHomeAsUpEnabled(true);
++        actionBar.setDisplayHomeAsUpEnabled(!EtesianToolbar.isAvailable(this));
+     }
+ 
+     private void initializeInAppNotificationFragment() {
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt
+index 8146172..38ac9c1 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt
+@@ -82,6 +82,7 @@ import org.koin.android.ext.android.inject
+ import org.koin.core.component.KoinComponent
+ import org.koin.core.component.inject
+ import org.koin.core.parameter.parametersOf
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ 
+ private const val TAG = "MainActivity"
+ 
+@@ -629,6 +630,103 @@ open class MessageHomeActivity :
+         if (displayMode != DisplayMode.MESSAGE_VIEW) {
+             onMessageListDisplayed()
+         }
++
++        updateEtesianToolbar()
++    }
++
++    /**
++     * N9: puts this screen's actions on the Etesian system toolbar (when it is showing) and hides the in-app
++     * up/drawer arrow it replaces.
++     */
++    private fun updateEtesianToolbar() {
++        if (isFinishing || !EtesianToolbar.isAvailable(this)) return
++
++        if (::actionBar.isInitialized) {
++            actionBar.setDisplayHomeAsUpEnabled(false)
++        }
++
++        val toolbar = EtesianToolbar.of(this).setStyle(EtesianToolbar.STYLE_LIGHT)
++        val showingMessage = displayMode == DisplayMode.MESSAGE_VIEW ||
++            (displayMode == DisplayMode.SPLIT_VIEW && messageViewContainerFragment != null)
++
++        if (showingMessage) {
++            toolbar.setBack(true)
++            toolbar.setItems(
++                { id -> onEtesianToolbarItem(id) },
++                EtesianToolbar.Item.action(
++                    TOOLBAR_REPLY,
++                    Icons.Outlined.Reply,
++                    getString(R.string.etesian_toolbar_reply),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_FORWARD,
++                    Icons.Outlined.Forward,
++                    getString(R.string.etesian_toolbar_forward),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_DELETE,
++                    Icons.Outlined.Delete,
++                    getString(R.string.etesian_toolbar_delete),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_MENU,
++                    Icons.Outlined.MoreVert,
++                    getString(R.string.etesian_toolbar_menu),
++                ),
++            )
++        } else {
++            // Main screen: no Back unless a nested list (thread, search) is shown.
++            toolbar.setBack(isAdditionalMessageListDisplayed || !isDrawerEnabled)
++            toolbar.setItems(
++                { id -> onEtesianToolbarItem(id) },
++                EtesianToolbar.Item.action(
++                    TOOLBAR_COMPOSE,
++                    Icons.Outlined.Edit,
++                    getString(R.string.etesian_toolbar_new),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_REFRESH,
++                    Icons.Outlined.Refresh,
++                    getString(R.string.etesian_toolbar_refresh),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_FOLDERS,
++                    Icons.Outlined.Folder,
++                    getString(R.string.etesian_toolbar_folders),
++                ),
++                EtesianToolbar.Item.action(
++                    TOOLBAR_MENU,
++                    Icons.Outlined.MoreVert,
++                    getString(R.string.etesian_toolbar_menu),
++                ),
++            )
++        }
++    }
++
++    private fun onEtesianToolbarItem(id: String) {
++        if (isFinishing) return
++        when (id) {
++            TOOLBAR_COMPOSE -> messageListFragment?.onCompose() ?: onCompose(null)
++            TOOLBAR_REFRESH -> messageListFragment?.onCheckMail()
++            TOOLBAR_FOLDERS -> {
++                val drawer = navigationDrawer
++                if (isDrawerEnabled && drawer != null && !isAdditionalMessageListDisplayed) {
++                    if (drawer.isOpen) drawer.close() else drawer.open()
++                } else {
++                    launchManageFoldersScreen()
++                }
++            }
++            TOOLBAR_REPLY -> messageViewContainerFragment?.onReply()
++            TOOLBAR_FORWARD -> messageViewContainerFragment?.onForward()
++            TOOLBAR_DELETE -> messageViewContainerFragment?.onDelete()
++            TOOLBAR_MENU -> {
++                if (displayMode == DisplayMode.MESSAGE_VIEW) {
++                    openOptionsMenu()
++                } else {
++                    SettingsActivity.launch(this)
++                }
++            }
++        }
+     }
+ 
+     override fun onStart() {
+@@ -1118,6 +1216,7 @@ open class MessageHomeActivity :
+ 
+             if (displayMode == DisplayMode.SPLIT_VIEW) {
+                 fragment.isActive = true
++                updateEtesianToolbar()
+             } else {
+                 showMessageView()
+             }
+@@ -1162,6 +1261,8 @@ open class MessageHomeActivity :
+         if (displayMode == DisplayMode.SPLIT_VIEW) {
+             showMessageViewPlaceHolder()
+         }
++
++        updateEtesianToolbar()
+     }
+ 
+     private fun addMessageListFragment(fragment: MessageListFragmentBridgeContract) {
+@@ -1355,6 +1456,8 @@ open class MessageHomeActivity :
+         showDefaultTitleView()
+ 
+         onMessageListDisplayed()
++
++        updateEtesianToolbar()
+     }
+ 
+     private fun setDrawerLockState() {
+@@ -1384,6 +1487,8 @@ open class MessageHomeActivity :
+         }
+ 
+         showMessageTitleView()
++
++        updateEtesianToolbar()
+     }
+ 
+     private fun showDefaultTitleView() {
+@@ -1520,6 +1625,14 @@ open class MessageHomeActivity :
+         private const val EXTRA_SEARCH_FOLDER = "com.fsck.k9.search_folder"
+ 
+         private const val STATE_DISPLAY_MODE = "displayMode"
++
++        private const val TOOLBAR_COMPOSE = "compose"
++        private const val TOOLBAR_REFRESH = "refresh"
++        private const val TOOLBAR_FOLDERS = "folders"
++        private const val TOOLBAR_MENU = "menu"
++        private const val TOOLBAR_REPLY = "reply"
++        private const val TOOLBAR_FORWARD = "forward"
++        private const val TOOLBAR_DELETE = "delete"
+         private const val STATE_MESSAGE_VIEW_ONLY = "messageViewOnly"
+         private const val STATE_MESSAGE_LIST_WAS_DISPLAYED = "messageListWasDisplayed"
+ 
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt
+index b64e422..c1630c2 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt
+@@ -228,6 +228,7 @@ class LegacyMessageListFragment :
+     private var actionMode: ActionMode? = null
+     private var hasConnectivity: Boolean? = null
+     private var isShowFloatingActionButton: Boolean = true
++    private var isEtesianToolbar: Boolean = false
+ 
+     /**
+      * Relevant messages for the current context when we have to remember the chosen messages
+@@ -504,7 +505,9 @@ class LegacyMessageListFragment :
+     }
+ 
+     private fun initializeFloatingActionButton(view: View) {
+-        isShowFloatingActionButton = generalSettingsManager.getConfig()
++        // N9: the Etesian system toolbar carries "New message" instead of the FAB.
++        isEtesianToolbar = com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(requireContext())
++        isShowFloatingActionButton = !isEtesianToolbar && generalSettingsManager.getConfig()
+             .display
+             .inboxSettings
+             .isShowComposeButtonOnMessageList
+@@ -1156,7 +1159,7 @@ class LegacyMessageListFragment :
+     }
+ 
+     private fun prepareMenu(menu: Menu) {
+-        menu.findItem(R.id.compose).isVisible = !isShowFloatingActionButton
++        menu.findItem(R.id.compose).isVisible = !isShowFloatingActionButton && !isEtesianToolbar
+         prepareSortMenu(menu)
+         menu.findItem(R.id.select_all).isVisible = true
+         menu.findItem(R.id.mark_all_as_read).isVisible = isMarkAllAsReadSupported
+@@ -1835,6 +1838,10 @@ class LegacyMessageListFragment :
+         doNegativeClick(dialogId)
+     }
+ 
++    override fun onCheckMail() {
++        if (isAdded) checkMail()
++    }
++
+     private fun checkMail() {
+         if (isSingleAccountMode && isSingleFolderMode) {
+             val folderId = currentFolder!!.databaseId
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt
+index b0a7227..7a85161 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt
+@@ -269,6 +269,7 @@ class MessageListFragment :
+     private var actionMode: ActionMode? = null
+     private var hasConnectivity: Boolean? = null
+     private var isShowFloatingActionButton: Boolean = true
++    private var isEtesianToolbar: Boolean = false
+ 
+     /**
+      * Relevant messages for the current context when we have to remember the chosen messages
+@@ -483,7 +484,9 @@ class MessageListFragment :
+     }
+ 
+     private fun initializeFloatingActionButton(view: View) {
+-        isShowFloatingActionButton = generalSettingsManager.getConfig()
++        // N9: the Etesian system toolbar carries "New message" instead of the FAB.
++        isEtesianToolbar = com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(requireContext())
++        isShowFloatingActionButton = !isEtesianToolbar && generalSettingsManager.getConfig()
+             .display
+             .inboxSettings
+             .isShowComposeButtonOnMessageList
+@@ -1049,7 +1052,7 @@ class MessageListFragment :
+     }
+ 
+     private fun prepareMenu(menu: Menu) {
+-        menu.findItem(R.id.compose).isVisible = !isShowFloatingActionButton
++        menu.findItem(R.id.compose).isVisible = !isShowFloatingActionButton && !isEtesianToolbar
+         prepareSortMenu(menu)
+         menu.findItem(R.id.select_all).isVisible = true
+         menu.findItem(R.id.mark_all_as_read).isVisible = isMarkAllAsReadSupported
+@@ -1657,6 +1660,10 @@ class MessageListFragment :
+         doNegativeClick(dialogId)
+     }
+ 
++    override fun onCheckMail() {
++        if (isAdded) checkMail()
++    }
++
+     private fun checkMail() {
+         if (isSingleAccountMode && isSingleFolderMode) {
+             val folderId = currentFolder!!.databaseId
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt
+index 7fe146a..0a1c262 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt
+@@ -38,6 +38,9 @@ interface MessageListFragmentBridgeContract {
+     fun isSearchViewCollapsed(): Boolean
+     fun expandSearchView()
+     fun onCompose()
++
++    /** Synchronizes the displayed folder(s); used by the Etesian system toolbar. */
++    fun onCheckMail()
+     fun onCycleSort()
+     fun collapseSearchView()
+     fun onReverseSort()
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt
+index 14bf30a..33ea29d 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt
+@@ -56,6 +56,7 @@ class MessageViewHolder(
+     val starClickAreaView: View = view.findViewById(R.id.star_click_area)
+     val attachmentView: ImageView = view.findViewById(R.id.attachment)
+     val statusView: ImageView = view.findViewById(R.id.status)
++    val unreadMarkerView: View = view.findViewById(R.id.unread_marker)
+ 
+     @Suppress("LongMethod", "CyclomaticComplexMethod")
+     fun bind(messageListItem: MessageListItem, isActive: Boolean, isSelected: Boolean) {
+@@ -138,8 +139,10 @@ class MessageViewHolder(
+                 res.getString(R.string.message_list_content_description_unread_prefix, firstLineText)
+             }
+ 
+-            dateView.typeface = Typeface.create(dateView.typeface, maybeBoldTypeface)
+-            dateView.setTextColor(foregroundColor)
++            // N9 Mail: small grey time, unread shown by the bold sender and a blue dot.
++            dateView.typeface = Typeface.create(dateView.typeface, Typeface.NORMAL)
++            dateView.setTextColor(selectPreviewTextColor(isActive, isSelected))
++            unreadMarkerView.isVisible = !isRead
+             dateView.text = messageListItem.displayMessageDateTime
+             attachmentView.isVisible = hasAttachments
+             attachmentView.setColorFilter(foregroundColor)
+diff --git a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt
+index 5bbc848..a4e4663 100644
+--- a/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt
++++ b/legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt
+@@ -42,11 +42,11 @@ data class MessageViewHolderColors(
+                 selectedBackground = theme.resolveColorAttribute(MaterialR.attr.colorSurfaceVariant),
+                 regular = theme.resolveColorAttribute(MaterialR.attr.colorOnSurface),
+                 regularBackground = theme.resolveColorAttribute(MaterialR.attr.colorSurface),
+-                read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),
++                read = theme.resolveColorAttribute(MaterialR.attr.colorOnSurface),
+                 readBackground = theme.resolveColorAttribute(MaterialR.attr.colorSurfaceContainerHigh),
+                 unread = theme.resolveColorAttribute(MaterialR.attr.colorOnSurface),
+                 unreadBackground = theme.resolveColorAttribute(MaterialR.attr.colorSurface),
+-                previewText = theme.resolveColorAttribute(MaterialR.attr.colorOutline),
++                previewText = theme.resolveColorAttribute(MaterialR.attr.colorOnSurfaceVariant),
+                 previewActiveText = theme.resolveColorAttribute(MaterialR.attr.colorOnSecondary),
+                 previewSelectedText = theme.resolveColorAttribute(MaterialR.attr.colorOnSurfaceVariant),
+             )
+diff --git a/legacy/ui/legacy/src/main/java/com/bompotis/etesian/toolbar/EtesianToolbar.java b/legacy/ui/legacy/src/main/java/com/bompotis/etesian/toolbar/EtesianToolbar.java
+new file mode 100644
+index 0000000..8a2b3b9
+--- /dev/null
++++ b/legacy/ui/legacy/src/main/java/com/bompotis/etesian/toolbar/EtesianToolbar.java
+@@ -0,0 +1,285 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.bompotis.etesian.toolbar;
++
++import android.app.Activity;
++import android.app.Application;
++import android.app.PendingIntent;
++import android.content.BroadcastReceiver;
++import android.content.Context;
++import android.content.Intent;
++import android.content.IntentFilter;
++import android.graphics.drawable.Icon;
++import android.os.Bundle;
++import android.provider.Settings;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.WeakHashMap;
++
++/**
++ * Puts an activity's own actions on the Etesian (N9) system toolbar at the bottom of the
++ * screen, in place of the user's custom buttons, while that activity is in front.
++ *
++ * <pre>
++ * EtesianToolbar.of(activity)
++ *         .setBack(false)
++ *         .setItems(Arrays.asList(
++ *                 EtesianToolbar.Item.action("add", R.drawable.ic_add, "New event"),
++ *                 EtesianToolbar.Item.tab("month", R.drawable.ic_month, "Month", true),
++ *                 EtesianToolbar.Item.tab("week", R.drawable.ic_week, "Week", false)),
++ *                 id -> onToolbarItem(id));
++ * </pre>
++ *
++ * Call it again whenever the items change (e.g. another tab is selected). The toolbar follows
++ * the activity: it is shown while the activity is in front and re-sent when it resumes. If the
++ * system toolbar is unavailable ({@link #isAvailable}), draw your own bar instead.
++ */
++public final class EtesianToolbar {
++
++    /** Broadcast to SystemUI: show these items for a task's top activity. */
++    public static final String ACTION_SET = "com.bompotis.etesian.toolbar.SET";
++    /** Broadcast to SystemUI: the activity no longer provides items. */
++    public static final String ACTION_CLEAR = "com.bompotis.etesian.toolbar.CLEAR";
++
++    public static final String EXTRA_TASK = "task";
++    public static final String EXTRA_COMPONENT = "component";
++    public static final String EXTRA_BACK = "back";
++    public static final String EXTRA_ITEMS = "items";
++    public static final String EXTRA_CALLBACK = "callback";
++    /** Filled into the callback by SystemUI: the id of the tapped item. */
++    public static final String EXTRA_ID = "id";
++
++    public static final String KEY_ID = "id";
++    public static final String KEY_LABEL = "label";
++    public static final String KEY_ICON = "icon";
++    public static final String KEY_TAB = "tab";
++    public static final String KEY_SELECTED = "selected";
++    public static final String KEY_ENABLED = "enabled";
++    public static final String KEY_BADGE = "badge";
++
++    private static final String SYSTEMUI = "com.android.systemui";
++    private static final WeakHashMap<Activity, EtesianToolbar> sInstances = new WeakHashMap<>();
++
++    /** Receives taps on this toolbar's items. */
++    public interface Listener {
++        void onItemSelected(String id);
++    }
++
++    /** One button: a tab (shown selected or not) or a plain action. */
++    public static final class Item {
++        final String mId;
++        final int mIconRes;
++        final Icon mIcon;
++        final String mLabel;
++        final boolean mTab;
++        boolean mSelected;
++        boolean mEnabled = true;
++        boolean mTint = true;
++        String mBadge;
++
++        private Item(String id, int iconRes, Icon icon, String label, boolean tab, boolean selected) {
++            mId = id;
++            mIconRes = iconRes;
++            mIcon = icon;
++            mLabel = label;
++            mTab = tab;
++            mSelected = selected;
++        }
++
++        /** A button that runs an action. The icon is drawn monochrome in the bar's colour. */
++        public static Item action(String id, int iconRes, String label) {
++            return new Item(id, iconRes, null, label, false, false);
++        }
++
++        public static Item action(String id, Icon icon, String label) {
++            return new Item(id, 0, icon, label, false, false);
++        }
++
++        /** One of a set of views; the selected one is drawn as the N9's lighter block. */
++        public static Item tab(String id, int iconRes, String label, boolean selected) {
++            return new Item(id, iconRes, null, label, true, selected);
++        }
++
++        public Item setEnabled(boolean enabled) {
++            mEnabled = enabled;
++            return this;
++        }
++
++        /**
++         * Whether the icon is drawn monochrome in the bar's colour (the default), or in its own
++         * colours (the N9's app icons, like the orange feed icon in Feeds).
++         */
++        public Item setTinted(boolean tint) {
++            mTint = tint;
++            return this;
++        }
++
++        /** A small count or mark on the button, or null for none. */
++        public Item setBadge(String badge) {
++            mBadge = badge;
++            return this;
++        }
++
++        Bundle toBundle(Context context) {
++            final Bundle b = new Bundle();
++            b.putString(KEY_ID, mId);
++            b.putString(KEY_LABEL, mLabel);
++            b.putParcelable(KEY_ICON, mIcon != null ? mIcon
++                    : Icon.createWithResource(context.getPackageName(), mIconRes));
++            b.putBoolean(KEY_TAB, mTab);
++            b.putBoolean(KEY_SELECTED, mSelected);
++            b.putBoolean(KEY_ENABLED, mEnabled);
++            b.putBoolean("tint", mTint);
++            b.putString(KEY_BADGE, mBadge);
++            return b;
++        }
++    }
++
++    /**
++     * Whether the system toolbar is showing (Etesian mode with the bottom bar on). When it
++     * isn't, the app should draw its own bar.
++     */
++    public static boolean isAvailable(Context context) {
++        return Settings.Secure.getInt(context.getContentResolver(), "etesian_gestures", 0) == 1
++                && Settings.Secure.getInt(context.getContentResolver(), "etesian_bottom_bar", 1)
++                        == 1;
++    }
++
++    /** The toolbar for [activity] (one per activity). */
++    public static EtesianToolbar of(Activity activity) {
++        EtesianToolbar t = sInstances.get(activity);
++        if (t == null) {
++            t = new EtesianToolbar(activity);
++            sInstances.put(activity, t);
++        }
++        return t;
++    }
++
++    private final Activity mActivity;
++    private final String mClickAction;
++    private boolean mBack = true;
++    private String mStyle;
++    private List<Item> mItems;
++    private Listener mListener;
++    private boolean mRegistered;
++
++    private final BroadcastReceiver mClicks = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            final String id = intent.getStringExtra(EXTRA_ID);
++            if (id != null && mListener != null) {
++                mListener.onItemSelected(id);
++            }
++        }
++    };
++
++    private EtesianToolbar(Activity activity) {
++        mActivity = activity;
++        mClickAction = "com.bompotis.etesian.toolbar.CLICK." + activity.getPackageName() + "."
++                + System.identityHashCode(activity);
++        activity.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
++            @Override
++            public void onActivityResumed(Activity a) {
++                if (mItems != null) send();
++            }
++
++            @Override
++            public void onActivityDestroyed(Activity a) {
++                clear();
++                sInstances.remove(a);
++            }
++
++            @Override public void onActivityCreated(Activity a, Bundle b) {}
++            @Override public void onActivityStarted(Activity a) {}
++            @Override public void onActivityPaused(Activity a) {}
++            @Override public void onActivityStopped(Activity a) {}
++            @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
++        });
++    }
++
++    /** Whether the system Back button is shown with the items (main screens usually omit it). */
++    public EtesianToolbar setBack(boolean back) {
++        mBack = back;
++        if (mItems != null) send();
++        return this;
++    }
++
++    /** The bar follows the user's theme (the default). */
++    public static final int STYLE_DEFAULT = 0;
++    /** A black bar whatever the theme, as in the N9's Gallery and other black screens. */
++    public static final int STYLE_DARK = 1;
++    /** The N9's light grey bar whatever the theme. */
++    public static final int STYLE_LIGHT = 2;
++
++    /** Asks for a dark or light bar for this activity (STYLE_*). */
++    public EtesianToolbar setStyle(int style) {
++        mStyle = style == STYLE_DARK ? "dark" : style == STYLE_LIGHT ? "light" : null;
++        if (mItems != null) send();
++        return this;
++    }
++
++    /** Shows [items] on the toolbar; [listener] receives taps. */
++    public EtesianToolbar setItems(List<Item> items, Listener listener) {
++        mItems = new ArrayList<>(items);
++        mListener = listener;
++        send();
++        return this;
++    }
++
++    public EtesianToolbar setItems(Listener listener, Item... items) {
++        return setItems(Arrays.asList(items), listener);
++    }
++
++    /** Hands the toolbar back to the user's own buttons. */
++    public void clear() {
++        mItems = null;
++        if (mRegistered) {
++            try {
++                mActivity.unregisterReceiver(mClicks);
++            } catch (IllegalArgumentException ignored) {
++            }
++            mRegistered = false;
++        }
++        mActivity.sendBroadcast(new Intent(ACTION_CLEAR).setPackage(SYSTEMUI)
++                .putExtra(EXTRA_TASK, mActivity.getTaskId())
++                .putExtra(EXTRA_COMPONENT, mActivity.getComponentName().flattenToString()));
++    }
++
++    private void send() {
++        if (!mRegistered) {
++            mActivity.registerReceiver(mClicks, new IntentFilter(mClickAction),
++                    Context.RECEIVER_NOT_EXPORTED);
++            mRegistered = true;
++        }
++        final ArrayList<Bundle> items = new ArrayList<>();
++        for (Item i : mItems) items.add(i.toBundle(mActivity));
++        // Runs as this app when SystemUI sends it, so the receiver needn't be exported.
++        final PendingIntent callback = PendingIntent.getBroadcast(mActivity,
++                System.identityHashCode(mActivity),
++                new Intent(mClickAction).setPackage(mActivity.getPackageName()),
++                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
++        mActivity.sendBroadcast(new Intent(ACTION_SET).setPackage(SYSTEMUI)
++                .putExtra(EXTRA_TASK, mActivity.getTaskId())
++                .putExtra(EXTRA_COMPONENT, mActivity.getComponentName().flattenToString())
++                .putExtra(EXTRA_BACK, mBack)
++                .putExtra("style", mStyle)
++                .putParcelableArrayListExtra(EXTRA_ITEMS, items)
++                .putExtra(EXTRA_CALLBACK, callback));
++    }
++}
+diff --git a/legacy/ui/legacy/src/main/res/drawable/n9_engraved_rule.xml b/legacy/ui/legacy/src/main/res/drawable/n9_engraved_rule.xml
+new file mode 100644
+index 0000000..fe22ea1
+--- /dev/null
++++ b/legacy/ui/legacy/src/main/res/drawable/n9_engraved_rule.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: engraved rule between list rows (grey line over a white line). -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:gravity="top" android:height="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="#FFD6D6D6" />
++        </shape>
++    </item>
++    <item android:gravity="bottom" android:height="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="#FFFFFFFF" />
++        </shape>
++    </item>
++</layer-list>
+diff --git a/legacy/ui/legacy/src/main/res/drawable/n9_unread_dot.xml b/legacy/ui/legacy/src/main/res/drawable/n9_unread_dot.xml
+new file mode 100644
+index 0000000..28f0f22
+--- /dev/null
++++ b/legacy/ui/legacy/src/main/res/drawable/n9_unread_dot.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 Mail: small blue unread marker. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
++    <solid android:color="#FF00A5E5" />
++    <size android:width="7dp" android:height="7dp" />
++</shape>
+diff --git a/legacy/ui/legacy/src/main/res/layout/message_compose_content.xml b/legacy/ui/legacy/src/main/res/layout/message_compose_content.xml
+index c09a72e..77ba842 100644
+--- a/legacy/ui/legacy/src/main/res/layout/message_compose_content.xml
++++ b/legacy/ui/legacy/src/main/res/layout/message_compose_content.xml
+@@ -31,6 +31,19 @@ the 'composer theme' setting).
+             android:minHeight="50dp"
+             >
+ 
++            <!-- N9 Mail: labelled "Subject:" field like "To:" -->
++            <com.google.android.material.textview.MaterialTextView
++                android:id="@+id/n9_subject_label"
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginStart="12dp"
++                android:paddingEnd="8dp"
++                android:labelFor="@+id/subject"
++                android:minWidth="50dp"
++                android:text="@string/n9_subject_label"
++                style="@style/ComposeTextLabel"
++                />
++
+             <EditText
+                 android:id="@+id/subject"
+                 android:layout_width="fill_parent"
+@@ -50,8 +63,8 @@ the 'composer theme' setting).
+ 
+         <View
+             android:layout_width="match_parent"
+-            android:layout_height="1dp"
+-            android:background="?android:attr/listDivider"
++            android:layout_height="2dp"
++            android:background="@drawable/n9_engraved_rule"
+             />
+ 
+         <!-- We have to use "wrap_content" (not "0dip") for "layout_height", otherwise the
+diff --git a/legacy/ui/legacy/src/main/res/layout/message_compose_recipients.xml b/legacy/ui/legacy/src/main/res/layout/message_compose_recipients.xml
+index d9c88eb..40d95db 100644
+--- a/legacy/ui/legacy/src/main/res/layout/message_compose_recipients.xml
++++ b/legacy/ui/legacy/src/main/res/layout/message_compose_recipients.xml
+@@ -210,10 +210,10 @@
+ 
+     <View
+         android:layout_width="match_parent"
+-        android:layout_height="1dp"
++        android:layout_height="2dp"
+         android:visibility="gone"
+         android:id="@+id/reply_to_divider"
+-        android:background="?android:attr/listDivider"
++        android:background="@drawable/n9_engraved_rule"
+         />
+ 
+     <LinearLayout
+@@ -261,8 +261,8 @@
+ 
+     <View
+         android:layout_width="match_parent"
+-        android:layout_height="1dp"
+-        android:background="?android:attr/listDivider"
++        android:layout_height="2dp"
++        android:background="@drawable/n9_engraved_rule"
+         />
+ 
+     <RelativeLayout
+@@ -338,8 +338,8 @@
+ 
+     <View
+         android:layout_width="match_parent"
+-        android:layout_height="1dp"
+-        android:background="?android:attr/listDivider"
++        android:layout_height="2dp"
++        android:background="@drawable/n9_engraved_rule"
+         />
+ 
+     <LinearLayout
+@@ -386,10 +386,10 @@
+ 
+     <View
+         android:layout_width="match_parent"
+-        android:layout_height="1dp"
++        android:layout_height="2dp"
+         android:visibility="gone"
+         android:id="@+id/cc_divider"
+-        android:background="?android:attr/listDivider"
++        android:background="@drawable/n9_engraved_rule"
+         />
+ 
+     <LinearLayout
+@@ -436,10 +436,10 @@
+ 
+     <View
+         android:layout_width="match_parent"
+-        android:layout_height="1dp"
++        android:layout_height="2dp"
+         android:visibility="gone"
+         android:id="@+id/bcc_divider"
+-        android:background="?android:attr/listDivider"
++        android:background="@drawable/n9_engraved_rule"
+         />
+ 
+ </LinearLayout>
+diff --git a/legacy/ui/legacy/src/main/res/layout/message_list_item.xml b/legacy/ui/legacy/src/main/res/layout/message_list_item.xml
+index 1f946ba..fb5932e 100644
+--- a/legacy/ui/legacy/src/main/res/layout/message_list_item.xml
++++ b/legacy/ui/legacy/src/main/res/layout/message_list_item.xml
+@@ -15,6 +15,19 @@
+         app:layout_constraintStart_toStartOf="parent"
+         />
+ 
++    <!-- N9 Mail: unread marker -->
++    <View
++        android:id="@+id/unread_marker"
++        android:layout_width="7dp"
++        android:layout_height="7dp"
++        android:layout_marginStart="5dp"
++        android:background="@drawable/n9_unread_dot"
++        android:visibility="gone"
++        app:layout_constraintBottom_toBottomOf="@+id/subject"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintTop_toTopOf="@+id/subject"
++        />
++
+     <ImageView
+         android:id="@+id/selected"
+         android:layout_width="@dimen/messageListContactPictureSize"
+@@ -142,7 +155,7 @@
+         android:layout_height="wrap_content"
+         android:layout_marginEnd="@dimen/messageListHorizontalPadding"
+         android:singleLine="true"
+-        android:textAppearance="?attr/textAppearanceBodyMedium"
++        android:textAppearance="?attr/textAppearanceBodySmall"
+         android:textColor="?attr/colorOnSurfaceVariant"
+         app:layout_constraintBaseline_toBaselineOf="@+id/subject"
+         app:layout_constraintEnd_toEndOf="parent"
+@@ -206,8 +219,8 @@
+     <View
+         android:id="@+id/divider"
+         android:layout_width="0dp"
+-        android:layout_height="1dp"
+-        android:background="?android:attr/listDivider"
++        android:layout_height="2dp"
++        android:background="@drawable/n9_engraved_rule"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toEndOf="@+id/contact_picture_click_area"
+diff --git a/legacy/ui/legacy/src/main/res/layout/message_view_header.xml b/legacy/ui/legacy/src/main/res/layout/message_view_header.xml
+index 02af6b3..b5754ac 100644
+--- a/legacy/ui/legacy/src/main/res/layout/message_view_header.xml
++++ b/legacy/ui/legacy/src/main/res/layout/message_view_header.xml
+@@ -102,7 +102,8 @@
+             android:ellipsize="end"
+             android:gravity="center_vertical"
+             android:maxLines="1"
+-            android:textAppearance="?attr/textAppearanceBodyLarge"
++            android:textAppearance="?attr/textAppearanceTitleMedium"
++            android:textStyle="bold"
+             app:layout_constrainedWidth="true"
+             app:layout_constraintEnd_toStartOf="@+id/date"
+             app:layout_constraintHorizontal_bias="0.0"
+@@ -120,7 +121,7 @@
+             android:ellipsize="none"
+             android:singleLine="true"
+             android:textAppearance="?attr/textAppearanceCaption"
+-            android:textColor="?attr/colorSecondary"
++            android:textColor="?attr/colorOnSurfaceVariant"
+             app:layout_constraintBaseline_toBaselineOf="@+id/from"
+             app:layout_constraintEnd_toStartOf="@+id/menu_primary_action"
+             app:layout_constraintStart_toEndOf="@id/from"
+@@ -187,6 +188,13 @@
+ 
+     </androidx.constraintlayout.widget.ConstraintLayout>
+ 
++    <!-- N9 Mail: engraved rule between the header block and the body -->
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="2dp"
++        android:background="@drawable/n9_engraved_rule"
++        />
++
+     <LinearLayout
+         android:id="@+id/attachment_summary_container"
+         android:layout_width="match_parent"
+diff --git a/legacy/ui/legacy/src/main/res/values/etesian_strings.xml b/legacy/ui/legacy/src/main/res/values/etesian_strings.xml
+new file mode 100644
+index 0000000..ac249ad
+--- /dev/null
++++ b/legacy/ui/legacy/src/main/res/values/etesian_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Labels for the Etesian (N9) system toolbar items. Modified for the N9 Mail build. -->
++<resources>
++    <string name="etesian_toolbar_new" translatable="false">New</string>
++    <string name="etesian_toolbar_refresh" translatable="false">Refresh</string>
++    <string name="etesian_toolbar_folders" translatable="false">Folders</string>
++    <string name="etesian_toolbar_menu" translatable="false">Menu</string>
++    <string name="etesian_toolbar_reply" translatable="false">Reply</string>
++    <string name="etesian_toolbar_forward" translatable="false">Forward</string>
++    <string name="etesian_toolbar_delete" translatable="false">Delete</string>
++    <string name="etesian_toolbar_send" translatable="false">Send</string>
++    <string name="etesian_toolbar_attach" translatable="false">Attach</string>
++    <string name="n9_subject_label" translatable="false">Subject:</string>
++</resources>
+diff --git a/legacy/ui/legacy/src/main/res/values/strings.xml b/legacy/ui/legacy/src/main/res/values/strings.xml
+index c667eb2..ceaf478 100644
+--- a/legacy/ui/legacy/src/main/res/values/strings.xml
++++ b/legacy/ui/legacy/src/main/res/values/strings.xml
+@@ -908,10 +908,10 @@
+     <!-- Note: This references message_view_download_remainder -->
+     <string name="preview_encrypted">*Encrypted*</string>
+     <string name="add_from_contacts">Add from Contacts</string>
+-    <string name="recipient_cc">Cc</string>
+-    <string name="recipient_bcc">Bcc</string>
+-    <string name="recipient_to">To</string>
+-    <string name="recipient_from">From</string>
++    <string name="recipient_cc">Cc:</string>
++    <string name="recipient_bcc">Bcc:</string>
++    <string name="recipient_to">To:</string>
++    <string name="recipient_from">From:</string>
+     <string name="reply_to_label">Reply to</string>
+     <string name="expand_content_description">Expand</string>
+     <string name="unknown_recipient">&lt;Unknown Recipient&gt;</string>

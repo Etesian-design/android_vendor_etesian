@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle Wi-Fi switch (belle-ref2.jpg): a dark pill with the power squircle; the wide one adds the
+     Wi-Fi glyph and the count of networks in range. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:layout_gravity="center" android:background="@drawable/bc_pill" android:gravity="center_vertical"
+    android:orientation="horizontal" android:padding="5dp">
+    <FrameLayout android:id="@+id/bc_power" android:layout_width="56dp" android:layout_height="56dp" android:background="@drawable/bc_power_off">
+        <ImageView android:layout_width="30dp" android:layout_height="30dp" android:layout_gravity="center" android:src="@drawable/bc_glyph_power"/>
+    </FrameLayout>
+    <FrameLayout android:id="@+id/bc_side" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1">
+        <ImageView android:id="@+id/bc_side_glyph" android:layout_width="34dp" android:layout_height="34dp" android:layout_gravity="center"
+            android:src="@drawable/bc_glyph_wifi"/>
+        <TextView android:id="@+id/bc_count" android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="top|end"
+            android:layout_marginTop="2dp" android:layout_marginEnd="6dp" android:background="@drawable/bc_badge" android:gravity="center"
+            android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold" android:fontFamily="etesian-text" android:visibility="gone"/>
+    </FrameLayout>
+</LinearLayout>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="n9_window">#E9E9E9</color>
+    <color name="n9_list">#F4F4F4</color>
+    <color name="n9_text">#191919</color>
+    <color name="n9_secondary">#8C8C8C</color>
+    <color name="n9_separator">#D6D6D6</color>
+    <color name="n9_blue">#00A5E5</color>
+    <color name="n9_green">#62AE2E</color>
+    <color name="n9_red">#D42D2A</color>
+    <color name="n9_pressed">#C7E9F7</color>
+</resources>

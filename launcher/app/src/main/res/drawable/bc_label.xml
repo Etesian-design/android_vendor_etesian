@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle shortcut label tab: dark glass over the icon's bottom edge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:angle="270" android:startColor="#E0404144" android:endColor="#E0151517"/>
+    <corners android:radius="4dp"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>

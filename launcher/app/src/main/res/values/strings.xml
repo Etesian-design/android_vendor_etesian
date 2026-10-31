@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Etesian</string>
+    <string name="gesture_service_label">Etesian swipe gestures</string>
+    <string name="gesture_service_description">Swipe in from the left or right edge to minimise the current application to Open applications. Swipe down from the top edge (centre) to close it. Also captures the live previews shown in Open applications.</string>
+    <string name="events_service_label">Etesian events</string>
+    <string name="belle_clock_desc">Large digital clock with the date</string>
+    <string name="belle_analog_desc">Analog clock on a dark face</string>
+    <string name="belle_weather_desc">Current weather for your location</string>
+    <string name="belle_calendar_desc">Your next three calendar events</string>
+    <string name="belle_shortcuts_desc">Four application shortcuts of your choice</string>
+    <string name="belle_feeds_desc">Latest items from your feeds</string>
+    <string name="belle_music_desc">Now playing, with playback controls</string>
+</resources>

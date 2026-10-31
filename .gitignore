@@ -1,0 +1,12 @@
+# Old snapshots of this tree (include Harmattan patches): local only.
+backups/
+# Built from source by mail/build-mail.sh; etesian.mk only adds EtesianMail when it exists.
+mail/EtesianMail.apk
+mail/Android.bp
+# Android Studio / Gradle output (the ROM builds these with Soong)
+build/
+.gradle/
+.kotlin/
+.idea/
+local.properties
+*.iml

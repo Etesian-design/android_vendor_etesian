@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle email widget header: blue gradient. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:angle="270" android:startColor="#FF4FB4EC" android:endColor="#FF1270B8"/>
+    <corners android:topLeftRadius="10dp" android:topRightRadius="10dp"/></shape>

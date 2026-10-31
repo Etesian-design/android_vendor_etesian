@@ -1,0 +1,18 @@
+# App component -> N9 icon (basename in the N9's usr/share/themes/blanco/meegotouch/icons/).
+# Read by make-iconpack.sh to build the "N9 icons" pack. Several components may share an
+# icon; lines whose icon the user's N9 lacks are skipped.
+com.android.dialer/com.android.dialer.main.impl.MainActivity               icon-l-telephony
+com.android.messaging/com.android.messaging.ui.conversationlist.ConversationListActivity icon-l-conversation
+com.android.contacts/com.android.contacts.activities.PeopleActivity        icon-l-contacts
+com.android.settings/com.android.settings.Settings                         icon-l-settings
+org.lineageos.aperture/org.lineageos.aperture.CameraLauncher               icon-l-camera
+org.lineageos.glimpse/org.lineageos.glimpse.MainActivity                   icon-l-gallery
+org.lineageos.jelly/org.lineageos.jelly.MainActivity                       icon-l-browser
+com.bompotis.etesian.mail/net.thunderbird.app.common.MainActivity        icon-l-email
+org.lineageos.etar/com.android.calendar.AllInOneActivity                   icon-l-calendar
+com.android.deskclock/com.android.deskclock.DeskClock                      icon-l-clock
+com.android.calculator2/com.android.calculator2.Calculator                 icon-l-calculator
+org.lineageos.twelve/org.lineageos.twelve.MainActivity                     icon-l-music
+com.android.documentsui/com.android.documentsui.LauncherActivity           icon-l-documents
+com.bompotis.etesian.store/com.bompotis.etesian.store.ui.MainActivity  icon-l-store
+com.android.stk/com.android.stk.StkMain                                    icon-l-sim-services

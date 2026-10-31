@@ -1,0 +1,48 @@
+// Etesian Store: an F-Droid client styled after the Nokia Store on the N9.
+// Privileged system app so it can install/uninstall silently through
+// PackageInstaller (INSTALL_PACKAGES / DELETE_PACKAGES, see permissions/).
+android_app {
+    name: "EtesianStore",
+    srcs: ["app/src/main/java/**/*.kt"],
+    resource_dirs: ["app/src/main/res"],
+    manifest: ":EtesianStore-manifest",
+    platform_apis: true,
+    certificate: "platform",
+    system_ext_specific: true,
+    privileged: true,
+    required: ["privapp_allowlist_com.bompotis.etesian.store.xml"],
+    static_libs: [
+        "androidx.core_core-ktx",
+        "androidx.recyclerview_recyclerview",
+        "etesian-fastscroll",
+        "etesian-toolbar",
+        "kotlinx_coroutines_android",
+    ],
+    aaptflags: [
+        "--version-code",
+        "100",
+        "--version-name",
+        "rom",
+    ],
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
+}
+
+// aapt2 needs the package in the manifest (kept out of the source manifest like the launcher).
+genrule {
+    name: "EtesianStore-manifest",
+    srcs: ["app/src/main/AndroidManifest.xml"],
+    out: ["AndroidManifest.xml"],
+    cmd: "sed 's|<manifest |<manifest package=\"com.bompotis.etesian.store\" |' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "privapp_allowlist_com.bompotis.etesian.store.xml",
+    src: "permissions/privapp_allowlist_com.bompotis.etesian.store.xml",
+    sub_dir: "permissions",
+    system_ext_specific: true,
+}

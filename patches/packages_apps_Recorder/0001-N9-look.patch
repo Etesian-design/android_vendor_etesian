@@ -1,0 +1,277 @@
+diff --git a/app/src/main/java/org/lineageos/recorder/RecorderActivity.kt b/app/src/main/java/org/lineageos/recorder/RecorderActivity.kt
+index 4f7288f..3f7bb7e 100644
+--- a/app/src/main/java/org/lineageos/recorder/RecorderActivity.kt
++++ b/app/src/main/java/org/lineageos/recorder/RecorderActivity.kt
+@@ -12,6 +12,7 @@ import android.content.DialogInterface
+ import android.content.Intent
+ import android.content.IntentFilter
+ import android.content.ServiceConnection
++import android.content.res.ColorStateList
+ import android.graphics.drawable.AnimatedVectorDrawable
+ import android.graphics.drawable.Drawable
+ import android.os.Bundle
+@@ -263,11 +264,15 @@ class RecorderActivity : AppCompatActivity(R.layout.activity_main) {
+         if (UiStatus.READY == status) {
+             titleTextView.text = getString(R.string.main_sound_action)
+             floatingActionButton.setImageResource(R.drawable.ic_mic)
++            floatingActionButton.backgroundTintList =
++                ColorStateList.valueOf(getColor(R.color.n9_blue))
+             elapsedTimeText.isVisible = false
+             recordingWaveFormView.isVisible = false
+             pauseResumeImageView.isVisible = false
+         } else {
+             floatingActionButton.setImageResource(R.drawable.ic_stop)
++            floatingActionButton.backgroundTintList =
++                ColorStateList.valueOf(getColor(R.color.n9_red))
+             elapsedTimeText.isVisible = true
+             recordingWaveFormView.isVisible = true
+             recordingWaveFormView.setAmplitude(0)
+diff --git a/app/src/main/java/org/lineageos/recorder/RecorderApplication.kt b/app/src/main/java/org/lineageos/recorder/RecorderApplication.kt
+index 2454912..cb1bf08 100644
+--- a/app/src/main/java/org/lineageos/recorder/RecorderApplication.kt
++++ b/app/src/main/java/org/lineageos/recorder/RecorderApplication.kt
+@@ -6,13 +6,11 @@
+ package org.lineageos.recorder
+ 
+ import android.app.Application
+-import com.google.android.material.color.DynamicColors
+ 
+ class RecorderApplication : Application() {
+     override fun onCreate() {
+         super.onCreate()
+ 
+-        // Observe dynamic colors changes
+-        DynamicColors.applyToActivitiesIfAvailable(this)
++        // N9 look: static light palette, no Material You dynamic colours
+     }
+ }
+diff --git a/app/src/main/res/layout/activity_list.xml b/app/src/main/res/layout/activity_list.xml
+index d04cc23..62f9576 100644
+--- a/app/src/main/res/layout/activity_list.xml
++++ b/app/src/main/res/layout/activity_list.xml
+@@ -12,8 +12,10 @@
+     <com.google.android.material.appbar.AppBarLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_window"
+         android:fitsSystemWindows="true"
+-        app:liftOnScroll="true">
++        app:elevation="0dp"
++        app:liftOnScroll="false">
+ 
+         <androidx.appcompat.widget.Toolbar
+             android:id="@+id/toolbar"
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index a9d1ed4..f8639c8 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -15,7 +15,7 @@
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
+         android:textAlignment="center"
+-        android:textColor="?android:attr/textColorPrimary"
++        android:textColor="@color/n9_text"
+         app:layout_constraintBottom_toTopOf="@id/recordingWaveFormView"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+@@ -27,6 +27,8 @@
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:textSize="28sp"
++        android:textFontWeight="300"
++        android:textColor="@color/n9_text_secondary"
+         android:visibility="gone"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+@@ -43,11 +45,18 @@
+         android:clipToPadding="false"
+         android:contentDescription="@string/main_sound_action"
+         android:src="@drawable/ic_mic"
+-        app:backgroundTint="?attr/colorSurface"
++        android:elevation="0dp"
++        app:elevation="0dp"
++        app:pressedTranslationZ="0dp"
++        app:hoveredFocusedTranslationZ="0dp"
++        app:fabCustomSize="88dp"
++        app:maxImageSize="40dp"
++        app:shapeAppearanceOverlay="@style/AppTheme.Squircle"
++        app:backgroundTint="@color/n9_blue"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+-        app:tint="?attr/colorOnSurface" />
++        app:tint="@color/n9_white" />
+ 
+     <org.lineageos.recorder.ui.WaveFormView
+         android:id="@+id/recordingWaveFormView"
+diff --git a/app/src/main/res/layout/list_item.xml b/app/src/main/res/layout/list_item.xml
+index f9e1d3e..f3bbed1 100644
+--- a/app/src/main/res/layout/list_item.xml
++++ b/app/src/main/res/layout/list_item.xml
+@@ -11,7 +11,7 @@
+     android:layout_height="wrap_content"
+     android:background="?attr/selectableItemBackground"
+     android:paddingHorizontal="16dp"
+-    android:paddingVertical="8dp">
++    android:paddingTop="8dp">
+ 
+     <ImageView
+         android:id="@+id/playImageView"
+@@ -24,17 +24,17 @@
+         android:paddingEnd="2dp"
+         android:paddingTop="2dp"
+         android:paddingBottom="2dp"
+-        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintBottom_toTopOf="@id/separatorView"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnBackground" />
++        app:tint="@color/n9_blue" />
+ 
+     <ImageView
+         android:id="@+id/menuImageView"
+         style="@style/AppTheme.ImageButton"
+         android:contentDescription="@string/list_item_menu"
+         android:src="@drawable/ic_menu"
+-        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintBottom_toTopOf="@id/separatorView"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+         app:tint="?attr/colorOnBackground" />
+@@ -45,7 +45,8 @@
+         android:layout_height="wrap_content"
+         android:paddingTop="8dp"
+         android:layout_marginStart="16dp"
+-        android:textColor="?android:attr/textColorSecondary"
++        android:textColor="@color/n9_text_secondary"
++        android:textSize="14sp"
+         app:layout_constraintStart_toEndOf="@id/playImageView"
+         app:layout_constraintTop_toBottomOf="@id/titleTextView"
+         tools:text="1970-01-01" />
+@@ -59,10 +60,23 @@
+         android:layout_marginStart="16dp"
+         android:layout_marginEnd="16dp"
+         android:textColor="?android:attr/textColorPrimary"
+-        android:textSize="16sp"
++        android:textSize="18sp"
+         app:layout_constraintStart_toEndOf="@id/playImageView"
+         app:layout_constraintTop_toTopOf="parent"
+         app:layout_constraintEnd_toStartOf="@id/menuImageView"
+         tools:text="Recording name" />
+ 
++    <!-- N9 flat list: 1dp separator under each row -->
++    <View
++        android:id="@+id/separatorView"
++        android:layout_width="0dp"
++        android:layout_height="1dp"
++        android:layout_marginTop="8dp"
++        android:layout_marginHorizontal="-16dp"
++        android:background="@color/n9_separator"
++        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintTop_toBottomOf="@id/dateTextView" />
++
+ </androidx.constraintlayout.widget.ConstraintLayout>
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+new file mode 100644
+index 0000000..68a03e7
+--- /dev/null
++++ b/app/src/main/res/values/colors.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Nokia N9 (Etesian "blanco") static light palette -->
++<resources>
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_surface">#F4F4F4</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_red">#D42D2A</color>
++    <color name="n9_white">#FFFFFF</color>
++</resources>
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index 546ab97..2685b2c 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -4,7 +4,34 @@
+      SPDX-License-Identifier: Apache-2.0
+ -->
+ <resources>
+-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
++    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
++        <!-- N9 static light palette (no dynamic colour, no dark mode) -->
++        <item name="android:forceDarkAllowed">false</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:windowBackground">@color/n9_window</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue</item>
++        <item name="colorOnPrimaryContainer">@color/n9_white</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="android:colorAccent">@color/n9_blue</item>
++        <item name="colorControlActivated">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_surface</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_surface</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text_secondary</item>
++        <item name="android:colorBackgroundFloating">@color/n9_surface</item>
++        <item name="colorOnBackground">@color/n9_text</item>
++        <item name="colorError">@color/n9_red</item>
++        <item name="colorOutline">@color/n9_separator</item>
++        <item name="toolbarStyle">@style/AppTheme.Toolbar</item>
+         <item name="android:navigationBarColor">@android:color/transparent</item>
+         <item name="android:statusBarColor">@android:color/transparent</item>
+         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+@@ -30,8 +57,10 @@
+         <item name="android:paddingBottom">24dp</item>
+         <item name="android:paddingStart">16dp</item>
+         <item name="android:paddingEnd">16dp</item>
+-        <item name="android:textColor">?android:attr/colorAccent</item>
+-        <item name="android:textSize">36sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:textSize">32sp</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
+         <item name="android:maxLines">1</item>
+     </style>
+ 
+@@ -55,6 +84,26 @@
+         <item name="iconTint">?attr/colorOnSurface</item>
+     </style>
+ 
++    <!-- Flat, light N9 page header -->
++    <style name="AppTheme.Toolbar" parent="Widget.Material3.Toolbar">
++        <item name="android:background">@color/n9_window</item>
++        <item name="titleTextAppearance">@style/AppTheme.TitleText</item>
++    </style>
++
++    <style name="AppTheme.TitleText" parent="TextAppearance.Material3.HeadlineMedium">
++        <item name="android:textSize">32sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++    </style>
++
++    <!-- Etesian squircle: corner radius ~28% of the short side -->
++    <style name="AppTheme.Squircle" parent="">
++        <item name="cornerFamily">rounded</item>
++        <item name="cornerSize">28%</item>
++    </style>
++
+     <!-- Alert dialog theme. -->
+     <style name="Theme.Recorder.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+         <item name="android:colorBackground">?attr/colorSurface</item>

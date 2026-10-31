@@ -1,0 +1,95 @@
+diff --git a/src/com/android/server/telecom/Ringer.java b/src/com/android/server/telecom/Ringer.java
+index dbb2a2fee..c25104bc5 100644
+--- a/src/com/android/server/telecom/Ringer.java
++++ b/src/com/android/server/telecom/Ringer.java
+@@ -564,7 +564,9 @@ public class Ringer {
+                         // vibrator wasn't reserved. This still triggers the mBlockOnRingingFuture.
+                         return;
+                     }
+-                    final VibrationEffect vibrationEffect = mDefaultVibrationEffect;
++                    VibrationEffect n9 = loadN9RingtoneVibration(ringtoneUri);
++                    final VibrationEffect vibrationEffect =
++                            n9 != null ? n9 : mDefaultVibrationEffect;
+ 
+                     boolean isUsingAudioCoupledHaptics =
+                             !finalHapticChannelsMuted && ringtone != null
+@@ -1000,6 +1002,12 @@ public class Ringer {
+             FeatureFlags featureFlags) {
+         Resources resources = TelecomResourceId.getResources(context);
+ 
++        VibrationEffect n9 = loadN9RingVibration(vibrationEffectProxy);
++        if (n9 != null) {
++            Log.i(TAG, "Using the N9 ring vibration.");
++            return n9;
++        }
++
+         if (TelecomResourceId.getBoolean(context, "use_simple_vibration_pattern")) {
+             Log.i(TAG, "Using simple default ring vibration.");
+             return createSimpleRingVibration(vibrationEffectProxy);
+@@ -1016,6 +1024,66 @@ public class Ringer {
+                 PULSE_PATTERN, PULSE_AMPLITUDE, REPEAT_VIBRATION_AT);
+     }
+ 
++    /**
++     * The N9's ring vibration (its Nokia tune pattern), when the user's own N9 files were built
++     * in (vendor/etesian): on/off timings in ms, comma-separated, starting with an off.
++     */
++    private static VibrationEffect loadN9RingVibration(VibrationEffectProxy proxy) {
++        return loadN9Vibration(proxy, new java.io.File("/product/etc/etesian/ring_vibration.txt"));
++    }
++
++    /**
++     * The N9 vibration made for the ringtone that is playing (each N9 ringtone has its own), or
++     * null to use the default ring vibration.
++     */
++    private VibrationEffect loadN9RingtoneVibration(Uri ringtoneUri) {
++        if (ringtoneUri == null) return null;
++        try {
++            Uri uri = ringtoneUri;
++            if (android.provider.Settings.AUTHORITY.equals(uri.getAuthority())) {
++                uri = RingtoneManager.getActualDefaultRingtoneUri(mContext,
++                        RingtoneManager.TYPE_RINGTONE);
++                if (uri == null) return null;
++            }
++            String name = null;
++            try (android.database.Cursor c = mContext.getContentResolver().query(uri,
++                    new String[] {android.provider.OpenableColumns.DISPLAY_NAME},
++                    null, null, null)) {
++                if (c != null && c.moveToFirst()) name = c.getString(0);
++            }
++            if (name == null) return null;
++            int dot = name.lastIndexOf('.');
++            if (dot > 0) name = name.substring(0, dot);
++            return loadN9Vibration(mVibrationEffectProxy, new java.io.File(
++                    "/product/etc/etesian/vibra/" + name.replace(' ', '_') + ".txt"));
++        } catch (Exception e) {
++            Log.w(TAG, "No N9 vibration for the ringtone: " + e);
++            return null;
++        }
++    }
++
++    private static VibrationEffect loadN9Vibration(VibrationEffectProxy proxy,
++            java.io.File file) {
++        if (!file.exists()) return null;
++        try {
++            String[] parts = new String(java.nio.file.Files.readAllBytes(file.toPath()))
++                    .trim().split(",");
++            long[] timings = new long[parts.length + 1];
++            int[] amplitudes = new int[parts.length + 1];
++            for (int i = 0; i < parts.length; i++) {
++                timings[i] = Long.parseLong(parts[i].trim());
++                amplitudes[i] = i % 2 == 0 ? 0 : 255;
++            }
++            // A pause before it starts over.
++            timings[parts.length] = DEFAULT_RING_VIBRATION_LOOP_DELAY_MS;
++            amplitudes[parts.length] = 0;
++            return proxy.createWaveform(timings, amplitudes, 0);
++        } catch (Exception e) {
++            Log.w(TAG, "Bad N9 ring vibration: " + e);
++            return null;
++        }
++    }
++
+     private static VibrationEffect createSimpleRingVibration(
+             VibrationEffectProxy vibrationEffectProxy) {
+         return vibrationEffectProxy.createWaveform(SIMPLE_VIBRATION_PATTERN,

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle LCD clock (belle-ref10.jpg): dark metal frame around a black glass. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><gradient android:angle="270" android:startColor="#FF5A5B60" android:centerColor="#FF2A2B2E" android:endColor="#FF0E0E10"/>
+        <corners android:radius="14dp"/><stroke android:width="1dp" android:color="#FF000000"/></shape></item>
+    <item android:left="8dp" android:top="8dp" android:right="8dp" android:bottom="8dp"><shape>
+        <gradient android:angle="270" android:startColor="#FF2A2B2E" android:endColor="#FF050506"/><corners android:radius="8dp"/>
+        <stroke android:width="1dp" android:color="#FF46474B"/></shape></item>
+</layer-list>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_bodyFontFamily" translatable="false">fira-sans</string>
+    <string name="config_bodyFontFamilyMedium" translatable="false">fira-sans</string>
+    <string name="config_headlineFontFamily" translatable="false">fira-sans</string>
+    <string name="config_headlineFontFamilyMedium" translatable="false">fira-sans</string>
+</resources>

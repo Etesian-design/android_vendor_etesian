@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The N9 switch for settings rows (mock 20). -->
+<androidx.appcompat.widget.SwitchCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@id/switchWidget" android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:focusable="false" android:clickable="false" android:background="@null"
+    app:thumbTint="@null" app:trackTint="@null"
+    android:thumb="@drawable/n9_switch_thumb" app:track="@drawable/n9_switch_track"/>

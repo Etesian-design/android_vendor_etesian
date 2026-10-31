@@ -1,0 +1,15 @@
+// Permissions for EtesianLauncher (built from launcher/Android.bp).
+prebuilt_etc {
+    name: "privapp_allowlist_com.bompotis.etesian.launcher.xml",
+    src: "permissions/privapp_allowlist_com.bompotis.etesian.launcher.xml",
+    sub_dir: "permissions",
+    system_ext_specific: true,
+}
+
+prebuilt_etc {
+    name: "default-permissions_com.bompotis.etesian.launcher.xml",
+    src: "permissions/default-permissions_com.bompotis.etesian.launcher.xml",
+    sub_dir: "default-permissions",
+    system_ext_specific: true,
+}
+

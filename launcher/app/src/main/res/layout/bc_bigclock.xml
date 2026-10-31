@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle large analog clocks (belle-ref10/11): the dial is set from code (squircle or gears). The face
+     is sized to the widget and the day name and date placed inside it from code (BelleClassic2.fitFace);
+     white hands with a thin blue seconds hand. Transparent round the face. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:id="@+id/bc_face" android:layout_width="220dp" android:layout_height="220dp" android:layout_gravity="center">
+        <AnalogClock android:id="@+id/bc_clock" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:dial="@drawable/bc_square_dial" android:hand_hour="@drawable/bc_hand_hour_l" android:hand_minute="@drawable/bc_hand_minute_l"
+            android:hand_second="@drawable/bc_hand_second"/>
+        <TextClock android:id="@+id/bc_day" android:layout_width="44dp" android:layout_height="wrap_content" android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="18dp" android:format12Hour="EEE" android:format24Hour="EEE" android:gravity="center"
+            android:textColor="#FFB4B5B9" android:textSize="15sp" android:fontFamily="etesian-text"/>
+        <TextClock android:id="@+id/bc_date" android:layout_width="26dp" android:layout_height="26dp" android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="30dp" android:background="@drawable/bc_date_box" android:format12Hour="d" android:format24Hour="d"
+            android:gravity="center" android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+    </FrameLayout>
+</FrameLayout>

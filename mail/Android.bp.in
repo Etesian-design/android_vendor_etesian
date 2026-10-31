@@ -1,0 +1,11 @@
+// N9 Mail: Thunderbird for Android (Apache-2.0), rebranded and restyled, built out of tree with
+// build-mail.sh. The Gradle output is unsigned; Soong signs it with the default (dev) key.
+android_app_import {
+    name: "EtesianMail",
+    apk: "EtesianMail.apk",
+    default_dev_cert: true,
+    product_specific: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

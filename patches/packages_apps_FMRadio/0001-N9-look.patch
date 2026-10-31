@@ -1,0 +1,450 @@
+diff --git a/res/drawable/circle_button.xml b/res/drawable/circle_button.xml
+index cef039e..749a895 100644
+--- a/res/drawable/circle_button.xml
++++ b/res/drawable/circle_button.xml
+@@ -18,10 +18,17 @@
+ <ripple xmlns:android="http://schemas.android.com/apk/res/android"
+     android:color="@color/floating_action_button_touch_tint" >
+     <item android:id="@android:id/mask">
+-        <shape android:shape="oval">
+-            <solid android:color="@color/floating_action_button_touch_tint" />
+-            <corners android:radius="90dp"/>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/white_color" />
++            <corners android:radius="28dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <gradient android:angle="270"
++                android:startColor="@color/n9_button_top"
++                android:endColor="@color/n9_button_bottom" />
++            <corners android:radius="28dp" />
+         </shape>
+     </item>
+-<!--     <item android:drawable="@color/theme_primary_color" /> -->
+ </ripple>
+diff --git a/res/drawable/favorite_circle_button.xml b/res/drawable/favorite_circle_button.xml
+index b09fab7..749a895 100644
+--- a/res/drawable/favorite_circle_button.xml
++++ b/res/drawable/favorite_circle_button.xml
+@@ -16,12 +16,19 @@
+ -->
+ 
+ <ripple xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:color="@color/theme_primarydark_color" >
++    android:color="@color/floating_action_button_touch_tint" >
+     <item android:id="@android:id/mask">
+-        <shape android:shape="oval">
+-            <solid android:color="@color/theme_primarydark_color" />
+-            <corners android:radius="90dp"/>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/white_color" />
++            <corners android:radius="28dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <gradient android:angle="270"
++                android:startColor="@color/n9_button_top"
++                android:endColor="@color/n9_button_bottom" />
++            <corners android:radius="28dp" />
+         </shape>
+     </item>
+-<!--     <item android:drawable="@color/theme_primary_color" /> -->
+ </ripple>
+diff --git a/res/layout-land/no_headset.xml b/res/layout-land/no_headset.xml
+index 7696477..c4cb655 100644
+--- a/res/layout-land/no_headset.xml
++++ b/res/layout-land/no_headset.xml
+@@ -40,7 +40,7 @@
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_below="@+id/no_middle"
+-        android:background="@color/white_color"
++        android:background="@color/black_color"
+         android:gravity="center" >
+ 
+         <TextView
+@@ -48,10 +48,10 @@
+             android:layout_width="@dimen/fm_noheadset_text_width"
+             android:layout_height="match_parent"
+             android:alpha="0.87"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:gravity="center"
+             android:text="@string/fm_no_headset_text"
+-            android:textColor="@color/black_color"
++            android:textColor="@color/white_color"
+             android:textSize="@dimen/fm_noheadset_text_size" />
+ 
+     </LinearLayout>
+diff --git a/res/layout/favorite.xml b/res/layout/favorite.xml
+index fb9ffc4..4080fbf 100644
+--- a/res/layout/favorite.xml
++++ b/res/layout/favorite.xml
+@@ -48,7 +48,7 @@
+             android:text="@string/station_empty_text"
+             android:gravity="center"
+             android:textSize="@dimen/fm_station_searching_tips_size"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:alpha="0.87" />
+     </LinearLayout>
+ 
+@@ -65,7 +65,7 @@
+             android:text="@string/station_searching_tips"
+             android:gravity="center"
+             android:textSize="@dimen/fm_station_searching_tips_size"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:alpha="0.87" />
+         <ProgressBar
+             android:id="@+id/search_progress"
+diff --git a/res/layout/favorite_gridview_item.xml b/res/layout/favorite_gridview_item.xml
+index 7cfd16b..aecfe56 100644
+--- a/res/layout/favorite_gridview_item.xml
++++ b/res/layout/favorite_gridview_item.xml
+@@ -69,7 +69,7 @@
+             android:layout_marginTop="4dip"
+             android:alpha="0.87"
+             android:ellipsize="end"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:singleLine="true"
+             android:textColor="#000000"
+             android:textSize="14dip" />
+@@ -81,7 +81,7 @@
+             android:layout_alignWithParentIfMissing="true"
+             android:layout_below="@id/station_freq"
+             android:alpha="0.54"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:maxLines="2"
+             android:ellipsize="end"
+             android:textColor="#000000"
+diff --git a/res/layout/fm_record_activity.xml b/res/layout/fm_record_activity.xml
+index 6e73f94..044ca1f 100644
+--- a/res/layout/fm_record_activity.xml
++++ b/res/layout/fm_record_activity.xml
+@@ -41,10 +41,10 @@
+                 android:id="@+id/minutes"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+-                android:fontFamily="sans-serif-light"
++                android:fontFamily="etesian-text"
+                 android:singleLine="true"
+                 android:text="@string/timer_default"
+-                android:textColor="#607D8B"
++                android:textColor="@color/n9_accent"
+                 android:textSize="88sp" />
+ 
+             <TextView
+@@ -53,20 +53,20 @@
+                 android:layout_height="wrap_content"
+                 android:layout_marginLeft="12dip"
+                 android:layout_marginRight="24dip"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:singleLine="true"
+                 android:text="@string/minutes_label"
+-                android:textColor="#607D8B"
++                android:textColor="@color/n9_accent"
+                 android:textSize="24sp" />
+ 
+             <TextView
+                 android:id="@+id/seconds"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+-                android:fontFamily="sans-serif-light"
++                android:fontFamily="etesian-text"
+                 android:singleLine="true"
+                 android:text="@string/timer_default"
+-                android:textColor="#607D8B"
++                android:textColor="@color/n9_accent"
+                 android:textSize="88sp" />
+ 
+             <TextView
+@@ -74,10 +74,10 @@
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:layout_marginLeft="12dip"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:singleLine="true"
+                 android:text="@string/seconds_label"
+-                android:textColor="#607D8B"
++                android:textColor="@color/n9_accent"
+                 android:textSize="24sp" />
+         </LinearLayout>
+     </LinearLayout>
+@@ -106,7 +106,7 @@
+                 android:includeFontPadding="false"
+                 android:layout_marginBottom="-6dip"
+                 android:alpha="0.87"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:singleLine="true"
+                 android:textColor="#000000"
+                 android:textSize="24sp" />
+@@ -127,7 +127,7 @@
+                     android:layout_height="wrap_content"
+                     android:alpha="0.54"
+                     android:ellipsize="end"
+-                    android:fontFamily="sans-serif-medium"
++                    android:fontFamily="etesian-text"
+                     android:singleLine="true"
+                     android:textColor="#000000"
+                     android:textSize="14sp" />
+@@ -139,7 +139,7 @@
+                     android:layout_marginLeft="6dip"
+                     android:alpha="0.54"
+                     android:ellipsize="end"
+-                    android:fontFamily="sans-serif"
++                    android:fontFamily="etesian-text"
+                     android:singleLine="true"
+                     android:textColor="#000000"
+                     android:textSize="14sp" />
+@@ -182,7 +182,7 @@
+             android:background="?android:selectableItemBackground"
+             android:contentDescription="@string/stop_record"
+             android:enabled="false"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:text="@string/stop_record"
+             android:textColor="#000000"
+             android:textSize="14sp" />
+diff --git a/res/layout/main_bottom.xml b/res/layout/main_bottom.xml
+index e181f3c..34b71d4 100644
+--- a/res/layout/main_bottom.xml
++++ b/res/layout/main_bottom.xml
+@@ -37,7 +37,7 @@
+             android:layout_width="match_parent"
+             android:layout_height="48dp"
+             android:alpha="0.24"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:gravity="center_vertical"
+             android:text="@string/favorites"
+             android:textColor="#000000"
+diff --git a/res/layout/main_header.xml b/res/layout/main_header.xml
+index a077e3a..cd106db 100644
+--- a/res/layout/main_header.xml
++++ b/res/layout/main_header.xml
+@@ -45,7 +45,7 @@
+                 android:layout_height="wrap_content"
+                 android:layout_alignParentLeft="true"
+                 android:layout_alignParentTop="true"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:paddingLeft="16dip"
+                 android:paddingTop="56dip"
+                 android:text="@string/fm_symbol"
+@@ -59,7 +59,7 @@
+                 android:layout_alignParentLeft="true"
+                 android:layout_alignParentTop="true"
+                 android:alpha="0.87"
+-                android:fontFamily="sans-serif-light"
++                android:fontFamily="etesian-text"
+                 android:gravity="left"
+                 android:paddingLeft="16dip"
+                 android:paddingTop="64dip"
+diff --git a/res/layout/no_headset.xml b/res/layout/no_headset.xml
+index 0ed1f93..88a5a45 100644
+--- a/res/layout/no_headset.xml
++++ b/res/layout/no_headset.xml
+@@ -40,7 +40,7 @@
+         android:layout_height="match_parent"
+         android:gravity="center"
+         android:layout_below="@+id/no_middle"
+-        android:background="@color/white_color">
++        android:background="@color/black_color">
+         <TextView
+             android:id="@+id/no_eaphone_text"
+             android:layout_width="@dimen/fm_noheadset_text_width"
+@@ -48,8 +48,8 @@
+             android:gravity="center"
+             android:text="@string/fm_no_headset_text"
+             android:textSize="@dimen/fm_noheadset_text_size"
+-            android:textColor="@color/black_color"
+-            android:fontFamily="sans-serif"
++            android:textColor="@color/white_color"
++            android:fontFamily="etesian-text"
+             android:alpha="0.87" />
+ 
+     </LinearLayout>
+diff --git a/res/layout/save_dialog.xml b/res/layout/save_dialog.xml
+index f1f81a9..817981f 100644
+--- a/res/layout/save_dialog.xml
++++ b/res/layout/save_dialog.xml
+@@ -34,7 +34,7 @@
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:alpha="0.87"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:text="@string/save_dialog_title"
+             android:textColor="#000000"
+             android:textSize="20sp" />
+@@ -44,7 +44,7 @@
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:alpha="0.87"
+-            android:fontFamily="sans-serif"
++            android:fontFamily="etesian-text"
+             android:hint="@string/edit_recording_name_hint"
+             android:maxLength="80"
+             android:paddingTop="20dip"
+@@ -68,7 +68,7 @@
+             android:layout_marginEnd="5dip"
+             android:alpha="0.87"
+             android:background="?android:selectableItemBackground"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:text="@string/btn_discard_recording"
+             android:textColor="#000000"
+             android:textSize="14sp" />
+@@ -80,7 +80,7 @@
+             android:layout_marginStart="5dip"
+             android:alpha="1"
+             android:background="?android:selectableItemBackground"
+-            android:fontFamily="sans-serif-medium"
++            android:fontFamily="etesian-text"
+             android:text="@string/btn_save_recording"
+             android:textColor="#FF4081"
+             android:textSize="14sp" />
+diff --git a/res/layout/station_item.xml b/res/layout/station_item.xml
+index 35b16c0..93e4b3f 100644
+--- a/res/layout/station_item.xml
++++ b/res/layout/station_item.xml
+@@ -42,7 +42,7 @@
+                 android:layout_height="wrap_content"
+                 android:textColor="@color/black_color"
+                 android:alpha="0.87"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:gravity="center_vertical"
+                 android:singleLine="true"
+                 android:textSize="@dimen/fm_primary_text_size" />
+@@ -56,7 +56,7 @@
+                 android:layout_toRightOf="@+id/lv_station_freq"
+                 android:alpha="0.87"
+                 android:ellipsize="end"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:gravity="center_vertical"
+                 android:singleLine="true"
+                 android:textSize="@dimen/fm_primary_text_size" />
+@@ -77,7 +77,7 @@
+                 android:layout_marginTop="6dip"
+                 android:alpha="0.54"
+                 android:ellipsize="end"
+-                android:fontFamily="sans-serif"
++                android:fontFamily="etesian-text"
+                 android:gravity="center_vertical"
+                 android:singleLine="true"
+                 android:textSize="@dimen/fm_rds_text_size"
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index fe39aca..2b94111 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -19,14 +19,19 @@
+     <color name="white_color">#FFFFFF</color>
+     <color name="black_color">#000000</color>
+     <color name="floating_action_button_icon_color">@color/white_color</color>
+-    <color name="fm_main_color">#004466</color>
+-    <color name="theme_title_color">#DEFFFFFF</color>
+-    <color name="theme_primarydark_color">#455A64</color>
+-    <color name="theme_primary_color">#607D8B</color>
+-    <color name="theme_windowBackground">#607D8B</color>
+-    <color name="floating_action_button_touch_tint">#80ffffff</color>
+-    <color name="actionbar_overflow_title_color">#DE000000</color>
+-    <color name="actionbar_overflow_title_disabled_color">#33000000</color>
++    <color name="fm_main_color">#000000</color>
++    <color name="theme_title_color">#FFFFFF</color>
++    <color name="theme_primarydark_color">#000000</color>
++    <color name="theme_primary_color">#000000</color>
++    <color name="theme_windowBackground">#000000</color>
++    <color name="floating_action_button_touch_tint">#8000A5E5</color>
++    <color name="actionbar_overflow_title_color">#DEFFFFFF</color>
++    <color name="actionbar_overflow_title_disabled_color">#33FFFFFF</color>
+     <!-- FM main page text color -->
+-    <color name="text_fm_color">#CFD8DC</color>
++    <color name="text_fm_color">#FFFFFF</color>
++    <!-- N9 (Etesian) media palette -->
++    <color name="n9_accent">#00A5E5</color>
++    <color name="n9_button_top">#3A3A3A</color>
++    <color name="n9_button_bottom">#2A2A2A</color>
++    <color name="n9_secondary_text">#8C8C8C</color>
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 4d58427..f0d86cd 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -17,7 +17,13 @@
+ 
+ <resources>
+ 
+-    <style name="AppTheme" parent="@android:style/Theme.Material.Light">
++    <style name="AppTheme" parent="@android:style/Theme.Material">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:colorAccent">@color/n9_accent</item>
++        <item name="android:colorBackground">@color/black_color</item>
++        <item name="android:navigationBarColor">@color/black_color</item>
++        <item name="android:textColorPrimary">@color/white_color</item>
++        <item name="android:textColorSecondary">@color/n9_secondary_text</item>
+         <item name="android:colorPrimaryDark">@color/theme_primarydark_color</item>
+         <item name="android:colorPrimary">@color/theme_primary_color</item>
+         <item name="android:windowBackground">@color/theme_windowBackground</item>
+@@ -25,11 +31,16 @@
+         <item name="android:actionOverflowButtonStyle">@style/FmOverflowButtonStyle</item>
+     </style>
+ 
+-    <style name="LightTheme" parent="@android:style/Theme.Material.Light">
++    <style name="LightTheme" parent="@android:style/Theme.Material">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:colorAccent">@color/n9_accent</item>
++        <item name="android:colorBackground">@color/black_color</item>
++        <item name="android:navigationBarColor">@color/black_color</item>
+         <item name="android:textColorPrimary">@color/theme_title_color</item>
++        <item name="android:textColorSecondary">@color/n9_secondary_text</item>
+         <item name="android:colorPrimaryDark">@color/theme_primarydark_color</item>
+         <item name="android:colorPrimary">@color/theme_primary_color</item>
+-        <item name="android:windowBackground">@color/white_color</item>
++        <item name="android:windowBackground">@color/black_color</item>
+         <item name="android:windowNoTitle">false</item>
+     </style>
+ 
+diff --git a/src/com/android/fmradio/FmFavoriteActivity.java b/src/com/android/fmradio/FmFavoriteActivity.java
+index a7883bc..2228370 100644
+--- a/src/com/android/fmradio/FmFavoriteActivity.java
++++ b/src/com/android/fmradio/FmFavoriteActivity.java
+@@ -341,7 +341,7 @@ public class FmFavoriteActivity extends Activity {
+                 viewHolder.mStationRdsView.setText(rds);
+                 if (0 == isFavorite) {
+                     viewHolder.mStationTypeView.setImageResource(R.drawable.btn_fm_favorite_off);
+-                    viewHolder.mStationTypeView.setColorFilter(Color.BLACK,
++                    viewHolder.mStationTypeView.setColorFilter(Color.WHITE,
+                             PorterDuff.Mode.SRC_ATOP);
+                     viewHolder.mStationTypeView.setAlpha(0.54f);
+                 } else {
+diff --git a/src/com/android/fmradio/views/FmScroller.java b/src/com/android/fmradio/views/FmScroller.java
+index 91dfdc6..891f055 100644
+--- a/src/com/android/fmradio/views/FmScroller.java
++++ b/src/com/android/fmradio/views/FmScroller.java
+@@ -849,13 +849,13 @@ public class FmScroller extends FrameLayout {
+                     } else {
+                         viewHolder.mPlayIndicator.stopAnimation();
+                     }
+-                    viewHolder.mStationFreq.setTextColor(Color.parseColor("#607D8B"));
++                    viewHolder.mStationFreq.setTextColor(Color.parseColor("#00A5E5"));
+                     viewHolder.mStationFreq.setAlpha(1f);
+                     viewHolder.mStationName.setMaxLines(1);
+                 } else {
+                     viewHolder.mPlayIndicator.setVisibility(View.GONE);
+                     viewHolder.mPlayIndicator.stopAnimation();
+-                    viewHolder.mStationFreq.setTextColor(Color.parseColor("#000000"));
++                    viewHolder.mStationFreq.setTextColor(Color.WHITE);
+                     viewHolder.mStationFreq.setAlpha(0.87f);
+                     viewHolder.mStationName.setMaxLines(2);
+                 }

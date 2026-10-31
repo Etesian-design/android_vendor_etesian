@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle gear clock (belle-ref11.jpg): the gear dial is set from code; the day name sits low on the
+     left over the dark gear, the date in a small round bubble at 3 o'clock. Sized and placed from code
+     (BelleClassic2.fitFace). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:id="@+id/bc_face" android:layout_width="220dp" android:layout_height="220dp" android:layout_gravity="center">
+        <AnalogClock android:id="@+id/bc_clock" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:dial="@drawable/bc_square_dial" android:hand_hour="@drawable/bc_hand_hour_l" android:hand_minute="@drawable/bc_hand_minute_l"
+            android:hand_second="@drawable/bc_hand_second"/>
+        <TextClock android:id="@+id/bc_day" android:layout_width="52dp" android:layout_height="wrap_content" android:layout_gravity="top|start"
+            android:layout_marginStart="40dp" android:layout_marginTop="146dp" android:format12Hour="EEE" android:format24Hour="EEE"
+            android:gravity="center" android:textColor="#FFB4B5B9" android:textSize="14sp" android:fontFamily="etesian-text"/>
+        <TextClock android:id="@+id/bc_date" android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="20dp" android:background="@drawable/bc_date_bubble" android:format12Hour="d" android:format24Hour="d"
+            android:gravity="center" android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
+    </FrameLayout>
+</FrameLayout>

@@ -1,0 +1,35 @@
+diff --git a/fonts/etc/fonts_customization.xml b/fonts/etc/fonts_customization.xml
+index 90d6444..7341aba 100644
+--- a/fonts/etc/fonts_customization.xml
++++ b/fonts/etc/fonts_customization.xml
+@@ -486,4 +486,30 @@
+             <axis tag="wght" stylevalue="700"/>
+         </font>
+     </family>
++    <family customizationType="new-named-family" name="etesian-text">
++        <font weight="300" style="normal">FiraSans-Light.ttf</font>
++        <font weight="400" style="normal">FiraSans-Regular.ttf</font>
++        <font weight="500" style="normal">FiraSans-Medium.ttf</font>
++        <font weight="700" style="normal">FiraSans-Bold.ttf</font>
++    </family>
++    <family customizationType="new-named-family" name="fira-sans">
++        <font weight="300" style="normal">FiraSans-Light.ttf</font>
++        <font weight="400" style="normal">FiraSans-Regular.ttf</font>
++        <font weight="500" style="normal">FiraSans-Medium.ttf</font>
++        <font weight="700" style="normal">FiraSans-Bold.ttf</font>
++    </family>
++    <family customizationType="new-named-family" name="ubuntu-sans">
++        <font weight="300" style="normal">UbuntuSans-VF.ttf
++            <axis tag="wght" stylevalue="300"/>
++        </font>
++        <font weight="400" style="normal">UbuntuSans-VF.ttf
++            <axis tag="wght" stylevalue="400"/>
++        </font>
++        <font weight="500" style="normal">UbuntuSans-VF.ttf
++            <axis tag="wght" stylevalue="500"/>
++        </font>
++        <font weight="700" style="normal">UbuntuSans-VF.ttf
++            <axis tag="wght" stylevalue="700"/>
++        </font>
++    </family>
+ </fonts-modification>

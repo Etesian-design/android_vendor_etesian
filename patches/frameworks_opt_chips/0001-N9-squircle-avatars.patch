@@ -1,0 +1,64 @@
+diff --git a/src/com/android/ex/chips/CircularImageView.java b/src/com/android/ex/chips/CircularImageView.java
+index 246cc96..2142e7b 100644
+--- a/src/com/android/ex/chips/CircularImageView.java
++++ b/src/com/android/ex/chips/CircularImageView.java
+@@ -104,11 +104,10 @@ public class CircularImageView extends ImageView {
+ 
+         shader.setLocalMatrix(matrix);
+         bitmapPaint.setShader(shader);
+-        canvas.drawCircle(dest.centerX(), dest.centerY(), dest.width() / 2f,
+-                bitmapPaint);
++        // N9 look: contact photos in dropdowns are squircles too.
++        canvas.drawPath(RecipientEditTextView.n9Squircle(dest, 0f), bitmapPaint);
+ 
+         // Then draw the border.
+-        canvas.drawCircle(dest.centerX(), dest.centerY(),
+-                dest.width() / 2f - circularImageBorder / 2, borderPaint);
++        canvas.drawPath(RecipientEditTextView.n9Squircle(dest, circularImageBorder / 2), borderPaint);
+     }
+ }
+\ No newline at end of file
+diff --git a/src/com/android/ex/chips/RecipientEditTextView.java b/src/com/android/ex/chips/RecipientEditTextView.java
+index 1fc7ec0..feb9600 100644
+--- a/src/com/android/ex/chips/RecipientEditTextView.java
++++ b/src/com/android/ex/chips/RecipientEditTextView.java
+@@ -1089,20 +1089,35 @@ public class RecipientEditTextView extends MultiAutoCompleteTextView implements
+         return height - ((height - mTextHeight) / 2);
+     }
+ 
++    /** The N9 squircle (superellipse, n = 2.8) filling [box], inset by [inset]. */
++    static android.graphics.Path n9Squircle(RectF box, float inset) {
++        final android.graphics.Path path = new android.graphics.Path();
++        final float cx = box.centerX(), cy = box.centerY();
++        final float rx = box.width() / 2f - inset, ry = box.height() / 2f - inset;
++        for (int i = 0; i < 96; i++) {
++            final double t = 2 * Math.PI * i / 96, c = Math.cos(t), sn = Math.sin(t);
++            final float x = (float) (cx + rx * Math.signum(c) * Math.pow(Math.abs(c), 2 / 2.8));
++            final float y = (float) (cy + ry * Math.signum(sn) * Math.pow(Math.abs(sn), 2 / 2.8));
++            if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
++        }
++        path.close();
++        return path;
++    }
++
+     /**
+      * Draws the icon onto the canvas given the source rectangle of the bitmap and the destination
+      * rectangle of the canvas.
+      *
+-     * <p>The icon is drawn as a circle.
++     * <p>The icon is drawn as an N9 squircle.
+      */
+     protected void drawCircularIconOnCanvas(Bitmap icon, Canvas canvas, RectF src, RectF dst) {
++        // N9 look: contact avatars are n=2.8 squircles, never circles.
+         setWorkPaintForIcon(icon, src, dst);
+-        canvas.drawCircle(dst.centerX(), dst.centerY(), dst.width() / 2f, mWorkPaint);
++        canvas.drawPath(n9Squircle(dst, 0f), mWorkPaint);
+ 
+         final float borderWidth = 1f;
+         setWorkPaintForBorder(borderWidth);
+-        canvas.drawCircle(dst.centerX(), dst.centerY(), dst.width() / 2f - borderWidth / 2,
+-                mWorkPaint);
++        canvas.drawPath(n9Squircle(dst, borderWidth / 2), mWorkPaint);
+ 
+         mWorkPaint.reset();
+     }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle weather (belle-ref6.jpg): grey glass, big temperature with the icon breaking out above
+     the panel, high/low, the place on a dark tab, two forecast days on the right. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="30dp"
+        android:background="@drawable/bc_glass" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.25" android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="bottom"
+                android:orientation="horizontal" android:paddingStart="12dp">
+                <TextView android:id="@+id/bc_temp" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:includeFontPadding="false" android:textColor="#FFFFFFFF" android:textSize="46sp" android:fontFamily="etesian-text"/>
+                <TextView android:id="@+id/bc_hilo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp"
+                    android:layout_marginBottom="4dp" android:textColor="#FFB4B5B9" android:textSize="16sp" android:fontFamily="etesian-text"/>
+            </LinearLayout>
+            <TextView android:id="@+id/bc_place" android:layout_width="match_parent" android:layout_height="34dp" android:layout_margin="6dp"
+                android:background="@drawable/bc_label" android:ellipsize="end" android:gravity="center" android:maxLines="1"
+                android:textColor="#FFFFFFFF" android:textSize="16sp" android:fontFamily="etesian-text"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.75" android:gravity="center"
+            android:orientation="vertical">
+            <ImageView android:id="@+id/bc_d1_icon" android:layout_width="40dp" android:layout_height="40dp"/>
+            <TextView android:id="@+id/bc_d1_hilo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+            <TextView android:id="@+id/bc_d1_day" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.75" android:gravity="center"
+            android:orientation="vertical">
+            <ImageView android:id="@+id/bc_d2_icon" android:layout_width="40dp" android:layout_height="40dp"/>
+            <TextView android:id="@+id/bc_d2_hilo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+            <TextView android:id="@+id/bc_d2_day" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#FFFFFFFF" android:textSize="15sp" android:fontFamily="etesian-text"/>
+        </LinearLayout>
+    </LinearLayout>
+    <ImageView android:id="@+id/bc_icon" android:layout_width="84dp" android:layout_height="84dp" android:layout_marginStart="60dp"/>
+</FrameLayout>

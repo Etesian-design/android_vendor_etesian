@@ -1,0 +1,8 @@
+// Etesian backgrounds: lets an app follow the user's background choice (N9 light, black,
+// dark grey or wallpaper; black or wallpaper for black screens).
+java_library {
+    name: "etesian-theme",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    min_sdk_version: "31",
+}

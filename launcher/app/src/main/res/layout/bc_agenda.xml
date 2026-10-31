@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle big calendar (belle-ref7.jpg): ring pins, "◀ Monday | 1 Oct ▶", event rows (people glyph,
+     cyan bar, title, organiser), "+ Create new event". -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="5dp"
+        android:background="@drawable/bc_paper" android:orientation="vertical" android:paddingBottom="10dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="44dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:id="@+id/bc_prev" android:layout_width="56dp" android:layout_height="match_parent" android:padding="13dp"
+                android:src="@drawable/bc_glyph_left" android:tint="#FF8E8E92" android:contentDescription="Previous day"/>
+            <TextView android:id="@+id/bc_day" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:gravity="center" android:textColor="#FF1A1A1A" android:textSize="17sp" android:fontFamily="etesian-text"/>
+            <ImageView android:id="@+id/bc_next" android:layout_width="56dp" android:layout_height="match_parent" android:padding="13dp"
+                android:src="@drawable/bc_glyph_right" android:tint="#FF1A1A1A" android:contentDescription="Next day"/>
+        </LinearLayout>
+        <ImageView android:layout_width="match_parent" android:layout_height="1dp" android:background="#FFC9C9CC"/>
+        <!-- the day's events, all of them, scrolling (Belle calendar agenda: scrollablebox) -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <TextView android:id="@+id/bc_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center" android:text="No events" android:textColor="#FF6E6E73" android:textSize="16sp" android:fontFamily="etesian-text"/>
+            <ListView android:id="@+id/bc_items" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:divider="#FFDADADD" android:dividerHeight="1dp" android:scrollbarSize="3dp" android:scrollbarStyle="insideOverlay"
+                android:fadeScrollbars="false" android:scrollbarThumbVertical="@drawable/bc_scroll_thumb" android:listSelector="#22000000"/>
+        </FrameLayout>
+        <TextView android:id="@+id/bc_create" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp" android:background="@drawable/bc_pill_btn" android:drawableStart="@drawable/bc_glyph_plus"
+            android:drawablePadding="10dp" android:drawableTint="#FFB5B5B8" android:gravity="center" android:paddingStart="20dp" android:paddingEnd="26dp"
+            android:text="Create new event" android:textColor="#FF1A1A1A" android:textSize="16sp" android:fontFamily="etesian-text"/>
+    </LinearLayout>
+    <ImageView android:layout_width="8dp" android:layout_height="14dp" android:layout_gravity="top|start" android:layout_marginStart="44dp" android:background="@drawable/bc_ring"/>
+    <ImageView android:layout_width="8dp" android:layout_height="14dp" android:layout_gravity="top|end" android:layout_marginEnd="44dp" android:background="@drawable/bc_ring"/>
+</FrameLayout>

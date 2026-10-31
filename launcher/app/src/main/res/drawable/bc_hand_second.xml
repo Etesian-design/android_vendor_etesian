@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle large clock seconds hand: a thin blue line with a blue cap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="400dp" android:height="400dp" android:viewportWidth="100" android:viewportHeight="100">
+    <path android:strokeColor="#FF3D8FE0" android:strokeWidth="0.8" android:pathData="M50,58V12"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M50,46.6a3.4,3.4 0,1 1,0 6.8a3.4,3.4 0,1 1,0 -6.8z"/>
+    <path android:fillColor="#FF3D8FE0" android:pathData="M50,48.4a1.6,1.6 0,1 1,0 3.2a1.6,1.6 0,1 1,0 -3.2z"/>
+</vector>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The white feed mark, at the N9 icon's proportions inside the 72dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <group android:translateX="10.7" android:translateY="10.7" android:scaleX="0.666" android:scaleY="0.666">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M19,45m-5,0a5,5 0 1 1 10,0a5,5 0 1 1 -10,0" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M14,28a22,22 0 0 1 22,22h-6.5a15.5,15.5 0 0 0 -15.5,-15.5z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M14,15a35,35 0 0 1 35,35h-6.5a28.5,28.5 0 0 0 -28.5,-28.5z" />
+    </group>
+</vector>

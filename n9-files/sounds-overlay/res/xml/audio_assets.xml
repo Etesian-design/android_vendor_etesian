@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths are under /product/media/audio/ui/ (see import.sh). -->
+<audio_assets version="1.0">
+    <asset id="FX_KEY_CLICK" file="n9/static_press.wav"/>
+    <asset id="FX_FOCUS_NAVIGATION_UP" file="n9/static_press.wav"/>
+    <asset id="FX_FOCUS_NAVIGATION_DOWN" file="n9/static_press.wav"/>
+    <asset id="FX_FOCUS_NAVIGATION_LEFT" file="n9/static_press.wav"/>
+    <asset id="FX_FOCUS_NAVIGATION_RIGHT" file="n9/static_press.wav"/>
+    <asset id="FX_KEYPRESS_STANDARD" file="n9/static_press.wav"/>
+    <asset id="FX_KEYPRESS_SPACEBAR" file="n9/static_press.wav"/>
+    <asset id="FX_KEYPRESS_DELETE" file="n9/static_press.wav"/>
+    <asset id="FX_KEYPRESS_RETURN" file="n9/static_press.wav"/>
+    <asset id="FX_KEYPRESS_INVALID" file="n9/static_release.wav"/>
+    <asset id="FX_BACK" file="n9/static_press.wav"/>
+</audio_assets>

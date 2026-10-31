@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle switch widget body: a dark lit pill. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><gradient android:angle="270" android:startColor="#FF4C4D52" android:centerColor="#FF26272A" android:endColor="#FF101012"/>
+        <corners android:radius="16dp"/><stroke android:width="1.5dp" android:color="#FF050506"/></shape></item>
+</layer-list>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle switch button, off: dark squircle, no light. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="#FF0C0C0D"/><corners android:radius="20dp"/></shape></item>
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="5dp"><shape>
+        <gradient android:angle="270" android:startColor="#FF3E3F43" android:endColor="#FF222325"/><corners android:radius="17dp"/></shape></item>
+</layer-list>

@@ -1,0 +1,31 @@
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 9a0010f..f1e1b06 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -467,6 +467,8 @@
+     <string name="status_bar_clock_auto_hide_title">Auto hide</string>
+     <string name="status_bar_clock_auto_hide_summary">Hide clock if launcher is visible</string>
+ 
++    <string name="status_bar_n9_layout_title">N9 layout</string>
++    <string name="status_bar_n9_layout_summary">Battery and signal on the left, notifications and clock on the right, as on the Nokia N9. Clock position and the icons below still apply, mirrored.</string>
+     <string name="status_bar_clock_position_title">Clock position</string>
+     <string name="status_bar_clock_position_right">Right</string>
+     <string name="status_bar_clock_position_left">Left</string>
+diff --git a/res/xml/status_bar_settings.xml b/res/xml/status_bar_settings.xml
+index 1bb4ee8..3f778cb 100644
+--- a/res/xml/status_bar_settings.xml
++++ b/res/xml/status_bar_settings.xml
+@@ -27,6 +27,13 @@
+     <PreferenceCategory
+         android:title="@string/status_bar_icons_title">
+ 
++        <!-- Etesian: N9 arrangement (system icons left, notifications and clock right). -->
++        <lineageos.preference.SecureSettingSwitchPreference
++            android:key="etesian_status_bar_layout"
++            android:title="@string/status_bar_n9_layout_title"
++            android:summary="@string/status_bar_n9_layout_summary"
++            android:defaultValue="true" />
++
+         <Preference
+             android:key="status_bar_icons"
+             android:title="@string/status_bar_system_icons_title"

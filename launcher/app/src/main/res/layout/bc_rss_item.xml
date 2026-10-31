@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One post in the Belle RSS widget's list: an orange dot while new, the title up to three lines (rsswidget3 max-line-amount 3). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_item" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="52dp"
+    android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+    android:paddingTop="8dp" android:paddingBottom="8dp">
+    <ImageView android:id="@+id/bc_new" android:layout_width="10dp" android:layout_height="10dp" android:src="@drawable/bc_dot"/>
+    <TextView android:id="@+id/bc_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:layout_marginStart="12dp" android:ellipsize="end" android:maxLines="3" android:textColor="#FF1A1A1A" android:textSize="15sp"
+        android:fontFamily="etesian-text"/>
+</LinearLayout>

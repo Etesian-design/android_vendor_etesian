@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The N9 light page; no dynamic colour, no night variant on purpose. -->
+    <style name="Theme.EtesianFeeds" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">etesian-text</item>
+        <item name="android:colorPrimary">#FFFF8600</item>
+        <item name="android:colorAccent">#FFFF8600</item>
+        <item name="android:colorControlActivated">#FFFF8600</item>
+        <item name="android:windowBackground">@color/page</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

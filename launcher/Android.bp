@@ -1,0 +1,54 @@
+// Etesian launcher as built into the ROM. Compiled against the platform's
+// internal APIs (gesture input monitor, recents animations, task listeners),
+// which the Gradle build can't see. Gradle still builds it as a plain app.
+android_app {
+    name: "EtesianLauncher",
+    srcs: [
+        "app/src/main/java/**/*.kt",
+        // Recents provider and N9 gestures; uses internal APIs, so ROM only.
+        "app/src/platform/java/**/*.kt",
+    ],
+    resource_dirs: ["app/src/main/res"],
+    manifest: ":EtesianLauncher-manifest",
+    platform_apis: true,
+    certificate: "platform",
+    system_ext_specific: true,
+    privileged: true,
+    required: [
+        "privapp_allowlist_com.bompotis.etesian.launcher.xml",
+        "default-permissions_com.bompotis.etesian.launcher.xml",
+    ],
+    overrides: ["Launcher3QuickStep", "TrebuchetQuickStep"],
+    static_libs: [
+        "androidx.core_core-ktx",
+        "androidx.appcompat_appcompat",
+        "androidx.recyclerview_recyclerview",
+        "androidx.preference_preference",
+        "com.google.android.material_material",
+        "SystemUISharedLib",
+        // Android extras → Share network: the Wi-Fi QR code.
+        "zxing-core",
+    ],
+    kotlincflags: ["-Xjvm-default=all"],
+    // Above the Gradle/test builds, so a ROM update always replaces an installed test copy.
+    aaptflags: [
+        "--version-code",
+        "100",
+        "--version-name",
+        "rom",
+    ],
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
+}
+
+// Gradle sets the package through its namespace; aapt2 needs it in the manifest.
+genrule {
+    name: "EtesianLauncher-manifest",
+    srcs: ["app/src/main/AndroidManifest.xml"],
+    out: ["AndroidManifest.xml"],
+    cmd: "sed 's|<manifest |<manifest package=\"com.bompotis.etesian.launcher\" |' $(in) > $(out)",
+}

@@ -1,0 +1,3196 @@
+diff --git a/app/Android.bp b/app/Android.bp
+index 19724c3..a5ceaca 100644
+--- a/app/Android.bp
++++ b/app/Android.bp
+@@ -91,6 +91,9 @@ android_app {
+         "kotlin-stdlib",
+         "kotlinx_coroutines_guava",
+         "kotlinx_serialization_json",
++        // N9: system bottom toolbar
++        "etesian-toolbar",
++        "etesian-fastscroll",
+     ],
+ 
+     optimize: {
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 4c7e7c2..a765c9f 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -20,6 +20,15 @@
+     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
+ 
++    <!-- N9: "Music Store" row on the home view -->
++    <queries>
++        <package android:name="com.bompotis.etesian.store" />
++        <intent>
++            <action android:name="android.intent.action.VIEW" />
++            <data android:scheme="market" />
++        </intent>
++    </queries>
++
+     <application
+         android:name=".TwelveApplication"
+         android:appCategory="audio"
+diff --git a/app/src/main/java/org/lineageos/twelve/MainActivity.kt b/app/src/main/java/org/lineageos/twelve/MainActivity.kt
+index 9e722b0..ff83600 100644
+--- a/app/src/main/java/org/lineageos/twelve/MainActivity.kt
++++ b/app/src/main/java/org/lineageos/twelve/MainActivity.kt
+@@ -8,6 +8,7 @@ package org.lineageos.twelve
+ import android.content.Intent
+ import android.os.Bundle
+ import android.util.Log
++import android.view.View
+ import android.widget.FrameLayout
+ import androidx.activity.enableEdgeToEdge
+ import androidx.activity.viewModels
+@@ -17,12 +18,15 @@ import androidx.core.util.Consumer
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.WindowInsetsCompat
+ import androidx.core.view.isVisible
++import androidx.fragment.app.Fragment
++import androidx.fragment.app.FragmentManager
+ import androidx.lifecycle.Lifecycle
+ import androidx.lifecycle.lifecycleScope
+ import androidx.lifecycle.repeatOnLifecycle
+ import androidx.navigation.NavOptions
+ import androidx.navigation.fragment.DialogFragmentNavigator
+ import androidx.navigation.fragment.NavHostFragment
++import com.google.android.material.appbar.MaterialToolbar
+ import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.flow.collectLatest
+@@ -30,6 +34,7 @@ import kotlinx.coroutines.flow.combine
+ import kotlinx.coroutines.flow.distinctUntilChanged
+ import kotlinx.coroutines.flow.flowOn
+ import kotlinx.coroutines.launch
++import com.bompotis.etesian.toolbar.EtesianToolbar
+ import org.lineageos.twelve.ext.navigateSafe
+ import org.lineageos.twelve.ext.slideDown
+ import org.lineageos.twelve.ext.slideUp
+@@ -67,6 +72,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
+     // Intents
+     private val intentListener = Consumer<Intent> { intentsViewModel.onIntent(it) }
+ 
++    // N9: whether the home fragment shows its main view (no Back) or one of its lists
++    private var mainPageIsHome = true
++
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+ 
+@@ -106,6 +114,28 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
+                 .build()
+         }
+ 
++        // N9 system toolbar: Back everywhere but on the main view, no app buttons
++        navController.addOnDestinationChangedListener { _, _, _ ->
++            updateEtesianToolbar()
++        }
++
++        // With the system toolbar, the screens' own back arrows are redundant
++        supportFragmentManager.registerFragmentLifecycleCallbacks(
++            object : FragmentManager.FragmentLifecycleCallbacks() {
++                override fun onFragmentViewCreated(
++                    fm: FragmentManager,
++                    f: Fragment,
++                    v: View,
++                    savedInstanceState: Bundle?,
++                ) {
++                    if (EtesianToolbar.isAvailable(this@MainActivity)) {
++                        v.findViewById<MaterialToolbar>(R.id.toolbar)?.navigationIcon = null
++                    }
++                }
++            },
++            true
++        )
++
+         // Intents
+         intentsViewModel.onIntent(intent)
+         addOnNewIntentListener(intentListener)
+@@ -126,6 +156,55 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
+         }
+     }
+ 
++    override fun onResume() {
++        super.onResume()
++
++        updateEtesianToolbar()
++    }
++
++    /**
++     * Called by the home fragment when it switches between its main view and its lists.
++     */
++    fun setMainPageIsHome(isHome: Boolean) {
++        mainPageIsHome = isHome
++        updateEtesianToolbar()
++    }
++
++    private fun updateEtesianToolbar() {
++        if (!EtesianToolbar.isAvailable(this)) {
++            return
++        }
++
++        val isMainView = navController.currentDestination?.id == R.id.mainFragment
++                && mainPageIsHome
++
++        // Now playing: Back plus the play queue, like N9 Music
++        val isNowPlaying = navController.currentDestination?.id == R.id.nowPlayingFragment
++
++        EtesianToolbar.of(this)
++            .setStyle(EtesianToolbar.STYLE_DARK)
++            .setBack(!isMainView)
++            .setItems(
++                when (isNowPlaying) {
++                    true -> listOf(
++                        EtesianToolbar.Item.action(
++                            TOOLBAR_ITEM_QUEUE,
++                            R.drawable.ic_queue_play_next,
++                            getString(R.string.queue),
++                        )
++                    )
++
++                    false -> listOf()
++                }
++            ) { id ->
++                if (id == TOOLBAR_ITEM_QUEUE &&
++                    navController.currentDestination?.id == R.id.nowPlayingFragment
++                ) {
++                    navController.navigate(R.id.action_nowPlayingFragment_to_fragment_queue)
++                }
++            }
++    }
++
+     override fun onDestroy() {
+         removeOnNewIntentListener(intentListener)
+ 
+@@ -292,6 +371,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
+     companion object {
+         private val LOG_TAG = MainActivity::class.simpleName!!
+ 
++        private const val TOOLBAR_ITEM_QUEUE = "queue"
++
+         /**
+          * Now playing related route IDs.
+          */
+diff --git a/app/src/main/java/org/lineageos/twelve/TwelveApplication.kt b/app/src/main/java/org/lineageos/twelve/TwelveApplication.kt
+index b1a3204..e7b721c 100644
+--- a/app/src/main/java/org/lineageos/twelve/TwelveApplication.kt
++++ b/app/src/main/java/org/lineageos/twelve/TwelveApplication.kt
+@@ -10,7 +10,6 @@ import androidx.media3.common.util.UnstableApi
+ import coil3.ImageLoader
+ import coil3.PlatformContext
+ import coil3.SingletonImageLoader
+-import com.google.android.material.color.DynamicColors
+ import kotlinx.coroutines.MainScope
+ import org.lineageos.twelve.database.TwelveDatabase
+ import org.lineageos.twelve.repositories.MediaRepository
+@@ -35,8 +34,7 @@ class TwelveApplication : Application(), SingletonImageLoader.Factory {
+     override fun onCreate() {
+         super.onCreate()
+ 
+-        // Observe dynamic colors changes
+-        DynamicColors.applyToActivitiesIfAvailable(this)
++        // N9 look: static palette, no dynamic colors
+     }
+ 
+     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
+diff --git a/app/src/main/java/org/lineageos/twelve/fragments/MainFragment.kt b/app/src/main/java/org/lineageos/twelve/fragments/MainFragment.kt
+index b84f5ef..cc0add1 100644
+--- a/app/src/main/java/org/lineageos/twelve/fragments/MainFragment.kt
++++ b/app/src/main/java/org/lineageos/twelve/fragments/MainFragment.kt
+@@ -5,462 +5,94 @@
+ 
+ package org.lineageos.twelve.fragments
+ 
+-import android.content.Intent
+ import android.os.Bundle
+-import android.util.Log
+ import android.view.View
+-import android.view.inputmethod.InputMethodManager
+-import android.widget.LinearLayout
+-import androidx.activity.BackEventCompat
+ import androidx.activity.OnBackPressedCallback
+-import androidx.annotation.IdRes
+-import androidx.core.graphics.Insets
+-import androidx.core.view.ViewCompat
+-import androidx.core.view.WindowInsetsCompat
+-import androidx.core.view.isVisible
+-import androidx.core.widget.addTextChangedListener
+ import androidx.fragment.app.Fragment
+-import androidx.fragment.app.viewModels
+-import androidx.lifecycle.Lifecycle
+-import androidx.lifecycle.lifecycleScope
+-import androidx.lifecycle.repeatOnLifecycle
+-import androidx.navigation.fragment.findNavController
+-import androidx.navigation.ui.setupWithNavController
+-import androidx.recyclerview.widget.DiffUtil
+-import androidx.recyclerview.widget.RecyclerView
+ import androidx.viewpager2.adapter.FragmentStateAdapter
+ import androidx.viewpager2.widget.ViewPager2
+-import com.google.android.material.appbar.MaterialToolbar
+-import com.google.android.material.button.MaterialButton
+-import com.google.android.material.navigation.NavigationBarView
+-import com.google.android.material.progressindicator.LinearProgressIndicator
+-import com.google.android.material.search.SearchView
+-import com.google.android.material.snackbar.Snackbar
+-import kotlinx.coroutines.flow.collectLatest
+-import kotlinx.coroutines.launch
++import org.lineageos.twelve.MainActivity
+ import org.lineageos.twelve.R
+-import org.lineageos.twelve.SettingsActivity
+ import org.lineageos.twelve.ext.getViewProperty
+-import org.lineageos.twelve.ext.isLandscape
+-import org.lineageos.twelve.ext.isRtl
+-import org.lineageos.twelve.ext.navigateSafe
+-import org.lineageos.twelve.ext.scheduleHideSoftInput
+-import org.lineageos.twelve.ext.setProgressCompat
+-import org.lineageos.twelve.ext.updatePadding
+-import org.lineageos.twelve.models.Album
+-import org.lineageos.twelve.models.Artist
+-import org.lineageos.twelve.models.Audio
+-import org.lineageos.twelve.models.FlowResult
+-import org.lineageos.twelve.models.Genre
+-import org.lineageos.twelve.models.MediaItem
+-import org.lineageos.twelve.models.Playlist
+-import org.lineageos.twelve.models.Result.Companion.onError
+-import org.lineageos.twelve.models.areContentsTheSame
+-import org.lineageos.twelve.models.areItemsTheSame
+-import org.lineageos.twelve.ui.recyclerview.SimpleListAdapter
+-import org.lineageos.twelve.ui.views.ListItem
+-import org.lineageos.twelve.viewmodels.MainViewModel
++import org.lineageos.twelve.viewmodels.N9MusicViewModel
+ 
+ /**
+- * The home page.
++ * The home page (N9 Music): the album mosaic with the Artists/Albums/Songs/Playlists list, and
++ * those lists as further pages, so that their navigation actions stay on this destination.
+  */
+ class MainFragment : Fragment(R.layout.fragment_main) {
+-    // View models
+-    private val viewModel by viewModels<MainViewModel>()
+-
+     // Views
+-    private val navigationBarView by getViewProperty<NavigationBarView>(R.id.navigationBarView)
+-    private val playRandomSongsButton by getViewProperty<MaterialButton>(R.id.playRandomSongsButton)
+-    private val providerMaterialButton by getViewProperty<MaterialButton>(R.id.providerMaterialButton)
+-    private val searchLinearProgressIndicator by getViewProperty<LinearProgressIndicator>(R.id.searchLinearProgressIndicator)
+-    private val searchNoElementsLinearLayout by getViewProperty<LinearLayout>(R.id.searchNoElementsLinearLayout)
+-    private val searchRecyclerView by getViewProperty<RecyclerView>(R.id.searchRecyclerView)
+-    private val searchView by getViewProperty<SearchView>(R.id.searchView)
+-    private val settingsMaterialButton by getViewProperty<MaterialButton>(R.id.settingsMaterialButton)
+-    private val toolbar by getViewProperty<MaterialToolbar>(R.id.toolbar)
+     private val viewPager2 by getViewProperty<ViewPager2>(R.id.viewPager2)
+ 
+-    // System services
+-    private val inputMethodManager: InputMethodManager
+-        get() = requireContext().getSystemService(InputMethodManager::class.java)
+-
+-    // RecyclerView
+-    private val searchAdapter by lazy {
+-        object : SimpleListAdapter<MediaItem<*>, ListItem>(
+-            searchDiffCallback,
+-            ::ListItem
+-        ) {
+-            override fun ViewHolder.onBindView(item: MediaItem<*>) {
+-                view.setOnLongClickListener {
+-                    findNavController().navigateSafe(
+-                        R.id.action_mainFragment_to_fragment_media_item_bottom_sheet_dialog,
+-                        MediaItemBottomSheetDialogFragment.createBundle(item.uri)
+-                    )
+-                    true
+-                }
+-
+-                when (item) {
+-                    is Album -> {
+-                        view.setOnClickListener {
+-                            findNavController().navigateSafe(
+-                                R.id.action_mainFragment_to_fragment_album,
+-                                AlbumFragment.createBundle(item.uri)
+-                            )
+-                        }
+-
+-                        view.setTrailingIconImage(R.drawable.ic_album)
+-                        view.headlineText = item.title
+-                        view.supportingText = item.artistName
+-                    }
+-
+-                    is Artist -> {
+-                        view.setOnClickListener {
+-                            findNavController().navigateSafe(
+-                                R.id.action_mainFragment_to_fragment_artist,
+-                                ArtistFragment.createBundle(item.uri)
+-                            )
+-                        }
+-
+-                        view.setTrailingIconImage(R.drawable.ic_person)
+-                        view.headlineText = item.name
+-                        view.supportingText = null
+-                    }
+-
+-                    is Audio -> {
+-                        view.setOnClickListener {
+-                            findNavController().navigateSafe(
+-                                R.id.action_mainFragment_to_fragment_media_item_bottom_sheet_dialog,
+-                                MediaItemBottomSheetDialogFragment.createBundle(item.uri)
+-                            )
+-                        }
+-
+-                        view.setTrailingIconImage(R.drawable.ic_music_note)
+-                        view.headlineText = item.title
+-                        view.supportingText = item.artistName
+-                    }
+-
+-                    is Genre -> {
+-                        view.setOnClickListener {
+-                            findNavController().navigateSafe(
+-                                R.id.action_mainFragment_to_fragment_genre,
+-                                GenreFragment.createBundle(item.uri)
+-                            )
+-                        }
+-
+-                        view.setTrailingIconImage(R.drawable.ic_genres)
+-                        view.headlineText = item.name
+-                        view.supportingText = null
+-                    }
++    private val onBackPressedCallback = object : OnBackPressedCallback(false) {
++        override fun handleOnBackPressed() {
++            showPage(Page.HOME)
++        }
++    }
+ 
+-                    is Playlist -> {
+-                        view.setOnClickListener {
+-                            findNavController().navigateSafe(
+-                                R.id.action_mainFragment_to_fragment_playlist,
+-                                PlaylistFragment.createBundle(item.uri)
+-                            )
+-                        }
++    private val onPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
++        override fun onPageSelected(position: Int) {
++            val isHome = Page.entries[position] == Page.HOME
+ 
+-                        view.setTrailingIconImage(R.drawable.ic_playlist_play)
+-                        view.headlineText = item.name
+-                        view.supportingText = null
+-                    }
+-                }
+-            }
++            onBackPressedCallback.isEnabled = !isHome
++            (activity as? MainActivity)?.setMainPageIsHome(isHome)
+         }
+     }
+ 
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+         super.onViewCreated(view, savedInstanceState)
+ 
+-        // Insets
+-        ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v, windowInsets ->
+-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout())
+-
+-            v.updatePadding(
+-                insets,
+-                start = !resources.configuration.isLandscape,
+-                end = true,
+-            )
+-
+-            windowInsets
+-        }
+-
+-        ViewCompat.setOnApplyWindowInsetsListener(navigationBarView) { v, windowInsets ->
+-            val insets = windowInsets.getInsets(
+-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+-            )
+-
+-            v.updatePadding(
+-                insets,
+-                start = resources.configuration.isLandscape,
+-                top = resources.configuration.isLandscape,
+-                bottom = true,
+-            )
+-
+-            windowInsets
+-        }
+-
+-        ViewCompat.setOnApplyWindowInsetsListener(viewPager2) { v, windowInsets ->
+-            val displayCutoutInsets = windowInsets.getInsets(
+-                WindowInsetsCompat.Type.displayCutout()
+-            )
+-            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+-
+-            fun adjustInsets(insets: Insets) = Insets.of(
+-                when (!v.isRtl && resources.configuration.isLandscape) {
+-                    true -> 0
+-                    false -> insets.left
+-                },
+-                insets.top,
+-                when (v.isRtl && resources.configuration.isLandscape) {
+-                    true -> 0
+-                    false -> insets.right
+-                },
+-                when (resources.configuration.isLandscape) {
+-                    true -> insets.bottom
+-                    false -> 0
+-                },
+-            )
+-
+-            WindowInsetsCompat.Builder(windowInsets)
+-                .setInsets(
+-                    WindowInsetsCompat.Type.systemBars(),
+-                    adjustInsets(systemBarsInsets),
+-                )
+-                .setInsets(
+-                    WindowInsetsCompat.Type.displayCutout(),
+-                    adjustInsets(displayCutoutInsets),
+-                )
+-                .build()
+-        }
+-
+-        ViewCompat.setOnApplyWindowInsetsListener(searchRecyclerView) { v, windowInsets ->
+-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+-
+-            v.updatePadding(
+-                insets,
+-                start = true,
+-                end = true,
+-                bottom = true,
+-            )
+-
+-            windowInsets
+-        }
+-
+-        ViewCompat.setOnApplyWindowInsetsListener(searchNoElementsLinearLayout) { v, windowInsets ->
+-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+-
+-            v.updatePadding(
+-                insets,
+-                start = true,
+-                end = true,
+-                bottom = true,
+-            )
+-
+-            windowInsets
+-        }
+-
+-        // On back pressed
++        // On back pressed: a list goes back to the home view
+         requireActivity().onBackPressedDispatcher.addCallback(
+-            viewLifecycleOwner,
+-            object : OnBackPressedCallback(searchView.isShowing) {
+-                override fun handleOnBackStarted(backEvent: BackEventCompat) {
+-                    searchView.startBackProgress(backEvent)
+-                }
+-
+-                override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+-                    searchView.updateBackProgress(backEvent)
+-                }
+-
+-                override fun handleOnBackPressed() {
+-                    searchView.handleBackInvoked()
+-                }
+-
+-                override fun handleOnBackCancelled() {
+-                    searchView.cancelBackProgress()
+-                }
+-            }.also {
+-                searchView.addTransitionListener { searchView, _, newState ->
+-                    val isShowing = newState in listOf(
+-                        SearchView.TransitionState.SHOWN,
+-                        SearchView.TransitionState.SHOWING,
+-                    )
+-
+-                    it.isEnabled = isShowing
+-
+-                    // Clear search query if hidden
+-                    if (!isShowing) {
+-                        searchView.clearText()
+-                    }
+-                }
+-            }
++            viewLifecycleOwner, onBackPressedCallback
+         )
+ 
+-        toolbar.setupWithNavController(findNavController())
+-
+-        providerMaterialButton.setOnClickListener {
+-            findNavController().navigateSafe(
+-                R.id.action_mainFragment_to_fragment_provider_selector_dialog
+-            )
+-        }
+-        providerMaterialButton.setOnLongClickListener {
+-            viewModel.navigationProvider.value?.let {
+-                findNavController().navigateSafe(
+-                    R.id.action_mainFragment_to_fragment_provider_information_bottom_sheet_dialog,
+-                    ManageProviderFragment.createBundle(providerIdentifier = it.identifier),
+-                )
+-                true
+-            } ?: false
+-        }
+-
+-        settingsMaterialButton.setOnClickListener {
+-            val intent = Intent(context, SettingsActivity::class.java)
+-            startActivity(intent)
+-        }
+-
+-        playRandomSongsButton.setOnClickListener {
+-            viewLifecycleOwner.lifecycleScope.launch {
+-                viewModel.playAllAudios().onError {
+-                    Snackbar.make(
+-                        navigationBarView,
+-                        it.toString(),
+-                        Snackbar.LENGTH_SHORT,
+-                    ).show()
+-                }
+-            }
+-        }
+-
+         // View pager
+         viewPager2.isUserInputEnabled = false
+         viewPager2.adapter = object : FragmentStateAdapter(this) {
+             override fun getItemCount() = Page.entries.size
+             override fun createFragment(position: Int) = Page.entries[position].createFragment()
+         }
+-        viewPager2.offscreenPageLimit = Page.entries.size
+-
+-        navigationBarView.setOnItemSelectedListener { item ->
+-            if (item.itemId == R.id.searchFragment) {
+-                searchView.show()
+-                return@setOnItemSelectedListener false
+-            }
+-
+-            val index = Page.entries.indexOfFirst { it.menuItemId == item.itemId }
+-
+-            if (index >= 0) {
+-                viewPager2.currentItem = index
+-                true
+-            } else {
+-                false
+-            }
+-        }
+-
+-        // Search
+-        searchRecyclerView.adapter = searchAdapter
+-
+-        searchView.editText.addTextChangedListener { text ->
+-            viewModel.setSearchQuery(text.toString())
+-        }
+-        searchView.editText.setOnEditorActionListener { _, _, _ ->
+-            inputMethodManager.scheduleHideSoftInput(searchView.editText, 0)
+-            searchView.editText.clearFocus()
+-            viewModel.setSearchQuery(searchView.editText.text.toString(), true)
+-            true
+-        }
+-
+-        viewLifecycleOwner.lifecycleScope.launch {
+-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+-                launch {
+-                    viewModel.navigationProvider.collectLatest {
+-                        it?.let {
+-                            providerMaterialButton.text = it.name
+-                            providerMaterialButton.setIconResource(it.type.iconDrawableResId)
+-                        } ?: run {
+-                            providerMaterialButton.setText(R.string.no_provider)
+-                            providerMaterialButton.setIconResource(R.drawable.ic_warning)
+-                        }
+-                    }
+-                }
+-
+-                launch {
+-                    viewModel.searchResults.collectLatest {
+-                        searchLinearProgressIndicator.setProgressCompat(it)
+-
+-                        when (it) {
+-                            is FlowResult.Loading -> {
+-                                // Do nothing
+-                            }
+-
+-                            is FlowResult.Success -> {
+-                                searchAdapter.submitList(it.data)
+-
+-                                val isEmpty = it.data.isEmpty()
+-                                searchRecyclerView.isVisible = !isEmpty
+-                                searchNoElementsLinearLayout.isVisible =
+-                                    isEmpty && searchView.editText.text.isNotEmpty()
+-                            }
+-
+-                            is FlowResult.Failure -> {
+-                                Log.e(
+-                                    LOG_TAG,
+-                                    "Failed to load search results, error: ${it.error}",
+-                                    it.throwable
+-                                )
++        viewPager2.offscreenPageLimit = 1
++        viewPager2.registerOnPageChangeCallback(onPageChangeCallback)
++    }
+ 
+-                                searchAdapter.submitList(listOf())
++    override fun onResume() {
++        super.onResume()
+ 
+-                                searchRecyclerView.isVisible = false
+-                                searchNoElementsLinearLayout.isVisible = true
+-                            }
+-                        }
+-                    }
+-                }
+-            }
+-        }
++        val isHome = Page.entries[viewPager2.currentItem] == Page.HOME
++        onBackPressedCallback.isEnabled = !isHome
++        (activity as? MainActivity)?.setMainPageIsHome(isHome)
+     }
+ 
+     override fun onDestroyView() {
+         // View pager
++        viewPager2.unregisterOnPageChangeCallback(onPageChangeCallback)
+         viewPager2.adapter = null
+ 
+-        // Search
+-        searchRecyclerView.adapter = null
+-
+         super.onDestroyView()
+     }
+ 
+-    private enum class Page(
+-        @param:IdRes val menuItemId: Int,
+-        val createFragment: () -> Fragment,
+-    ) {
+-        ACTIVITY(R.id.activityFragment, ::ActivityFragment),
+-        LIBRARY(R.id.libraryFragment, ::LibraryFragment),
++    fun showPage(page: Page) {
++        viewPager2.setCurrentItem(page.ordinal, false)
+     }
+ 
+-    companion object {
+-        private val LOG_TAG = MainFragment::class.simpleName!!
+-
+-        private val searchDiffCallback = object : DiffUtil.ItemCallback<MediaItem<*>>() {
+-            override fun areItemsTheSame(
+-                oldItem: MediaItem<*>,
+-                newItem: MediaItem<*>
+-            ) = when (oldItem) {
+-                is Album -> oldItem.areItemsTheSame(newItem)
+-                is Artist -> oldItem.areItemsTheSame(newItem)
+-                is Audio -> oldItem.areItemsTheSame(newItem)
+-                is Genre -> oldItem.areItemsTheSame(newItem)
+-                is Playlist -> oldItem.areItemsTheSame(newItem)
+-            }
+-
+-            override fun areContentsTheSame(
+-                oldItem: MediaItem<*>,
+-                newItem: MediaItem<*>
+-            ) = when (oldItem) {
+-                is Album -> oldItem.areContentsTheSame(newItem)
+-                is Artist -> oldItem.areContentsTheSame(newItem)
+-                is Audio -> oldItem.areContentsTheSame(newItem)
+-                is Genre -> oldItem.areContentsTheSame(newItem)
+-                is Playlist -> oldItem.areContentsTheSame(newItem)
+-            }
++    fun showList(kind: N9MusicViewModel.Kind) = showPage(
++        when (kind) {
++            N9MusicViewModel.Kind.ARTISTS -> Page.ARTISTS
++            N9MusicViewModel.Kind.ALBUMS -> Page.ALBUMS
++            N9MusicViewModel.Kind.SONGS -> Page.SONGS
++            N9MusicViewModel.Kind.PLAYLISTS -> Page.PLAYLISTS
+         }
++    )
++
++    enum class Page(
++        val createFragment: () -> Fragment,
++    ) {
++        HOME({ N9HomeFragment() }),
++        ARTISTS({ N9LibraryListFragment.newInstance(N9MusicViewModel.Kind.ARTISTS) }),
++        ALBUMS({ N9LibraryListFragment.newInstance(N9MusicViewModel.Kind.ALBUMS) }),
++        SONGS({ N9LibraryListFragment.newInstance(N9MusicViewModel.Kind.SONGS) }),
++        PLAYLISTS({ N9LibraryListFragment.newInstance(N9MusicViewModel.Kind.PLAYLISTS) }),
+     }
+ }
+diff --git a/app/src/main/java/org/lineageos/twelve/fragments/NowPlayingFragment.kt b/app/src/main/java/org/lineageos/twelve/fragments/NowPlayingFragment.kt
+index e76e402..c0506ce 100644
+--- a/app/src/main/java/org/lineageos/twelve/fragments/NowPlayingFragment.kt
++++ b/app/src/main/java/org/lineageos/twelve/fragments/NowPlayingFragment.kt
+@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
+ import me.bogerchan.niervisualizer.NierVisualizerManager
+ import org.lineageos.twelve.R
+ import org.lineageos.twelve.ext.getViewProperty
+-import org.lineageos.twelve.ext.loadThumbnail
++import org.lineageos.twelve.ext.loadArtOrCover
+ import org.lineageos.twelve.ext.navigateSafe
+ import org.lineageos.twelve.ext.updatePadding
+ import org.lineageos.twelve.ext.updateValueAndRange
+@@ -69,6 +69,8 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing) {
+     private val albumArtConstraintLayout by getViewProperty<ConstraintLayout?>(R.id.albumArtConstraintLayout)
+     private val albumArtImageView by getViewProperty<ImageView>(R.id.albumArtImageView)
+     private val albumTitleTextView by getViewProperty<TextView>(R.id.albumTitleTextView)
++    private var n9AlbumTitle: String? = null
++    private var n9ArtworkMissing = false
+     private val audioInformationMaterialButton by getViewProperty<MaterialButton>(R.id.audioInformationMaterialButton)
+     private val audioTitleTextView by getViewProperty<TextView>(R.id.audioTitleTextView)
+     private val artistNameTextView by getViewProperty<TextView>(R.id.artistNameTextView)
+@@ -358,6 +360,11 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing) {
+                         if (albumTitleTextView.text != albumTitle) {
+                             albumTitleTextView.text = albumTitle
+                         }
++                        // N9: the generated cover follows the album when there is no artwork.
++                        if (n9AlbumTitle != mediaMetadata.albumTitle?.toString()) {
++                            n9AlbumTitle = mediaMetadata.albumTitle?.toString()
++                            if (n9ArtworkMissing) albumArtImageView.loadArtOrCover(null, n9AlbumTitle)
++                        }
+                     }
+                 }
+ 
+@@ -369,13 +376,13 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing) {
+                             }
+ 
+                             is Result.Success -> {
+-                                albumArtImageView.loadThumbnail(
+-                                    it.data,
+-                                    placeholder = R.drawable.ic_music_note,
+-                                )
++                                n9ArtworkMissing = it.data == null
++                                albumArtImageView.loadArtOrCover(it.data, n9AlbumTitle)
+                             }
+ 
+                             is Result.Failure -> {
++                                n9ArtworkMissing = true
++                                albumArtImageView.loadArtOrCover(null, n9AlbumTitle)
+                                 Log.e(
+                                     LOG_TAG,
+                                     "Error while getting media artwork: ${it.error}",
+diff --git a/app/src/main/java/org/lineageos/twelve/ui/views/NowPlayingBar.kt b/app/src/main/java/org/lineageos/twelve/ui/views/NowPlayingBar.kt
+index 5f6600a..1fdf2c3 100644
+--- a/app/src/main/java/org/lineageos/twelve/ui/views/NowPlayingBar.kt
++++ b/app/src/main/java/org/lineageos/twelve/ui/views/NowPlayingBar.kt
+@@ -17,6 +17,7 @@ import com.google.android.material.card.MaterialCardView
+ import com.google.android.material.color.MaterialColors
+ import com.google.android.material.progressindicator.CircularProgressIndicator
+ import org.lineageos.twelve.R
++import org.lineageos.twelve.ext.clipToN9Squircle
+ import org.lineageos.twelve.ext.loadThumbnail
+ import org.lineageos.twelve.models.Thumbnail
+ import kotlin.reflect.safeCast
+@@ -85,6 +86,8 @@ class NowPlayingBar @JvmOverloads constructor(
+     }
+ 
+     fun updateMediaArtwork(artwork: Thumbnail?) {
++        // N9: small Now Playing art is a squircle (clip the 44dp card holding it).
++        (thumbnailImageView.parent as android.view.View).clipToN9Squircle()
+         thumbnailImageView.loadThumbnail(artwork, placeholder = R.drawable.ic_music_note)
+     }
+ 
+diff --git a/app/src/main/res/layout-land/fragment_now_playing.xml b/app/src/main/res/layout-land/fragment_now_playing.xml
+index d234ffe..7d51186 100644
+--- a/app/src/main/res/layout-land/fragment_now_playing.xml
++++ b/app/src/main/res/layout-land/fragment_now_playing.xml
+@@ -7,7 +7,9 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++    android:layout_height="match_parent"
++    android:background="@drawable/n9_music_background"
++    android:theme="@style/ThemeOverlay.Twelve.N9.Dark">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+         android:layout_width="match_parent"
+@@ -47,7 +49,7 @@
+             android:id="@+id/albumArtConstraintLayout"
+             android:layout_width="0dp"
+             android:layout_height="match_parent"
+-            android:layout_margin="24dp"
++            android:layout_margin="16dp"
+             android:layout_weight="1">
+ 
+             <com.google.android.material.card.MaterialCardView
+@@ -56,7 +58,9 @@
+                 android:layout_width="0dp"
+                 android:layout_height="0dp"
+                 android:layout_gravity="center"
+-                app:cardCornerRadius="16dp"
++                app:cardCornerRadius="0dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp"
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintDimensionRatio="1:1"
+                 app:layout_constraintEnd_toEndOf="parent"
+@@ -83,7 +87,7 @@
+             android:id="@+id/nestedScrollView"
+             android:layout_width="0dp"
+             android:layout_height="match_parent"
+-            android:layout_weight="2"
++            android:layout_weight="1.3"
+             android:clipToPadding="false"
+             android:fillViewport="true">
+ 
+@@ -98,8 +102,8 @@
+                     layout="@layout/now_playing_labels"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+-                    android:layout_marginHorizontal="40dp"
+-                    android:layout_marginBottom="20dp" />
++                    android:layout_marginHorizontal="16dp"
++                    android:layout_marginBottom="16dp" />
+ 
+                 <include
+                     layout="@layout/now_playing_progress_slider"
+@@ -110,7 +114,8 @@
+                     layout="@layout/now_playing_media_controls"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+-                    android:layout_marginHorizontal="22dp"
++                    android:layout_marginHorizontal="8dp"
++                    android:layout_marginTop="8dp"
+                     android:layout_marginBottom="24dp" />
+ 
+                 <include
+diff --git a/app/src/main/res/layout/fragment_main.xml b/app/src/main/res/layout/fragment_main.xml
+index b841e11..a22b7c3 100644
+--- a/app/src/main/res/layout/fragment_main.xml
++++ b/app/src/main/res/layout/fragment_main.xml
+@@ -3,99 +3,14 @@
+      SPDX-FileCopyrightText: The LineageOS Project
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    xmlns:app="http://schemas.android.com/apk/res-auto"
+-    xmlns:tools="http://schemas.android.com/tools"
++<!-- N9 Music: the home view and the library lists are pages of this fragment -->
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent">
+ 
+-    <com.google.android.material.appbar.AppBarLayout
+-        android:id="@+id/appBarLayout"
+-        android:layout_width="0dp"
+-        android:layout_height="wrap_content"
+-        android:fitsSystemWindows="true"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toTopOf="parent">
++    <androidx.viewpager2.widget.ViewPager2
++        android:id="@+id/viewPager2"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent" />
+ 
+-        <com.google.android.material.appbar.MaterialToolbar
+-            android:id="@+id/toolbar"
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            tools:title="@string/app_name">
+-
+-            <com.google.android.material.button.MaterialButton
+-                android:id="@+id/settingsMaterialButton"
+-                style="?attr/materialIconButtonFilledTonalStyle"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
+-                android:layout_gravity="end"
+-                android:layout_marginEnd="16dp"
+-                android:contentDescription="@string/title_activity_settings"
+-                android:tooltipText="@string/title_activity_settings"
+-                app:icon="@drawable/ic_settings" />
+-
+-            <com.google.android.material.button.MaterialButton
+-                android:id="@+id/providerMaterialButton"
+-                style="?attr/materialButtonTonalStyle"
+-                android:layout_width="wrap_content"
+-                android:layout_height="wrap_content"
+-                android:layout_gravity="end"
+-                tools:icon="@drawable/ic_shelves"
+-                tools:text="Pixel 7 Pro" />
+-
+-        </com.google.android.material.appbar.MaterialToolbar>
+-
+-    </com.google.android.material.appbar.AppBarLayout>
+-
+-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+-        android:id="@+id/contentCoordinatorLayout"
+-        android:layout_width="0dp"
+-        android:layout_height="0dp"
+-        app:layout_constraintBottom_toTopOf="@+id/navigationBarView"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
+-
+-        <androidx.viewpager2.widget.ViewPager2
+-            android:id="@+id/viewPager2"
+-            android:layout_width="match_parent"
+-            android:layout_height="match_parent" />
+-
+-        <com.google.android.material.button.MaterialButton
+-            android:id="@+id/playRandomSongsButton"
+-            style="?attr/materialButtonTonalStyle"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:layout_gravity="bottom|end"
+-            android:layout_marginEnd="24dp"
+-            android:layout_marginBottom="12dp"
+-            android:text="@string/play_random_songs"
+-            android:textColor="?attr/colorOnTertiaryContainer"
+-            app:backgroundTint="?attr/colorTertiaryContainer"
+-            app:icon="@drawable/ic_shuffle_play"
+-            app:iconTint="?attr/colorOnTertiaryContainer"
+-            app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
+-            app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.Medium" />
+-
+-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+-
+-    <com.google.android.material.bottomnavigation.BottomNavigationView
+-        android:id="@+id/navigationBarView"
+-        android:layout_width="0dp"
+-        android:layout_height="wrap_content"
+-        app:layout_constraintBottom_toBottomOf="parent"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:menu="@menu/navigation_bar_view_fragment_main" />
+-
+-    <include
+-        layout="@layout/main_search_view"
+-        android:layout_width="0dp"
+-        android:layout_height="0dp"
+-        app:layout_constraintBottom_toBottomOf="parent"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toTopOf="parent" />
+-
+-</androidx.constraintlayout.widget.ConstraintLayout>
++</FrameLayout>
+diff --git a/app/src/main/res/layout/fragment_now_playing.xml b/app/src/main/res/layout/fragment_now_playing.xml
+index 7838931..08dff11 100644
+--- a/app/src/main/res/layout/fragment_now_playing.xml
++++ b/app/src/main/res/layout/fragment_now_playing.xml
+@@ -7,7 +7,9 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++    android:layout_height="match_parent"
++    android:background="@drawable/n9_music_background"
++    android:theme="@style/ThemeOverlay.Twelve.N9.Dark">
+ 
+     <com.google.android.material.appbar.AppBarLayout
+         android:layout_width="match_parent"
+@@ -64,14 +66,16 @@
+                 style="?attr/materialCardViewFilledStyle"
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+-                android:layout_marginHorizontal="40dp"
++                android:layout_marginHorizontal="12dp"
+                 android:layout_marginBottom="16dp"
+-                app:cardCornerRadius="16dp"
++                app:cardCornerRadius="0dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp"
+                 app:layout_constraintBottom_toTopOf="@+id/labelsLinearLayout"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:layout_constraintVertical_bias="0.5">
++                app:layout_constraintVertical_bias="0.0">
+ 
+                 <androidx.constraintlayout.widget.ConstraintLayout
+                     android:layout_width="match_parent"
+@@ -107,8 +111,8 @@
+                 layout="@layout/now_playing_labels"
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+-                android:layout_marginHorizontal="40dp"
+-                android:layout_marginBottom="20dp"
++                android:layout_marginHorizontal="16dp"
++                android:layout_marginBottom="16dp"
+                 app:layout_constraintBottom_toTopOf="@+id/progressSliderLinearLayout"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+@@ -131,7 +135,8 @@
+                 layout="@layout/now_playing_media_controls"
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+-                android:layout_marginHorizontal="22dp"
++                android:layout_marginHorizontal="8dp"
++                android:layout_marginTop="8dp"
+                 android:layout_marginBottom="24dp"
+                 app:layout_constraintBottom_toTopOf="@+id/bottomBarMaterialCardView"
+                 app:layout_constraintEnd_toEndOf="parent"
+diff --git a/app/src/main/res/layout/item_media_item_grid.xml b/app/src/main/res/layout/item_media_item_grid.xml
+index 516f9a5..982e94d 100644
+--- a/app/src/main/res/layout/item_media_item_grid.xml
++++ b/app/src/main/res/layout/item_media_item_grid.xml
+@@ -23,7 +23,7 @@
+             android:layout_width="0dp"
+             android:layout_height="0dp"
+             app:cardBackgroundColor="@android:color/transparent"
+-            app:cardCornerRadius="8dp"
++            app:cardCornerRadius="2dp"
+             app:layout_constraintDimensionRatio="W,1:1"
+             app:layout_constraintEnd_toEndOf="parent"
+             app:layout_constraintStart_toStartOf="parent"
+diff --git a/app/src/main/res/layout/now_playing_bar.xml b/app/src/main/res/layout/now_playing_bar.xml
+index 999d90e..133ecc1 100644
+--- a/app/src/main/res/layout/now_playing_bar.xml
++++ b/app/src/main/res/layout/now_playing_bar.xml
+@@ -10,15 +10,18 @@
+     android:layout_height="match_parent"
+     android:gravity="center_vertical"
+     android:orientation="horizontal"
+-    android:paddingHorizontal="16dp"
+-    android:paddingVertical="16dp">
++    android:paddingHorizontal="8dp"
++    android:paddingVertical="6dp">
+ 
+     <com.google.android.material.card.MaterialCardView
+         android:id="@+id/thumbnailMaterialCardView"
+         style="?attr/materialCardViewFilledStyle"
+-        android:layout_width="56dp"
+-        android:layout_height="56dp"
+-        app:cardBackgroundColor="?attr/colorSecondaryContainer">
++        android:layout_width="44dp"
++        android:layout_height="44dp"
++        app:cardBackgroundColor="@color/n9_dark_surface_high"
++        app:cardCornerRadius="0dp"
++        app:cardElevation="0dp"
++        app:strokeWidth="0dp">
+ 
+         <ImageView
+             android:id="@+id/thumbnailImageView"
+@@ -31,7 +34,7 @@
+     <LinearLayout
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
+-        android:layout_marginHorizontal="16dp"
++        android:layout_marginHorizontal="12dp"
+         android:layout_weight="1"
+         android:orientation="vertical">
+ 
+@@ -41,8 +44,10 @@
+             android:layout_height="wrap_content"
+             android:ellipsize="end"
+             android:maxLines="1"
+-            android:textAppearance="?attr/textAppearanceBodyLarge"
+-            android:textColor="?attr/colorOnSurface"
++            android:fontFamily="etesian-text"
++            android:textColor="@color/n9_dark_text"
++            android:textSize="16sp"
++            android:textStyle="bold"
+             tools:text="Tokyo Story" />
+ 
+         <TextView
+@@ -51,18 +56,21 @@
+             android:layout_height="wrap_content"
+             android:ellipsize="end"
+             android:maxLines="1"
+-            android:textAppearance="?attr/textAppearanceBodyMedium"
+-            android:textColor="?attr/colorOnSurface"
++            android:fontFamily="etesian-text"
++            android:textColor="@color/n9_dark_text_secondary"
++            android:textSize="14sp"
+             tools:text="Ryuichi Sakamoto" />
+ 
+         <TextView
+             android:id="@+id/albumTitleTextView"
++            android:visibility="gone"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:ellipsize="end"
+             android:maxLines="1"
+-            android:textAppearance="?attr/textAppearanceBodyMedium"
+-            android:textColor="?attr/colorOnSurface"
++            android:fontFamily="etesian-text"
++            android:textColor="@color/n9_dark_text_secondary"
++            android:textSize="14sp"
+             tools:text="Sweet Revenge" />
+ 
+     </LinearLayout>
+@@ -75,20 +83,24 @@
+             android:id="@+id/circularProgressIndicator"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:layout_gravity="center" />
++            android:layout_gravity="center"
++            app:indicatorColor="@color/n9_dark_text"
++            app:indicatorSize="44dp"
++            app:trackColor="@color/n9_music_rule"
++            app:trackThickness="2dp" />
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/playPauseMaterialButton"
+-            style="?attr/materialIconButtonFilledStyle"
++            style="@style/Widget.Twelve.N9.MediaButton"
+             android:layout_width="48dp"
+             android:layout_height="48dp"
+             android:layout_gravity="center"
+-            android:background="?attr/selectableItemBackgroundBorderless"
+-            android:contentDescription="@string/content_description_play_pause"
++                        android:contentDescription="@string/content_description_play_pause"
+             android:padding="0dp"
+             android:src="@drawable/avd_play_to_pause"
+             app:iconGravity="textStart"
+-            app:iconTint="?attr/colorOnSurface" />
++            app:iconSize="32dp"
++            app:iconTint="@color/n9_dark_text" />
+ 
+     </FrameLayout>
+ 
+diff --git a/app/src/main/res/layout/now_playing_bottom_bar.xml b/app/src/main/res/layout/now_playing_bottom_bar.xml
+index 7f5062a..03fa716 100644
+--- a/app/src/main/res/layout/now_playing_bottom_bar.xml
++++ b/app/src/main/res/layout/now_playing_bottom_bar.xml
+@@ -9,8 +9,10 @@
+     style="?attr/materialCardViewFilledStyle"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+-    app:cardBackgroundColor="?attr/colorSecondaryContainer"
+-    app:cardCornerRadius="12dp">
++    app:cardBackgroundColor="@android:color/transparent"
++    app:cardCornerRadius="0dp"
++    app:cardElevation="0dp"
++    app:strokeWidth="0dp">
+ 
+     <LinearLayout
+         android:layout_width="wrap_content"
+diff --git a/app/src/main/res/layout/now_playing_labels.xml b/app/src/main/res/layout/now_playing_labels.xml
+index 6766751..6e0bc21 100644
+--- a/app/src/main/res/layout/now_playing_labels.xml
++++ b/app/src/main/res/layout/now_playing_labels.xml
+@@ -18,8 +18,7 @@
+         android:marqueeRepeatLimit="marquee_forever"
+         android:maxLines="1"
+         android:singleLine="true"
+-        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+-        android:textColor="?attr/colorOnSurface"
++        android:textAppearance="@style/TextAppearance.Twelve.N9.NowPlayingTitleBold"
+         tools:text="Tokyo Story" />
+ 
+     <TextView
+@@ -30,8 +29,7 @@
+         android:marqueeRepeatLimit="marquee_forever"
+         android:maxLines="1"
+         android:singleLine="true"
+-        android:textAppearance="?attr/textAppearanceLabelLarge"
+-        android:textColor="?attr/colorOnSurface"
++        android:textAppearance="@style/TextAppearance.Twelve.N9.NowPlayingSubtitle"
+         tools:text="Ryuichi Sakamoto" />
+ 
+     <TextView
+@@ -42,8 +40,7 @@
+         android:marqueeRepeatLimit="marquee_forever"
+         android:maxLines="1"
+         android:singleLine="true"
+-        android:textAppearance="?attr/textAppearanceLabelLarge"
+-        android:textColor="?attr/colorOnSurface"
++        android:textAppearance="@style/TextAppearance.Twelve.N9.NowPlayingSubtitle"
+         tools:text="Sweet Revenge" />
+ 
+ </LinearLayout>
+diff --git a/app/src/main/res/layout/now_playing_media_controls.xml b/app/src/main/res/layout/now_playing_media_controls.xml
+index 33708b9..e34a9eb 100644
+--- a/app/src/main/res/layout/now_playing_media_controls.xml
++++ b/app/src/main/res/layout/now_playing_media_controls.xml
+@@ -3,84 +3,79 @@
+      SPDX-FileCopyrightText: The LineageOS Project
+      SPDX-License-Identifier: Apache-2.0
+ -->
+-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
++<!-- N9 Music: flat white shuffle / previous / play-pause / next / repeat row -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent"
++    android:layout_height="wrap_content"
+     android:gravity="center"
+     android:orientation="horizontal">
+ 
+     <FrameLayout
+-        style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Container"
+-        app:layout_constraintBottom_toBottomOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toTopOf="parent">
+-
+-        <ImageView
+-            android:id="@+id/shuffleMarkerImageView"
+-            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Marker"
+-            android:importantForAccessibility="no" />
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1">
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/shuffleMaterialButton"
+-            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Standard"
++            style="@style/Widget.Twelve.N9.MediaButton.Small"
+             app:icon="@drawable/ic_shuffle" />
+ 
++        <ImageView
++            android:id="@+id/shuffleMarkerImageView"
++            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Marker"
++            android:layout_width="5dp"
++            android:layout_height="5dp"
++            android:importantForAccessibility="no"
++            app:tint="@color/n9_dark_text" />
++
+     </FrameLayout>
+ 
+-    <com.google.android.material.button.MaterialButtonGroup
++    <LinearLayout
+         android:id="@+id/primaryMaterialButtonGroup"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:gravity="center_horizontal"
+-        android:spacing="4dp"
+-        app:layout_constraintBottom_toBottomOf="parent"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toTopOf="parent">
++        android:gravity="center"
++        android:orientation="horizontal">
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/previousTrackMaterialButton"
+-            style="?attr/materialIconButtonFilledTonalStyle"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            app:icon="@drawable/ic_skip_previous"
+-            app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.IconButton.Large.Narrow" />
++            style="@style/Widget.Twelve.N9.MediaButton"
++            android:layout_marginEnd="12dp"
++            app:icon="@drawable/ic_skip_previous" />
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/playPauseMaterialButton"
+-            style="?attr/materialIconButtonFilledStyle"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            app:icon="@drawable/ic_play_arrow"
+-            app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.IconButton.Large.Wide.Square" />
++            style="@style/Widget.Twelve.N9.MediaButton.Large"
++            android:contentDescription="@string/content_description_play_pause"
++            app:icon="@drawable/ic_play_arrow" />
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/nextTrackMaterialButton"
+-            style="?attr/materialIconButtonFilledTonalStyle"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            app:icon="@drawable/ic_skip_next"
+-            app:materialSizeOverlay="@style/SizeOverlay.Material3Expressive.Button.IconButton.Large.Narrow" />
++            style="@style/Widget.Twelve.N9.MediaButton"
++            android:layout_marginStart="12dp"
++            app:icon="@drawable/ic_skip_next" />
+ 
+-    </com.google.android.material.button.MaterialButtonGroup>
++    </LinearLayout>
+ 
+     <FrameLayout
+-        style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Container"
+-        app:layout_constraintBottom_toBottomOf="parent"
+-        app:layout_constraintEnd_toEndOf="parent"
+-        app:layout_constraintTop_toTopOf="parent">
+-
+-        <ImageView
+-            android:id="@+id/repeatMarkerImageView"
+-            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Marker"
+-            android:importantForAccessibility="no" />
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1">
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/repeatMaterialButton"
+-            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Standard"
++            style="@style/Widget.Twelve.N9.MediaButton.Small"
+             app:icon="@drawable/ic_repeat" />
+ 
++        <ImageView
++            android:id="@+id/repeatMarkerImageView"
++            style="@style/Theme.Twelve.NowPlayingFragment.MediaButton.Tertiary.Marker"
++            android:layout_width="5dp"
++            android:layout_height="5dp"
++            android:importantForAccessibility="no"
++            app:tint="@color/n9_dark_text" />
++
+     </FrameLayout>
+ 
+-</androidx.constraintlayout.widget.ConstraintLayout>
++</LinearLayout>
+diff --git a/app/src/main/res/layout/now_playing_progress_slider.xml b/app/src/main/res/layout/now_playing_progress_slider.xml
+index 36b1214..e180384 100644
+--- a/app/src/main/res/layout/now_playing_progress_slider.xml
++++ b/app/src/main/res/layout/now_playing_progress_slider.xml
+@@ -11,15 +11,16 @@
+ 
+     <com.google.android.material.slider.Slider
+         android:id="@+id/progressSlider"
++        style="@style/Widget.Twelve.N9.ProgressSlider"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginHorizontal="24dp"
++        android:layout_marginHorizontal="4dp"
+         android:valueFrom="0.0" />
+ 
+     <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginHorizontal="40dp"
++        android:layout_marginHorizontal="16dp"
+         android:gravity="center"
+         android:orientation="horizontal">
+ 
+@@ -27,8 +28,7 @@
+             android:id="@+id/currentTimestampTextView"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:textAppearance="?attr/textAppearanceLabelMedium"
+-            android:textColor="?attr/colorOnSurface"
++            android:textAppearance="@style/TextAppearance.Twelve.N9.NowPlayingTime"
+             tools:text="0:13" />
+ 
+         <Space
+@@ -40,8 +40,7 @@
+             android:id="@+id/durationTimestampTextView"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:textAppearance="?attr/textAppearanceLabelMedium"
+-            android:textColor="?attr/colorOnSurface"
++            android:textAppearance="@style/TextAppearance.Twelve.N9.NowPlayingTime"
+             tools:text="1:16" />
+ 
+     </LinearLayout>
+diff --git a/app/src/main/res/values-night/themes.xml b/app/src/main/res/values-night/themes.xml
+index e09327d..1a8b1a1 100644
+--- a/app/src/main/res/values-night/themes.xml
++++ b/app/src/main/res/values-night/themes.xml
+@@ -5,5 +5,12 @@
+ -->
+ <resources>
+     <!-- Base dialog theme -->
+-    <style name="BaseTheme.Twelve.Dialog" parent="Theme.Material3Expressive.Dark.Dialog.Alert" />
++    <!-- N9 Music: dialogs are dark too -->
++    <style name="BaseTheme.Twelve.Dialog" parent="Theme.Material3Expressive.Dark.Dialog.Alert">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_dark_surface</item>
++        <item name="colorOnSurface">@color/n9_dark_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
+ </resources>
+diff --git a/app/src/main/res/values-v31/themes.xml b/app/src/main/res/values-v31/themes.xml
+index c2cc167..bfb0191 100644
+--- a/app/src/main/res/values-v31/themes.xml
++++ b/app/src/main/res/values-v31/themes.xml
+@@ -5,7 +5,10 @@
+ -->
+ <resources>
+     <!-- App widget -->
+-    <style name="Theme.Twelve.AppWidgetContainer" parent="Theme.Material3Expressive.DynamicColors.DayNight">
++    <style name="Theme.Twelve.AppWidgetContainer" parent="Theme.Material3Expressive.Light">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_list</item>
++        <item name="colorOnSurface">@color/n9_text</item>
+         <item name="appWidgetRadius">@android:dimen/system_app_widget_background_radius</item>
+     </style>
+ </resources>
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 6d5fa51..b98a396 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -4,5 +4,26 @@
+      SPDX-License-Identifier: Apache-2.0
+ -->
+ <resources>
+-
++    <!-- N9 (Etesian blanco) static palette -->
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_blue_dark">#0083B6</color>
++    <color name="n9_blue_light">#CCEDFA</color>
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_list">#F4F4F4</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_white">#FFFFFF</color>
++    <color name="n9_red">#D42D2A</color>
++    <!-- Dark (Music main view / Now Playing) -->
++    <color name="n9_dark_bg">#000000</color>
++    <color name="n9_dark_surface">#141414</color>
++    <color name="n9_dark_surface_high">#262626</color>
++    <color name="n9_dark_text">#FFFFFF</color>
++    <color name="n9_dark_text_secondary">#A0A0A0</color>
++    <color name="n9_dark_separator">#333333</color>
++    <color name="n9_music_subtitle">#B0B0B0</color>
++    <color name="n9_music_rule">#4A4A4A</color>
++    <color name="n9_music_section">#8C8C8C</color>
++    <color name="n9_music_gradient_center">#2A2A2A</color>
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 26a62c2..263886f 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -331,4 +331,15 @@
+     <string name="favorites_playlist">Favorites</string>
+     <string name="add_to_favorites">Add to favorites</string>
+     <string name="remove_from_favorites">Remove from favorites</string>
++
++    <!-- N9 Music home and lists -->
++    <string name="n9_music_artists">Artists</string>
++    <string name="n9_music_albums">Albums</string>
++    <string name="n9_music_songs">Songs</string>
++    <string name="n9_music_playlists">Playlists</string>
++    <string name="n9_music_store">Music Store</string>
++    <string name="n9_music_shuffle">Shuffle</string>
++    <string name="n9_music_search">Search</string>
++    <string name="n9_music_back">Back</string>
++    <string name="n9_music_store_unavailable">No store available</string>
+ </resources>
+diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
+index 6b75fdc..448fd15 100644
+--- a/app/src/main/res/values/themes.xml
++++ b/app/src/main/res/values/themes.xml
+@@ -4,16 +4,196 @@
+      SPDX-License-Identifier: Apache-2.0
+ -->
+ <resources>
+-    <!-- Application theme -->
+-    <style name="Theme.Twelve" parent="Theme.Material3Expressive.DayNight.NoActionBar">
++    <!-- Application theme (N9 Music is a black app) -->
++    <style name="Theme.Twelve" parent="Theme.Material3Expressive.Dark.NoActionBar">
+         <item name="android:enforceNavigationBarContrast">true</item>
++        <!-- N9 Music: black palette (no dynamic colour) -->
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue_dark</item>
++        <item name="colorOnPrimaryContainer">@color/n9_white</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorOnSecondary">@color/n9_white</item>
++        <item name="colorSecondaryContainer">@color/n9_dark_surface_high</item>
++        <item name="colorOnSecondaryContainer">@color/n9_dark_text</item>
++        <item name="colorTertiary">@color/n9_blue</item>
++        <item name="colorOnTertiary">@color/n9_white</item>
++        <item name="colorTertiaryContainer">@color/n9_blue</item>
++        <item name="colorOnTertiaryContainer">@color/n9_white</item>
++        <item name="colorError">@color/n9_red</item>
++        <item name="android:colorBackground">@color/n9_dark_bg</item>
++        <item name="colorOnBackground">@color/n9_dark_text</item>
++        <item name="colorSurface">@color/n9_dark_bg</item>
++        <item name="colorOnSurface">@color/n9_dark_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_dark_text_secondary</item>
++        <item name="colorSurfaceVariant">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerLowest">@color/n9_dark_bg</item>
++        <item name="colorSurfaceContainerLow">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainer">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_dark_surface_high</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_dark_surface_high</item>
++        <item name="colorOutline">@color/n9_dark_text_secondary</item>
++        <item name="colorOutlineVariant">@color/n9_dark_separator</item>
++        <item name="android:windowBackground">@drawable/n9_music_background</item>
++        <item name="android:statusBarColor">@android:color/transparent</item>
++        <item name="android:windowLightStatusBar">false</item>
++        <item name="android:windowLightNavigationBar">false</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="elevationOverlayEnabled">false</item>
++        <item name="appBarLayoutStyle">@style/Theme.Twelve.N9.AppBarLayout</item>
++        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Twelve.N9.Headline</item>
++        <item name="textAppearanceDisplayMedium">@style/TextAppearance.Twelve.N9.Display</item>
++        <item name="materialCardViewFilledStyle">@style/Theme.Twelve.N9.Card</item>
+         <item name="android:navigationBarColor">@android:color/transparent</item>
+         <item name="enableEdgeToEdge">true</item>
+         <item name="materialSwitchStyle">@style/Widget.SettingsLib.MaterialSwitch</item>
++        <item name="android:textColorPrimary">@color/n9_dark_text</item>
++        <item name="android:textColorSecondary">@color/n9_dark_text_secondary</item>
++    </style>
++
++    <!-- N9 helpers -->
++    <style name="Theme.Twelve.N9.AppBarLayout" parent="Widget.Material3.AppBarLayout">
++        <item name="android:background">?android:attr/colorBackground</item>
++        <item name="liftOnScroll">false</item>
++        <item name="android:stateListAnimator">@null</item>
++    </style>
++
++    <!-- Square (N9) album art thumbnails -->
++    <style name="Theme.Twelve.N9.Card" parent="Widget.Material3.CardView.Filled">
++        <item name="cardCornerRadius">0dp</item>
++        <item name="cardElevation">0dp</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.Headline" parent="TextAppearance.Material3.HeadlineMedium">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="android:textSize">32sp</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.Display" parent="TextAppearance.Material3.DisplayMedium">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.NowPlayingTitle" parent="TextAppearance.Material3.HeadlineSmall">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++    </style>
++
++    <!-- N9 Music Now Playing: bold white title, grey artist/album, grey times -->
++    <style name="TextAppearance.Twelve.N9.NowPlayingTitleBold" parent="TextAppearance.Material3.TitleLarge">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">700</item>
++        <item name="android:textStyle">bold</item>
++        <item name="android:textSize">22sp</item>
++        <item name="android:textColor">@color/n9_dark_text</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.NowPlayingSubtitle" parent="TextAppearance.Material3.BodyLarge">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textSize">18sp</item>
++        <item name="android:textColor">@color/n9_dark_text_secondary</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.NowPlayingTime" parent="TextAppearance.Material3.BodySmall">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:textSize">14sp</item>
++        <item name="android:textColor">@color/n9_dark_text_secondary</item>
++    </style>
++
++    <!-- Thin grey track, white fill, small round knob -->
++    <style name="Widget.Twelve.N9.ProgressSlider" parent="Widget.Material3.Slider">
++        <item name="trackHeight">3dp</item>
++        <item name="trackCornerSize">0dp</item>
++        <item name="trackInsideCornerSize">0dp</item>
++        <item name="trackStopIndicatorSize">0dp</item>
++        <item name="thumbTrackGapSize">0dp</item>
++        <item name="thumbWidth">14dp</item>
++        <item name="thumbHeight">14dp</item>
++        <item name="thumbRadius">7dp</item>
++        <item name="thumbElevation">0dp</item>
++        <item name="haloRadius">14dp</item>
++        <item name="haloColor">#33FFFFFF</item>
++        <item name="thumbColor">@color/n9_dark_text</item>
++        <item name="trackColorActive">@color/n9_dark_text</item>
++        <item name="trackColorInactive">@color/n9_music_rule</item>
++        <item name="tickVisible">false</item>
++        <item name="labelBehavior">gone</item>
++    </style>
++
++    <!-- Flat white monochrome transport buttons (no Material circles) -->
++    <style name="Widget.Twelve.N9.MediaButton" parent="Widget.Material3.Button.IconButton">
++        <item name="android:layout_width">56dp</item>
++        <item name="android:layout_height">56dp</item>
++        <item name="android:layout_gravity">center</item>
++        <item name="android:padding">0dp</item>
++        <item name="android:insetTop">0dp</item>
++        <item name="android:insetBottom">0dp</item>
++        <item name="android:insetLeft">0dp</item>
++        <item name="android:insetRight">0dp</item>
++        <item name="backgroundTint">@android:color/transparent</item>
++        <item name="iconTint">@color/n9_dark_text</item>
++        <item name="iconGravity">textStart</item>
++        <item name="iconPadding">0dp</item>
++        <item name="iconSize">30dp</item>
++        <item name="rippleColor">#33FFFFFF</item>
++    </style>
++
++    <style name="Widget.Twelve.N9.MediaButton.Small">
++        <item name="android:layout_width">48dp</item>
++        <item name="android:layout_height">48dp</item>
++        <item name="iconSize">24dp</item>
++        <item name="iconTint">@color/n9_dark_text_secondary</item>
++    </style>
++
++    <style name="Widget.Twelve.N9.MediaButton.Large">
++        <item name="android:layout_width">80dp</item>
++        <item name="android:layout_height">80dp</item>
++        <item name="iconSize">56dp</item>
++    </style>
++
++    <!-- N9 Music Now Playing: dark overlay (black bg, white light text, blue accents) -->
++    <style name="ThemeOverlay.Twelve.N9.Dark" parent="">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue_dark</item>
++        <item name="colorOnPrimaryContainer">@color/n9_white</item>
++        <item name="colorSecondaryContainer">@color/n9_dark_surface_high</item>
++        <item name="colorOnSecondaryContainer">@color/n9_dark_text</item>
++        <item name="colorTertiaryContainer">@color/n9_blue</item>
++        <item name="colorOnTertiaryContainer">@color/n9_white</item>
++        <item name="android:colorBackground">@color/n9_dark_bg</item>
++        <item name="colorOnBackground">@color/n9_dark_text</item>
++        <item name="colorSurface">@color/n9_dark_bg</item>
++        <item name="colorOnSurface">@color/n9_dark_text</item>
++        <item name="colorOnSurfaceVariant">@color/n9_dark_text_secondary</item>
++        <item name="colorSurfaceVariant">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerLowest">@color/n9_dark_bg</item>
++        <item name="colorSurfaceContainerLow">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainer">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_dark_surface_high</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_dark_surface_high</item>
++        <item name="colorOutline">@color/n9_dark_text_secondary</item>
++        <item name="colorOutlineVariant">@color/n9_dark_separator</item>
++        <item name="android:textColorPrimary">@color/n9_dark_text</item>
++        <item name="android:textColorSecondary">@color/n9_dark_text_secondary</item>
+     </style>
+ 
+     <!-- Base dialog theme -->
+-    <style name="BaseTheme.Twelve.Dialog" parent="Theme.Material3Expressive.Light.Dialog.Alert" />
++    <style name="BaseTheme.Twelve.Dialog" parent="Theme.Material3Expressive.Dark.Dialog.Alert">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_dark_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_dark_surface</item>
++        <item name="colorOnSurface">@color/n9_dark_text</item>
++        <item name="android:fontFamily">etesian-text</item>
++    </style>
+ 
+     <!-- Dialog theme -->
+     <style name="Theme.Twelve.Dialog" parent="BaseTheme.Twelve.Dialog">
+@@ -98,7 +278,11 @@
+         <item name="tint">?attr/colorPrimary</item>
+     </style>
+ 
+-    <style name="Theme.Twelve.NowPlayingFragment.BottomBarButton" parent="Widget.Material3Expressive.Button.IconButton.Tonal">
++    <style name="Theme.Twelve.NowPlayingFragment.BottomBarButton" parent="Widget.Material3.Button.IconButton">
++        <item name="backgroundTint">@android:color/transparent</item>
++        <item name="iconTint">@color/n9_dark_text_secondary</item>
++        <item name="android:textColor">@color/n9_dark_text_secondary</item>
++        <item name="rippleColor">#33FFFFFF</item>
+         <item name="android:layout_width">48dp</item>
+         <item name="android:layout_height">48dp</item>
+         <item name="android:layout_gravity">center</item>
+@@ -110,7 +294,46 @@
+     </style>
+ 
+     <!-- App widget -->
+-    <style name="Theme.Twelve.AppWidgetContainer" parent="Theme.Material3Expressive.DynamicColors.DayNight">
++    <style name="Theme.Twelve.AppWidgetContainer" parent="Theme.Material3Expressive.Light">
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorSurface">@color/n9_list</item>
++        <item name="colorOnSurface">@color/n9_text</item>
+         <item name="appWidgetRadius">28dp</item>
+     </style>
++
++    <!-- N9 Music home rows: bold white, chevron on the right, no dividers -->
++    <style name="Theme.Twelve.N9.HomeRow" parent="">
++        <item name="android:layout_width">match_parent</item>
++        <item name="android:layout_height">72dp</item>
++        <item name="android:background">?attr/selectableItemBackground</item>
++        <item name="android:drawableEnd">@drawable/ic_n9_chevron</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:gravity">center_vertical|start</item>
++        <item name="android:paddingStart">16dp</item>
++        <item name="android:paddingEnd">16dp</item>
++        <item name="android:textColor">@color/n9_dark_text</item>
++        <item name="android:textSize">20sp</item>
++        <item name="android:textStyle">bold</item>
++    </style>
++
++    <!-- N9 Music lists -->
++    <style name="TextAppearance.Twelve.N9.ListTitle" parent="">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textStyle">bold</item>
++        <item name="android:textSize">20sp</item>
++        <item name="android:textColor">@color/n9_dark_text</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.ListSubtitle" parent="">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textSize">17sp</item>
++        <item name="android:textColor">@color/n9_music_subtitle</item>
++    </style>
++
++    <style name="TextAppearance.Twelve.N9.PageHeader" parent="">
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textFontWeight">300</item>
++        <item name="android:textSize">26sp</item>
++        <item name="android:textColor">@color/n9_dark_text</item>
++    </style>
+ </resources>
+diff --git a/app/src/main/java/org/lineageos/twelve/ext/N9Cover.kt b/app/src/main/java/org/lineageos/twelve/ext/N9Cover.kt
+new file mode 100644
+index 0000000..90cbc14
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/ext/N9Cover.kt
+@@ -0,0 +1,133 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.ext
++
++import android.graphics.Canvas
++import android.graphics.Color
++import android.graphics.ColorFilter
++import android.graphics.Paint
++import android.graphics.PixelFormat
++import android.graphics.Typeface
++import android.graphics.drawable.Drawable
++import android.widget.ImageView
++import coil3.asImage
++import coil3.dispose
++import coil3.request.error
++import coil3.request.placeholder
++
++/**
++ * N9 Music cover for an album without artwork (n9-music-noart*.png): the album name in heavy caps in
++ * a bright colour, then the name again without spaces in a dark shade of it, every line justified,
++ * on black, edge to edge. The colour is stable per album; an unknown album is always purple.
++ */
++class N9CoverDrawable(album: String?) : Drawable() {
++    private val name = album?.trim()?.uppercase()?.takeIf { it.isNotEmpty() && !isUnknown(it) }
++        ?: "UNKNOWN ALBUM"
++    val color = if (name == "UNKNOWN ALBUM") UNKNOWN else PALETTE[Math.floorMod(name.hashCode(), PALETTE.size)]
++    private val dark = Color.rgb(Color.red(color) / 3, Color.green(color) / 3, Color.blue(color) / 3)
++    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++        typeface = Typeface.create(Typeface.create("etesian-text", Typeface.NORMAL), 800, false)
++    }
++
++    override fun draw(canvas: Canvas) {
++        val b = bounds
++        if (b.isEmpty) return
++        canvas.save()
++        canvas.clipRect(b)
++        canvas.drawColor(Color.BLACK)
++        val w = b.width().toFloat()
++        paint.textSize = w / 6.2f
++        val lineHeight = paint.textSize * 1.12f
++        val lines = (b.height() / lineHeight).toInt() + 1
++        // The name word-wrapped (bright), then its letters without spaces (dark) filling every line.
++        val bright = wrap(name, w)
++        val rest = name.replace(" ", "")
++        var restIndex = 0
++        for (i in 0 until lines) {
++            val chars = StringBuilder()
++            val colors = ArrayList<Int>()
++            bright.getOrNull(i)?.let { s -> s.forEach { chars.append(it); colors.add(color) } }
++            if (i >= bright.size - 1) {
++                if (chars.isNotEmpty()) { chars.append(' '); colors.add(color) }
++                while (paint.measureText(chars.toString() + rest[restIndex % rest.length]) <= w) {
++                    chars.append(rest[restIndex % rest.length]); colors.add(dark); restIndex++
++                }
++            }
++            justify(canvas, chars.toString(), colors, b.left.toFloat(), w,
++                b.top + i * lineHeight + paint.textSize * 0.92f)
++        }
++        canvas.restore()
++    }
++
++    /** Greedy word wrap; a word wider than the line is broken. */
++    private fun wrap(text: String, w: Float): List<String> {
++        val out = ArrayList<String>()
++        var line = ""
++        for (word in text.split(' ').filter { it.isNotEmpty() }) {
++            var wd = word
++            val tryLine = if (line.isEmpty()) wd else "$line $wd"
++            if (paint.measureText(tryLine) <= w) { line = tryLine; continue }
++            if (line.isNotEmpty()) { out.add(line); line = "" }
++            while (paint.measureText(wd) > w) {
++                var n = wd.length
++                while (n > 1 && paint.measureText(wd, 0, n) > w) n--
++                out.add(wd.substring(0, n)); wd = wd.substring(n)
++            }
++            line = wd
++        }
++        if (line.isNotEmpty()) out.add(line)
++        return out
++    }
++
++    /** Draws [s] spread across [w]: the leftover width shared between the characters. */
++    private fun justify(canvas: Canvas, s: String, colors: List<Int>, x0: Float, w: Float, y: Float) {
++        if (s.isEmpty()) return
++        val gaps = (s.length - 1).coerceAtLeast(1)
++        // A short line (the name ends early) stays as it is rather than spread thin.
++        val extra = ((w - paint.measureText(s)) / gaps).coerceAtLeast(0f)
++            .let { if (it > paint.textSize * 0.25f) 0f else it }
++        var x = x0
++        s.forEachIndexed { i, c ->
++            paint.color = colors[i]
++            canvas.drawText(c.toString(), x, y, paint)
++            x += paint.measureText(c.toString()) + extra
++        }
++    }
++
++    override fun setAlpha(alpha: Int) { paint.alpha = alpha }
++    override fun setColorFilter(colorFilter: ColorFilter?) { paint.colorFilter = colorFilter }
++    @Deprecated("Deprecated in Java")
++    override fun getOpacity() = PixelFormat.OPAQUE
++
++    companion object {
++        /** Unknown / missing album. */
++        const val UNKNOWN = 0xFF8E10C4.toInt()
++
++        /** Bright N9 colours. */
++        private val PALETTE = intArrayOf(
++            0xFFFF5A00.toInt(), 0xFFE5007E.toInt(), 0xFF00A5E5.toInt(), 0xFF7DC400.toInt(),
++            0xFFFFB400.toInt(), 0xFFE3001B.toInt(), 0xFF00B3A4.toInt(), 0xFF2F6BFF.toInt(),
++        )
++
++        fun isUnknown(s: String) = s.equals("unknown", true) || s.equals("unknown album", true)
++            || s.equals("<unknown>", true)
++    }
++}
++
++/** Loads [data] as album art, square and as is; without art (or on error) the N9 generated cover. */
++fun ImageView.loadArtOrCover(data: Any?, album: String?) {
++    scaleType = ImageView.ScaleType.CENTER_CROP
++    val cover = N9CoverDrawable(album)
++    if (data == null) {
++        dispose()
++        setImageDrawable(cover)
++        return
++    }
++    loadThumbnail(data) {
++        placeholder(cover.asImage())
++        error(cover.asImage())
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/twelve/ext/N9Squircle.kt b/app/src/main/java/org/lineageos/twelve/ext/N9Squircle.kt
+new file mode 100644
+index 0000000..c6670da
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/ext/N9Squircle.kt
+@@ -0,0 +1,33 @@
++/*
++ * SPDX-FileCopyrightText: The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.ext
++
++import android.graphics.Matrix
++import android.graphics.Outline
++import android.view.View
++import android.view.ViewOutlineProvider
++import androidx.core.graphics.PathParser
++
++/** AOSP squircle on a 100x100 box: the N9 shape for every thumb-sized image. */
++private const val N9_SQUIRCLE =
++    "M100.00 50.00L99.92 57.13L99.69 61.68L99.31 65.56L98.78 69.04L98.09 72.23L97.25 75.18L96.26 77.92L95.12 80.48L93.82 82.86L92.38 85.08L90.78 87.13L89.04 89.04L87.13 90.78L85.08 92.38L82.86 93.82L80.48 95.12L77.92 96.26L75.18 97.25L72.23 98.09L69.04 98.78L65.56 99.31L61.68 99.69L57.13 99.92L50.00 100.00L42.87 99.92L38.32 99.69L34.44 99.31L30.96 98.78L27.77 98.09L24.82 97.25L22.08 96.26L19.52 95.12L17.14 93.82L14.92 92.38L12.87 90.78L10.96 89.04L9.22 87.13L7.62 85.08L6.18 82.86L4.88 80.48L3.74 77.92L2.75 75.18L1.91 72.23L1.22 69.04L0.69 65.56L0.31 61.68L0.08 57.13L0.00 50.00L0.08 42.87L0.31 38.32L0.69 34.44L1.22 30.96L1.91 27.77L2.75 24.82L3.74 22.08L4.88 19.52L6.18 17.14L7.62 14.92L9.22 12.87L10.96 10.96L12.87 9.22L14.92 7.62L17.14 6.18L19.52 4.88L22.08 3.74L24.82 2.75L27.77 1.91L30.96 1.22L34.44 0.69L38.32 0.31L42.87 0.08L50.00 0.00L57.13 0.08L61.68 0.31L65.56 0.69L69.04 1.22L72.23 1.91L75.18 2.75L77.92 3.74L80.48 4.88L82.86 6.18L85.08 7.62L87.13 9.22L89.04 10.96L90.78 12.87L92.38 14.92L93.82 17.14L95.12 19.52L96.26 22.08L97.25 24.82L98.09 27.77L98.78 30.96L99.31 34.44L99.69 38.32L99.92 42.87Z"
++
++/** Clips this view (album art, artist thumb) to the N9 squircle, centred in its bounds. */
++fun View.clipToN9Squircle() {
++    outlineProvider = object : ViewOutlineProvider() {
++        override fun getOutline(view: View, outline: Outline) {
++            val size = minOf(view.width, view.height).toFloat()
++            if (size <= 0f) return
++            outline.setPath(PathParser.createPathFromPathData(N9_SQUIRCLE).apply {
++                transform(Matrix().apply {
++                    setScale(size / 100f, size / 100f)
++                    postTranslate((view.width - size) / 2f, (view.height - size) / 2f)
++                })
++            })
++        }
++    }
++    clipToOutline = true
++}
+diff --git a/app/src/main/java/org/lineageos/twelve/fragments/N9HomeFragment.kt b/app/src/main/java/org/lineageos/twelve/fragments/N9HomeFragment.kt
+new file mode 100644
+index 0000000..131252c
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/fragments/N9HomeFragment.kt
+@@ -0,0 +1,141 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.fragments
++
++import android.content.ActivityNotFoundException
++import android.content.Intent
++import android.net.Uri
++import android.os.Bundle
++import android.util.Log
++import android.view.View
++import android.widget.TextView
++import android.widget.Toast
++import androidx.core.view.ViewCompat
++import androidx.core.view.WindowInsetsCompat
++import androidx.core.widget.NestedScrollView
++import androidx.fragment.app.Fragment
++import androidx.fragment.app.viewModels
++import androidx.lifecycle.Lifecycle
++import androidx.lifecycle.lifecycleScope
++import androidx.lifecycle.repeatOnLifecycle
++import androidx.navigation.fragment.findNavController
++import kotlinx.coroutines.flow.collectLatest
++import kotlinx.coroutines.launch
++import org.lineageos.twelve.R
++import org.lineageos.twelve.SettingsActivity
++import org.lineageos.twelve.ext.getViewProperty
++import org.lineageos.twelve.ext.navigateSafe
++import org.lineageos.twelve.ext.updatePadding
++import org.lineageos.twelve.ui.views.N9AlbumMosaic
++import org.lineageos.twelve.utils.PermissionsChecker
++import org.lineageos.twelve.utils.PermissionsUtils
++import org.lineageos.twelve.viewmodels.N9MusicViewModel
++
++/**
++ * N9 Music main view: a 3x3 mosaic of album covers over a plain list of the library views.
++ */
++class N9HomeFragment : Fragment(R.layout.fragment_n9_home) {
++    // View models
++    private val viewModel by viewModels<N9MusicViewModel>()
++
++    // Views
++    private val albumMosaic by getViewProperty<N9AlbumMosaic>(R.id.albumMosaic)
++    private val albumsTextView by getViewProperty<TextView>(R.id.albumsTextView)
++    private val artistsTextView by getViewProperty<TextView>(R.id.artistsTextView)
++    private val musicStoreTextView by getViewProperty<TextView>(R.id.musicStoreTextView)
++    private val nestedScrollView by getViewProperty<NestedScrollView>(R.id.nestedScrollView)
++    private val playlistsTextView by getViewProperty<TextView>(R.id.playlistsTextView)
++    private val songsTextView by getViewProperty<TextView>(R.id.songsTextView)
++
++    // Permissions
++    private val permissionsChecker = PermissionsChecker(
++        this, PermissionsUtils.mainPermissions
++    )
++
++    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
++        super.onViewCreated(view, savedInstanceState)
++
++        // Insets
++        ViewCompat.setOnApplyWindowInsetsListener(nestedScrollView) { v, windowInsets ->
++            val insets = windowInsets.getInsets(
++                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
++            )
++
++            v.updatePadding(
++                insets,
++                start = true,
++                top = true,
++                end = true,
++                bottom = true,
++            )
++
++            windowInsets
++        }
++
++        albumMosaic.setOnAlbumClickListener { album ->
++            findNavController().navigateSafe(
++                R.id.action_mainFragment_to_fragment_album,
++                AlbumFragment.createBundle(album.uri)
++            )
++        }
++
++        // The N9 has no settings button here: long press the covers
++        albumMosaic.setOnLongClickListener {
++            startActivity(Intent(requireContext(), SettingsActivity::class.java))
++            true
++        }
++
++        artistsTextView.setOnClickListener { showList(N9MusicViewModel.Kind.ARTISTS) }
++        albumsTextView.setOnClickListener { showList(N9MusicViewModel.Kind.ALBUMS) }
++        songsTextView.setOnClickListener { showList(N9MusicViewModel.Kind.SONGS) }
++        playlistsTextView.setOnClickListener { showList(N9MusicViewModel.Kind.PLAYLISTS) }
++
++        musicStoreTextView.setOnClickListener { openMusicStore() }
++        musicStoreTextView.setOnLongClickListener {
++            findNavController().navigateSafe(
++                R.id.action_mainFragment_to_fragment_provider_selector_dialog
++            )
++            true
++        }
++
++        viewLifecycleOwner.lifecycleScope.launch {
++            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
++                permissionsChecker.withPermissionsGranted {
++                    viewModel.mosaicAlbums.collectLatest {
++                        albumMosaic.setAlbums(it)
++                    }
++                }
++            }
++        }
++    }
++
++    private fun showList(kind: N9MusicViewModel.Kind) {
++        (parentFragment as? MainFragment)?.showList(kind)
++    }
++
++    private fun openMusicStore() {
++        val packageManager = requireContext().packageManager
++
++        val intent = packageManager.getLaunchIntentForPackage(STORE_PACKAGE_NAME)
++            ?: Intent(Intent.ACTION_VIEW, Uri.parse(STORE_SEARCH_URI))
++
++        try {
++            startActivity(intent)
++        } catch (e: ActivityNotFoundException) {
++            Log.w(LOG_TAG, "No music store", e)
++            Toast.makeText(
++                requireContext(), R.string.n9_music_store_unavailable, Toast.LENGTH_SHORT
++            ).show()
++        }
++    }
++
++    companion object {
++        private val LOG_TAG = N9HomeFragment::class.simpleName!!
++
++        private const val STORE_PACKAGE_NAME = "com.bompotis.etesian.store"
++        private const val STORE_SEARCH_URI = "market://search?q=music&c=music"
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/twelve/fragments/N9LibraryListFragment.kt b/app/src/main/java/org/lineageos/twelve/fragments/N9LibraryListFragment.kt
+new file mode 100644
+index 0000000..8205b0a
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/fragments/N9LibraryListFragment.kt
+@@ -0,0 +1,461 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.fragments
++
++import android.annotation.SuppressLint
++import android.content.res.ColorStateList
++import android.graphics.Color
++import android.os.Bundle
++import android.util.Log
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.EditText
++import android.widget.ImageButton
++import android.widget.ImageView
++import android.widget.LinearLayout
++import android.widget.TextView
++import androidx.core.os.bundleOf
++import androidx.core.view.ViewCompat
++import androidx.core.view.WindowInsetsCompat
++import androidx.core.view.isVisible
++import androidx.core.widget.addTextChangedListener
++import androidx.fragment.app.Fragment
++import androidx.fragment.app.viewModels
++import androidx.lifecycle.Lifecycle
++import androidx.lifecycle.lifecycleScope
++import androidx.lifecycle.repeatOnLifecycle
++import androidx.navigation.fragment.findNavController
++import androidx.recyclerview.widget.LinearLayoutManager
++import androidx.recyclerview.widget.RecyclerView
++import com.google.android.material.snackbar.Snackbar
++import kotlinx.coroutines.flow.collectLatest
++import kotlinx.coroutines.launch
++import com.bompotis.etesian.fastscroll.EtesianFastScroller
++import com.bompotis.etesian.toolbar.EtesianToolbar
++import org.lineageos.twelve.R
++import org.lineageos.twelve.ext.clipToN9Squircle
++import org.lineageos.twelve.ext.loadArtOrCover
++import org.lineageos.twelve.ext.getViewProperty
++import org.lineageos.twelve.ext.loadThumbnail
++import org.lineageos.twelve.ext.navigateSafe
++import org.lineageos.twelve.ext.updatePadding
++import org.lineageos.twelve.models.Album
++import org.lineageos.twelve.models.Artist
++import org.lineageos.twelve.models.Audio
++import org.lineageos.twelve.models.FlowResult
++import org.lineageos.twelve.models.Playlist
++import org.lineageos.twelve.models.Result.Companion.onError
++import org.lineageos.twelve.utils.PermissionsChecker
++import org.lineageos.twelve.utils.PermissionsUtils
++import org.lineageos.twelve.viewmodels.N9MusicViewModel
++
++/**
++ * N9 Music library list (Artists, Albums, Songs or Playlists): a light header over a thin rule,
++ * a pull-down search field, a Shuffle row, then the items in alphabetical sections.
++ */
++class N9LibraryListFragment : Fragment(R.layout.fragment_n9_library_list) {
++    // View models
++    private val viewModel by viewModels<N9MusicViewModel>()
++    private var playingUri: android.net.Uri? = null
++    private var playingAlbum: String? = null
++
++    // Views
++    private val backImageButton by getViewProperty<ImageButton>(R.id.backImageButton)
++    private val noElementsTextView by getViewProperty<TextView>(R.id.noElementsTextView)
++    private val recyclerView by getViewProperty<RecyclerView>(R.id.recyclerView)
++    private val rootLinearLayout by getViewProperty<LinearLayout>(R.id.rootLinearLayout)
++    private val titleTextView by getViewProperty<TextView>(R.id.titleTextView)
++
++    // Arguments
++    private val kind: N9MusicViewModel.Kind
++        get() = N9MusicViewModel.Kind.entries[requireArguments().getInt(ARG_KIND)]
++
++    // Data
++    private var allRows = listOf<N9MusicViewModel.Row>()
++    private var query = ""
++    private var scrolledPastSearch = false
++
++    // RecyclerView
++    private val adapter = ListAdapter()
++    private var fastScroller: EtesianFastScroller? = null
++
++    // Permissions
++    private val permissionsChecker = PermissionsChecker(
++        this, PermissionsUtils.mainPermissions
++    )
++
++    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
++        super.onViewCreated(view, savedInstanceState)
++
++        // Insets
++        ViewCompat.setOnApplyWindowInsetsListener(rootLinearLayout) { v, windowInsets ->
++            val insets = windowInsets.getInsets(
++                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
++            )
++
++            v.updatePadding(
++                insets,
++                start = true,
++                top = true,
++                end = true,
++            )
++
++            windowInsets
++        }
++
++        ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, windowInsets ->
++            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
++
++            v.updatePadding(
++                insets,
++                bottom = true,
++            )
++
++            windowInsets
++        }
++
++        titleTextView.setText(
++            when (kind) {
++                N9MusicViewModel.Kind.ARTISTS -> R.string.n9_music_artists
++                N9MusicViewModel.Kind.ALBUMS -> R.string.n9_music_albums
++                N9MusicViewModel.Kind.SONGS -> R.string.n9_music_songs
++                N9MusicViewModel.Kind.PLAYLISTS -> R.string.n9_music_playlists
++            }
++        )
++
++        // Without the system toolbar there is no Back button: draw our own
++        backImageButton.isVisible = !EtesianToolbar.isAvailable(requireContext())
++        backImageButton.setOnClickListener {
++            (parentFragment as? MainFragment)?.showPage(MainFragment.Page.HOME)
++        }
++
++        recyclerView.adapter = adapter
++        fastScroller = EtesianFastScroller.attach(recyclerView) { position ->
++            adapter.sectionFor(position)
++        }
++
++        viewModel.setKind(kind)
++
++        viewLifecycleOwner.lifecycleScope.launch {
++            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
++                viewModel.playing.collectLatest {
++                    playingUri = it.first
++                    playingAlbum = it.second
++                    recyclerView.adapter?.notifyDataSetChanged()
++                }
++            }
++        }
++
++        viewLifecycleOwner.lifecycleScope.launch {
++            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
++                permissionsChecker.withPermissionsGranted {
++                    viewModel.rows.collectLatest {
++                        when (it) {
++                            is FlowResult.Loading -> {
++                                // Do nothing
++                            }
++
++                            is FlowResult.Success -> {
++                                allRows = it.data
++                                updateRows()
++                            }
++
++                            is FlowResult.Failure -> {
++                                Log.e(
++                                    LOG_TAG,
++                                    "Failed to load $kind, error: ${it.error}",
++                                    it.throwable
++                                )
++
++                                allRows = listOf()
++                                updateRows()
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    override fun onDestroyView() {
++        fastScroller?.detach()
++        fastScroller = null
++        recyclerView.adapter = null
++
++        super.onDestroyView()
++    }
++
++    private fun updateRows() {
++        val rows = query.trim().takeIf { it.isNotEmpty() }?.let { q ->
++            allRows.filter {
++                it.title?.contains(q, true) == true || it.subtitle?.contains(q, true) == true
++            }
++        } ?: allRows
++
++        adapter.submitRows(rows)
++
++        noElementsTextView.isVisible = allRows.isEmpty()
++        noElementsTextView.setText(
++            when (kind) {
++                N9MusicViewModel.Kind.ARTISTS -> R.string.no_artists
++                N9MusicViewModel.Kind.ALBUMS -> R.string.no_albums
++                N9MusicViewModel.Kind.SONGS -> R.string.no_audios
++                N9MusicViewModel.Kind.PLAYLISTS -> R.string.no_playlists
++            }
++        )
++
++        // The search field hides above the top until the list is pulled down
++        if (!scrolledPastSearch && allRows.isNotEmpty()) {
++            scrolledPastSearch = true
++            (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
++                1, 0
++            )
++        }
++    }
++
++    private fun onRowClicked(row: N9MusicViewModel.Row, rows: List<N9MusicViewModel.Row>) {
++        when (val item = row.item) {
++            is Artist -> findNavController().navigateSafe(
++                R.id.action_mainFragment_to_fragment_artist,
++                ArtistFragment.createBundle(item.uri)
++            )
++
++            is Album -> findNavController().navigateSafe(
++                R.id.action_mainFragment_to_fragment_album,
++                AlbumFragment.createBundle(item.uri)
++            )
++
++            is Audio -> {
++                val audios = rows.mapNotNull { it.item as? Audio }
++                viewModel.playAudio(audios, audios.indexOf(item).coerceAtLeast(0))
++                findNavController().navigate(R.id.fragment_now_playing)
++            }
++
++            is Playlist -> findNavController().navigateSafe(
++                R.id.action_mainFragment_to_fragment_playlist,
++                PlaylistFragment.createBundle(item.uri)
++            )
++
++            else -> {
++                // Not listed here
++            }
++        }
++    }
++
++    private fun onRowLongClicked(row: N9MusicViewModel.Row) {
++        findNavController().navigateSafe(
++            R.id.action_mainFragment_to_fragment_media_item_bottom_sheet_dialog,
++            MediaItemBottomSheetDialogFragment.createBundle(row.item.uri)
++        )
++    }
++
++    private fun shuffle() {
++        viewLifecycleOwner.lifecycleScope.launch {
++            viewModel.shuffleAll().onError {
++                Snackbar.make(recyclerView, it.toString(), Snackbar.LENGTH_SHORT).show()
++            }
++        }
++    }
++
++    /**
++     * Search field, Shuffle row, then the rows.
++     */
++    private inner class ListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
++        private var rows = listOf<N9MusicViewModel.Row>()
++        private var sections = listOf<String>()
++
++        init {
++            setHasStableIds(true)
++        }
++
++        @SuppressLint("NotifyDataSetChanged")
++        fun submitRows(rows: List<N9MusicViewModel.Row>) {
++            this.rows = rows
++            this.sections = rows.map { sectionOf(it.title) }
++            notifyDataSetChanged()
++        }
++
++        fun sectionFor(position: Int) = sections.getOrNull(position - HEADER_COUNT)
++
++        override fun getItemCount() = HEADER_COUNT + rows.size
++
++        override fun getItemViewType(position: Int) = when (position) {
++            0 -> VIEW_TYPE_SEARCH
++            1 -> VIEW_TYPE_SHUFFLE
++            else -> VIEW_TYPE_ROW
++        }
++
++        override fun getItemId(position: Int) = when (position) {
++            0 -> -1L
++            1 -> -2L
++            else -> rows[position - HEADER_COUNT].item.uri.hashCode().toLong() and 0xFFFFFFFFL
++        }
++
++        override fun onCreateViewHolder(
++            parent: ViewGroup,
++            viewType: Int,
++        ): RecyclerView.ViewHolder {
++            val inflater = LayoutInflater.from(parent.context)
++
++            return when (viewType) {
++                VIEW_TYPE_SEARCH -> SearchViewHolder(
++                    inflater.inflate(R.layout.item_n9_list_search, parent, false)
++                )
++
++                else -> RowViewHolder(inflater.inflate(R.layout.item_n9_list_row, parent, false))
++            }
++        }
++
++        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
++            when (holder) {
++                is SearchViewHolder -> {
++                    // The text stays as typed
++                }
++
++                is RowViewHolder -> when (position) {
++                    1 -> holder.bindShuffle()
++                    else -> {
++                        val index = position - HEADER_COUNT
++                        val section = sections[index]
++                        holder.bind(
++                            rows[index],
++                            section.takeIf { index == 0 || sections[index - 1] != it },
++                            rows,
++                        )
++                    }
++                }
++            }
++        }
++    }
++
++    private inner class SearchViewHolder(view: View) : RecyclerView.ViewHolder(view) {
++        private val searchEditText = view.findViewById<EditText>(R.id.searchEditText)
++
++        init {
++            searchEditText.addTextChangedListener { text ->
++                query = text?.toString().orEmpty()
++                updateRows()
++            }
++        }
++    }
++
++    private inner class RowViewHolder(view: View) : RecyclerView.ViewHolder(view) {
++        private val rowLinearLayout = view.findViewById<LinearLayout>(R.id.rowLinearLayout)
++        private val sectionFrameLayout = view.findViewById<View>(R.id.sectionFrameLayout)
++        private val sectionTextView = view.findViewById<TextView>(R.id.sectionTextView)
++        private val subtitleTextView = view.findViewById<TextView>(R.id.subtitleTextView)
++        private val thumbnailImageView = view.findViewById<ImageView>(R.id.thumbnailImageView)
++        private val titleTextView = view.findViewById<TextView>(R.id.titleTextView)
++        private val trailingTextView = view.findViewById<TextView>(R.id.trailingTextView)
++        private val titleColor = titleTextView.textColors
++        private val subtitleColor = subtitleTextView.textColors
++        private val trailingColor = trailingTextView.textColors
++
++        fun bindShuffle() {
++            sectionFrameLayout.isVisible = false
++            // The shuffle icon is a squircle; album art is square.
++            thumbnailImageView.clipToN9Squircle()
++
++            thumbnailImageView.isVisible = true
++            thumbnailImageView.background = null
++            thumbnailImageView.scaleType = ImageView.ScaleType.CENTER
++            thumbnailImageView.imageTintList = ColorStateList.valueOf(Color.WHITE)
++            thumbnailImageView.setImageResource(R.drawable.ic_shuffle)
++
++            titleTextView.setText(R.string.n9_music_shuffle)
++            subtitleTextView.isVisible = false
++            trailingTextView.isVisible = false
++
++            rowLinearLayout.setOnClickListener { shuffle() }
++            rowLinearLayout.setOnLongClickListener(null)
++            rowLinearLayout.isLongClickable = false
++        }
++
++        fun bind(
++            row: N9MusicViewModel.Row,
++            section: String?,
++            rows: List<N9MusicViewModel.Row>,
++        ) {
++            sectionFrameLayout.isVisible = section != null
++            sectionTextView.text = section
++
++            // N9 Songs have no artwork
++            thumbnailImageView.isVisible = kind != N9MusicViewModel.Kind.SONGS
++            if (thumbnailImageView.isVisible) {
++                // N9: album art square and as is; generated covers where there is none.
++                thumbnailImageView.clipToOutline = false
++                thumbnailImageView.setBackgroundColor(THUMBNAIL_BACKGROUND_COLOR)
++                thumbnailImageView.imageTintList = null
++                when (kind) {
++                    N9MusicViewModel.Kind.PLAYLISTS -> {
++                        thumbnailImageView.scaleType = ImageView.ScaleType.CENTER_CROP
++                        thumbnailImageView.loadThumbnail(row.thumbnail, placeholder = R.drawable.ic_playlist_play)
++                    }
++                    N9MusicViewModel.Kind.ARTISTS -> thumbnailImageView.loadArtOrCover(row.thumbnail, row.subtitle)
++                    else -> thumbnailImageView.loadArtOrCover(row.thumbnail, row.title)
++                }
++            }
++
++            // N9: the item playing now is magenta.
++            val playing = when (kind) {
++                N9MusicViewModel.Kind.SONGS -> playingUri != null && row.item.uri == playingUri
++                N9MusicViewModel.Kind.ALBUMS -> playingAlbum != null && row.title == playingAlbum
++                else -> false
++            }
++            titleTextView.setTextColor(if (playing) PLAYING_COLOR else titleColor)
++            subtitleTextView.setTextColor(if (playing) PLAYING_COLOR else subtitleColor)
++            trailingTextView.setTextColor(if (playing) PLAYING_COLOR else trailingColor)
++
++            row.title?.also {
++                titleTextView.text = it
++            } ?: titleTextView.setText(R.string.unknown)
++
++            subtitleTextView.isVisible = row.subtitle != null || row.trailing != null
++            subtitleTextView.text = row.subtitle
++
++            trailingTextView.isVisible = row.trailing != null
++            trailingTextView.text = row.trailing
++
++            rowLinearLayout.setOnClickListener { onRowClicked(row, rows) }
++            rowLinearLayout.setOnLongClickListener {
++                onRowLongClicked(row)
++                true
++            }
++        }
++    }
++
++    companion object {
++        private val LOG_TAG = N9LibraryListFragment::class.simpleName!!
++
++        private const val ARG_KIND = "kind"
++
++        private const val HEADER_COUNT = 2
++        private const val VIEW_TYPE_SEARCH = 0
++        private const val VIEW_TYPE_SHUFFLE = 1
++        private const val VIEW_TYPE_ROW = 2
++
++        private const val THUMBNAIL_BACKGROUND_COLOR = 0xFF262626.toInt()
++        private val PLAYING_COLOR = ColorStateList.valueOf(0xFFC4008F.toInt())
++
++        fun newInstance(kind: N9MusicViewModel.Kind) = N9LibraryListFragment().apply {
++            arguments = bundleOf(ARG_KIND to kind.ordinal)
++        }
++
++        /**
++         * The N9 section of a title: its first letter, or # for anything else.
++         */
++        private fun sectionOf(title: String?): String {
++            val first = title?.trim()?.firstOrNull { it.isLetterOrDigit() }
++                ?: return "#"
++
++            return when (first.isLetter()) {
++                true -> first.uppercaseChar().toString()
++                false -> "#"
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/twelve/ui/views/N9AlbumMosaic.kt b/app/src/main/java/org/lineageos/twelve/ui/views/N9AlbumMosaic.kt
+new file mode 100644
+index 0000000..34f402e
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/ui/views/N9AlbumMosaic.kt
+@@ -0,0 +1,86 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.ui.views
++
++import android.content.Context
++import android.util.AttributeSet
++import android.view.ViewGroup
++import android.widget.ImageView
++import org.lineageos.twelve.ext.loadArtOrCover
++import org.lineageos.twelve.models.Album
++import kotlin.math.roundToInt
++
++/**
++ * The N9 Music home mosaic: 3x3 square album covers with thin dark gaps, no corners, no labels.
++ */
++class N9AlbumMosaic @JvmOverloads constructor(
++    context: Context,
++    attrs: AttributeSet? = null,
++    defStyleAttr: Int = 0,
++) : ViewGroup(context, attrs, defStyleAttr) {
++    private val gap = (2 * resources.displayMetrics.density).roundToInt()
++
++    private val imageViews = List(COUNT) {
++        ImageView(context).apply {
++            scaleType = ImageView.ScaleType.CENTER_CROP
++            setBackgroundColor(TILE_COLOR)
++            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
++            // Long presses belong to the whole mosaic
++            setOnLongClickListener { this@N9AlbumMosaic.performLongClick() }
++        }.also { addView(it) }
++    }
++
++    private var onAlbumClickListener: ((Album) -> Unit)? = null
++
++    fun setOnAlbumClickListener(listener: ((Album) -> Unit)?) {
++        onAlbumClickListener = listener
++    }
++
++    fun setAlbums(albums: List<Album>) {
++        imageViews.forEachIndexed { index, imageView ->
++            val album = albums.getOrNull(index)
++
++            imageView.setImageDrawable(null)
++            // N9: generated covers for albums without artwork.
++            album?.let { imageView.loadArtOrCover(it.thumbnail, it.title) }
++
++            imageView.contentDescription = album?.title
++            album?.let {
++                imageView.setOnClickListener { _ -> onAlbumClickListener?.invoke(it) }
++            } ?: run {
++                imageView.setOnClickListener(null)
++                imageView.isClickable = false
++            }
++        }
++    }
++
++    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
++        val width = MeasureSpec.getSize(widthMeasureSpec)
++        val tile = (width - gap * (COLUMNS - 1)) / COLUMNS
++        val tileSpec = MeasureSpec.makeMeasureSpec(tile, MeasureSpec.EXACTLY)
++
++        imageViews.forEach { it.measure(tileSpec, tileSpec) }
++
++        setMeasuredDimension(width, tile * COLUMNS + gap * (COLUMNS - 1))
++    }
++
++    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
++        val tile = (r - l - gap * (COLUMNS - 1)) / COLUMNS
++
++        imageViews.forEachIndexed { index, imageView ->
++            val left = (index % COLUMNS) * (tile + gap)
++            val top = (index / COLUMNS) * (tile + gap)
++            imageView.layout(left, top, left + tile, top + tile)
++        }
++    }
++
++    companion object {
++        private const val COLUMNS = 3
++        const val COUNT = COLUMNS * COLUMNS
++
++        private const val TILE_COLOR = 0xFF1A1A1A.toInt()
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/twelve/viewmodels/N9MusicViewModel.kt b/app/src/main/java/org/lineageos/twelve/viewmodels/N9MusicViewModel.kt
+new file mode 100644
+index 0000000..6f38e77
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/twelve/viewmodels/N9MusicViewModel.kt
+@@ -0,0 +1,177 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.twelve.viewmodels
++
++import android.app.Application
++import androidx.lifecycle.viewModelScope
++import androidx.core.net.toUri
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.ExperimentalCoroutinesApi
++import kotlinx.coroutines.flow.Flow
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.SharingStarted
++import kotlinx.coroutines.flow.combine
++import kotlinx.coroutines.flow.filterNotNull
++import kotlinx.coroutines.flow.firstOrNull
++import kotlinx.coroutines.flow.flatMapLatest
++import kotlinx.coroutines.flow.flowOn
++import kotlinx.coroutines.flow.map
++import kotlinx.coroutines.flow.stateIn
++import org.lineageos.twelve.ext.mediaItemFlow
++import org.lineageos.twelve.models.Album
++import org.lineageos.twelve.models.Error
++import org.lineageos.twelve.models.FlowResult
++import org.lineageos.twelve.models.FlowResult.Companion.asFlowResult
++import org.lineageos.twelve.models.FlowResult.Companion.getOrNull
++import org.lineageos.twelve.models.FlowResult.Companion.mapLatestData
++import org.lineageos.twelve.models.MediaItem
++import org.lineageos.twelve.models.Result
++import org.lineageos.twelve.models.Result.Companion.map
++import org.lineageos.twelve.models.SortingRule
++import org.lineageos.twelve.models.SortingStrategy
++import org.lineageos.twelve.models.Thumbnail
++
++/**
++ * N9 Music: the home mosaic and the Artists/Albums/Songs/Playlists lists.
++ */
++class N9MusicViewModel(application: Application) : TwelveViewModel(application) {
++    enum class Kind {
++        ARTISTS,
++        ALBUMS,
++        SONGS,
++        PLAYLISTS,
++    }
++
++    /**
++     * One list row: bold [title], grey [subtitle], optional grey [trailing] text (duration).
++     */
++    data class Row(
++        val item: MediaItem<*>,
++        val title: String?,
++        val subtitle: String?,
++        val trailing: String?,
++        val thumbnail: Thumbnail?,
++    )
++
++    private val kind = MutableStateFlow<Kind?>(null)
++
++    /** The audio playing now and its album, for the magenta row. */
++    @OptIn(ExperimentalCoroutinesApi::class)
++    val playing = mediaControllerFlow
++        .flatMapLatest { it.mediaItemFlow(eventsFlow) }
++        .map { item ->
++            item?.let { runCatching { it.mediaId.toUri() }.getOrNull() } to
++                    item?.mediaMetadata?.albumTitle?.toString()
++        }
++        .flowOn(Dispatchers.Main)
++        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null to null)
++
++    /**
++     * The most recent albums for the home mosaic, the ones with artwork first.
++     */
++    val mosaicAlbums = mediaRepository.albums(
++        SortingRule(SortingStrategy.CREATION_DATE, true)
++    )
++        .asFlowResult()
++        .map { result ->
++            result.getOrNull().orEmpty()
++                .sortedByDescending { it.thumbnail != null }
++                .take(MOSAIC_SIZE)
++        }
++        .flowOn(Dispatchers.IO)
++        .stateIn(
++            viewModelScope,
++            SharingStarted.WhileSubscribed(),
++            listOf<Album>()
++        )
++
++    @OptIn(ExperimentalCoroutinesApi::class)
++    val rows = kind
++        .filterNotNull()
++        .flatMapLatest { rowsOf(it) }
++        .flowOn(Dispatchers.IO)
++        .stateIn(
++            viewModelScope,
++            SharingStarted.WhileSubscribed(),
++            FlowResult.Loading
++        )
++
++    fun setKind(kind: Kind) {
++        this.kind.value = kind
++    }
++
++    suspend fun shuffleAll() = mediaRepository.audios().firstOrNull()?.map { audios ->
++        playAudio(audios.shuffled(), 0)
++    } ?: Result.Failure(Error.INVALID_RESPONSE)
++
++    private fun rowsOf(kind: Kind): Flow<FlowResult<List<Row>, Error>> = when (kind) {
++        Kind.ARTISTS -> combine(
++            mediaRepository.artists(byName).asFlowResult(),
++            mediaRepository.albums(byName).asFlowResult(),
++        ) { artists, albums ->
++            when (artists) {
++                is FlowResult.Loading -> FlowResult.Loading
++                is FlowResult.Failure -> FlowResult.Failure(artists.error, artists.throwable)
++                is FlowResult.Success -> {
++                    val albumsByArtist = albums.getOrNull().orEmpty()
++                        .filter { it.artistUri != null }
++                        .groupBy { it.artistUri }
++
++                    FlowResult.Success(
++                        artists.data.map { artist ->
++                            val album = albumsByArtist[artist.uri]?.firstOrNull()
++
++                            Row(
++                                artist,
++                                artist.name,
++                                album?.title,
++                                null,
++                                album?.thumbnail ?: artist.thumbnail,
++                            )
++                        }
++                    )
++                }
++            }
++        }
++
++        Kind.ALBUMS -> mediaRepository.albums(byName).asFlowResult().mapLatestData {
++            it.map { album ->
++                Row(album, album.title, album.artistName, null, album.thumbnail)
++            }
++        }
++
++        Kind.SONGS -> mediaRepository.audios(byName).asFlowResult().mapLatestData {
++            it.map { audio ->
++                Row(
++                    audio,
++                    audio.title,
++                    listOfNotNull(audio.artistName, audio.albumTitle)
++                        .joinToString(" | ")
++                        .takeIf { subtitle -> subtitle.isNotEmpty() },
++                    audio.durationMs?.let { durationMs -> formatDuration(durationMs) },
++                    null,
++                )
++            }
++        }
++
++        Kind.PLAYLISTS -> mediaRepository.playlists(byName).asFlowResult().mapLatestData {
++            it.map { playlist ->
++                Row(playlist, playlist.name, null, null, playlist.thumbnail)
++            }
++        }
++    }
++
++    companion object {
++        const val MOSAIC_SIZE = 9
++
++        private val byName = SortingRule(SortingStrategy.NAME)
++
++        private fun formatDuration(durationMs: Long): String {
++            val totalSeconds = durationMs / 1000
++            return "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
++        }
++    }
++}
+diff --git a/app/src/main/res/drawable/ic_n9_back.xml b/app/src/main/res/drawable/ic_n9_back.xml
+new file mode 100644
+index 0000000..6a347b3
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_n9_back.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="true"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++
++    <path
++        android:fillColor="@android:color/transparent"
++        android:pathData="M20,12H5M11,5L4,12L11,19"
++        android:strokeWidth="2.6"
++        android:strokeColor="@android:color/white"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++
++</vector>
+diff --git a/app/src/main/res/drawable/ic_n9_chevron.xml b/app/src/main/res/drawable/ic_n9_chevron.xml
+new file mode 100644
+index 0000000..d0319c1
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_n9_chevron.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++
++    <path
++        android:fillColor="@android:color/transparent"
++        android:pathData="M8.5,4L16.5,12L8.5,20"
++        android:strokeWidth="3.2"
++        android:strokeColor="@android:color/white"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++
++</vector>
+diff --git a/app/src/main/res/drawable/ic_n9_music_store.xml b/app/src/main/res/drawable/ic_n9_music_store.xml
+new file mode 100644
+index 0000000..8e57a18
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_n9_music_store.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Shopping bag with a note (N9 Music Store) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp"
++    android:height="28dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++
++    <path
++        android:fillColor="@android:color/transparent"
++        android:pathData="M9,7V5.5a3,3 0,0 1,6 0V7"
++        android:strokeWidth="1.5"
++        android:strokeColor="@android:color/white" />
++    <path
++        android:fillColor="@android:color/white"
++        android:pathData="M5,7h14l-1,15H6z" />
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M14,10v6.2a1.8,1.8 0,1 1,-1.2 -1.7V12h-2.3v5.2a1.8,1.8 0,1 1,-1.2 -1.7V10z" />
++
++</vector>
+diff --git a/app/src/main/res/drawable/n9_music_background.xml b/app/src/main/res/drawable/n9_music_background.xml
+new file mode 100644
+index 0000000..9db4433
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_music_background.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 Music: near-black with a soft lighter centre -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:centerX="0.5"
++        android:centerY="0.55"
++        android:endColor="@color/n9_dark_bg"
++        android:gradientRadius="120%p"
++        android:startColor="@color/n9_music_gradient_center"
++        android:type="radial" />
++</shape>
+diff --git a/app/src/main/res/drawable/n9_search_field.xml b/app/src/main/res/drawable/n9_search_field.xml
+new file mode 100644
+index 0000000..9891982
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_search_field.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <corners android:radius="22dp" />
++    <gradient
++        android:angle="270"
++        android:endColor="#D0D0D0"
++        android:startColor="#E6E6E6" />
++</shape>
+diff --git a/app/src/main/res/layout/fragment_n9_home.xml b/app/src/main/res/layout/fragment_n9_home.xml
+new file mode 100644
+index 0000000..61e39ab
+--- /dev/null
++++ b/app/src/main/res/layout/fragment_n9_home.xml
+@@ -0,0 +1,51 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/nestedScrollView"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:clipToPadding="false"
++    android:fillViewport="true">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical">
++
++        <org.lineageos.twelve.ui.views.N9AlbumMosaic
++            android:id="@+id/albumMosaic"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content" />
++
++        <TextView
++            android:id="@+id/artistsTextView"
++            style="@style/Theme.Twelve.N9.HomeRow"
++            android:text="@string/n9_music_artists" />
++
++        <TextView
++            android:id="@+id/albumsTextView"
++            style="@style/Theme.Twelve.N9.HomeRow"
++            android:text="@string/n9_music_albums" />
++
++        <TextView
++            android:id="@+id/songsTextView"
++            style="@style/Theme.Twelve.N9.HomeRow"
++            android:text="@string/n9_music_songs" />
++
++        <TextView
++            android:id="@+id/playlistsTextView"
++            style="@style/Theme.Twelve.N9.HomeRow"
++            android:text="@string/n9_music_playlists" />
++
++        <TextView
++            android:id="@+id/musicStoreTextView"
++            style="@style/Theme.Twelve.N9.HomeRow"
++            android:drawableEnd="@drawable/ic_n9_music_store"
++            android:text="@string/n9_music_store" />
++
++    </LinearLayout>
++
++</androidx.core.widget.NestedScrollView>
+diff --git a/app/src/main/res/layout/fragment_n9_library_list.xml b/app/src/main/res/layout/fragment_n9_library_list.xml
+new file mode 100644
+index 0000000..e02640d
+--- /dev/null
++++ b/app/src/main/res/layout/fragment_n9_library_list.xml
+@@ -0,0 +1,71 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:id="@+id/rootLinearLayout"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:orientation="vertical">
++
++    <!-- Header: light title over a thin rule -->
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:gravity="center_vertical"
++        android:minHeight="56dp"
++        android:orientation="horizontal"
++        android:paddingHorizontal="16dp">
++
++        <!-- Shown only without the Etesian system toolbar -->
++        <ImageButton
++            android:id="@+id/backImageButton"
++            android:layout_width="40dp"
++            android:layout_height="40dp"
++            android:layout_marginEnd="8dp"
++            android:background="?attr/selectableItemBackgroundBorderless"
++            android:contentDescription="@string/n9_music_back"
++            android:src="@drawable/ic_n9_back"
++            android:visibility="gone" />
++
++        <TextView
++            android:id="@+id/titleTextView"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:maxLines="1"
++            android:textAppearance="@style/TextAppearance.Twelve.N9.PageHeader" />
++
++    </LinearLayout>
++
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:layout_marginHorizontal="16dp"
++        android:background="@color/n9_music_rule" />
++
++    <FrameLayout
++        android:layout_width="match_parent"
++        android:layout_height="0dp"
++        android:layout_weight="1">
++
++        <androidx.recyclerview.widget.RecyclerView
++            android:id="@+id/recyclerView"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:clipToPadding="false"
++            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
++
++        <TextView
++            android:id="@+id/noElementsTextView"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center"
++            android:textAppearance="@style/TextAppearance.Twelve.N9.ListSubtitle"
++            android:visibility="gone" />
++
++    </FrameLayout>
++
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_n9_list_row.xml b/app/src/main/res/layout/item_n9_list_row.xml
+new file mode 100644
+index 0000000..cf7775c
+--- /dev/null
++++ b/app/src/main/res/layout/item_n9_list_row.xml
+@@ -0,0 +1,101 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:orientation="vertical">
++
++    <!-- Section: a thin rule with the letter at its right end -->
++    <FrameLayout
++        android:id="@+id/sectionFrameLayout"
++        android:layout_width="match_parent"
++        android:layout_height="24dp"
++        android:layout_marginStart="16dp"
++        android:visibility="gone">
++
++        <View
++            android:layout_width="match_parent"
++            android:layout_height="1dp"
++            android:layout_gravity="center_vertical"
++            android:layout_marginEnd="44dp"
++            android:background="@color/n9_music_rule" />
++
++        <TextView
++            android:id="@+id/sectionTextView"
++            android:layout_width="36dp"
++            android:layout_height="wrap_content"
++            android:layout_gravity="end|center_vertical"
++            android:fontFamily="etesian-text"
++            android:gravity="center"
++            android:textColor="@color/n9_music_section"
++            android:textSize="13sp"
++            android:textStyle="bold" />
++
++    </FrameLayout>
++
++    <LinearLayout
++        android:id="@+id/rowLinearLayout"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:background="?attr/selectableItemBackground"
++        android:gravity="center_vertical"
++        android:minHeight="72dp"
++        android:orientation="horizontal"
++        android:paddingVertical="4dp"
++        android:paddingStart="16dp"
++        android:paddingEnd="16dp">
++
++        <ImageView
++            android:id="@+id/thumbnailImageView"
++            android:layout_width="64dp"
++            android:layout_height="64dp"
++            android:layout_marginEnd="16dp"
++            android:importantForAccessibility="no"
++            android:scaleType="centerCrop" />
++
++        <LinearLayout
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:orientation="vertical">
++
++            <TextView
++                android:id="@+id/titleTextView"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:ellipsize="end"
++                android:maxLines="1"
++                android:textAppearance="@style/TextAppearance.Twelve.N9.ListTitle" />
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:orientation="horizontal">
++
++                <TextView
++                    android:id="@+id/subtitleTextView"
++                    android:layout_width="0dp"
++                    android:layout_height="wrap_content"
++                    android:layout_weight="1"
++                    android:ellipsize="end"
++                    android:maxLines="1"
++                    android:textAppearance="@style/TextAppearance.Twelve.N9.ListSubtitle" />
++
++                <TextView
++                    android:id="@+id/trailingTextView"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:layout_marginStart="8dp"
++                    android:maxLines="1"
++                    android:textAppearance="@style/TextAppearance.Twelve.N9.ListSubtitle" />
++
++            </LinearLayout>
++
++        </LinearLayout>
++
++    </LinearLayout>
++
++</LinearLayout>
+diff --git a/app/src/main/res/layout/item_n9_list_search.xml b/app/src/main/res/layout/item_n9_list_search.xml
+new file mode 100644
+index 0000000..7c61647
+--- /dev/null
++++ b/app/src/main/res/layout/item_n9_list_search.xml
+@@ -0,0 +1,52 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:orientation="vertical">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="44dp"
++        android:layout_marginHorizontal="16dp"
++        android:layout_marginVertical="12dp"
++        android:background="@drawable/n9_search_field"
++        android:gravity="center_vertical"
++        android:orientation="horizontal"
++        android:paddingHorizontal="16dp">
++
++        <EditText
++            android:id="@+id/searchEditText"
++            android:layout_width="0dp"
++            android:layout_height="match_parent"
++            android:layout_weight="1"
++            android:background="@null"
++            android:fontFamily="etesian-text"
++            android:hint="@string/n9_music_search"
++            android:imeOptions="actionSearch"
++            android:importantForAutofill="no"
++            android:inputType="text"
++            android:maxLines="1"
++            android:textColor="#191919"
++            android:textColorHint="#8C8C8C"
++            android:textSize="18sp" />
++
++        <ImageView
++            android:layout_width="24dp"
++            android:layout_height="24dp"
++            android:importantForAccessibility="no"
++            android:src="@drawable/ic_search"
++            android:tint="#333333" />
++
++    </LinearLayout>
++
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:layout_marginHorizontal="16dp"
++        android:background="@color/n9_music_rule" />
++
++</LinearLayout>

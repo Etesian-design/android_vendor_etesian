@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle flip clock (belle-ref1.jpg): hours and minutes on two black flip tiles. The digits size
+     themselves to the tile, clear of the date at the bottom at every widget size. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal" android:padding="2dp">
+    <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:layout_marginEnd="3dp" android:background="@drawable/bc_flip_tile">
+        <TextClock android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+            android:paddingTop="20dp" android:paddingBottom="20dp" android:paddingStart="6dp" android:paddingEnd="6dp"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="20sp" android:autoSizeMaxTextSize="84sp" android:maxLines="1"
+            android:format12Hour="h" android:format24Hour="HH" android:textColor="#FFFFFFFF" android:textSize="84sp"
+            android:fontFamily="etesian-text" android:textStyle="bold" android:shadowColor="#AA000000" android:shadowDy="2" android:shadowRadius="2"/>
+        <ImageView android:layout_width="match_parent" android:layout_height="1dp" android:layout_gravity="center_vertical" android:background="@drawable/bc_hinge"/>
+        <ImageView android:layout_width="4dp" android:layout_height="12dp" android:layout_gravity="center_vertical|start" android:background="@drawable/bc_pin"/>
+        <ImageView android:layout_width="4dp" android:layout_height="12dp" android:layout_gravity="center_vertical|end" android:background="@drawable/bc_pin"/>
+    </FrameLayout>
+    <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:layout_marginStart="3dp" android:background="@drawable/bc_flip_tile">
+        <TextClock android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+            android:paddingTop="20dp" android:paddingBottom="20dp" android:paddingStart="6dp" android:paddingEnd="6dp"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="20sp" android:autoSizeMaxTextSize="84sp" android:maxLines="1"
+            android:format12Hour="mm" android:format24Hour="mm" android:textColor="#FFFFFFFF" android:textSize="84sp"
+            android:fontFamily="etesian-text" android:textStyle="bold" android:shadowColor="#AA000000" android:shadowDy="2" android:shadowRadius="2"/>
+        <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="top|end"
+            android:layout_marginTop="8dp" android:layout_marginEnd="12dp" android:format12Hour="a" android:format24Hour=""
+            android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text" android:textStyle="bold"/>
+        <ImageView android:layout_width="match_parent" android:layout_height="1dp" android:layout_gravity="center_vertical" android:background="@drawable/bc_hinge"/>
+        <ImageView android:layout_width="4dp" android:layout_height="12dp" android:layout_gravity="center_vertical|start" android:background="@drawable/bc_pin"/>
+        <ImageView android:layout_width="4dp" android:layout_height="12dp" android:layout_gravity="center_vertical|end" android:background="@drawable/bc_pin"/>
+        <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="10dp" android:format12Hour="EEE MMM d" android:format24Hour="EEE MMM d"
+            android:textColor="#FF9A9BA0" android:textSize="15sp" android:fontFamily="etesian-text"/>
+    </FrameLayout>
+</LinearLayout>

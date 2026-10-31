@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One mail in the Belle Mail widget's list: blue dot when unread, bold sender, blue time right; the subject below. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_item" android:layout_width="match_parent" android:layout_height="58dp"
+    android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="10dp" android:paddingEnd="12dp">
+    <ImageView android:id="@+id/bc_unread" android:layout_width="9dp" android:layout_height="9dp" android:layout_marginEnd="9dp" android:src="@drawable/bc_mail_dot"/>
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <TextView android:id="@+id/bc_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end"
+                android:maxLines="1" android:textColor="#FF1A1A1A" android:textSize="16sp" android:textStyle="bold" android:fontFamily="etesian-text"/>
+            <TextView android:id="@+id/bc_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
+                android:textColor="#FF1C8FD8" android:textSize="14sp" android:fontFamily="etesian-text"/>
+        </LinearLayout>
+        <TextView android:id="@+id/bc_sub" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end"
+            android:maxLines="1" android:textColor="#FF6E6E73" android:textSize="14sp" android:fontFamily="etesian-text"/>
+    </LinearLayout>
+</LinearLayout>

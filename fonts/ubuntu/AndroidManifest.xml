@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ubuntu Sans as a choice in Settings > Display > Font. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bompotis.etesian.overlay.font.ubuntusans">
+    <overlay
+        android:targetPackage="android"
+        android:category="android.theme.customization.font"
+        android:priority="1" />
+    <application android:hasCode="false" android:label="Ubuntu Sans">
+        <meta-data
+            android:name="android.theme.customization.REQUIRED_SYSTEM_FONTS"
+            android:value="ubuntu-sans" />
+    </application>
+</manifest>

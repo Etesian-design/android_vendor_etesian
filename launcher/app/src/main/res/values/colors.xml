@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Etesian palette; mirrors object N9 in Util.kt. -->
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="n9_background">#FF000000</color>
+    <color name="n9_text">#FFFFFFFF</color>
+    <color name="n9_text_secondary">#FF8C8C8C</color>
+    <color name="n9_caption">#FFC8C8C8</color>
+    <color name="n9_accent">#FF2A86D8</color>
+    <color name="n9_tile">#FF2E2E2E</color>
+    <color name="n9_button">#FF3A3A3A</color>
+    <color name="n9_divider">#FF4A4A4A</color>
+</resources>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle calendar card (belle-ref1.jpg and the email/calendar reference): white paper with two
+     binder rings, the day as its header, then the next event (bold time, cyan bar, title). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="5dp"
+        android:background="@drawable/bc_paper" android:orientation="vertical" android:paddingBottom="8dp">
+        <TextView android:id="@+id/bc_day" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:paddingTop="4dp" android:paddingBottom="3dp" android:text="Today"
+            android:textColor="#FF1A1A1A" android:textSize="17sp" android:fontFamily="etesian-text"/>
+        <ImageView android:layout_width="match_parent" android:layout_height="1dp" android:background="#FFC9C9CC"/>
+        <TextView android:id="@+id/bc_empty" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center" android:text="No events for 7 days" android:textColor="#FF1A1A1A" android:textSize="17sp"
+            android:fontFamily="etesian-text"/>
+        <LinearLayout android:id="@+id/bc_event" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:visibility="gone">
+            <TextView android:id="@+id/bc_time" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#FF1A1A1A" android:textSize="15sp" android:textStyle="bold" android:fontFamily="etesian-text"/>
+            <ImageView android:layout_width="3dp" android:layout_height="26dp" android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
+                android:background="#FF19D3E6"/>
+            <TextView android:id="@+id/bc_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:ellipsize="end" android:maxLines="1" android:textColor="#FF1A1A1A" android:textSize="17sp" android:fontFamily="etesian-text"/>
+        </LinearLayout>
+    </LinearLayout>
+    <ImageView android:layout_width="8dp" android:layout_height="14dp" android:layout_gravity="top|start" android:layout_marginStart="44dp" android:background="@drawable/bc_ring"/>
+    <ImageView android:layout_width="8dp" android:layout_height="14dp" android:layout_gravity="top|end" android:layout_marginEnd="44dp" android:background="@drawable/bc_ring"/>
+</FrameLayout>

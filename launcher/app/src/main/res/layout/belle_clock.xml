@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle clock: no panel round it (transparent, as on Belle); shadowed text for any wallpaper. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/belle_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextClock
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="etesian-text"
+        android:format12Hour="h:mm"
+        android:format24Hour="HH:mm"
+        android:includeFontPadding="false"
+        android:textColor="#FFFFFFFF"
+        android:textFontWeight="300"
+        android:textSize="56sp" android:shadowColor="#99000000" android:shadowDy="1" android:shadowRadius="3" />
+
+    <TextClock
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="etesian-text"
+        android:format12Hour="EEEE d MMMM"
+        android:format24Hour="EEEE d MMMM"
+        android:textColor="#FFD0D0D0" android:shadowColor="#99000000" android:shadowDy="1" android:shadowRadius="3"
+        android:textSize="15sp" />
+</LinearLayout>

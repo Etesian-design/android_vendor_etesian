@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle single shortcut: the app's icon with its dark label tab over the icon's bottom edge. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bc_icon" android:layout_width="64dp" android:layout_height="64dp"
+        android:layout_gravity="center_horizontal|top" android:src="@drawable/belle_add"/>
+    <TextView android:id="@+id/bc_label" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top" android:layout_marginTop="50dp" android:minWidth="76dp"
+        android:background="@drawable/bc_label" android:ellipsize="end" android:gravity="center" android:maxLines="1"
+        android:paddingStart="6dp" android:paddingEnd="6dp" android:paddingTop="2dp" android:paddingBottom="3dp"
+        android:textColor="#FFFFFFFF" android:textSize="13sp" android:fontFamily="etesian-text"/>
+</FrameLayout>

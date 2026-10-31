@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle email widget: blue gradient header with the account centred and a round mail badge (unread count)
+     top right; white list of up to 20 mails that scrolls (as the Belle Mail widget), rows = blue dot when unread, bold sender, blue time right,
+     grey subject (bc_mail_item). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bc_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <FrameLayout android:layout_width="match_parent" android:layout_height="40dp" android:background="@drawable/bc_mail_header">
+        <TextView android:id="@+id/bc_account" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+            android:paddingStart="48dp" android:paddingEnd="48dp" android:ellipsize="end" android:maxLines="1" android:text="Mail"
+            android:textColor="#FFFFFFFF" android:textSize="18sp" android:fontFamily="etesian-text" android:shadowColor="#80000000" android:shadowDy="1" android:shadowRadius="1"/>
+        <FrameLayout android:layout_width="34dp" android:layout_height="34dp" android:layout_gravity="end|center_vertical" android:layout_marginEnd="6dp"
+            android:background="@drawable/bc_mail_badge">
+            <ImageView android:id="@+id/bc_glyph" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="6dp" android:src="@drawable/bc_glyph_mail"/>
+            <TextView android:id="@+id/bc_count" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+                android:textColor="#FF0E5E9E" android:textSize="15sp" android:textStyle="bold" android:fontFamily="etesian-text" android:visibility="gone"/>
+        </FrameLayout>
+    </FrameLayout>
+    <FrameLayout android:id="@+id/bc_list" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:background="@drawable/bc_white_body" android:paddingBottom="4dp">
+        <TextView android:id="@+id/bc_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:gravity="center" android:text="No new mail" android:textColor="#FF6E6E73" android:textSize="16sp" android:fontFamily="etesian-text"/>
+        <ListView android:id="@+id/bc_items" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:divider="#FFDADADD" android:dividerHeight="1dp" android:scrollbarSize="3dp" android:scrollbarStyle="insideOverlay"
+            android:fadeScrollbars="false" android:scrollbarThumbVertical="@drawable/bc_scroll_thumb" android:listSelector="#22000000"/>
+    </FrameLayout>
+</LinearLayout>

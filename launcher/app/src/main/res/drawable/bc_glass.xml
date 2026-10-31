@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Belle grey glass panel (music, weather). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><gradient android:angle="270" android:startColor="#E6505155" android:centerColor="#E62A2B2E" android:endColor="#E6141416"/>
+        <corners android:radius="14dp"/><stroke android:width="1dp" android:color="#FF0A0A0B"/></shape></item>
+    <item android:left="1dp" android:right="1dp" android:top="1dp" android:bottom="30dp"><shape>
+        <gradient android:angle="270" android:startColor="#26FFFFFF" android:endColor="#00FFFFFF"/><corners android:radius="13dp"/></shape></item>
+</layer-list>
