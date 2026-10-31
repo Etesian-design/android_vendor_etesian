@@ -5,9 +5,10 @@
     <ImageView android:id="@+id/bc_ring" android:layout_width="78dp" android:layout_height="78dp" android:layout_gravity="center"/>
     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center"
         android:gravity="center_horizontal" android:orientation="vertical">
-        <TextView android:id="@+id/bc_amount" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FFF0EFF0" android:textSize="21sp" android:textStyle="bold" android:shadowColor="#FF000000" android:shadowDy="1" android:shadowRadius="1" android:fontFamily="etesian-text"/>
+        <TextView android:id="@+id/bc_amount" android:layout_width="56dp" android:layout_height="30dp" android:gravity="center"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="29sp" android:includeFontPadding="false"
+            android:textColor="#FFF0EFF0" android:textStyle="bold" android:shadowColor="#FF000000" android:shadowDy="1" android:shadowRadius="1" android:fontFamily="etesian-text"/>
         <TextView android:id="@+id/bc_unit" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FFF0EFF0" android:textSize="14sp" android:textStyle="bold" android:shadowColor="#FF000000" android:shadowDy="1" android:shadowRadius="1" android:fontFamily="etesian-text"/>
+            android:textColor="#FFF0EFF0" android:textSize="21sp" android:includeFontPadding="false" android:textStyle="bold" android:shadowColor="#FF000000" android:shadowDy="1" android:shadowRadius="1" android:fontFamily="etesian-text"/>
     </LinearLayout>
 </FrameLayout>

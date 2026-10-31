@@ -94,6 +94,8 @@ object BelleClassic2 {
     /** The squircle clocks (belle-ref10.jpg, belle-ref4.jpg). */
     /** The glyph colour on a Belle toggle cap that is off (BelleCap.vue). */
     const val CAP_OFF = 0xFF2E343D.toInt()
+    /** A lit glyph on a cap that is on: Belle blue (belle-ref4). */
+    const val CAP_ON = 0xFF3C8FE6.toInt()
 
     /**
      * Moves a cap's glyph with the cap (bc_toggle_*, bc_sw_*, a 72 × 82 face): the cap sits up when on, so the glyph rises
@@ -220,12 +222,12 @@ class BelleSwitch1Widget : AppWidgetProvider() {
             if (k.word != null) {
                 v.setViewVisibility(R.id.bc_word, View.VISIBLE); v.setViewVisibility(R.id.bc_glyph, View.GONE)
                 v.setTextViewText(R.id.bc_word, k.word)
-                v.setTextColor(R.id.bc_word, if (on) 0xFFFFFFFF.toInt() else BelleClassic2.CAP_OFF)
+                v.setTextColor(R.id.bc_word, if (on) BelleClassic2.CAP_ON else BelleClassic2.CAP_OFF)
             } else {
                 v.setViewVisibility(R.id.bc_word, View.GONE); v.setViewVisibility(R.id.bc_glyph, View.VISIBLE)
                 v.setImageViewResource(R.id.bc_glyph, k.glyph)
                 // Belle: lit blue when on, embossed grey when off.
-                v.setInt(R.id.bc_glyph, "setColorFilter", if (on) 0xFFFFFFFF.toInt() else BelleClassic2.CAP_OFF)
+                v.setInt(R.id.bc_glyph, "setColorFilter", if (on) BelleClassic2.CAP_ON else BelleClassic2.CAP_OFF)
             }
             // the glyph rides on the cap: up when on, pressed down when off
             BelleClassic2.capGlyph(v, intArrayOf(R.id.bc_glyph, R.id.bc_word), on, 82f)
@@ -303,25 +305,29 @@ class BelleDataUsageWidget : AppWidgetProvider() {
         /** The 701's data meter: a squircle ringed by twelve #27AAE1 segments from 12 o'clock (the used share brighter), round a
          *  dark squircle that carries the amount. */
         private fun ring(ctx: Context, f: Float): Bitmap {
-            val px = ctx.dp(78f); val s = px.toFloat()
+            // the 701's mobiletrackewidgeticon on its 80 unit face: ring band 8.5 deep, the inner squircle 62 across
+            val px = ctx.dp(78f); val s = px.toFloat(); val u = s / 80f
             val bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val p = Paint(Paint.ANTI_ALIAS_FLAG)
-            val m = s * 0.04f
-            val outer = squircle(m, m, s - 2 * m, 2.7)
-            val inner = squircle(s * 0.19f, s * 0.19f, s * 0.62f, 2.7)
+            val outer = squircle(0f, 0f, s, 2.7)
             p.shader = LinearGradient(0f, 0f, 0f, s, 0xFF58595B.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
             c.drawPath(outer, p); p.shader = null
             c.save(); c.clipPath(outer)
             val sweep = RectF(-s, -s, 2 * s, 2 * s)
-            p.color = 0x4D27AAE1; c.drawArc(sweep, -90f, 360f, true, p)
-            p.color = 0xB327AAE1.toInt(); c.drawArc(sweep, -90f, 360f * f.coerceIn(0f, 1f), true, p)
-            p.color = 0x59000000; p.strokeWidth = s * 0.012f; p.style = Paint.Style.STROKE
-            for (k in 0 until 12) { val a = Math.toRadians(k * 30.0); c.drawLine(s / 2, s / 2, s / 2 + s * kotlin.math.sin(a).toFloat(), s / 2 - s * kotlin.math.cos(a).toFloat(), p) }
+            p.color = 0x4C27AAE1; c.drawArc(sweep, -90f, 360f, true, p)
+            p.color = 0xB227AAE1.toInt(); c.drawArc(sweep, -90f, 360f * f.coerceIn(0f, 1f), true, p)
+            p.style = Paint.Style.STROKE; p.strokeWidth = u * 0.5f
+            for (k in 0 until 12) {
+                val a = Math.toRadians(k * 30.0); val dx = kotlin.math.sin(a).toFloat(); val dy = -kotlin.math.cos(a).toFloat()
+                p.color = 0x26000000; c.drawLine(s / 2, s / 2, s / 2 + s * dx, s / 2 + s * dy, p)
+                p.color = 0x26FFFFFF; c.drawLine(s / 2 + u * 0.5f, s / 2 + u * 0.5f, s / 2 + u * 0.5f + s * dx, s / 2 + u * 0.5f + s * dy, p)
+            }
             c.restore()
-            p.style = Paint.Style.FILL
-            p.shader = LinearGradient(0f, s * 0.19f, 0f, s * 0.81f, 0xFF58595B.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
-            c.drawPath(inner, p)
+            p.style = Paint.Style.FILL; p.color = 0xFF575756.toInt()
+            c.drawPath(squircle(8.5f * u, 8.5f * u, 63f * u, 2.7), p)
+            p.shader = LinearGradient(0f, 9f * u, 0f, 71f * u, 0xFF58595B.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
+            c.drawPath(squircle(9f * u, 9f * u, 62f * u, 2.7), p)
             return bmp
         }
 

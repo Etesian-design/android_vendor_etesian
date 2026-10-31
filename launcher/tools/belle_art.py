@@ -7,7 +7,7 @@ src/stories/belle/BelleDial.vue, BelleCap.vue, BelleOnOff.vue):
     3.6 for the on/off track, 2.7 for its knob and the data meter
   - the dial (a 126 grid): warm charcoal #41413C -> #282823 in a #50504B -> #34342F bezel, white bars at 12/3/6/9, faint ticks
     between, a date window at 3 o'clock; white hour (0.60 r, 5 wide) and minute (0.86 r, 2.6 wide) hands, #4791DC second hand
-  - the toggle cap (72 x 82): blue-grey metal #A6B6C1 -> #555E70, up over a blue well when on, down in a dark well when off
+  - the toggle cap (72 x 82): blue-grey metal #A6B6C1 -> #555E70, up over a blue well (bright at the bottom) when on, down in a dark well when off
   - the on/off switch (66 x 44): green #7EC142 -> #1C6332 or grey track, white knob with the power glyph, left when on
 
 Run: python3 tools/belle_art.py   (from launcher/; rewrites the files listed in OUT)
@@ -85,7 +85,7 @@ def cap(on):
     metal = lambda y1, y2: grad([(0, '#FFA6B6C1'), (1, '#FF555E70')], y1, y2)
     body = path(squircle(72, 82, 2.95), gradient=metal(0, 82), stroke='#4D010101', width=1)
     if on:
-        body += path(squircle(66, 76, 2.95, 3, 3), gradient=grad([(0, '#FF2FA7DD'), (0.16, '#FF2F86DD'), (1, '#FF355CA6')], 3, 79), stroke='#FF355CA6', width=0.8)
+        body += path(squircle(66, 76, 2.95, 3, 3), gradient=grad([(0, '#FF2FA7DD'), (0.16, '#FF2F86DD'), (1, '#FF355CA6')], 74, 46), stroke='#FF355CA6', width=0.8)
     else:
         body += path(squircle(66, 76, 2.95, 3, 3), fill='#FF4E5662', stroke='#FF808C9A', width=0.8)
     y = 4 if on else 14
