@@ -134,13 +134,18 @@ object BelleClassic2 {
         v.setViewLayoutMargin(R.id.bc_date, RemoteViews.MARGIN_END, side * (1 - face.dateX) - date / 2, dip)
         v.setTextViewTextSize(R.id.bc_date, dip, side * face.text)
         if (!day) return
-        val dayW = side * 0.26f
         val textSize = side * face.text
+        // The gear clock's day is top-anchored and sits in a round bubble as large as the date's (belle-ref11), centred on dayX, dayY;
+        // a centred day (dayY 0.5) is plain text.
+        val bubble = face.dayY != 0.5f
+        val dayW = if (bubble) date else side * 0.26f
         v.setViewLayoutWidth(R.id.bc_day, dayW, dip)
         v.setViewLayoutMargin(R.id.bc_day, RemoteViews.MARGIN_START, side * face.dayX - dayW / 2, dip)
-        // The gear clock's day is top-anchored: centre its line on dayY (a centred one keeps 0.5).
-        if (face.dayY != 0.5f) v.setViewLayoutMargin(R.id.bc_day, RemoteViews.MARGIN_TOP, side * face.dayY - textSize * 0.7f, dip)
-        v.setTextViewTextSize(R.id.bc_day, dip, textSize)
+        if (bubble) {
+            v.setViewLayoutHeight(R.id.bc_day, date, dip)
+            v.setViewLayoutMargin(R.id.bc_day, RemoteViews.MARGIN_TOP, side * face.dayY - date / 2, dip)
+        }
+        v.setTextViewTextSize(R.id.bc_day, dip, if (bubble) textSize * 0.78f else textSize)
     }
 }
 
