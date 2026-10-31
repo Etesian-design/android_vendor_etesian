@@ -2,7 +2,7 @@
 # spells the time; Notes keeps a note written with + and deletes it with the bin.
 unlock
 providers=$(sh_ dumpsys appwidget | grep -o 'etesian.launcher/com.bompotis.etesian.launcher.Belle[A-Za-z0-9]*' | sort -u)
-for w in Switch1 DataUsage Notes Agenda BigClock GearClock LcdClock WordClock Web WeatherClassic MusicClassic Rss FmSwitch; do
+for w in Switch1 DataUsage Notes Agenda StackMail BigClock GearClock LcdClock WordClock Web WeatherClassic MusicClassic Rss FmSwitch; do
   check "provider Belle${w}Widget registered" 'echo "$providers" | grep -q "\.Belle${w}Widget$"'
 done
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }
