@@ -311,14 +311,17 @@ class BelleDataUsageWidget : AppWidgetProvider() {
 class BelleMailWidget : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, ids: IntArray) = updateAll(ctx)
 
-    private class Mail(val pkg: String, val from: String, val subject: String, val account: String?, val time: Long)
+    /** [tap] is the notification's own action: that mail in its app. */
+    class Mail(val pkg: String, val from: String, val subject: String, val account: String?, val time: Long,
+        val tap: android.app.PendingIntent?)
+
+    /** The new mails (email notifications, newest first), the unread count and the app that opens them. */
+    data class Inbox(val mails: List<Mail>, val unread: Int, val open: Intent?)
 
     companion object {
         const val MAIL_PKG = "com.bompotis.etesian.mail"
 
-        fun updateAll(ctx: Context) {
-            val ids = BelleWidgets.ids(ctx, BelleMailWidget::class.java)
-            if (ids.isEmpty()) return
+        fun inbox(ctx: Context): Inbox {
             val sbns = runCatching { EventsStore.service?.activeNotifications }.getOrNull().orEmpty()
                 .filter { it.notification.category == android.app.Notification.CATEGORY_EMAIL }
             val (sums, singles) = sbns.partition { it.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY != 0 }
@@ -326,16 +329,26 @@ class BelleMailWidget : AppWidgetProvider() {
                 val e = it.notification.extras
                 Mail(it.packageName, e.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString().orEmpty(),
                     e.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()?.lineSequence()?.firstOrNull().orEmpty(),
-                    e.getCharSequence(android.app.Notification.EXTRA_SUB_TEXT)?.toString(), it.postTime)
+                    e.getCharSequence(android.app.Notification.EXTRA_SUB_TEXT)?.toString(), it.postTime, it.notification.contentIntent)
             }.sortedByDescending { it.time }
-            val unread = maxOf(mails.size, sums.sumOf { it.notification.number })
-            val p = BelleClassic2.prefs(ctx)
-            mails.firstOrNull()?.account?.takeIf { it.isNotBlank() }?.let { p.edit().putString("mail_account", it).apply() }
+            mails.firstOrNull()?.account?.takeIf { it.isNotBlank() }?.let { BelleClassic2.prefs(ctx).edit().putString("mail_account", it).apply() }
             val pkg = mails.firstOrNull()?.pkg ?: MAIL_PKG
-            val open = ctx.packageManager.getLaunchIntentForPackage(pkg)
-                ?: ctx.packageManager.getLaunchIntentForPackage(MAIL_PKG)
+            val open = ctx.packageManager.getLaunchIntentForPackage(pkg) ?: ctx.packageManager.getLaunchIntentForPackage(MAIL_PKG)
+            return Inbox(mails, maxOf(mails.size, sums.sumOf { it.notification.number }), open)
+        }
+
+        fun account(ctx: Context) = BelleClassic2.prefs(ctx).getString("mail_account", null) ?: "Mail"
+
+        fun time(ctx: Context, t: Long): CharSequence =
+            if (DateUtils.isToday(t)) DateFormat.getTimeFormat(ctx).format(java.util.Date(t)) else DateFormat.format("d MMM", t)
+
+        fun updateAll(ctx: Context) {
+            BelleStackMailWidget.updateAll(ctx)
+            val ids = BelleWidgets.ids(ctx, BelleMailWidget::class.java)
+            if (ids.isEmpty()) return
+            val (mails, unread, open) = inbox(ctx)
             val v = RemoteViews(ctx.packageName, R.layout.bc_mail)
-            v.setTextViewText(R.id.bc_account, p.getString("mail_account", null) ?: "Mail")
+            v.setTextViewText(R.id.bc_account, account(ctx))
             v.setViewVisibility(R.id.bc_count, if (unread > 0) View.VISIBLE else View.GONE)
             v.setViewVisibility(R.id.bc_glyph, if (unread > 0) View.GONE else View.VISIBLE)
             v.setTextViewText(R.id.bc_count, if (unread > 99) "99+" else unread.toString())
@@ -344,13 +357,71 @@ class BelleMailWidget : AppWidgetProvider() {
                 RemoteViews(ctx.packageName, R.layout.bc_mail_item).apply {
                     setTextViewText(R.id.bc_title, m.from)
                     setTextViewText(R.id.bc_sub, m.subject)
-                    setTextViewText(R.id.bc_time, if (DateUtils.isToday(m.time)) DateFormat.getTimeFormat(ctx).format(java.util.Date(m.time))
-                        else DateFormat.format("d MMM", m.time))
+                    setTextViewText(R.id.bc_time, time(ctx, m.time))
                     setOnClickFillInIntent(R.id.bc_item, Intent())
                 }
             }
             if (open != null) BelleWidgets.list(ctx, v, R.id.bc_items, R.id.bc_empty, rows, 67, open)
             if (open != null) v.setOnClickPendingIntent(R.id.bc_root, BelleWidgets.activity(ctx, 66, open))
+            AppWidgetManager.getInstance(ctx).updateAppWidget(ids, v)
+        }
+    }
+}
+
+/** Belle's Latest mail (stackemail): one new mail at a time, newest first; ▲ ▼ step through them, a tap opens that mail. */
+class BelleStackMailWidget : AppWidgetProvider() {
+    override fun onUpdate(ctx: Context, awm: AppWidgetManager, ids: IntArray) = updateAll(ctx)
+
+    override fun onReceive(ctx: Context, intent: Intent) {
+        when (intent.action) {
+            NEWER -> shown(ctx, shown(ctx) - 1)
+            OLDER -> shown(ctx, shown(ctx) + 1)
+            else -> { super.onReceive(ctx, intent); return }
+        }
+        updateAll(ctx)
+    }
+
+    companion object {
+        private const val NEWER = "com.bompotis.etesian.launcher.MAIL_NEWER"
+        private const val OLDER = "com.bompotis.etesian.launcher.MAIL_OLDER"
+        private fun shown(ctx: Context) = BelleClassic2.prefs(ctx).getInt("stackmail_shown", 0)
+        private fun shown(ctx: Context, i: Int) = BelleClassic2.prefs(ctx).edit().putInt("stackmail_shown", i.coerceAtLeast(0)).apply()
+
+        private fun pi(ctx: Context, action: String, code: Int) = android.app.PendingIntent.getBroadcast(ctx, code,
+            Intent(ctx, BelleStackMailWidget::class.java).setAction(action),
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+
+        fun updateAll(ctx: Context) {
+            val ids = BelleWidgets.ids(ctx, BelleStackMailWidget::class.java)
+            if (ids.isEmpty()) return
+            val box = BelleMailWidget.inbox(ctx)
+            val n = box.mails.size
+            // a newer mail than the one last seen on top brings the widget back to it
+            val p = BelleClassic2.prefs(ctx)
+            val newest = box.mails.firstOrNull()?.time ?: 0L
+            if (newest != p.getLong("stackmail_newest", 0L)) { p.edit().putLong("stackmail_newest", newest).apply(); shown(ctx, 0) }
+            val i = shown(ctx).coerceAtMost((n - 1).coerceAtLeast(0))
+            val m = box.mails.getOrNull(i)
+            val v = RemoteViews(ctx.packageName, R.layout.bc_stackmail)
+            v.setTextViewText(R.id.bc_account, BelleMailWidget.account(ctx))
+            v.setViewVisibility(R.id.bc_count, if (box.unread > 0) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.bc_glyph, if (box.unread > 0) View.GONE else View.VISIBLE)
+            v.setTextViewText(R.id.bc_count, if (box.unread > 99) "99+" else box.unread.toString())
+            v.setViewVisibility(R.id.bc_item, if (m != null) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.bc_empty, if (m == null) View.VISIBLE else View.GONE)
+            v.setTextViewText(R.id.bc_empty, if (EventsStore.isEnabled(ctx)) "No new mail" else "Allow Etesian events notification access")
+            if (m != null) {
+                v.setTextViewText(R.id.bc_title, m.from)
+                v.setTextViewText(R.id.bc_sub, m.subject)
+                v.setTextViewText(R.id.bc_time, BelleMailWidget.time(ctx, m.time))
+            }
+            v.setTextViewText(R.id.bc_position, if (n > 0) "${i + 1} of $n" else "")
+            v.setInt(R.id.bc_up, "setColorFilter", if (i > 0) 0xFFFFFFFF.toInt() else 0xFF6A6B70.toInt())
+            v.setInt(R.id.bc_down, "setColorFilter", if (i < n - 1) 0xFFFFFFFF.toInt() else 0xFF6A6B70.toInt())
+            v.setOnClickPendingIntent(R.id.bc_up, pi(ctx, NEWER, 71))
+            v.setOnClickPendingIntent(R.id.bc_down, pi(ctx, OLDER, 72))
+            // the mail itself (its notification's action), else the mail app
+            (m?.tap ?: box.open?.let { BelleWidgets.activity(ctx, 73, it) })?.let { v.setOnClickPendingIntent(R.id.bc_body, it) }
             AppWidgetManager.getInstance(ctx).updateAppWidget(ids, v)
         }
     }
