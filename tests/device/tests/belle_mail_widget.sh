@@ -8,14 +8,7 @@ seek() { for _ in 1 2 3 4 5 6 7 8; do sh_ input swipe 540 600 540 1800 150; done
 acct='resource-id="com.bompotis.etesian.launcher:id/bc_account"'
 wp=$(pref_switch home Widgets 1)  # the Widgets view is off by default: on for the test, restored at the end
 # the widget alone on an emptied Widgets view (the user's own may be full); their widgets are put back at the end
-sh_ cp /data/data/$LAUNCHER/shared_prefs/widgets.xml /data/local/tmp/wbak.xml
-prefs_put() { sh_ am force-stop $LAUNCHER; sh_ cp $1 /data/data/$LAUNCHER/shared_prefs/widgets.xml
-  u=$(sh_ stat -c %u /data/data/$LAUNCHER); sh_ chown $u:$u /data/data/$LAUNCHER/shared_prefs/widgets.xml
-  sh_ chmod 660 /data/data/$LAUNCHER/shared_prefs/widgets.xml; sh_ restorecon /data/data/$LAUNCHER/shared_prefs/widgets.xml >/dev/null 2>&1; }
-sh_ "echo \"<?xml version='1.0' encoding='utf-8' standalone='yes' ?><map><string name=\\\"widget_items\\\"></string></map>\" > /data/local/tmp/wempty.xml"
-prefs_put /data/local/tmp/wempty.xml
-widgets_pane
-sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind widget --es cls BelleMailWidget >/dev/null; sleep 3
+widgets_only BelleMailWidget
 check "mail widget shows its header" 'seek "$acct"'
 check "and new mail or \"No new mail\"" 'dump | grep -q "No new mail\|bc_title\|notification access"'
 # Regression 2026-10-30: the widget showed a fixed three mails. As Belle's Mail widget, it holds up to 20 and scrolls.
@@ -35,5 +28,5 @@ sh_ input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); sleep 5
 check "tapping opens Mail" 'top_activity | grep -q "com.bompotis.etesian.mail"'
 check "launcher did not crash" '! crashed com.bompotis.etesian.launcher'
 sh_ am force-stop com.bompotis.etesian.mail; home
-prefs_put /data/local/tmp/wbak.xml
+widgets_restore
 pref_switch home Widgets "$wp" >/dev/null; home

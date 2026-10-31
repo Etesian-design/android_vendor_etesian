@@ -12,12 +12,12 @@ seek() { for _ in 1 2 3 4 5 6 7 8; do sh_ input swipe 540 600 540 1800 150; done
   for _ in 1 2 3 4 5 6 7 8 9 10; do dump | grep -q "$1" && return 0; sh_ input swipe 540 1500 540 900 300; sleep 0.8; done; return 1; }
 wp=$(pref_switch home Widgets 1)  # the Widgets view is off by default: on for the test, restored at the end
 widgets_pane; down
-dump | grep -q 'O.Clock\|Oh \|ty\b\|teen' || add_widget "Word clock (Belle classic)"
-down
+widgets_only BelleWordClockWidget # on its own: the user's Widgets view may have no room for it
 ones="One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve"
 h=$(sh_ date +%I | sed 's/^0//'); word=$(echo $ones | cut -d' ' -f$h); next=$(echo $ones | cut -d' ' -f$(( h % 12 + 1 )))
 # late in the hour it reads "Five to <next hour>", so either hour is right
 check "word clock shows the hour ($word or $next)" 'seek_widget "text=\"$word\"" || seek_widget "text=\"$next\""'
+widgets_restore; widgets_pane; down
 dump | grep -q 'content-desc="New note"' || add_widget "Notes (Belle classic)"; sleep 2
 down
 note="Belle note $$"
