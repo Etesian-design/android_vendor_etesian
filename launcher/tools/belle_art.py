@@ -80,6 +80,12 @@ OUT['bc_hand_second'] = vector(400, 400, 126, 126,
     + path('M63,60.8a2.2,2.2 0,1 1,0 4.4a2.2,2.2 0,1 1,0 -4.4z', fill='#FF4791DC')
     + path('M63,62a1,1 0,1 1,0 2a1,1 0,1 1,0 -2z', fill='#FFFFFFFF'))
 
+# the gear clock's second hand (belle-ref11): thin and light, not the blue one of the squircle clocks
+OUT['bc_hand_second_gear'] = vector(400, 400, 126, 126,
+    path('M63,76V12', stroke='#FFE6E6E8', width=0.8)
+    + path('M63,57.5a5.5,5.5 0,1 1,0 11a5.5,5.5 0,1 1,0 -11z', gradient=grad([(0, '#FF6A6B70'), (0.5, '#FF3A3B3F'), (1, '#FF202124')], 57.5, 68.5), stroke='#FF0E0E10', width=0.6)
+    + path('M63,61.4a1.6,1.6 0,1 1,0 3.2a1.6,1.6 0,1 1,0 -3.2z', fill='#FFD0D1D5'))
+
 # ---- the toggle cap (switches 4x1 and the 1x1 switch) ----
 def cap(on):
     metal = lambda y1, y2: grad([(0, '#FFA6B6C1'), (1, '#FF555E70')], y1, y2)

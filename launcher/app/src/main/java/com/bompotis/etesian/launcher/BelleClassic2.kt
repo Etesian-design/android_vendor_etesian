@@ -698,9 +698,14 @@ class BelleGearClockWidget : AppWidgetProvider() {
             val bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp); val s = px.toFloat(); val m = s / 2
             val p = Paint(Paint.ANTI_ALIAS_FLAG)
-            p.shader = RadialGradient(m, m * 0.8f, m, 0xFF4A4B4F.toInt(), 0xFF141416.toInt(), Shader.TileMode.CLAMP)
+            // the lighter metal rim carrying the twelve ticks, then the dark face (belle-ref11)
+            p.shader = LinearGradient(0f, 0f, 0f, s, intArrayOf(0xFF6A6B70.toInt(), 0xFF3A3B3F.toInt(), 0xFF202124.toInt()), null, Shader.TileMode.CLAMP)
             c.drawCircle(m, m, m, p)
+            val face = m * 53f / 63f
+            p.shader = RadialGradient(m, m * 0.8f, face, 0xFF3A3B3F.toInt(), 0xFF121214.toInt(), Shader.TileMode.CLAMP)
+            c.drawCircle(m, m, face, p)
             p.shader = null
+            c.save(); c.clipPath(Path().apply { addCircle(m, m, face, Path.Direction.CW) })
             fun gear(cx: Float, cy: Float, r: Float, teeth: Int, color: Int) {
                 val path = Path()
                 for (i in 0 until teeth * 2) {
@@ -718,10 +723,11 @@ class BelleGearClockWidget : AppWidgetProvider() {
             gear(m * 0.62f, m * 1.32f, m * 0.38f, 12, 0xFF2A2B2F.toInt())
             gear(m, m, m * 0.36f, 12, 0xFF37383C.toInt())
             gear(m * 1.38f, m * 1.3f, m * 0.22f, 9, 0xFF323337.toInt())
-            p.color = 0xFF8E8F94.toInt(); p.strokeWidth = s * 0.012f; p.strokeCap = Paint.Cap.ROUND
+            c.restore()
+            p.color = 0xFFC8C9CD.toInt(); p.strokeWidth = s * 0.011f; p.strokeCap = Paint.Cap.ROUND
             for (i in 0 until 12) {
                 val a = Math.PI * i / 6
-                val r1 = m * 0.86f; val r2 = m * (if (i % 3 == 0) 0.76f else 0.80f)
+                val r1 = m * 0.945f; val r2 = m * (if (i % 3 == 0) 0.86f else 0.88f)
                 c.drawLine(m + r1 * cos(a).toFloat(), m + r1 * sin(a).toFloat(), m + r2 * cos(a).toFloat(), m + r2 * sin(a).toFloat(), p)
             }
             p.style = Paint.Style.STROKE; p.strokeWidth = s * 0.008f; p.color = 0xFF050506.toInt()

@@ -7,7 +7,7 @@
     <FrameLayout android:id="@+id/bc_face" android:layout_width="220dp" android:layout_height="220dp" android:layout_gravity="center">
         <AnalogClock android:id="@+id/bc_clock" android:layout_width="match_parent" android:layout_height="match_parent"
             android:dial="@drawable/bc_square_dial" android:hand_hour="@drawable/bc_hand_hour_l" android:hand_minute="@drawable/bc_hand_minute_l"
-            android:hand_second="@drawable/bc_hand_second"/>
+            android:hand_second="@drawable/bc_hand_second_gear"/>
         <TextClock android:id="@+id/bc_day" android:layout_width="52dp" android:layout_height="wrap_content" android:layout_gravity="top|start"
             android:layout_marginStart="40dp" android:layout_marginTop="146dp" android:format12Hour="EEE" android:format24Hour="EEE"
             android:gravity="center" android:textColor="#FFB4B5B9" android:textSize="14sp" android:fontFamily="etesian-text"/>
