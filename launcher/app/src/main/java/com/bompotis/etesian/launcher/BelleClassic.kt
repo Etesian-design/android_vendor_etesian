@@ -32,7 +32,7 @@ import android.widget.RemoteViews
 /**
  * Exact Symbian Belle widgets, next to the Belle-style ones in [BelleWidgets]: the flip clock,
  * the calendar card, single app and contact shortcuts, the square analog clock, the Wi-Fi switch
- * and the row of switches (references: docs/bugs-2026-10-25.md, belle-ref*.jpg).
+ * and the row of switches (references: notes/bugs-2026-10-25.md (local notes), belle-ref*.jpg).
  */
 object BelleClassic {
     const val ACTION_TOGGLE = "com.bompotis.etesian.launcher.BELLE_TOGGLE"

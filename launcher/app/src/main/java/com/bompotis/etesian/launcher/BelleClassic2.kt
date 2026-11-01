@@ -46,7 +46,7 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * More exact Symbian Belle widgets (references belle-ref7..11 in docs/bugs-2026-10-25.md): the 1×1
+ * More exact Symbian Belle widgets (references belle-ref7..11 in notes/bugs-2026-10-25.md (local notes)): the 1×1
  * switches, the data tracker, Notes, the big calendar, the large clocks and website shortcuts.
  */
 object BelleClassic2 {
