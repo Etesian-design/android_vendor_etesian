@@ -18,6 +18,8 @@ class HomeActivity : ComponentActivity() {
         const val PAGE_SWITCHER = 2
         const val PAGE_WIDGETS = 3
         const val EXTRA_PAGE = "etesian.page"
+        /** Read by SystemUI (EtesianBubble): 1 while the Events view is on screen. */
+        const val EVENTS_SHOWING = "etesian_events_showing"
 
         /** Home, showing Open applications; where minimised applications go. */
         fun switcherIntent(ctx: android.content.Context): Intent =
@@ -74,6 +76,7 @@ class HomeActivity : ComponentActivity() {
             describePane(index)
             pages.forEachIndexed { i, p -> if (i != index) p.second.exitModes() }
             pages.getOrNull(index)?.second?.onShown()
+            eventsShowing(resumed)
         }
         setContentView(pager)
         Platform.homeContent = pager
@@ -244,11 +247,22 @@ class HomeActivity : ComponentActivity() {
         RunningApps.prune(this)
         N9Defaults.applyOnce(this)
         pages.getOrNull(pager.currentPage)?.second?.onShown()
+        eventsShowing(true)
     }
 
     override fun onPause() {
         super.onPause()
         resumed = false
+        eventsShowing(false)
+    }
+
+    /**
+     * Tells SystemUI the Events view is on screen (Settings.Secure etesian_events_showing): a new
+     * notification then slides into its section here instead of popping up as a bubble.
+     */
+    private fun eventsShowing(resumed: Boolean) {
+        val on = resumed && pages.getOrNull(pager.currentPage)?.second is EventsPage
+        runCatching { android.provider.Settings.Secure.putInt(contentResolver, EVENTS_SHOWING, if (on) 1 else 0) }
     }
 
     @Deprecated("Widget bind/configure results")
