@@ -1,4 +1,4 @@
-# Android extras → glance line on the lock screen (mock 18): "Alarm 07:00 · Design review 14:00"
+# Settings → glance line on the lock screen (mock 18): "Alarm 07:00 · Design review 14:00"
 # right-aligned under the date in readable grey. No alarm is set: the test publishes only an event.
 check "glance code present" 'grep -q etesian_extra_glance /home/memphisx/android/lineage/frameworks/base/packages/SystemUI/src/com/android/systemui/keyguard/ui/view/layout/sections/KeyguardSliceViewSection.kt'
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }

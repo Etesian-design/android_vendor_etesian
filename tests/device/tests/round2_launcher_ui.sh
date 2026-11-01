@@ -61,15 +61,16 @@ check "Back leaves widget edit mode" '! dump | grep -q "text=\"Done\""'
 
 # -- settings --
 sh_ am start --activity-clear-task -n com.bompotis.etesian.launcher/.SettingsActivity >/dev/null; sleep 2
-for t in "Home screen" "Applications" "Events" "Wallpapers &amp; backgrounds"; do
+for t in "Home screen" "Applications" "Events and notifications"; do
   check "settings lists $t" 'dump | grep -q "text=\"$t\""'
 done
-# System is last: below the fold once Android extras is listed.
-check "settings lists System" 'dump | grep -q "text=\"System\"" || { sh_ input swipe 540 1700 540 600 300; sleep 1; dump | grep -q "text=\"System\""; }'
+# Wallpapers and System are below the fold with all the pages listed.
+check "settings lists Wallpapers" 'dump | grep -q "text=\"Wallpapers &amp; backgrounds\"" || { sh_ input swipe 540 1700 540 1100 300; sleep 1; dump | grep -q "text=\"Wallpapers &amp; backgrounds\""; }'
 for _ in 1 2; do sh_ input swipe 540 600 540 1700 200; done; sleep 1
-tap_text "Wallpapers &amp; backgrounds"; sleep 2
+check "settings lists System" '( for _ in 1 2 3 4; do dump | grep -q "text=\"System\"" && exit 0; sh_ input swipe 540 1700 540 600 300; sleep 1; done; false )'
+sh_ am start -f 0x10008000 -n com.bompotis.etesian.launcher/.SettingsActivity --es section wallpapers >/dev/null; sleep 2
 check "wallpaper page offers the home wallpaper mode" 'dump | grep -q "text=\"Home screen\""'
-sh_ input keyevent BACK; sleep 1; tap_text "Events"; sleep 2
+sh_ am start -f 0x10008000 -n com.bompotis.etesian.launcher/.SettingsActivity --es section events >/dev/null; sleep 2
 check "events page opens (weather setting)" 'dump | grep -q "text=\"Weather location\""'
 check "launcher did not crash" '! crashed com.bompotis.etesian.launcher'
 home

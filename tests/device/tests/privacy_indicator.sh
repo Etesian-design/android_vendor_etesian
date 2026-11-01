@@ -1,4 +1,4 @@
-# Android extras → privacy indicators (mock 12): while the camera is in use a green squircle camera
+# Settings → privacy indicators (mock 12): while the camera is in use a green squircle camera
 # glyph in the status bar and "Camera in use · <app> · tap to stop" at the top of the status menu.
 # Silent: the camera app only shows its preview (no photo is taken).
 check "privacy glyph code" 'grep -q etesian_extra_privacy /home/memphisx/android/lineage/frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/events/PrivacyDotViewController.kt'

@@ -1,4 +1,4 @@
-# Android extras → Private space (story Phone v2, state private-space): Android's private space as
+# Settings → Private space (story Phone v2, state private-space): Android's private space as
 # a locked folder at the end of the Applications grid; opening it asks for the security code (N9
 # code screen); its apps show in the folder; closing it locks the space again. Off by default.
 # Uses a temporary private profile, removed at the end. (No test PIN: this phone refuses to set

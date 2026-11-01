@@ -1,4 +1,4 @@
-# Android extras → Share network QR (story Phone v2, state wifi-qr): "Share network" in Etesian
+# Settings → Share network QR (story Phone v2, state wifi-qr): "Share network" in Etesian
 # settings → a dim sheet with the QR code, "SSID · password" and Close. Scanning is the camera's:
 # no Scan row, and the status menu's Wi-Fi long-press never shows an invented sheet.
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }

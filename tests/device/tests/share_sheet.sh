@@ -1,4 +1,4 @@
-# Android extras → Share filter and pinned targets (mocks 11, 11b, 11c): the chooser is the N9 sheet
+# Sharing → N9 share sheet (mocks 11, 11b, 11c): the chooser is the N9 sheet
 # (Filter with word-start matching, Pinned by long-press, All apps); Suggested people optional.
 # Off: the stock chooser. Nothing is shared: the sheet is closed with Back.
 check "ShareActivity.kt exists" '[ -f /home/memphisx/android/lineage/vendor/etesian/launcher/app/src/main/java/com/bompotis/etesian/launcher/ShareActivity.kt ]'
@@ -8,11 +8,11 @@ share2() { sh_ am start -a android.intent.action.SEND -t text/plain --es android
 old=$(sh_ settings get secure etesian_extra_share)
 unlock; home
 sh_ settings put secure etesian_extra_share 0
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2
+sh_ am start -n $LAUNCHER/.SettingsActivity --es section sharing >/dev/null; sleep 2
 sh_ input keyevent BACK; sleep 1
 check "off: alias disabled" 'sh_ pm dump $LAUNCHER | grep -A2 "disabledComponents" | grep -q ShareChooser || ! sh_ pm query-activities -a android.intent.action.CHOOSER | grep -q ShareChooser'
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2
-tap_text "Share filter and pinned targets"; sleep 1.5
+sh_ am start -n $LAUNCHER/.SettingsActivity --es section sharing >/dev/null; sleep 2
+tap_text "N9 share sheet"; sleep 1.5
 check "switch on" '[ "$(sh_ settings get secure etesian_extra_share)" = 1 ]'
 home; sleep 1
 share
@@ -36,8 +36,8 @@ sh_ input swipe $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) $(( ($1+$3)/2 )) $(( ($2+$4)/2
 sleep 2.5
 check "long-press again unpins ($first listed once)" '[ $(dump | grep -o "text=\"$first\"" | wc -l) = 1 ]'
 sh_ input keyevent BACK; sleep 1
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2
-tap_text "Share filter and pinned targets"; sleep 1.5; home
+sh_ am start -n $LAUNCHER/.SettingsActivity --es section sharing >/dev/null; sleep 2
+tap_text "N9 share sheet"; sleep 1.5; home
 share
 check "off again: stock chooser" '! top_activity | grep -q ShareActivity'
 sh_ input keyevent BACK; sleep 1

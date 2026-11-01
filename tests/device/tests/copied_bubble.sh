@@ -1,4 +1,4 @@
-# Android extras → "Copied" bubble (story Phone v2, state copied): copying shows the notification
+# Settings → "Copied" bubble (story Phone v2, state copied): copying shows the notification
 # bubble "Copied · Text copied to clipboard" instead of the clipboard overlay. Off by default.
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }
 bubble() { sh_ dumpsys window windows | grep -q "EtesianBubble"; }

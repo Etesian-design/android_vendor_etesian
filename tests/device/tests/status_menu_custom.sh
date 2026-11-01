@@ -1,4 +1,4 @@
-# Android extras → status menu customisation and music (mocks 01, 01c, 01e, 07, 07b): toggle
+# Settings → status menu customisation and music (mocks 01, 01c, 01e, 07, 07b): toggle
 # strip, edit mode (drag handle, ✕, ✎, Done / Add item), toggles editor, hidden rows with the
 # handle, the small music widget. Off: the N9 menu as before (no strip). Taps only open views;
 # nothing is switched (no toggle tile is tapped).
@@ -67,8 +67,8 @@ bry=$(yof Brightness); bty=$(yof Bluetooth)
 check "brightness sits under Volume, above the rows (mock 1a)" '[ -n "$bry" ] && [ -n "$bty" ] && [ "$bry" -lt "$bty" ]'
 # Hidden rows: 3 visible rows max, reveal by handle
 sh_ input keyevent BACK; sleep 1
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2
-tap_text "Status menu: visible rows"; sleep 1; tap_text "3"; sleep 1; sh_ input keyevent BACK; sleep 1
+sh_ am start -n $LAUNCHER/.SettingsActivity --es section status >/dev/null; sleep 2
+tap_text "Visible rows"; sleep 1; tap_text "3"; sleep 1; sh_ input keyevent BACK; sleep 1
 sh_ am force-stop $LAUNCHER; sleep 1; menu
 check "4 rows, 3 visible: the more handle" 'desc "More rows"'
 check "hidden row not shown" '! dump | grep -q "text=\"Flight mode\""'

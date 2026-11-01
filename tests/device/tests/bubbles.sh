@@ -1,4 +1,4 @@
-# Android extras → "Notification bubbles over apps" (mock 08, 13, 16): instead of the heads-up, the
+# Settings → "Notification bubbles over apps" (mock 08, 13, 16): instead of the heads-up, the
 # lock-screen card floats under the status bar; tap opens, swipe up dismisses. Also used for
 # "App pinned". Off: the stock heads-up. Silent: the test channel has no sound.
 SRC=/home/memphisx/android/lineage/frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt

@@ -1,4 +1,4 @@
-# Android extras → Emergency information on the lock screen (design A2, stories medical-a2 / medical-card).
+# Settings → Emergency information on the lock screen (design A2, stories medical-a2 / medical-card).
 # Off by default; on: owner block left of the clock (never overlapping it, also with a larger font);
 # tap opens the full-screen card over the lock screen (still locked); its contacts and the only
 # Emergency call button exist (nothing is called); Close returns to the lock screen.
