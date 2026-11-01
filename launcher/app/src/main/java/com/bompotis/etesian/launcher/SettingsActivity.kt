@@ -20,7 +20,7 @@ import androidx.preference.SwitchPreferenceCompat
 class SettingsActivity : AppCompatActivity() {
 
     /** A sub page of Etesian settings: its key, title, one-line summary and icon. */
-    class Section(val key: String, val title: String, val summary: String, val icon: Int)
+    class Section(val key: String, val title: String, val summary: String, val icon: Int, val main: Boolean = true)
 
     companion object {
         const val EXTRA_SECTION = "section"
@@ -38,15 +38,23 @@ class SettingsActivity : AppCompatActivity() {
                 .putString(PINS, list.distinct().joinToString("\n") { "${it.first}\u0001${it.second}" }).apply()
         val SECTIONS = listOf(
             Section("home", "Home screen", "Views, indicator dots", R.drawable.ic_set_home),
-            Section("apps", "Applications", "Grid, icons, search", R.drawable.ic_set_apps),
-            Section("events", "Events", "Feeds, weather, layouts", R.drawable.ic_set_events),
+            Section("apps", "Applications", "Grid, icons, search, private space", R.drawable.ic_set_apps),
+            Section("events", "Events and notifications", "Feeds, weather, notifications", R.drawable.ic_set_events),
+            Section("status", "Status menu", "Toggles, sliders, music, modes", R.drawable.ic_set_status),
+            Section("open", "Open applications", "Arranging, carousel, split screen", R.drawable.ic_set_open),
             Section("wallpapers", "Wallpapers & backgrounds", "Home wallpapers, app and menu backgrounds", R.drawable.ic_set_wallpaper),
             Section("gestures", "Gestures", "Swipes, back, edge bar", R.drawable.ic_set_gestures),
-            Section("lock", "Lock screen", "Notifications on the lock screen", R.drawable.ic_set_lock),
+            Section("lock", "Lock screen", "Notifications, glance line, weather", R.drawable.ic_set_lock),
+            Section("emergency", "Emergency information", "Medical details for first responders", R.drawable.ic_set_emergency),
+            Section("sharing", "Sharing", "Share sheet, sharing a network", R.drawable.ic_set_share),
             Section("toolbar", "Toolbar", "The N9 bar under every app", R.drawable.ic_set_toolbar),
-            Section("extras", "Android extras", "Things the N9 did not have", R.drawable.ic_set_system),
             Section("system", "System", "Permissions, default home app", R.drawable.ic_set_system),
+            // Sub pages of a page: not listed on the main page.
+            Section("priority", "Priority people", "", 0, main = false),
+            Section("dismissed", "Dismissed notifications", "", 0, main = false),
         )
+        /** Pages that start with a live preview of what their settings change. */
+        val PREVIEWS = setOf("apps", "events", "status", "open", "lock", "emergency", "sharing", "priority", "dismissed")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,6 +124,13 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     class Screen : PreferenceFragmentCompat() {
+        /** Priority people → Add a person: the contact picker, then the page again with them listed. */
+        private val pickContact = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.PickContact()) { uri ->
+            val id = uri?.lastPathSegment?.toLongOrNull() ?: return@registerForActivityResult
+            Priority.set(requireContext(), id, true)
+            activity?.recreate()
+        }
+
         override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             val section = arguments?.getString(EXTRA_SECTION) ?: return
@@ -289,7 +304,7 @@ class SettingsActivity : AppCompatActivity() {
                     key = "quick_internet"; title = "Internet connection"
                     intent = Intent(Settings.ACTION_WIRELESS_SETTINGS)
                 })
-                // Android extras → Share network QR (mock: Share network on the connected network; scanning is the camera's).
+                // Sharing → Share network (mock: Share network on the connected network; scanning is the camera's).
                 if (Extras.on(ctx, Extras.WIFI_QR)) {
                     screen.addPreference(QuickRow(ctx).apply {
                         key = "quick_wifi_share"; title = "Share network"
@@ -318,7 +333,7 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }.apply { key = "quick_brightness"; layoutResource = R.layout.pref_quick_brightness; isSelectable = false })
                 // Then one row per sub page, N9 style (icon, title, what's inside).
-                SECTIONS.filter { it.key !in setOf("gestures", "lock", "toolbar") || SystemTasks.available(ctx) }.forEach { sec ->
+                SECTIONS.filter { it.main && (it.key !in setOf("gestures", "lock", "toolbar") || SystemTasks.available(ctx)) }.forEach { sec ->
                     screen.addPreference(Preference(ctx).apply {
                         key = "section_${sec.key}"
                         title = sec.title; summary = sec.summary
@@ -333,8 +348,14 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Edge bar" to "gestures", "Lock screen" to "lock",
-                "Bottom toolbar" to "toolbar", "System" to "system", "Android extras" to "extras")
+                "Gestures" to "gestures", "Edge bar" to "gestures", "Notifications on the lock screen" to "lock",
+                "Bottom toolbar" to "toolbar", "System" to "system",
+                "Notifications" to "events", "Today" to "events", "Over apps" to "events",
+                "Status menu" to "status", "Arranging" to "open", "Carousel" to "open", "Split screen" to "open",
+                "Private space" to "apps", "Under the clock" to "lock", "Emergency information" to "emergency",
+                "Medical details" to "emergency", "Emergency contacts" to "emergency", "Share sheet" to "sharing",
+                "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed")
+            if (section in PREVIEWS) screen.addPreference(SettingsPreview.Row(ctx, section!!))
             val hidden = preferenceManager.createPreferenceScreen(ctx)
             fun category(title: String) = PreferenceCategory(ctx).apply {
                 this.title = title
@@ -360,7 +381,6 @@ class SettingsActivity : AppCompatActivity() {
             switch(home, Prefs.PAGE_EVENTS, "Events", "Notifications feed, left of Applications", true)
             switch(home, Prefs.PAGE_WIDGETS, "Widgets", "Widgets, left of Events", false)
             // N9: Open applications can keep your order (drag cards in edit mode) or arrange themselves.
-            switch(home, RunningApps.AUTO_ARRANGE, "Open applications: auto-arrange", "The last opened application moves to the top", true)
 
             val look = category("Appearance")
             ListPreference(ctx).apply {
@@ -533,7 +553,7 @@ class SettingsActivity : AppCompatActivity() {
                     arrayOf(Prefs.ACTION_MINIMISE, Prefs.ACTION_BACK, Prefs.ACTION_CLOSE, Prefs.ACTION_NONE),
                     Prefs.ACTION_MINIMISE)
 
-                val lock = category("Lock screen")
+                val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,
                                current: String) = ListPreference(ctx).apply {
                     // Without a key the choice dialog can't open (IllegalArgumentException).
@@ -621,76 +641,51 @@ class SettingsActivity : AppCompatActivity() {
                     Intent(ctx, ToolbarSettingsActivity::class.java))
             }
 
-            // Android extras: one switch per non-N9 addition (Settings.Secure etesian_extra_*), all off = pure N9.
-            val extras = category("Android extras")
-            // The page is already titled "Android extras" (mock 20): no second, blue heading.
-            if (section == "extras") extras.title = null
-            extras.addPreference(Preference(ctx).apply {
-                summary = "Things the N9 did not have. All off = the pure N9."
-                isSelectable = false; isIconSpaceReserved = false; isPersistent = false
-            })
-            Extras.ALL.forEach { e ->
-                SwitchPreferenceCompat(ctx).apply {
-                    key = "secure_" + e.key
-                    title = e.title; isSingleLineTitle = false
-                    isPersistent = false; isIconSpaceReserved = false
-                    // Mock 20: bold rows with the N9 switch.
-                    layoutResource = R.layout.pref_n9_switch_row
-                    widgetLayoutResource = R.layout.pref_n9_switch_widget
-                    isChecked = Extras.on(ctx, e.name)
-                    setOnPreferenceChangeListener { _, v ->
-                        Extras.set(ctx, e.name, v as Boolean)
-                        if (v && e.name == Extras.LOCK_WEATHER) Weather.refresh(ctx) {}
-                        if (v && e.name == Extras.EMERGENCY &&
-                            ctx.checkSelfPermission(android.Manifest.permission.CALL_PHONE) != android.content.pm.PackageManager.PERMISSION_GRANTED)
-                            activity?.requestPermissions(arrayOf(android.Manifest.permission.CALL_PHONE), 7)
-                        true
-                    }
-                    extras.addPreference(this)
+            // Additions the N9 did not have: ordinary settings on the page of what they change, each off
+            // by default (Settings.Secure etesian_extra_*, see Extras), so a fresh phone is the pure N9.
+            fun extra(cat: PreferenceCategory, name: String, title: String, summary: String) = SwitchPreferenceCompat(ctx).apply {
+                key = "secure_" + Extras.key(name)
+                this.title = title; this.summary = summary; isSingleLineTitle = false
+                isPersistent = false; isIconSpaceReserved = false
+                layoutResource = R.layout.pref_n9_switch_row
+                widgetLayoutResource = R.layout.pref_n9_switch_widget
+                isChecked = Extras.on(ctx, name)
+                setOnPreferenceChangeListener { _, v ->
+                    Extras.set(ctx, name, v as Boolean)
+                    if (v && name == Extras.LOCK_WEATHER) Weather.refresh(ctx) {}
+                    if (v && name == Extras.EMERGENCY &&
+                        ctx.checkSelfPermission(android.Manifest.permission.CALL_PHONE) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                        activity?.requestPermissions(arrayOf(android.Manifest.permission.CALL_PHONE), 7)
+                    true
                 }
+                cat.addPreference(this)
             }
-            // Keep dismissed notifications (ghost rows) options, stored in Settings.Secure (Ghosts).
-            fun secureList(k: String, t: String, names: Array<String>, values: Array<String>, def: String) = ListPreference(ctx).apply {
+            fun page(cat: PreferenceCategory, key: String, summary: String) = Preference(ctx).apply {
+                this.key = "page_$key"; title = SECTIONS.first { it.key == key }.title; this.summary = summary
+                isIconSpaceReserved = false; isPersistent = false
+                intent = Intent(ctx, SettingsActivity::class.java).putExtra(EXTRA_SECTION, key)
+                cat.addPreference(this)
+            }
+            fun secureList(cat: PreferenceCategory, k: String, t: String, names: Array<String>, values: Array<String>, def: String) = ListPreference(ctx).apply {
                 key = "secure_$k"; title = t; isIconSpaceReserved = false; isPersistent = false
                 entries = names; entryValues = values
                 value = Settings.Secure.getString(ctx.contentResolver, k)?.takeIf { it in values } ?: def
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
                 setOnPreferenceChangeListener { _, v -> Settings.Secure.putString(ctx.contentResolver, k, v as String); true }
-                extras.addPreference(this)
+                cat.addPreference(this)
             }
-            // Emergency information (our own fields; Android's Emergency Information app keeps its data private).
-            fun secureText(k: String, t: String, hint: String) = androidx.preference.EditTextPreference(ctx).apply {
-                key = "secure_etesian_emergency_$k"; title = t; isIconSpaceReserved = false; isPersistent = false
-                text = Emergency.get(ctx, k); dialogMessage = hint
-                summaryProvider = androidx.preference.Preference.SummaryProvider<androidx.preference.EditTextPreference> { p ->
-                    p.text?.takeIf { it.isNotBlank() }?.lines()?.joinToString(", ") ?: "Not set" }
-                setOnPreferenceChangeListener { _, v -> Emergency.put(ctx, k, (v as String).trim()); true }
-                extras.addPreference(this)
-            }
-            secureText("name", "Emergency: name", "Your name, shown beside the clock")
-            secureText("blood", "Emergency: blood type", "For example A+")
-            secureText("allergies", "Emergency: allergies", "")
-            secureText("medication", "Emergency: medication", "")
-            secureText("notes", "Emergency: medical notes", "")
-            secureText("donor", "Emergency: organ donor", "Yes or No")
-            secureText("contacts", "Emergency: contacts", "One per line: Name | relation | number")
+
+            // Events and notifications
+            val notes = category("Notifications")
+            extra(notes, Extras.ACTIONS, "Actions and snooze", "Long-press a notification: Mark as read, Snooze, Dismiss")
+            extra(notes, Extras.INLINE_REPLY, "Inline reply", "Reply to a message from Events")
+            extra(notes, Extras.LIVE_UPDATES, "Live updates", "Ongoing progress pinned under Notifications")
+            page(notes, "priority", "A person's messages, mail and calls first, grouped under them")
+            page(notes, "dismissed", "Keep dismissed notifications as faded rows")
+            val today = category("Today")
+            extra(today, Extras.TODAY, "Today in Events", "One-line items above Notifications")
             androidx.preference.MultiSelectListPreference(ctx).apply {
-                key = "secure_etesian_emergency_show"; title = "Emergency: shown beside the clock"
-                isIconSpaceReserved = false; isPersistent = false
-                entries = arrayOf("Name", "Blood type", "Allergies", "Medication", "Medical notes", "Organ donor")
-                entryValues = arrayOf("name", "blood", "allergies", "medication", "notes", "donor")
-                values = (Settings.Secure.getString(ctx.contentResolver, "etesian_emergency_show") ?: "name,blood,allergies").split(',').toSet()
-                summary = entryValues.map { it.toString() }.filter { it in values }.joinToString(", ")
-                setOnPreferenceChangeListener { p, v ->
-                    @Suppress("UNCHECKED_CAST") val set = v as Set<String>
-                    val ordered = entryValues.map { it.toString() }.filter { it in set }
-                    Settings.Secure.putString(ctx.contentResolver, "etesian_emergency_show", ordered.joinToString(","))
-                    p.summary = ordered.joinToString(", "); true
-                }
-                extras.addPreference(this)
-            }
-            androidx.preference.MultiSelectListPreference(ctx).apply {
-                key = "secure_" + Today.KEY_ITEMS; title = "Today in Events: items"
+                key = "secure_" + Today.KEY_ITEMS; title = "Items"
                 isIconSpaceReserved = false; isPersistent = false
                 entries = Today.ALL.map { it.second }.toTypedArray(); entryValues = Today.ALL.map { it.first }.toTypedArray()
                 values = Today.shown(ctx)
@@ -701,26 +696,125 @@ class SettingsActivity : AppCompatActivity() {
                     Settings.Secure.putString(ctx.contentResolver, Today.KEY_ITEMS, Today.ALL.map { it.first }.filter { it in set }.joinToString(","))
                     p.summary = sum(set); true
                 }
-                extras.addPreference(this)
+                today.addPreference(this)
             }
-            secureList(Ghosts.KEY_SIZE, "Dismissed notifications: size", arrayOf("Small", "Big"), arrayOf("small", "big"), "small")
-            secureList(Ghosts.KEY_ROWS, "Dismissed notifications: rows shown",
+            val over = category("Over apps")
+            extra(over, Extras.BUBBLES, "Notification bubbles", "A card under the status bar instead of the Android pop-up")
+            extra(over, Extras.COPIED, "“Copied” bubble", "A short bubble when something is copied, instead of the clipboard overlay")
+
+            // Events and notifications → Priority people
+            val prio = category("Priority people")
+            if (section == "priority") prio.title = null
+            extra(prio, Extras.PRIORITY, "Priority people", "Their notifications from any app come first, grouped under them")
+            Priority.ids(ctx).forEach { id ->
+                val name = Priority.nameOf(ctx, id) ?: "Contact $id"
+                prio.addPreference(Preference(ctx).apply {
+                    key = "priority_$id"; title = "★ $name"; summary = "Tap to remove"
+                    isIconSpaceReserved = false; isPersistent = false
+                    setOnPreferenceClickListener { Priority.set(ctx, id, false); prio.removePreference(this); true }
+                })
+            }
+            prio.addPreference(Preference(ctx).apply {
+                key = "priority_add"; title = "Add a person"; summary = "Or long-press their notification in Events"
+                isIconSpaceReserved = false; isPersistent = false
+                setOnPreferenceClickListener {
+                    pickContact.launch(null); true
+                }
+            })
+
+            // Events and notifications → Dismissed notifications (ghost rows)
+            val ghosts = category("Dismissed notifications")
+            if (section == "dismissed") ghosts.title = null
+            extra(ghosts, Extras.GHOST_ROWS, "Keep dismissed notifications", "Faded rows at the end of Notifications; tap them for Earlier")
+            secureList(ghosts, Ghosts.KEY_SIZE, "Size", arrayOf("Small", "Big"), arrayOf("small", "big"), "small")
+            secureList(ghosts, Ghosts.KEY_ROWS, "Rows shown",
                 arrayOf("0.5 (Big only)", "1", "1.5", "2", "2.5", "3"), arrayOf("0.5", "1", "1.5", "2", "2.5", "3"), "2.5")
-            secureList(Ghosts.KEY_KEEP, "Dismissed notifications: keep for",
+            secureList(ghosts, Ghosts.KEY_KEEP, "Keep for",
                 arrayOf("1 hour", "4 hours", "12 hours", "24 hours", "Forever"), arrayOf("1", "4", "12", "24", "0"), "24")
-            // Status menu options (used while its extra is on); pure N9 defaults: all rows.
+
+            // Status menu (the options apply while your own layout is on; pure N9: all rows).
+            val status = category("Status menu")
+            if (section == "status") status.title = null
+            extra(status, Extras.STATUS_MENU, "Your own layout", "A toggle strip, sliders and fewer rows; edit with the pencil")
             ListPreference(ctx).apply {
-                key = StatusLayout.MAX_ROWS; title = "Status menu: visible rows"; isIconSpaceReserved = false
+                key = StatusLayout.MAX_ROWS; title = "Visible rows"; isIconSpaceReserved = false
                 entries = arrayOf("3", "4", "5", "All"); entryValues = arrayOf("3", "4", "5", "0"); setDefaultValue("0")
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
-                extras.addPreference(this)
+                status.addPreference(this)
             }
             ListPreference(ctx).apply {
-                key = StatusLayout.REVEAL; title = "Status menu: reveal hidden rows"; isIconSpaceReserved = false
+                key = StatusLayout.REVEAL; title = "Reveal hidden rows"; isIconSpaceReserved = false
                 entries = arrayOf("Button", "Swipe down", "Both"); entryValues = arrayOf("button", "swipe", "both"); setDefaultValue("both")
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
-                extras.addPreference(this)
+                status.addPreference(this)
             }
+            extra(status, Extras.MUSIC, "Music", "The small music player at the top")
+            extra(status, Extras.MODES, "Do Not Disturb and Modes", "A Mode strip under Profile")
+            extra(status, Extras.PRIVACY, "Privacy indicators", "Camera and microphone in use, in the status bar")
+
+            // Open applications
+            val arranging = category("Arranging")
+            switch(arranging, RunningApps.AUTO_ARRANGE, "Auto-arrange", "The last opened application moves to the top", true)
+            val carousel = category("Carousel")
+            extra(carousel, Extras.CARD_ACTIONS, "Actions under the card", "Split view, Pop-up, Screenshot and App info")
+            extra(carousel, Extras.PINNING, "App pinning", "Pin under the card keeps one app on screen")
+            val split = category("Split screen")
+            extra(split, Extras.SPLIT_MERGE, "Two-finger merge", "In edit mode, pull two cards together with two fingers; pull a pair apart to separate")
+
+            // Applications
+            val priv = category("Private space")
+            extra(priv, Extras.PRIVATE, "Private space", "Android's private space as a locked folder at the end of the grid")
+
+            // Lock screen
+            val under = category("Under the clock")
+            extra(under, Extras.GLANCE, "Glance line", "Next alarm and event under the date")
+            extra(under, Extras.LOCK_WEATHER, "Weather", "Current weather under the date (from the Events weather)")
+            page(under, "emergency", "Owner and medical essentials beside the clock")
+
+            // Emergency information: our own fields (Android's Emergency Information app keeps its data private).
+            val emergency = category("Emergency information")
+            if (section == "emergency") emergency.title = null
+            extra(emergency, Extras.EMERGENCY, "Show on the lock screen", "Owner and essentials beside the clock; tap for the full card")
+            androidx.preference.MultiSelectListPreference(ctx).apply {
+                key = "secure_etesian_emergency_show"; title = "Shown beside the clock"
+                isIconSpaceReserved = false; isPersistent = false
+                entries = arrayOf("Name", "Blood type", "Allergies", "Medication", "Medical notes", "Organ donor")
+                entryValues = arrayOf("name", "blood", "allergies", "medication", "notes", "donor")
+                values = (Settings.Secure.getString(ctx.contentResolver, "etesian_emergency_show") ?: "name,blood,allergies").split(',').toSet()
+                fun sum(v: Set<String>) = entryValues.indices.filter { entryValues[it].toString() in v }.joinToString(", ") { entries[it] }
+                summary = sum(values)
+                setOnPreferenceChangeListener { p, v ->
+                    @Suppress("UNCHECKED_CAST") val set = v as Set<String>
+                    val ordered = entryValues.map { it.toString() }.filter { it in set }
+                    Settings.Secure.putString(ctx.contentResolver, "etesian_emergency_show", ordered.joinToString(","))
+                    p.summary = sum(set); true
+                }
+                emergency.addPreference(this)
+            }
+            val medical = category("Medical details")
+            fun secureText(cat: PreferenceCategory, k: String, t: String, hint: String) = androidx.preference.EditTextPreference(ctx).apply {
+                key = "secure_etesian_emergency_$k"; title = t; isIconSpaceReserved = false; isPersistent = false
+                text = Emergency.get(ctx, k); dialogMessage = hint
+                summaryProvider = androidx.preference.Preference.SummaryProvider<androidx.preference.EditTextPreference> { p ->
+                    p.text?.takeIf { it.isNotBlank() }?.lines()?.joinToString(", ") ?: "Not set" }
+                setOnPreferenceChangeListener { _, v -> Emergency.put(ctx, k, (v as String).trim()); true }
+                cat.addPreference(this)
+            }
+            secureText(medical, "name", "Name", "Your name, shown beside the clock")
+            secureText(medical, "blood", "Blood type", "For example A+")
+            secureText(medical, "allergies", "Allergies", "")
+            secureText(medical, "medication", "Medication", "")
+            secureText(medical, "notes", "Medical notes", "")
+            secureText(medical, "donor", "Organ donor", "Yes or No")
+            val econtacts = category("Emergency contacts")
+            secureText(econtacts, "contacts", "Contacts", "One per line: Name | relation | number")
+
+            // Sharing
+            val sheet = category("Share sheet")
+            extra(sheet, Extras.SHARE, "N9 share sheet", "With a filter and pinned apps, instead of Android's")
+            extra(sheet, Extras.SHARE_PEOPLE, "Suggested people", "A row of people at the top of the sheet")
+            val nets = category("Networks")
+            extra(nets, Extras.WIFI_QR, "Share network", "On the main settings page: a QR code and the password of your Wi-Fi")
 
             val system = category("System")
             if (!SystemTasks.available(ctx)) {

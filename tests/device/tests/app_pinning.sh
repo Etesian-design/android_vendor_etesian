@@ -1,4 +1,4 @@
-# Android extras → App pinning (mock 10): "Pin" in the carousel action row pins the middle card
+# Settings → App pinning (mock 10): "Pin" in the carousel action row pins the middle card
 # (screen pinning), the N9 bubble "App pinned · Long-press Back to unpin" shows, long-press Back unpins.
 # Long-press on a card is ALWAYS N9 edit mode (Done / Close all), pinning on or off: no card menu.
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }

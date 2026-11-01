@@ -1,4 +1,4 @@
-# Android extras → Notification actions and snooze / Inline reply / Live updates (mocks 04, 05, 17).
+# Settings → Notification actions and snooze / Inline reply / Live updates (mocks 04, 05, 17).
 # Long-press an Events item: N9 menu sheet (Reply, Mark as read, Snooze, Dismiss); Reply opens
 # the one-line composer; ongoing progress is pinned first under Notifications. Off: dismiss mode.
 # Silent: the launcher's own test channel, no sound; the reply goes back to the launcher itself.

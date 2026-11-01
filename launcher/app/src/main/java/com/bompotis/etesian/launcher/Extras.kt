@@ -7,7 +7,7 @@ import android.os.Looper
 import android.provider.Settings
 
 /**
- * Etesian settings → Android extras: things the N9 did not have, one switch each, stored in
+ * Additions the N9 did not have, one switch each, shown on the settings page of what they change; stored in
  * Settings.Secure as etesian_extra_<name> (SystemUI and other apps read the same keys).
  * All off (the default) = the pure N9.
  */

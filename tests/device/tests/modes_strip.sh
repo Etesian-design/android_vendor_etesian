@@ -1,4 +1,4 @@
-# Android extras → Do Not Disturb and Modes as profiles (mocks 09, 10): a "Mode" strip under
+# Settings → Do Not Disturb and Modes as profiles (mocks 09, 10): a "Mode" strip under
 # Profile (Off, Do Not Disturb, the enabled modes); the moon glyph while on; long-press a mode
 # opens its page. Silent: DND only mutes. The previous zen mode is restored.
 check "Modes.kt exists" '[ -f /home/memphisx/android/lineage/vendor/etesian/launcher/app/src/main/java/com/bompotis/etesian/launcher/Modes.kt ]'

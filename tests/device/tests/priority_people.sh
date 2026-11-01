@@ -1,4 +1,4 @@
-# Android extras → Priority people (story Phone v2, state priority): priority is per contact.
+# Settings → Priority people (story Phone v2, state priority): priority is per contact.
 # Long-press a notification about a contact → "Priority person"; that person's notifications from
 # any app (matched by Person uri or name) then sit first under Notifications, grouped under them
 # with a gold star. Off by default. Uses a temporary test contact, removed at the end.

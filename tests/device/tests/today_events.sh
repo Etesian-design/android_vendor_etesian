@@ -1,4 +1,4 @@
-# Android extras → Today in Events (story Phone v2, state screen-time): optional "Today" section
+# Settings → Today in Events (story Phone v2, state screen-time): optional "Today" section
 # above Notifications with one-line items (lit squircle sized to the line): screen time, all-day
 # events, birthdays, upcoming events; the items are user-chosen. Off by default. Uses a temporary
 # local test calendar and a test contact, both removed at the end.
@@ -33,9 +33,9 @@ check "single line items (≤ 34dp tall: ${rh}px)" '[ $rh -gt 0 ] && [ $rh -le $
 sh_ settings put secure etesian_today_items birthdays; sleep 1.5; events_pane
 check "customised: only the chosen item (birthdays)" 'dump | grep -q "Test Birthday’s birthday" && ! dump | grep -q "screen time"'
 check "Calendar section back when upcoming is not in Today" 'dump | grep -q "text=\"Calendar\"" && dump | grep -q "text=\"Etesian review\""'
-sh_ am start -f 0x10008000 -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2
-for _ in 1 2 3 4 5 6 7 8; do dump | grep -q "Today in Events: items" && break; sh_ input swipe 540 1700 540 900 300; sleep 0.8; done
-check "settings: Today items option" 'dump | grep -q "Today in Events: items"'
+sh_ am start -f 0x10008000 -n $LAUNCHER/.SettingsActivity --es section events >/dev/null; sleep 2
+for _ in 1 2 3 4 5 6 7 8; do dump | grep -q "text=\"Items\"" && break; sh_ input swipe 540 1700 540 900 300; sleep 0.8; done
+check "settings: Today items option" 'dump | grep -q "text=\"Items\""'
 # Clean up the test data.
 sh_ "content delete --uri 'content://com.android.calendar/calendars?$SA' --where \"name='etesian_test'\""
 sh_ "content delete --uri 'content://com.android.contacts/raw_contacts?caller_is_syncadapter=true' --where _id=$rc"

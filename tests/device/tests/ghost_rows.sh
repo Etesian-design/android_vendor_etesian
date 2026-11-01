@@ -1,4 +1,4 @@
-# Android extras → Keep dismissed notifications (story Phone v2 → Try it: ghost rows).
+# Settings → Keep dismissed notifications (story Phone v2 → Try it: ghost rows).
 # Off by default: nothing kept. On: a dismissed notification becomes the top ghost row at the end of
 # Notifications; size/rows settings; the rows are one item (tap = Earlier page, swipe in dismiss mode = all expire);
 # Keep-for expiry. Silent test notifications only; the user's own notifications are never touched.
@@ -69,12 +69,12 @@ check "kept right after dismissing" 'dump | grep -q "Earlier notifications (1)"'
 sleep 4; events_pane; sh_ input swipe 540 900 540 1900 150; sleep 1
 check "expires after Keep for" '! dump | grep -q "Earlier notifications"'
 sh_ settings put secure etesian_extra_ghost_rows 0
-sh_ am start -f 0x10008000 -n $LAUNCHER/.SettingsActivity --es section extras >/dev/null; sleep 2.5
+sh_ am start -f 0x10008000 -n $LAUNCHER/.SettingsActivity --es section dismissed >/dev/null; sleep 2.5
 check "settings: the switch" 'tap_text "Keep dismissed notifications" >/dev/null; sleep 1; [ "$(sh_ settings get secure etesian_extra_ghost_rows)" = 1 ]'
 sh_ settings put secure etesian_extra_ghost_rows 0
-for _ in 1 2 3 4 5 6 7 8 9 10; do dump | grep -q "Dismissed notifications: keep for" && break; sh_ input swipe 540 1700 540 900 300; sleep 0.8; done
+for _ in 1 2 3 4 5 6 7 8 9 10; do dump | grep -q "text=\"Keep for\"" && break; sh_ input swipe 540 1700 540 900 300; sleep 0.8; done
 shot ghost_settings
-check "settings: its options" 'dump | grep -q "Dismissed notifications: size" && dump | grep -q "Dismissed notifications: rows shown" && dump | grep -q "Dismissed notifications: keep for"'
+check "settings: its options" 'dump | grep -q "text=\"Size\"" && dump | grep -q "text=\"Rows shown\"" && dump | grep -q "text=\"Keep for\""'
 sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind cancel >/dev/null
 for k in $keys; do [ "${gold[$k]}" = null ] && sh_ settings delete secure $k >/dev/null || sh_ settings put secure $k "${gold[$k]}"; done
 check "launcher did not crash" '! crashed $LAUNCHER'

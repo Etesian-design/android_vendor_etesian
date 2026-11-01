@@ -1,4 +1,4 @@
-# Android extras → status menu strip, 6th tile "Screen recorder" (mock 1a) and the red status-bar
+# Settings → status menu strip, 6th tile "Screen recorder" (mock 1a) and the red status-bar
 # dot (mock "Recording dot"): tap starts a whole-screen recording without audio, the dot shows,
 # tapping the dot asks "Stop recording?" and stops it. Silent: notification/system streams are
 # muted for the run; the recording made is deleted afterwards and never left running.
