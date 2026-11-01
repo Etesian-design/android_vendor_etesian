@@ -980,7 +980,51 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     /** Dismissing folds a notification out of the list: fade, a slight drop, then the rest closes up. */
     private inner class FoldAnimator : androidx.recyclerview.widget.DefaultItemAnimator() {
         private val folding = mutableSetOf<RecyclerView.ViewHolder>()
+        private val sliding = mutableSetOf<RecyclerView.ViewHolder>()
         init { removeDuration = 250; moveDuration = 300 }
+
+        /**
+         * A new notification slides down from under the header of its section (or the row above
+         * it): it is clipped to its own place, so it never draws over the label and separator.
+         * Other rows (date, headers, feeds, faded rows) appear as before.
+         */
+        override fun animateAdd(holder: RecyclerView.ViewHolder): Boolean {
+            val v = holder.itemView
+            if (v !is EventRow && v !is CardRow && v !is GroupRow && v !is StackRow && v !is PriorityView) return super.animateAdd(holder)
+            sliding += holder
+            dispatchAddStarting(holder)
+            // Hidden in its place until the rows under it have moved down to make room.
+            v.clipBounds = android.graphics.Rect(0, 0, 0, 0)
+            v.post {
+                val h = v.height.coerceAtLeast(1)
+                android.animation.ValueAnimator.ofFloat(-h.toFloat(), 0f).apply {
+                    startDelay = moveDuration
+                    duration = 420
+                    interpolator = android.view.animation.DecelerateInterpolator(1.8f)
+                    addUpdateListener {
+                        val t = it.animatedValue as Float
+                        v.translationY = t
+                        v.clipBounds = android.graphics.Rect(0, (-t).toInt(), v.width, v.height)
+                    }
+                    addListener(object : android.animation.AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(a: android.animation.Animator) = slid(holder)
+                    })
+                    v.setTag(R.id.events_slide, this)
+                    start()
+                }
+            }
+            return false
+        }
+        private fun slid(holder: RecyclerView.ViewHolder) {
+            if (!sliding.remove(holder)) return
+            val v = holder.itemView
+            v.translationY = 0f; v.clipBounds = null; v.setTag(R.id.events_slide, null)
+            dispatchAddFinished(holder); if (!isRunning) dispatchAnimationsFinished()
+        }
+        private fun stopSlide(holder: RecyclerView.ViewHolder) {
+            (holder.itemView.getTag(R.id.events_slide) as? android.animation.Animator)?.cancel()
+            slid(holder)
+        }
         override fun animateRemove(holder: RecyclerView.ViewHolder): Boolean {
             val v = holder.itemView
             if (v is GhostView || v is TopRow) return super.animateRemove(holder)
@@ -997,13 +1041,15 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
             v.animate().setListener(null); v.alpha = 1f; v.translationY = 0f; v.scaleX = 1f; v.scaleY = 1f
             dispatchRemoveFinished(holder); if (!isRunning) dispatchAnimationsFinished()
         }
-        override fun isRunning() = folding.isNotEmpty() || super.isRunning()
+        override fun isRunning() = folding.isNotEmpty() || sliding.isNotEmpty() || super.isRunning()
         override fun endAnimation(item: RecyclerView.ViewHolder) {
             if (item in folding) { item.itemView.animate().cancel(); done(item) }
+            if (item in sliding) stopSlide(item)
             super.endAnimation(item)
         }
         override fun endAnimations() {
             folding.toList().forEach { it.itemView.animate().cancel(); done(it) }
+            sliding.toList().forEach { stopSlide(it) }
             super.endAnimations()
         }
     }

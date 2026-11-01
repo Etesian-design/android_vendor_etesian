@@ -1,3 +1,4 @@
 <resources>
     <item name="settings_container" type="id" />
+    <item name="events_slide" type="id" />
 </resources>

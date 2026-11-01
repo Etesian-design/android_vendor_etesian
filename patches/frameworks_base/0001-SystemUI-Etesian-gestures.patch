@@ -5971,10 +5971,10 @@ index 513611c04871..e419c0571d72 100644
          mNormalRippleColor = mContext.getColor(
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt
 new file mode 100644
-index 000000000000..de29ee0208cd
+index 000000000000..489c459716b4
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,243 @@
 +/*
 + * Copyright (C) 2026 The LineageOS Project
 + *
@@ -6035,6 +6035,12 @@ index 000000000000..de29ee0208cd
 +        return pm?.isInteractive == false || !occluded(context)
 +    }
 +
++    /** The home screen is the focused task (guards against a stale etesian_events_showing). */
++    private fun homeInFront(): Boolean = runCatching {
++        android.app.ActivityTaskManager.getService().focusedRootTaskInfo?.topActivity?.packageName ==
++            "com.bompotis.etesian.launcher"
++    }.getOrDefault(false)
++
 +    /** An activity shows over the lock screen (camera, alarm, call). */
 +    private fun occluded(context: Context): Boolean = runCatching {
 +        val atm = android.app.ActivityTaskManager.getService()
@@ -6051,6 +6057,8 @@ index 000000000000..de29ee0208cd
 +    fun show(context: Context, sbn: StatusBarNotification) {
 +        // On the lock screen the notification only joins the card stack there: no bubble over it.
 +        if (onLockScreen(context)) return
++        // In the launcher's Events view it slides into its section there instead.
++        if (Settings.Secure.getInt(context.contentResolver, "etesian_events_showing", 0) == 1 && homeInFront()) return
 +        main.post {
 +            val card = EtesianLockCard(windowContext(context))
 +            card.bind(sbn, 1)
