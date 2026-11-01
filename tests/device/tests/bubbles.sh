@@ -25,6 +25,13 @@ sh_ input tap 540 180; sleep 2
 check "tap opens it" 'top_activity | grep -q SettingsActivity'
 check "tap hides the bubble" '! bubble_shown'
 post cancel; home
+# Regression: on the lock screen a new notification only joins the card stack, with no bubble over it.
+post cancel; lock; sh_ input keyevent WAKEUP; sleep 2
+post; sleep 2
+check "lock screen: no bubble" '! bubble_shown'
+shot bubble_lock
+check "lock screen: the card is in the stack" 'dump | grep -q "Are we still on for lunch?"'
+post cancel; unlock; home
 # App pinned bubble
 sh_ am start -n $LAUNCHER/.SettingsActivity >/dev/null; sleep 2
 tid=$(sh_ am stack list | grep SettingsActivity | grep -o 'taskId=[0-9]*' | head -1 | cut -d= -f2)
