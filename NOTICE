@@ -1,0 +1,13 @@
+Etesian (LineageOS vendor tree)
+Etesian, founded by Kyriakos Bompotis.
+
+Licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only, LICENSE), with the additional
+terms in ADDITIONAL-TERMS.md (section 7(b) attribution, section 7(e) names and logos, the Phorepoc exception).
+
+Third-party code under its own licence:
+- patches/: changes to AOSP and LineageOS projects, under the licence of the project they apply to (Apache-2.0 for most);
+- mail/: Thunderbird for Android (Apache-2.0) build scaffolding and patches, rebranded as Mail;
+- launcher/gradlew*: the Gradle wrapper (Apache-2.0);
+- fonts: Fira Sans, Ubuntu Sans and Archivo (SIL OFL-1.1);
+- meeye/: fetched at build time, not stored here; Meeye icon pack, CC BY-NC-ND 4.0, its dashboard Apache-2.0.
+No Nokia fonts, icons, wallpapers or sounds are included.
