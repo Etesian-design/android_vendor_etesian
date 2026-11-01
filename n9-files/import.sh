@@ -1,12 +1,12 @@
 #!/bin/bash
 # "Bring your own N9 files": copies the N9's font and tones from a copy of an N9's
-# filesystem into vendor/etesian-n9, which the build then picks up. Nokia's files are
+# filesystem into vendor/harmattan-n9, which the build then picks up. Nokia's files are
 # never part of this repository; each user supplies them from their own N9.
 #
 #   import.sh /path/to/n9-root      (a directory holding the N9's usr/share/...)
 set -e
 SRC="${1:?usage: import.sh /path/to/n9-root}"
-DEST="$(cd "$(dirname "$0")/../.." && pwd)/etesian-n9"
+DEST="$(cd "$(dirname "$0")/../.." && pwd)/harmattan-n9"
 # Keep an earlier boot animation in case this run can't make one (no ffmpeg).
 KEEP=$(mktemp); [ -f "$DEST/bootanimation.zip" ] && cp "$DEST/bootanimation.zip" "$KEEP" || rm -f "$KEEP"
 rm -rf "$DEST"; mkdir -p "$DEST/fonts" "$DEST/ringtones" "$DEST/notifications" "$DEST/alarms"

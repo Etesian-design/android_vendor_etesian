@@ -14,7 +14,7 @@ PRODUCT_PACKAGES += \
     FontFiraSansOverlay FontUbuntuSansOverlay
 
 # Optional: the user's own N9 font and tones, if imported (n9-files/import.sh).
--include vendor/etesian-n9/n9.mk
+-include vendor/harmattan-n9/n9.mk
 
 # Etesian boot animation (bootanimation/README.md): the N9 motion with our own wordmark and
 # redrawn background. Set after n9.mk so it replaces the Nokia one.
