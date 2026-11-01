@@ -1,5 +1,5 @@
 # N9 font and tones, imported from the user's own N9 (see vendor/etesian/n9-files/import.sh).
-N9_DIR := vendor/harmattan-n9
+N9_DIR := vendor/etesian-n9
 
 PRODUCT_COPY_FILES += \
     $(foreach f,$(notdir $(wildcard $(N9_DIR)/fonts/*.ttf)),$(N9_DIR)/fonts/$(f):$(TARGET_COPY_OUT_PRODUCT)/fonts/$(f)) \

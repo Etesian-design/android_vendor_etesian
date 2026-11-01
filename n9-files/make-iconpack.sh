@@ -1,13 +1,13 @@
 #!/bin/bash
 # "Bring your own N9 files": builds the "N9 icons" icon pack (ADW/Nova appfilter format) from
-# the N9 app icons that import.sh copied into vendor/harmattan-n9/app-icons, using
-# iconpack/mapping.txt. The result goes to vendor/harmattan-n9/iconpack, which the build picks
+# the N9 app icons that import.sh copied into vendor/etesian-n9/app-icons, using
+# iconpack/mapping.txt. The result goes to vendor/etesian-n9/iconpack, which the build picks
 # up as N9IconPack. Nokia's icons are never part of this repository.
 #
-#   make-iconpack.sh [icons-dir]    (default: vendor/harmattan-n9/app-icons)
+#   make-iconpack.sh [icons-dir]    (default: vendor/etesian-n9/app-icons)
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
-DEST="$(cd "$HERE/../.." && pwd)/harmattan-n9"
+DEST="$(cd "$HERE/../.." && pwd)/etesian-n9"
 ICONS="${1:-$DEST/app-icons}"
 OUT="$DEST/iconpack"
 rm -rf "$OUT"; mkdir -p "$OUT/res/xml" "$OUT/res/drawable-nodpi"

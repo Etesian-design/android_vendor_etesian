@@ -10,3 +10,5 @@ build/
 .idea/
 local.properties
 *.iml
+# Working notes (bug lists, progress logs, plans): local only.
+notes/
