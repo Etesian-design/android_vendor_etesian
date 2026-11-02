@@ -1142,7 +1142,7 @@ index 5e2f2417..6e623fc8 100644
 +    }
  }
 diff --git a/app/src/main/java/com/android/calendar/month/MonthWeekEventsView.java b/app/src/main/java/com/android/calendar/month/MonthWeekEventsView.java
-index 8394eb5a..c6d6416f 100644
+index 8394eb5a..fc55b88c 100644
 --- a/app/src/main/java/com/android/calendar/month/MonthWeekEventsView.java
 +++ b/app/src/main/java/com/android/calendar/month/MonthWeekEventsView.java
 @@ -137,6 +137,14 @@ public class MonthWeekEventsView extends SimpleWeekView {
@@ -1424,6 +1424,49 @@ index 89f06eb1..0b333af0 100644
      val rootView = activity.window.decorView.rootView
      val windowInsetsController =
          WindowCompat.getInsetsController(activity.window, rootView)
+diff --git a/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt b/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt
+new file mode 100644
+index 00000000..c20b18a3
+--- /dev/null
++++ b/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt
+@@ -0,0 +1,37 @@
++package com.android.calendar.theme
++
++import android.app.Activity
++import android.content.Context
++import com.bompotis.etesian.theme.EtesianBackground
++
++/**
++ * N9 ROM: the user's Etesian "Apps (light on the N9)" background. N9_LIGHT keeps Calendar's
++ * N9 light look; the dark styles (black, dark grey, wallpaper) switch Etar to its night
++ * resources, and the window background is drawn by [EtesianBackground.apply].
++ */
++object EtesianTheme {
++
++    @JvmStatic
++    fun style(context: Context): EtesianBackground.Style = EtesianBackground.content(context)
++
++    @JvmStatic
++    fun isDark(context: Context): Boolean = style(context).dark
++
++    /** Call after setContentView; returns the applied style for [recreateIfChanged]. */
++    @JvmStatic
++    fun applyBackground(activity: Activity): EtesianBackground.Style {
++        val s = style(activity)
++        EtesianBackground.apply(activity, s)
++        return s
++    }
++
++    /** Call from onResume; recreates the activity when the user picked another background. */
++    @JvmStatic
++    fun recreateIfChanged(activity: Activity, applied: EtesianBackground.Style?): Boolean {
++        if (applied != null && style(activity) != applied) {
++            activity.recreate()
++            return true
++        }
++        return false
++    }
++}
 diff --git a/app/src/main/java/com/android/calendar/theme/ThemeUtils.kt b/app/src/main/java/com/android/calendar/theme/ThemeUtils.kt
 index 5298c71b..7b4f7c02 100644
 --- a/app/src/main/java/com/android/calendar/theme/ThemeUtils.kt
@@ -1461,6 +1504,697 @@ index 5298c71b..7b4f7c02 100644
          val theme = getTheme(context)
          when (theme) {
              Theme.SYSTEM -> if (isSystemInDarkTheme(context)) {
+diff --git a/app/src/main/res/drawable-xxhdpi/n9_dialog_button_negative_sq0.9.png b/app/src/main/res/drawable-xxhdpi/n9_dialog_button_negative_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..99880642d649398b7eb1cd999dca76b0ac1fa65e
+GIT binary patch
+literal 4248
+zcmZ`-c|26z|G(lvwr1q9XPK033hA*__G=9>$uhP?q(Zi27pf~uOoPahWt12mVuTE`
+zo0zgM*_wyJV63UJedoLU^ZVoX$2sS9&$;K^bI*By-tYH0309WIyj-GO008isnt&)~
+z8Np0pob1dz(pbF+0AQ}Bpq|a6oYh>{JL02FUD3^fo)3*w86N`hY(ouvDssO5pa1&Y
+zO2o{McRn4dNkt(y2cBJ2_peXQ)Gbh&4_Gqbesaa-?o4sy;#GTVPPXr{18ert73N7+
+z2^KU?rymW1G6A{itGT)3n$-QZIPx8Jf(NPEHu@o%L$LUF_(BAA_j0plG|R-vfo1}0
+z-R1%q@9yqiURik}PAV1p6~hU(SGqP&2d+-kK2AwVsciR;c%|}F03jiu@3BO$LzcO6
+z>Omh1$ROz9Ajl;x2;5`=TB?zVLQUKdwSwmI&bI7mqA`TNpQja`0kf{y&T$jo?C3DO
+z6ugW@FKMbDp9pGA;ADw;;s!m@*SomZ7%<<v_FCO9Dh|pE7WZ<+$izXvg8P3D>O)f%
+zw8GmCx}el;Ems^iwM72@-y_N1?30AYfy7VAfqW3BJ|{$Zg(Nk|<MxxF!#R!q`xqHJ
+z_y(Q%{lm$_gFQbrmr5H22R#@JxKH@?T2=#IrOe|{)V;N}Wm)f}ol~+T4eql55vrM_
+zV6QC2_+JArAWnF?_9?N7WHFy{#p3+6lh3ND`d|%`TQqw7s(sn8FKdfy!s0H$$Mp+!
+zONgDF9kYT!M+~n!Swtq4aJwJ{LyN>Nhpah;Xy-?d6ISEAv!f=1rw+0{)}ncfvG1h=
+zt;6F>xEaMTIE!wEZ?B7fzb0uufTW}+-eq@x^3XlIByc|9_rXiqYttiC%Gj8&*r`*I
+zZ%oFzJ=D&f+<D!+KhoddPn3%PRe;_6le|Uj6pqtKkv7Gwtag4uXQ!9o-?S>i;VNDJ
+zuV@W#u(5K_4|_DD$<^gEynK97-yiVZ!*uw4nspGt#|b^$_|cJxMd?Tv`i16o70Jb3
+zwD<rdFS%YW0CeH-2|}M1IZp1m4B{|L<!70}Grj{;I`!|3+xwkdmf)2{l&q}miN=aO
+zHTM-xguZ|w0O(5&qHI68)a+aZ{=PzHMI6HonTvP%oze>1j@9<myr%vmLkzRQJ6|p;
+zDM?>iTKcUC?7s^1HMTAmEg$D>y1+KEtVMQ5^$Gw{O*J*!A5O|zBH{43u!wbVH}qBr
+z8Y!rW;77dA%F40}3k%Z@aNg}h<1-TafS5S=o|_c#0Q9gHC`IEvnX~e|c8zSTs;XKk
+zRj3at2qx~Q*`eE#M=YxB|0yae+C12up)b?v(Ubl;M<y6Hj0_yQqvic$LIlB|La|Sw
+z=wf8(NF?&p&L&A|re`yvDbu-b7KiFl5a2@aw8atW&9sKK)_{8CT;4suI^A-4SlTh5
+zm%4Q&g;H;Z+eE|I0v)C+sTdmnmBzXD_V!eYhU6Gw%CXcY>4y4o1V54P$OJ~3OwX>7
+zkx|L0JcE)s$9t=JE!5>5b{TJ@FaS+mfqi>#qkxhhriHp_sHkj&6<EP=sHLi{{VFzc
+z`}uUU%8=mTTnkJ*x3mC4+h5u3kp|TL1g2ohKRrAgOt4YFU)}!eKY(O*q);fv5i>g1
+z@wVxx=jNeJp;CzJX4bXn8$^1(h@_+rN=~4i0@Cj(w0(F_ROZRwjnu)S7J_M5csREd
+z0w?yWH{I+EXYA~NXqmg@shZpA3@t4!-;j{qB#H)^c46}4#<_T?n7((#6mzxCZ$`Vi
+zrbeK$03T@)8wg^l<ou()3g<?bbD5;GqBCb<Y2DPV5xiqvRQSqRl_b7E^yi#)Lxtf>
+zH{rbH)z!#gZ|@$cDOnf1=k0B}{qrYL^y!>Dh<%|zw)@j*^hMjykWD5<quCq-E?shN
+zQ;UV{F*3dWIj)u#7QstCWnpX2j&~aw8{<&RLb<uQWZSYEC)4~4U}-nXZY-~?MA*vj
+za67Lyyth;&9(QP0*V2kq&Ll-*OXL-B=J!T_J`r~BCHTA_zN^H?%iD+NudQ4xgadDE
+z6za`NLqyy&u>7r1Q?8!;nG2mr+)yJE6n%u5=vmg-OtUj7kOFfkoqV!nQlW{k9r56s
+zMHzzm^kqI^#u&VzkS@VFD*?N}dF&5B3KwzOVvv_k^|>PfLEhOI>?UtaLq>9h>4O82
+zlC!e1tTVfDW;p!^m0PiHUM-60T)&Bu=9ZT1(7UxGbH~0L&2A2Y_ff9iZS1j7Z#5E#
+zQMdh`e^9VzJ;+=i9ru-!z&Z|l(}~d^3z@t~EtSLNiAhMfbk{uTl+)rdumnxOBIfGk
+zn#p^&Pcz}5fb;P3@{)xodr~H<4@j{}=g;#a_~FUl#XvXhwuj0lpe}eCGD%EKB=IV6
+zT7^(0qkhc|=20WR2#5EAi<gBEh)IIA{7$HVp^~^x)V?ad>K3s3T@#4$nQSA{b#TT{
+zg{wm37+dBH;t`fv2LvaJ0J?T|Ld&erf+e>I;>Z~@k4uOj%DT?(?0~X{hFpJ+raNm(
+z2u4P4P=T=Z4S$Cdn9&SeNYY}q0X4Ib2?w9}SSD%y=NZ#m=ngahdYEFY&Sy@B%(gs^
+z%o=qOv^D$9#Ak*C_5K|e2omqAD#nsMCNuspZf7O<yq>5PJO)o6+14fCt=A9CMDUKh
+zI0302hbz(S4=Q713t6PuVoD!)pRpn*tET?(g9o@77B(SU80noIoAA|<191yI7&$mN
+zs13yY0kjB*v%|w*tB|wYXu6<)K8*TF2%gXKu5mkRl5p8vWI9X^*Fsq3Lo9Q=<35b_
+zMXBa{;5q#JA44v{JL4tS+belL9W#&yAEfZBb}Y++hlQ}uK@acf1!?ku+X&sM&$;K!
+zU%CZ80G5N7mPSfCzTUr(teTl;XQmZoj&bwS2jA89vEFIbq>`6d4vp3Y4MLs*{l5bN
+z^n<N~DTasW>$^j0ZJg7d!mX1$rysp`WAjr@n)P`K|J0`(TPI?){+~u=<y?sgF4bN1
+zYd5E`|L2|m4dCyWs-fCYcPXor2hcV9o!~Qh^X#^_)^>T46mFmGjrP#HFT$*<(yp|}
+zP;u=!)}d#j<Br)127^5p`?=^I+=I8q#Q9?yt{!z)Bd<TLlLEo8;KUcevS5_K3#|)2
+z6g<aWA3tE|+`hZ~nHcz|KlPfhJzYR>tI)tjd^UY!Bu<6hJKGlS&+<mw>DP7nd7+Hk
+z1@c{v9L`Zi*iCNS&|3h#UQkfLg>d=nC5<4+`;z8zN>ubcFy!2z-yYgDonEy*BAxh^
+zs%qeJz9wPuxqO@BiB4hIxAgg=4?56db(T|I?VVRny8#3r2dDnuZ%r|rs#Vu$G0-cS
+zgxQ?vY#-9{z{ci0$?jh5#EmZhRLFdm&?b$T*WequTU(Z?<Vwu8=;;IiPcJY0;M;3&
+zfpv~9|88*kvLtAeLV*GMbK6UUODiiYO{D`Yz}okE0{{Ro;zlL^@{N4<a>)d|{@>_;
+zvGD^^7K5csNvZdl{BF~-;uQ3j!==<l``Ta-*PDus&4$|@x6&m49dFX@LB__<N@K=b
+zr3#l97Xj(^?F~wojv`b09tV>c42G4G$)y6;VE4JpLi(U?`*Fl)B9S<cm_Q28+$s-k
+z{q+TZ;=~Ch6M3EWNJ+T0uR|{{?HC+K-;=}b-+c7wQNg!d*79kkgYrDXnW2VNWe8f@
+zq4rnQ9I=F0fIRTw_I9xJ!-p+<0Yfg}(aS;aG2vor=*rquBh}c*h$}0DcTcirR+;C6
+z<`8*;;4{$`0%HX7Xi~jcmeFd}DBY)EyqoX>lEly<Z}Ayf7k}X&oD@T#@~BmE&lloh
+zM-ps$=eUPNPdJ)_#{fA2E*1Bczi`;uoSEoCw{X3jK$O|>&arz>^rid%&Bo7d6QSqO
+zudiRfI@O}J28V|`(jC;?CJV7BXJ_Y6XndZCsA%?S1QFda{(ffczZST;d4`g6)KOjT
+z^+SW5GEpZ47CVjpA>IBK)f??-Zx31KUc%Xms1X=mb`L+VudnCIm_{vY^dG?U-NfEF
+zb}&Uq=ahs5v8WD@-q)@cv}oiAJ>362vocXj8)iBM*tdypP;7()o)Dq!H`NeKtLsWR
+zwP#&2+-B*J7;ekl#xDQ;g{j66rQbw9cv|V>$y<;KgXlNa6uygM+9<(9Lq6cecFVo@
+zvSjVqHsy%v-2*GLtWjD{)@B4#q;F5EJ?JO>Po}xjk&1Z@XIo*`e<m7Au(jd>>i3;H
+zg_qAfx5y&)z|wx?u)6b*<~Kv)q&^nYNTbCa?zQpEzGYT&5UO-LOgmpk%n&Y*>$Ybs
+z=z`Bxp5{^A>YbvBtmO9nN_x;r8)Fvv<Gg3jo^{#1LXRG}SQ`)Hhg(F3pOi*;I|$bK
+zID*#O`KM2xexaz=62`{y3$tjDLW#IJ`OpuCQu!ACQVKD*M@%nS5;Da^_<4AEgq^y@
+zT3*Z3EV(*@PfJT%x?9V@U<1zQlN~`Bi+Z9zEDeFkB2&-F&olQka_M+GdyMR>w|FZ#
+z&QsleQy={)_RQ+Hjg7A_r?f$LoD)=rq!Du(e6+Q-h2gt9xnk<R;@q(}E9{Y*JI{Il
+zW;qE6BpPa8x}?AYczSxe%;g-_(HdBp#)Tbm0e}C6X@=L-)D*01;}dqXIYnG^Q=%nv
+zE37GVCiU=cgXCpI;r}(Tw2~XgK78+NlLD;3_&lnL{B16v*#(Vej3=Cw%?Ki&o`~@t
+zR(sf@=RQ3B&p-dTjRwznCY{m)p+ZhTchNm*{Xu10Y`+p|>xvY@%B-*5e}Cj#k+IUE
+zyTlD=hJD@l^`y~}{vgD7N1~7`%IqK>BF=|OyeQ-xxR}msJL7xa^)bP7l2A_#g&C%S
+z?K-NRQNfE}3v`wa!~xrTJ7}doF;r0WjTt80aO*>oX7a8ZSLpYWR3M5lM#h?<F+{Dw
+z?%Y$fWn5d(;0tsX!lGb?-*hyobcc+c#@5!>7h?V1wj__Ou2d$LrpL6ynS8Ytp?y^C
+zGs!V{@qj>U*wds+#mAuW>?kvwYJzS^U2OP9D<KLVG}DZnV!&aVRAeUU@ofhwT)aj~
+z<rv|h>!Jm<cYbqE_FCR2Jh`i?O66y~-uUU4_1;+~Ad<&m<d><6jt(75ns4*Yme6mP
+z1X|Ps>z(R+g_*RL8O1wtY<*Vhd5QMbwyPgM$%mf@K~nXb4Ov|LMT-L4vMKhMX8vz<
+zpGo2?GF6F(hX+ZHa8O7um*TW}iDW$P8Vf4x>HVe5vvEl8QM9XAA%<=(s6&emUH(ib
+zaRGu{sX035;>T7S&M%9c)*~x&0DtGy_YLGgQsKu{HK;KV^Jg_udaBD`qk75EqGSr?
+z%URQaKjBBj@ZGiM)tTlaPs&bBH=CHNk<O+yVaUSM_kZVWMXf9F4cchsu2bVfpEpHC
+z6h(h=NzWv$ClJRIm;+<)9BEld|ErN>nA%P{>=p|k2mnYD0+D^)EOM=3?Flm~Dw%B1
+zPapr_<&A^TyT=xoer!8+&G>a|^=ygp-SC*B6EML`IeXdO!^|58z|_zZtkAz1`!6l7
+BH3a|w
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/drawable-xxhdpi/n9_dialog_button_negative_sq1.9.png b/app/src/main/res/drawable-xxhdpi/n9_dialog_button_negative_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..e40e4a26c9ffb6fea6062b7893e9aaacb6d1e22c
+GIT binary patch
+literal 5341
+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
+I5RSP20UNY7_y7O^
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/drawable-xxhdpi/n9_dialog_button_positive_sq0.9.png b/app/src/main/res/drawable-xxhdpi/n9_dialog_button_positive_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3086b0317d35ce2162c2d7d215fa50c180502a37
+GIT binary patch
+literal 4141
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/drawable-xxhdpi/n9_dialog_button_positive_sq1.9.png b/app/src/main/res/drawable-xxhdpi/n9_dialog_button_positive_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2136702f2fea22ebacf7b6c19026747d629decc
+GIT binary patch
+literal 4333
+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
+b<`(&XaQl<beHwpy00000NkvXXu0mjfAaFfx
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/drawable/n9_bottom_bar_bg.xml b/app/src/main/res/drawable/n9_bottom_bar_bg.xml
+new file mode 100644
+index 00000000..a272f163
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_bottom_bar_bg.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar: grey vertical gradient with a dark edge over a light line on top -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item>
++        <shape android:shape="rectangle">
++            <gradient android:angle="270"
++                android:startColor="@color/n9_toolbar_top"
++                android:endColor="@color/n9_toolbar_bottom" />
++        </shape>
++    </item>
++    <item android:gravity="top" android:height="2dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_toolbar_highlight" />
++        </shape>
++    </item>
++    <item android:gravity="top" android:height="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_toolbar_edge" />
++        </shape>
++    </item>
++</layer-list>
+diff --git a/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml b/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml
+new file mode 100644
+index 00000000..12b2c94e
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar cell: lighter flat block when selected or pressed -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="2dp"><color android:color="@color/n9_toolbar_selected" /></inset>
++    </item>
++    <item android:state_selected="true">
++        <inset android:insetTop="2dp"><color android:color="@color/n9_toolbar_selected" /></inset>
++    </item>
++    <item><color android:color="@android:color/transparent" /></item>
++</selector>
+diff --git a/app/src/main/res/drawable/n9_dialog_button_negative.xml b/app/src/main/res/drawable/n9_dialog_button_negative.xml
+new file mode 100644
+index 00000000..52b520a2
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_dialog_button_negative.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 dialog button (negative): squircle, light grey -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++            <nine-patch android:src="@drawable/n9_dialog_button_negative_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++            <nine-patch android:src="@drawable/n9_dialog_button_negative_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++</selector>
+diff --git a/app/src/main/res/drawable/n9_dialog_button_positive.xml b/app/src/main/res/drawable/n9_dialog_button_positive.xml
+new file mode 100644
+index 00000000..c4b212ea
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_dialog_button_positive.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 dialog button (positive): rounded pill, N9 calendar orange -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++            <nine-patch android:src="@drawable/n9_dialog_button_positive_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++            <nine-patch android:src="@drawable/n9_dialog_button_positive_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++</selector>
+diff --git a/app/src/main/res/drawable/n9_edit_row_bg.xml b/app/src/main/res/drawable/n9_edit_row_bg.xml
+new file mode 100644
+index 00000000..f2f7540f
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_edit_row_bg.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 editor line: flat pale blue-grey with a thin separator at the bottom -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/agenda_list_separator_color" />
++        </shape>
++    </item>
++    <item android:bottom="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_window_bg" />
++        </shape>
++    </item>
++</layer-list>
+diff --git a/app/src/main/res/drawable/n9_ic_next.xml b/app/src/main/res/drawable/n9_ic_next.xml
+new file mode 100644
+index 00000000..73d6ac13
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_next.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 month header next arrow (solid orange triangle, drawn as vector) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="true"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@color/n9_orange"
++        android:pathData="M8,5L17,12L8,19z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_previous.xml b/app/src/main/res/drawable/n9_ic_previous.xml
+new file mode 100644
+index 00000000..c78ec63f
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_previous.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 month header previous arrow (solid orange triangle, drawn as vector) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="true"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@color/n9_orange"
++        android:pathData="M16,5L7,12L16,19z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_month_panel_bg.xml b/app/src/main/res/drawable/n9_month_panel_bg.xml
+new file mode 100644
+index 00000000..082e1995
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_month_panel_bg.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 compact month: brushed light-grey panel -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <gradient android:angle="270"
++        android:startColor="@color/n9_month_panel_top"
++        android:endColor="@color/n9_month_panel_bottom" />
++</shape>
+diff --git a/app/src/main/res/drawable/n9_tb_add.xml b/app/src/main/res/drawable/n9_tb_add.xml
+new file mode 100644
+index 00000000..3ea233c9
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tb_add.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: new event (plus) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="@color/n9_toolbar_icon"
++        android:pathData="M14.5,6h3v8.5H26v3h-8.5V26h-3v-8.5H6v-3h8.5z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_tb_agenda.xml b/app/src/main/res/drawable/n9_tb_agenda.xml
+new file mode 100644
+index 00000000..02bd1a05
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tb_agenda.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: agenda (list) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="@color/n9_toolbar_icon"
++        android:pathData="M6,7h4v4H6zM12,7.5h14v3H12zM6,14h4v4H6zM12,14.5h14v3H12zM6,21h4v4H6zM12,21.5h14v3H12z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_tb_menu.xml b/app/src/main/res/drawable/n9_tb_menu.xml
+new file mode 100644
+index 00000000..767a0e92
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tb_menu.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: menu -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="@color/n9_toolbar_icon"
++        android:pathData="M6,8h20v3H6zM6,14.5h20v3H6zM6,21h20v3H6z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_tb_month.xml b/app/src/main/res/drawable/n9_tb_month.xml
+new file mode 100644
+index 00000000..90b0692a
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tb_month.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: month (grid) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="@color/n9_toolbar_icon"
++        android:pathData="M6,6h5.5v5.5H6zM13.25,6h5.5v5.5h-5.5zM20.5,6H26v5.5h-5.5zM6,13.25h5.5v5.5H6zM13.25,13.25h5.5v5.5h-5.5zM20.5,13.25H26v5.5h-5.5zM6,20.5h5.5V26H6zM13.25,20.5h5.5V26h-5.5zM20.5,20.5H26V26h-5.5z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_tb_week.xml b/app/src/main/res/drawable/n9_tb_week.xml
+new file mode 100644
+index 00000000..7f70be2b
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tb_week.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: week/day (columns) -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="@color/n9_toolbar_icon"
++        android:pathData="M6,6h5.5v20H6zM13.25,6h5.5v20h-5.5zM20.5,6H26v20h-5.5z" />
++</vector>
+diff --git a/app/src/main/res/layout-land/n9_full_month_by_week.xml b/app/src/main/res/layout-land/n9_full_month_by_week.xml
+new file mode 100644
+index 00000000..060cd4bc
+--- /dev/null
++++ b/app/src/main/res/layout-land/n9_full_month_by_week.xml
+@@ -0,0 +1,63 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 compact month, phone landscape: the grid on the left, the selected day's events
++     beside it (below it there would be no room left). -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/month"
++    android:orientation="horizontal"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@color/n9_window_bg">
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="match_parent"
++        android:layout_weight="1"
++        android:orientation="vertical"
++        android:background="@drawable/n9_month_panel_bg">
++
++        <TextView android:id="@+id/month_name"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:visibility="gone"
++            style="@style/MonthView_MiniMonthLabel" />
++
++        <include android:id="@+id/day_names" layout="@layout/n9_month_header" />
++
++        <com.android.calendar.month.MonthListView
++            android:id="@android:id/list"
++            android:layout_width="match_parent"
++            android:layout_height="0dp"
++            android:layout_weight="1"
++            android:cacheColorHint="@android:color/transparent"
++            android:divider="@null"
++            android:drawSelectorOnTop="false" />
++    </LinearLayout>
++
++    <View
++        android:layout_width="1dp"
++        android:layout_height="match_parent"
++        android:background="@color/agenda_list_separator_color" />
++
++    <FrameLayout
++        android:layout_width="0dp"
++        android:layout_height="match_parent"
++        android:layout_weight="1">
++
++        <ListView
++            android:id="@+id/n9_day_events"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:divider="@color/agenda_list_separator_color"
++            android:dividerHeight="1px" />
++
++        <TextView
++            android:id="@+id/n9_day_events_empty"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:gravity="center"
++            android:text="@string/n9_no_events"
++            android:textColor="@color/n9_text_secondary"
++            android:textFontWeight="300"
++            android:textSize="20sp" />
++    </FrameLayout>
++</LinearLayout>
 diff --git a/app/src/main/res/layout/agenda_day.xml b/app/src/main/res/layout/agenda_day.xml
 index 5dfa8c95..f0ad5f1a 100644
 --- a/app/src/main/res/layout/agenda_day.xml
@@ -2163,6 +2897,160 @@ index a7b02fc1..c13bb00a 100644
 +        android:textSize="18sp" />
  
  </LinearLayout>
+diff --git a/app/src/main/res/layout/n9_full_month_by_week.xml b/app/src/main/res/layout/n9_full_month_by_week.xml
+new file mode 100644
+index 00000000..780a2910
+--- /dev/null
++++ b/app/src/main/res/layout/n9_full_month_by_week.xml
+@@ -0,0 +1,55 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 compact month (phones): weekday row, 6-row grid on a brushed panel,
++     and the selected day's events below -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/month"
++    android:orientation="vertical"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@color/n9_window_bg">
++
++    <TextView android:id="@+id/month_name"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:visibility="gone"
++        style="@style/MonthView_MiniMonthLabel" />
++
++    <include android:id="@+id/day_names" layout="@layout/n9_month_header" />
++
++    <com.android.calendar.month.MonthListView
++        android:id="@android:id/list"
++        android:layout_width="match_parent"
++        android:layout_height="@dimen/n9_month_grid_height"
++        android:background="@drawable/n9_month_panel_bg"
++        android:cacheColorHint="@android:color/transparent"
++        android:divider="@null"
++        android:drawSelectorOnTop="false" />
++
++    <View
++        android:layout_width="match_parent"
++        android:layout_height="1dp"
++        android:background="@color/agenda_list_separator_color" />
++
++    <FrameLayout
++        android:layout_width="match_parent"
++        android:layout_height="0dp"
++        android:layout_weight="1">
++
++        <ListView
++            android:id="@+id/n9_day_events"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:divider="@color/agenda_list_separator_color"
++            android:dividerHeight="1px" />
++
++        <TextView
++            android:id="@+id/n9_day_events_empty"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:gravity="center"
++            android:text="@string/n9_no_events"
++            android:textColor="@color/n9_text_secondary"
++            android:textFontWeight="300"
++            android:textSize="20sp" />
++    </FrameLayout>
++</LinearLayout>
+diff --git a/app/src/main/res/layout/n9_month_event_item.xml b/app/src/main/res/layout/n9_month_event_item.xml
+new file mode 100644
+index 00000000..9ba00bab
+--- /dev/null
++++ b/app/src/main/res/layout/n9_month_event_item.xml
+@@ -0,0 +1,45 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 compact month: one event of the selected day (like an agenda row) -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:minHeight="64dip"
++    android:background="@color/n9_window_bg"
++    android:orientation="horizontal">
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:layout_gravity="center_vertical"
++        android:layout_marginStart="16dip"
++        android:layout_marginEnd="8dip"
++        android:paddingTop="8dip"
++        android:paddingBottom="8dip"
++        android:orientation="vertical">
++
++        <TextView
++            android:id="@+id/n9_event_title"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:singleLine="true"
++            android:textColor="@color/n9_text"
++            android:textSize="20sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:id="@+id/n9_event_when"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:singleLine="true"
++            android:textColor="@color/agenda_item_where_text_color"
++            android:textSize="16sp" />
++    </LinearLayout>
++
++    <View
++        android:id="@+id/n9_event_color"
++        android:layout_width="6dip"
++        android:layout_height="match_parent" />
++</LinearLayout>
+diff --git a/app/src/main/res/layout/n9_month_header.xml b/app/src/main/res/layout/n9_month_header.xml
+new file mode 100644
+index 00000000..21961d89
+--- /dev/null
++++ b/app/src/main/res/layout/n9_month_header.xml
+@@ -0,0 +1,36 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 compact month weekday labels; same structure/ids as full_month_header -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="horizontal"
++    android:layout_width="match_parent"
++    android:layout_height="32dip"
++    android:background="@color/n9_month_panel_top"
++    android:gravity="center_vertical">
++
++    <TextView android:id="@+id/wk_label"
++        android:layout_width="24dip"
++        android:layout_height="wrap_content"
++        android:gravity="center"
++        android:visibility="gone" />
++
++    <TextView android:id="@+id/d0_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d1_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d2_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d3_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d4_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d5_label"
++        style="@style/N9MonthDayLabel" />
++
++    <TextView android:id="@+id/d6_label"
++        style="@style/N9MonthDayLabel" />
++</LinearLayout>
 diff --git a/app/src/main/res/menu-land/all_in_one_title_bar.xml b/app/src/main/res/menu-land/all_in_one_title_bar.xml
 index 1dc7b969..2b972654 100644
 --- a/app/src/main/res/menu-land/all_in_one_title_bar.xml
@@ -2425,7 +3313,7 @@ index 77b07b59..6e64fadd 100644
  
  </resources>
 diff --git a/app/src/main/res/values-night/themes.xml b/app/src/main/res/values-night/themes.xml
-index 902ac9ca..a04dd621 100644
+index 902ac9ca..085ac3d7 100644
 --- a/app/src/main/res/values-night/themes.xml
 +++ b/app/src/main/res/values-night/themes.xml
 @@ -1,6 +1,67 @@
@@ -3031,7 +3919,7 @@ index 1478fe14..c41d4122 100644
          <item name="android:layout_height">wrap_content</item>
          <item name="android:layout_width">wrap_content</item>
 diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
-index 14c041b9..f0410345 100644
+index 14c041b9..49e94170 100644
 --- a/app/src/main/res/values/themes.xml
 +++ b/app/src/main/res/values/themes.xml
 @@ -3,14 +3,124 @@
@@ -3966,520 +4854,3 @@ index f1d37086..35311895 100644
 +    return new EditEventAllBinding(rootView);
    }
  }
-diff --git a/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt b/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt
-new file mode 100644
-index 00000000..c20b18a3
---- /dev/null
-+++ b/app/src/main/java/com/android/calendar/theme/EtesianTheme.kt
-@@ -0,0 +1,37 @@
-+package com.android.calendar.theme
-+
-+import android.app.Activity
-+import android.content.Context
-+import com.bompotis.etesian.theme.EtesianBackground
-+
-+/**
-+ * N9 ROM: the user's Etesian "Apps (light on the N9)" background. N9_LIGHT keeps Calendar's
-+ * N9 light look; the dark styles (black, dark grey, wallpaper) switch Etar to its night
-+ * resources, and the window background is drawn by [EtesianBackground.apply].
-+ */
-+object EtesianTheme {
-+
-+    @JvmStatic
-+    fun style(context: Context): EtesianBackground.Style = EtesianBackground.content(context)
-+
-+    @JvmStatic
-+    fun isDark(context: Context): Boolean = style(context).dark
-+
-+    /** Call after setContentView; returns the applied style for [recreateIfChanged]. */
-+    @JvmStatic
-+    fun applyBackground(activity: Activity): EtesianBackground.Style {
-+        val s = style(activity)
-+        EtesianBackground.apply(activity, s)
-+        return s
-+    }
-+
-+    /** Call from onResume; recreates the activity when the user picked another background. */
-+    @JvmStatic
-+    fun recreateIfChanged(activity: Activity, applied: EtesianBackground.Style?): Boolean {
-+        if (applied != null && style(activity) != applied) {
-+            activity.recreate()
-+            return true
-+        }
-+        return false
-+    }
-+}
-diff --git a/app/src/main/res/drawable/n9_bottom_bar_bg.xml b/app/src/main/res/drawable/n9_bottom_bar_bg.xml
-new file mode 100644
-index 00000000..a272f163
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_bottom_bar_bg.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar: grey vertical gradient with a dark edge over a light line on top -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <gradient android:angle="270"
-+                android:startColor="@color/n9_toolbar_top"
-+                android:endColor="@color/n9_toolbar_bottom" />
-+        </shape>
-+    </item>
-+    <item android:gravity="top" android:height="2dp">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_toolbar_highlight" />
-+        </shape>
-+    </item>
-+    <item android:gravity="top" android:height="1dp">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_toolbar_edge" />
-+        </shape>
-+    </item>
-+</layer-list>
-diff --git a/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml b/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml
-new file mode 100644
-index 00000000..12b2c94e
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_bottom_bar_item_bg.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar cell: lighter flat block when selected or pressed -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="2dp"><color android:color="@color/n9_toolbar_selected" /></inset>
-+    </item>
-+    <item android:state_selected="true">
-+        <inset android:insetTop="2dp"><color android:color="@color/n9_toolbar_selected" /></inset>
-+    </item>
-+    <item><color android:color="@android:color/transparent" /></item>
-+</selector>
-diff --git a/app/src/main/res/drawable/n9_dialog_button_negative.xml b/app/src/main/res/drawable/n9_dialog_button_negative.xml
-new file mode 100644
-index 00000000..9aa57ba0
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_dialog_button_negative.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 dialog button (negative): squircle, light grey -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+            <shape android:shape="rectangle">
-+                <corners android:radius="12dp" />
-+                <solid android:color="#C4C4C4" />
-+            </shape>
-+        </inset>
-+    </item>
-+    <item>
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+            <shape android:shape="rectangle">
-+                <corners android:radius="12dp" />
-+                <gradient android:angle="270" android:startColor="#F4F4F4" android:endColor="#DCDCDC" />
-+                <stroke android:width="1dp" android:color="@color/n9_separator" />
-+            </shape>
-+        </inset>
-+    </item>
-+</selector>
-diff --git a/app/src/main/res/drawable/n9_dialog_button_positive.xml b/app/src/main/res/drawable/n9_dialog_button_positive.xml
-new file mode 100644
-index 00000000..bc5d5c84
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_dialog_button_positive.xml
-@@ -0,0 +1,20 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 dialog button (positive): rounded pill, N9 calendar orange -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+            <shape android:shape="rectangle">
-+                <corners android:radius="12dp" />
-+                <solid android:color="@color/n9_orange_dark" />
-+            </shape>
-+        </inset>
-+    </item>
-+    <item>
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+            <shape android:shape="rectangle">
-+                <corners android:radius="12dp" />
-+                <gradient android:angle="270" android:startColor="#FF9A3C" android:endColor="#F07010" />
-+            </shape>
-+        </inset>
-+    </item>
-+</selector>
-diff --git a/app/src/main/res/drawable/n9_edit_row_bg.xml b/app/src/main/res/drawable/n9_edit_row_bg.xml
-new file mode 100644
-index 00000000..f2f7540f
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_edit_row_bg.xml
-@@ -0,0 +1,14 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 editor line: flat pale blue-grey with a thin separator at the bottom -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/agenda_list_separator_color" />
-+        </shape>
-+    </item>
-+    <item android:bottom="1dp">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_window_bg" />
-+        </shape>
-+    </item>
-+</layer-list>
-diff --git a/app/src/main/res/drawable/n9_ic_next.xml b/app/src/main/res/drawable/n9_ic_next.xml
-new file mode 100644
-index 00000000..73d6ac13
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_ic_next.xml
-@@ -0,0 +1,12 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 month header next arrow (solid orange triangle, drawn as vector) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="24dp"
-+    android:height="24dp"
-+    android:autoMirrored="true"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="@color/n9_orange"
-+        android:pathData="M8,5L17,12L8,19z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_ic_previous.xml b/app/src/main/res/drawable/n9_ic_previous.xml
-new file mode 100644
-index 00000000..c78ec63f
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_ic_previous.xml
-@@ -0,0 +1,12 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 month header previous arrow (solid orange triangle, drawn as vector) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="24dp"
-+    android:height="24dp"
-+    android:autoMirrored="true"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="@color/n9_orange"
-+        android:pathData="M16,5L7,12L16,19z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_month_panel_bg.xml b/app/src/main/res/drawable/n9_month_panel_bg.xml
-new file mode 100644
-index 00000000..082e1995
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_month_panel_bg.xml
-@@ -0,0 +1,7 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 compact month: brushed light-grey panel -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-+    <gradient android:angle="270"
-+        android:startColor="@color/n9_month_panel_top"
-+        android:endColor="@color/n9_month_panel_bottom" />
-+</shape>
-diff --git a/app/src/main/res/drawable/n9_tb_add.xml b/app/src/main/res/drawable/n9_tb_add.xml
-new file mode 100644
-index 00000000..3ea233c9
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tb_add.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: new event (plus) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="@color/n9_toolbar_icon"
-+        android:pathData="M14.5,6h3v8.5H26v3h-8.5V26h-3v-8.5H6v-3h8.5z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_tb_agenda.xml b/app/src/main/res/drawable/n9_tb_agenda.xml
-new file mode 100644
-index 00000000..02bd1a05
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tb_agenda.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: agenda (list) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="@color/n9_toolbar_icon"
-+        android:pathData="M6,7h4v4H6zM12,7.5h14v3H12zM6,14h4v4H6zM12,14.5h14v3H12zM6,21h4v4H6zM12,21.5h14v3H12z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_tb_menu.xml b/app/src/main/res/drawable/n9_tb_menu.xml
-new file mode 100644
-index 00000000..767a0e92
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tb_menu.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: menu -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="@color/n9_toolbar_icon"
-+        android:pathData="M6,8h20v3H6zM6,14.5h20v3H6zM6,21h20v3H6z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_tb_month.xml b/app/src/main/res/drawable/n9_tb_month.xml
-new file mode 100644
-index 00000000..90b0692a
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tb_month.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: month (grid) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="@color/n9_toolbar_icon"
-+        android:pathData="M6,6h5.5v5.5H6zM13.25,6h5.5v5.5h-5.5zM20.5,6H26v5.5h-5.5zM6,13.25h5.5v5.5H6zM13.25,13.25h5.5v5.5h-5.5zM20.5,13.25H26v5.5h-5.5zM6,20.5h5.5V26H6zM13.25,20.5h5.5V26h-5.5zM20.5,20.5H26V26h-5.5z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_tb_week.xml b/app/src/main/res/drawable/n9_tb_week.xml
-new file mode 100644
-index 00000000..7f70be2b
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tb_week.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: week/day (columns) -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="@color/n9_toolbar_icon"
-+        android:pathData="M6,6h5.5v20H6zM13.25,6h5.5v20h-5.5zM20.5,6H26v20h-5.5z" />
-+</vector>
-diff --git a/app/src/main/res/layout-land/n9_full_month_by_week.xml b/app/src/main/res/layout-land/n9_full_month_by_week.xml
-new file mode 100644
-index 00000000..060cd4bc
---- /dev/null
-+++ b/app/src/main/res/layout-land/n9_full_month_by_week.xml
-@@ -0,0 +1,63 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 compact month, phone landscape: the grid on the left, the selected day's events
-+     beside it (below it there would be no room left). -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:id="@+id/month"
-+    android:orientation="horizontal"
-+    android:layout_width="match_parent"
-+    android:layout_height="match_parent"
-+    android:background="@color/n9_window_bg">
-+
-+    <LinearLayout
-+        android:layout_width="0dp"
-+        android:layout_height="match_parent"
-+        android:layout_weight="1"
-+        android:orientation="vertical"
-+        android:background="@drawable/n9_month_panel_bg">
-+
-+        <TextView android:id="@+id/month_name"
-+            android:layout_width="match_parent"
-+            android:layout_height="wrap_content"
-+            android:visibility="gone"
-+            style="@style/MonthView_MiniMonthLabel" />
-+
-+        <include android:id="@+id/day_names" layout="@layout/n9_month_header" />
-+
-+        <com.android.calendar.month.MonthListView
-+            android:id="@android:id/list"
-+            android:layout_width="match_parent"
-+            android:layout_height="0dp"
-+            android:layout_weight="1"
-+            android:cacheColorHint="@android:color/transparent"
-+            android:divider="@null"
-+            android:drawSelectorOnTop="false" />
-+    </LinearLayout>
-+
-+    <View
-+        android:layout_width="1dp"
-+        android:layout_height="match_parent"
-+        android:background="@color/agenda_list_separator_color" />
-+
-+    <FrameLayout
-+        android:layout_width="0dp"
-+        android:layout_height="match_parent"
-+        android:layout_weight="1">
-+
-+        <ListView
-+            android:id="@+id/n9_day_events"
-+            android:layout_width="match_parent"
-+            android:layout_height="match_parent"
-+            android:divider="@color/agenda_list_separator_color"
-+            android:dividerHeight="1px" />
-+
-+        <TextView
-+            android:id="@+id/n9_day_events_empty"
-+            android:layout_width="match_parent"
-+            android:layout_height="match_parent"
-+            android:gravity="center"
-+            android:text="@string/n9_no_events"
-+            android:textColor="@color/n9_text_secondary"
-+            android:textFontWeight="300"
-+            android:textSize="20sp" />
-+    </FrameLayout>
-+</LinearLayout>
-diff --git a/app/src/main/res/layout/n9_full_month_by_week.xml b/app/src/main/res/layout/n9_full_month_by_week.xml
-new file mode 100644
-index 00000000..780a2910
---- /dev/null
-+++ b/app/src/main/res/layout/n9_full_month_by_week.xml
-@@ -0,0 +1,55 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 compact month (phones): weekday row, 6-row grid on a brushed panel,
-+     and the selected day's events below -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:id="@+id/month"
-+    android:orientation="vertical"
-+    android:layout_width="match_parent"
-+    android:layout_height="match_parent"
-+    android:background="@color/n9_window_bg">
-+
-+    <TextView android:id="@+id/month_name"
-+        android:layout_width="match_parent"
-+        android:layout_height="wrap_content"
-+        android:visibility="gone"
-+        style="@style/MonthView_MiniMonthLabel" />
-+
-+    <include android:id="@+id/day_names" layout="@layout/n9_month_header" />
-+
-+    <com.android.calendar.month.MonthListView
-+        android:id="@android:id/list"
-+        android:layout_width="match_parent"
-+        android:layout_height="@dimen/n9_month_grid_height"
-+        android:background="@drawable/n9_month_panel_bg"
-+        android:cacheColorHint="@android:color/transparent"
-+        android:divider="@null"
-+        android:drawSelectorOnTop="false" />
-+
-+    <View
-+        android:layout_width="match_parent"
-+        android:layout_height="1dp"
-+        android:background="@color/agenda_list_separator_color" />
-+
-+    <FrameLayout
-+        android:layout_width="match_parent"
-+        android:layout_height="0dp"
-+        android:layout_weight="1">
-+
-+        <ListView
-+            android:id="@+id/n9_day_events"
-+            android:layout_width="match_parent"
-+            android:layout_height="match_parent"
-+            android:divider="@color/agenda_list_separator_color"
-+            android:dividerHeight="1px" />
-+
-+        <TextView
-+            android:id="@+id/n9_day_events_empty"
-+            android:layout_width="match_parent"
-+            android:layout_height="match_parent"
-+            android:gravity="center"
-+            android:text="@string/n9_no_events"
-+            android:textColor="@color/n9_text_secondary"
-+            android:textFontWeight="300"
-+            android:textSize="20sp" />
-+    </FrameLayout>
-+</LinearLayout>
-diff --git a/app/src/main/res/layout/n9_month_event_item.xml b/app/src/main/res/layout/n9_month_event_item.xml
-new file mode 100644
-index 00000000..9ba00bab
---- /dev/null
-+++ b/app/src/main/res/layout/n9_month_event_item.xml
-@@ -0,0 +1,45 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 compact month: one event of the selected day (like an agenda row) -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:layout_width="match_parent"
-+    android:layout_height="wrap_content"
-+    android:minHeight="64dip"
-+    android:background="@color/n9_window_bg"
-+    android:orientation="horizontal">
-+
-+    <LinearLayout
-+        android:layout_width="0dp"
-+        android:layout_height="wrap_content"
-+        android:layout_weight="1"
-+        android:layout_gravity="center_vertical"
-+        android:layout_marginStart="16dip"
-+        android:layout_marginEnd="8dip"
-+        android:paddingTop="8dip"
-+        android:paddingBottom="8dip"
-+        android:orientation="vertical">
-+
-+        <TextView
-+            android:id="@+id/n9_event_title"
-+            android:layout_width="match_parent"
-+            android:layout_height="wrap_content"
-+            android:ellipsize="end"
-+            android:singleLine="true"
-+            android:textColor="@color/n9_text"
-+            android:textSize="20sp"
-+            android:textStyle="bold" />
-+
-+        <TextView
-+            android:id="@+id/n9_event_when"
-+            android:layout_width="match_parent"
-+            android:layout_height="wrap_content"
-+            android:ellipsize="end"
-+            android:singleLine="true"
-+            android:textColor="@color/agenda_item_where_text_color"
-+            android:textSize="16sp" />
-+    </LinearLayout>
-+
-+    <View
-+        android:id="@+id/n9_event_color"
-+        android:layout_width="6dip"
-+        android:layout_height="match_parent" />
-+</LinearLayout>
-diff --git a/app/src/main/res/layout/n9_month_header.xml b/app/src/main/res/layout/n9_month_header.xml
-new file mode 100644
-index 00000000..21961d89
---- /dev/null
-+++ b/app/src/main/res/layout/n9_month_header.xml
-@@ -0,0 +1,36 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 compact month weekday labels; same structure/ids as full_month_header -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:orientation="horizontal"
-+    android:layout_width="match_parent"
-+    android:layout_height="32dip"
-+    android:background="@color/n9_month_panel_top"
-+    android:gravity="center_vertical">
-+
-+    <TextView android:id="@+id/wk_label"
-+        android:layout_width="24dip"
-+        android:layout_height="wrap_content"
-+        android:gravity="center"
-+        android:visibility="gone" />
-+
-+    <TextView android:id="@+id/d0_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d1_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d2_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d3_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d4_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d5_label"
-+        style="@style/N9MonthDayLabel" />
-+
-+    <TextView android:id="@+id/d6_label"
-+        style="@style/N9MonthDayLabel" />
-+</LinearLayout>

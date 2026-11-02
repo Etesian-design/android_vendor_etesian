@@ -13,6 +13,202 @@ index 7f51f2e7c61..8dfbdf36c2c 100644
      ],
  
      plugins: [
+diff --git a/res/drawable-xxhdpi/n9_search_field.9.png b/res/drawable-xxhdpi/n9_search_field.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..80c3953f6875d30a27ac001faf48034ff4fc5df1
+GIT binary patch
+literal 10041
+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
+
+literal 0
+HcmV?d00001
+
 diff --git a/res/drawable/ic_homepage_search.xml b/res/drawable/ic_homepage_search.xml
 index 1e8bcdc7e4e..1fef5cab8ad 100644
 --- a/res/drawable/ic_homepage_search.xml
@@ -26,8 +222,45 @@ index 1e8bcdc7e4e..1fef5cab8ad 100644
      <path
          android:fillColor="#FF000000"
          android:pathData="M20.49,19l-5.73,-5.73C15.53,12.2 16,10.91 16,9.5C16,5.91 13.09,3 9.5,3S3,5.91 3,9.5C3,13.09 5.91,16 9.5,16c1.41,0 2.7,-0.47 3.77,-1.24L19,20.49L20.49,19zM5,9.5C5,7.01 7.01,5 9.5,5S14,7.01 14,9.5S11.99,14 9.5,14S5,11.99 5,9.5z"/>
+diff --git a/res/drawable/n9_engraved_divider.xml b/res/drawable/n9_engraved_divider.xml
+new file mode 100644
+index 00000000000..934c83cd2f5
+--- /dev/null
++++ b/res/drawable/n9_engraved_divider.xml
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<!-- N9 (Etesian) engraved rule: a dark groove over a faint highlight, inset from the edges. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="16dp" android:right="16dp" android:bottom="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_rule_dark"/>
++            <size android:height="1dp"/>
++        </shape>
++    </item>
++    <item android:left="16dp" android:right="16dp" android:top="1dp">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_rule_light"/>
++            <size android:height="1dp"/>
++        </shape>
++    </item>
++</layer-list>
 diff --git a/res/drawable/search_bar_selected_background.xml b/res/drawable/search_bar_selected_background.xml
-index a1299c5969b..8bf5cec099f 100644
+index a1299c5969b..2ee3f6a9f95 100644
 --- a/res/drawable/search_bar_selected_background.xml
 +++ b/res/drawable/search_bar_selected_background.xml
 @@ -16,5 +16,5 @@
@@ -35,10 +268,10 @@ index a1299c5969b..8bf5cec099f 100644
  <ripple xmlns:android="http://schemas.android.com/apk/res/android"
          android:color="?android:attr/colorControlHighlight">
 -    <item android:drawable="@color/settingslib_materialColorSurfaceContainerLowest"/>
-+    <item android:drawable="@color/n9_search_bg"/><!-- N9 -->
++    <item android:drawable="@drawable/n9_search_field" /><!-- N9: squircle-half ends -->
  </ripple>
 diff --git a/res/layout/homepage_preference.xml b/res/layout/homepage_preference.xml
-index 3f57592e3e4..7bc8bcb60cc 100644
+index 3f57592e3e4..028b53cb69a 100644
 --- a/res/layout/homepage_preference.xml
 +++ b/res/layout/homepage_preference.xml
 @@ -65,6 +65,10 @@
@@ -64,7 +297,7 @@ index 3f57592e3e4..7bc8bcb60cc 100644
              android:hyphenationFrequency="normalFast"
              android:lineBreakWordStyle="phrase"
 diff --git a/res/layout/homepage_preference_expressive.xml b/res/layout/homepage_preference_expressive.xml
-index d0798bf6e3d..a63bd52f028 100644
+index d0798bf6e3d..c3ce099a996 100644
 --- a/res/layout/homepage_preference_expressive.xml
 +++ b/res/layout/homepage_preference_expressive.xml
 @@ -63,7 +63,10 @@
@@ -202,8 +435,81 @@ index 4d076e2b82d..f3f70c8bdd6 100644
  
      <color name="contextual_card_dismissal_background">@*android:color/material_grey_100</color>
      <color name="contextual_card_background">@*android:color/background_device_default_light</color>
+diff --git a/res/values/n9_colors.xml b/res/values/n9_colors.xml
+new file mode 100644
+index 00000000000..2a180f7bbb2
+--- /dev/null
++++ b/res/values/n9_colors.xml
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<!-- Nokia N9 (Etesian) black palette. Settings is forced to night mode
++     (SettingsApplication), so these apply in both configurations. -->
++<resources>
++    <color name="n9_window_bg">#000000</color>
++    <color name="n9_list_bg">#000000</color>
++    <color name="n9_search_bg">#1A1A1A</color>
++    <color name="n9_text_primary">#FFFFFF</color>
++    <color name="n9_text_secondary">#A0A0A0</color>
++    <color name="n9_separator">#4A4A4A</color>
++    <color name="n9_accent">#2A86D8</color>
++    <color name="n9_accent_dark">#1E5F99</color>
++    <!-- N9: plain monochrome icons, no tile behind them -->
++    <color name="n9_icon_tile_bg">#00000000</color>
++    <color name="n9_icon_tint">#FFFFFF</color>
++    <color name="n9_switch_track_off">#3A3A3A</color>
++    <!-- Engraved rule: groove and highlight -->
++    <color name="n9_rule_dark">#0F0F0F</color>
++    <color name="n9_rule_light">#333333</color>
++    <color name="n9_positive">#62AE2E</color>
++    <color name="n9_negative">#E5534F</color>
++</resources>
+diff --git a/res/values/n9_dimens.xml b/res/values/n9_dimens.xml
+new file mode 100644
+index 00000000000..8701dcb49e6
+--- /dev/null
++++ b/res/values/n9_dimens.xml
+@@ -0,0 +1,24 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    Copyright (C) 2026 The LineageOS Project
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<resources>
++    <!-- N9 squircle icon tile on the homepage: 40dp, radius ~28% -->
++    <dimen name="n9_icon_tile_size">40dp</dimen>
++    <dimen name="n9_icon_tile_radius">11dp</dimen>
++    <dimen name="n9_icon_tile_padding">8dp</dimen>
++    <dimen name="n9_list_primary_text_size">20sp</dimen>
++    <dimen name="n9_list_secondary_text_size">14sp</dimen>
++</resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
-index 4f105e95bec..0f144b5e5e1 100644
+index 4f105e95bec..3817e8b275e 100644
 --- a/res/values/styles.xml
 +++ b/res/values/styles.xml
 @@ -341,7 +341,7 @@
@@ -221,7 +527,7 @@ index 4f105e95bec..0f144b5e5e1 100644
      <style name="SearchBarStyle">
 -        <item name="android:theme">@style/Theme.MaterialComponents.DayNight</item>
 +        <item name="android:theme">@style/Theme.MaterialComponents</item><!-- N9: dark -->
-+        <item name="cardBackgroundColor">@color/n9_search_bg</item><!-- N9 -->
++        <item name="cardBackgroundColor">@android:color/transparent</item><!-- N9: the bar draws the field (search_bar_selected_background) -->
          <item name="cardCornerRadius">@dimen/search_bar_corner_radius</item>
          <item name="cardElevation">0dp</item>
      </style>
@@ -229,7 +535,7 @@ index 4f105e95bec..0f144b5e5e1 100644
      <style name="SearchBarStyle_v2">
 -        <item name="android:theme">@style/Theme.MaterialComponents.DayNight</item>
 +        <item name="android:theme">@style/Theme.MaterialComponents</item><!-- N9: dark -->
-+        <item name="cardBackgroundColor">@color/n9_search_bg</item><!-- N9 -->
++        <item name="cardBackgroundColor">@android:color/transparent</item><!-- N9: the bar draws the field (search_bar_selected_background) -->
          <item name="cardCornerRadius">40dp</item>
          <item name="cardElevation">0dp</item>
 -        <item name="strokeWidth">1dp</item>
@@ -269,7 +575,7 @@ index c7638d32c97..8191fa37813 100644
  
      <style name="SetupWizardPreferenceFragmentStyle" parent="PreferenceFragment.Material">
 diff --git a/res/values/themes.xml b/res/values/themes.xml
-index 7422dbc2572..d29813b2f8f 100644
+index 7422dbc2572..3b0ec5ff3a6 100644
 --- a/res/values/themes.xml
 +++ b/res/values/themes.xml
 @@ -81,6 +81,27 @@
@@ -330,7 +636,7 @@ index 7422dbc2572..d29813b2f8f 100644
  
      <style name="Theme.Settings.Home.NoAnimation">
 diff --git a/res/values/themes_expressive.xml b/res/values/themes_expressive.xml
-index 7d089b1b131..f9173c8ceaa 100644
+index 7d089b1b131..f40e03e0e0a 100644
 --- a/res/values/themes_expressive.xml
 +++ b/res/values/themes_expressive.xml
 @@ -73,6 +73,26 @@
@@ -371,6 +677,251 @@ index 7d089b1b131..f9173c8ceaa 100644
      </style>
  
      <style name="Theme.LockSettings.Expressive" parent="Theme.SubSettings.Expressive">
+diff --git a/src/com/android/settings/core/EtesianChrome.java b/src/com/android/settings/core/EtesianChrome.java
+new file mode 100644
+index 00000000000..0523aed3690
+--- /dev/null
++++ b/src/com/android/settings/core/EtesianChrome.java
+@@ -0,0 +1,239 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.core;
++
++import android.app.ActionBar;
++import android.app.Activity;
++import android.graphics.Color;
++import android.graphics.Typeface;
++import android.util.TypedValue;
++import android.view.View;
++import android.widget.TextView;
++import android.widget.Toolbar;
++
++import com.android.settings.R;
++
++import com.bompotis.etesian.theme.EtesianBackground;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
++import java.util.ArrayList;
++import java.util.List;
++
++/**
++ * Nokia N9 (Etesian) chrome for Settings: the black-screen background (black or the user's
++ * dark wallpaper, Settings.Secure {@code etesian_dark_bg}) and the system bottom toolbar.
++ */
++public final class EtesianChrome {
++
++    private EtesianChrome() {}
++
++    /** Whether the system toolbar is showing, so Settings' own Back arrows should be hidden. */
++    public static boolean useSystemToolbar(Activity activity) {
++        return EtesianToolbar.isAvailable(activity);
++    }
++
++    /**
++     * Applies the N9 black-screen background to [activity]'s window. Returns whether it is the
++     * wallpaper, in which case the caller should make its opaque bars transparent.
++     */
++    public static boolean applyBackground(Activity activity) {
++        final EtesianBackground.Style style = EtesianBackground.blackScreen(activity);
++        EtesianBackground.applyBlackScreen(activity, style);
++        return style == EtesianBackground.Style.WALLPAPER;
++    }
++
++    /** Makes [views] transparent (null entries are skipped), for the wallpaper background. */
++    public static void clearBackgrounds(View... views) {
++        for (View v : views) {
++            if (v != null) v.setBackgroundColor(Color.TRANSPARENT);
++        }
++    }
++
++    /**
++     * Puts the dark N9 toolbar on [activity]: Back on sub-pages, none on the main page, plus
++     * [items]. Hides the action bar's own Back arrow while the system toolbar shows.
++     */
++    public static void applyToolbar(Activity activity, boolean back,
++            EtesianToolbar.Listener listener, EtesianToolbar.Item... items) {
++        if (!EtesianToolbar.isAvailable(activity)) {
++            return;
++        }
++        hideBackArrow(activity, null);
++        final List<EtesianToolbar.Item> list = new ArrayList<>();
++        for (EtesianToolbar.Item i : items) list.add(i);
++        EtesianToolbar.of(activity)
++                .setBack(back)
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setItems(list, listener != null ? listener : id -> {});
++    }
++
++    /** Hides the action bar's Back arrow (the system toolbar has Back). */
++    public static void hideBackArrow(Activity activity, Toolbar toolbar) {
++        final ActionBar actionBar = activity.getActionBar();
++        if (actionBar != null) {
++            actionBar.setDisplayHomeAsUpEnabled(false);
++            actionBar.setHomeButtonEnabled(false);
++        }
++        if (toolbar != null) {
++            toolbar.setNavigationIcon(null);
++        }
++    }
++
++    /** N9 page title: Nokia Pure Light (300), 26sp, whatever the toolbar style says. */
++    public static void styleTitle(Toolbar toolbar) {
++        final Typeface light = Typeface.create(
++                Typeface.create("etesian-text", Typeface.NORMAL), 300, false);
++        for (int i = 0; i < toolbar.getChildCount(); i++) {
++            final View child = toolbar.getChildAt(i);
++            if (child instanceof TextView) {
++                final TextView title = (TextView) child;
++                title.setTypeface(light);
++                title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
++            }
++        }
++    }
++
++    /**
++     * Hides the system toolbar on this activity, as on the N9's main Settings page (sub pages
++     * have one, usually with only Back).
++     */
++    public static void hideToolbar(Activity activity) {
++        if (!EtesianToolbar.isAvailable(activity)) {
++            return;
++        }
++        EtesianToolbar.of(activity)
++                .setBack(false)
++                .setStyle(EtesianToolbar.STYLE_DARK)
++                .setHidden(true)
++                .setItems(new ArrayList<>(), id -> {});
++    }
++
++    /**
++     * Search by pulling down at the top of any Settings screen (the N9 had no search; this
++     * keeps it without a button). Feed it every touch from the activity's dispatchTouchEvent.
++     */
++    public static final class PullToSearch {
++        private static final float TRIGGER_DP = 110f;
++        private final Activity mActivity;
++        private final float mDensity;
++        private float mDownX;
++        private float mDownY;
++        private boolean mTracking;
++        private boolean mPulling;
++        private TextView mHint;
++
++        public PullToSearch(Activity activity) {
++            mActivity = activity;
++            mDensity = activity.getResources().getDisplayMetrics().density;
++        }
++
++        public void onTouch(android.view.MotionEvent ev) {
++            switch (ev.getActionMasked()) {
++                case android.view.MotionEvent.ACTION_DOWN:
++                    mDownX = ev.getRawX();
++                    mDownY = ev.getRawY();
++                    // Only from a list that is already at its top.
++                    mTracking = atTop(mActivity.findViewById(android.R.id.content), ev.getRawX(),
++                            ev.getRawY());
++                    mPulling = false;
++                    break;
++                case android.view.MotionEvent.ACTION_MOVE: {
++                    if (!mTracking) break;
++                    final float dy = ev.getRawY() - mDownY;
++                    final float dx = Math.abs(ev.getRawX() - mDownX);
++                    if (!mPulling && (dy < 0 || dx > Math.abs(dy))) {
++                        if (Math.abs(dy) > 12 * mDensity || dx > 12 * mDensity) mTracking = false;
++                        break;
++                    }
++                    if (dy > 16 * mDensity) mPulling = true;
++                    if (mPulling) showHint(dy / (TRIGGER_DP * mDensity));
++                    break;
++                }
++                case android.view.MotionEvent.ACTION_UP:
++                    if (mPulling && ev.getRawY() - mDownY >= TRIGGER_DP * mDensity) openSearch();
++                    // fall through
++                case android.view.MotionEvent.ACTION_CANCEL:
++                    mTracking = false;
++                    mPulling = false;
++                    hideHint();
++                    break;
++            }
++        }
++
++        /** True when the scrolling view under (x, y), if any, cannot scroll further up. */
++        private static boolean atTop(View v, float x, float y) {
++            if (v == null || v.getVisibility() != View.VISIBLE) return true;
++            final int[] at = new int[2];
++            v.getLocationOnScreen(at);
++            if (x < at[0] || y < at[1] || x > at[0] + v.getWidth() || y > at[1] + v.getHeight()) {
++                return true;
++            }
++            if (v.canScrollVertically(-1)) return false;
++            if (v instanceof android.view.ViewGroup) {
++                final android.view.ViewGroup g = (android.view.ViewGroup) v;
++                for (int i = 0; i < g.getChildCount(); i++) {
++                    if (!atTop(g.getChildAt(i), x, y)) return false;
++                }
++            }
++            return true;
++        }
++
++        private void showHint(float progress) {
++            if (mHint == null) {
++                mHint = new TextView(mActivity);
++                mHint.setTextColor(Color.WHITE);
++                mHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
++                mHint.setGravity(android.view.Gravity.CENTER);
++                final int pad = (int) (12 * mDensity);
++                mHint.setPadding(pad, pad, pad, pad);
++                mHint.setBackgroundColor(0xE0101010);
++                final android.widget.FrameLayout.LayoutParams lp =
++                        new android.widget.FrameLayout.LayoutParams(
++                                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
++                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
++                                android.view.Gravity.TOP);
++                ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).addView(mHint, lp);
++                mHint.setOnApplyWindowInsetsListener((view, insets) -> {
++                    view.setPadding(pad, pad + insets.getInsets(
++                            android.view.WindowInsets.Type.statusBars()).top, pad, pad);
++                    return insets;
++                });
++                mHint.requestApplyInsets();
++            }
++            final float p = Math.min(1f, progress);
++            mHint.setText(progress >= 1f ? "Release to search" : "Pull down to search");
++            mHint.setAlpha(p);
++            mHint.setTranslationY(-(1f - p) * mHint.getHeight());
++        }
++
++        private void hideHint() {
++            if (mHint == null) return;
++            ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).removeView(mHint);
++            mHint = null;
++        }
++
++        private void openSearch() {
++            try {
++                mActivity.startActivity(new android.content.Intent(
++                        "com.android.settings.action.SETTINGS_SEARCH")
++                        .setPackage(mActivity.getString(R.string.config_settingsintelligence_package_name)));
++            } catch (RuntimeException e) {
++                // No search app.
++            }
++        }
++    }
++}
 diff --git a/src/com/android/settings/core/SettingsBaseActivity.java b/src/com/android/settings/core/SettingsBaseActivity.java
 index deed076c199..45b2489fe30 100644
 --- a/src/com/android/settings/core/SettingsBaseActivity.java
@@ -635,358 +1186,3 @@ index 3d1a3761f1c..268fcb9a36e 100644
                      }
                  }
              } catch (IOException e) {
-diff --git a/res/drawable/n9_engraved_divider.xml b/res/drawable/n9_engraved_divider.xml
-new file mode 100644
-index 00000000000..934c83cd2f5
---- /dev/null
-+++ b/res/drawable/n9_engraved_divider.xml
-@@ -0,0 +1,31 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    Copyright (C) 2026 The LineageOS Project
-+
-+    Licensed under the Apache License, Version 2.0 (the "License");
-+    you may not use this file except in compliance with the License.
-+    You may obtain a copy of the License at
-+
-+         http://www.apache.org/licenses/LICENSE-2.0
-+
-+    Unless required by applicable law or agreed to in writing, software
-+    distributed under the License is distributed on an "AS IS" BASIS,
-+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+    See the License for the specific language governing permissions and
-+    limitations under the License.
-+-->
-+<!-- N9 (Etesian) engraved rule: a dark groove over a faint highlight, inset from the edges. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:left="16dp" android:right="16dp" android:bottom="1dp">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_rule_dark"/>
-+            <size android:height="1dp"/>
-+        </shape>
-+    </item>
-+    <item android:left="16dp" android:right="16dp" android:top="1dp">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_rule_light"/>
-+            <size android:height="1dp"/>
-+        </shape>
-+    </item>
-+</layer-list>
-diff --git a/res/values/n9_colors.xml b/res/values/n9_colors.xml
-new file mode 100644
-index 00000000000..2a180f7bbb2
---- /dev/null
-+++ b/res/values/n9_colors.xml
-@@ -0,0 +1,37 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    Copyright (C) 2026 The LineageOS Project
-+
-+    Licensed under the Apache License, Version 2.0 (the "License");
-+    you may not use this file except in compliance with the License.
-+    You may obtain a copy of the License at
-+
-+         http://www.apache.org/licenses/LICENSE-2.0
-+
-+    Unless required by applicable law or agreed to in writing, software
-+    distributed under the License is distributed on an "AS IS" BASIS,
-+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+    See the License for the specific language governing permissions and
-+    limitations under the License.
-+-->
-+<!-- Nokia N9 (Etesian) black palette. Settings is forced to night mode
-+     (SettingsApplication), so these apply in both configurations. -->
-+<resources>
-+    <color name="n9_window_bg">#000000</color>
-+    <color name="n9_list_bg">#000000</color>
-+    <color name="n9_search_bg">#1A1A1A</color>
-+    <color name="n9_text_primary">#FFFFFF</color>
-+    <color name="n9_text_secondary">#A0A0A0</color>
-+    <color name="n9_separator">#4A4A4A</color>
-+    <color name="n9_accent">#2A86D8</color>
-+    <color name="n9_accent_dark">#1E5F99</color>
-+    <!-- N9: plain monochrome icons, no tile behind them -->
-+    <color name="n9_icon_tile_bg">#00000000</color>
-+    <color name="n9_icon_tint">#FFFFFF</color>
-+    <color name="n9_switch_track_off">#3A3A3A</color>
-+    <!-- Engraved rule: groove and highlight -->
-+    <color name="n9_rule_dark">#0F0F0F</color>
-+    <color name="n9_rule_light">#333333</color>
-+    <color name="n9_positive">#62AE2E</color>
-+    <color name="n9_negative">#E5534F</color>
-+</resources>
-diff --git a/res/values/n9_dimens.xml b/res/values/n9_dimens.xml
-new file mode 100644
-index 00000000000..8701dcb49e6
---- /dev/null
-+++ b/res/values/n9_dimens.xml
-@@ -0,0 +1,24 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    Copyright (C) 2026 The LineageOS Project
-+
-+    Licensed under the Apache License, Version 2.0 (the "License");
-+    you may not use this file except in compliance with the License.
-+    You may obtain a copy of the License at
-+
-+         http://www.apache.org/licenses/LICENSE-2.0
-+
-+    Unless required by applicable law or agreed to in writing, software
-+    distributed under the License is distributed on an "AS IS" BASIS,
-+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+    See the License for the specific language governing permissions and
-+    limitations under the License.
-+-->
-+<resources>
-+    <!-- N9 squircle icon tile on the homepage: 40dp, radius ~28% -->
-+    <dimen name="n9_icon_tile_size">40dp</dimen>
-+    <dimen name="n9_icon_tile_radius">11dp</dimen>
-+    <dimen name="n9_icon_tile_padding">8dp</dimen>
-+    <dimen name="n9_list_primary_text_size">20sp</dimen>
-+    <dimen name="n9_list_secondary_text_size">14sp</dimen>
-+</resources>
-diff --git a/src/com/android/settings/core/EtesianChrome.java b/src/com/android/settings/core/EtesianChrome.java
-new file mode 100644
-index 00000000000..5dec69fb096
---- /dev/null
-+++ b/src/com/android/settings/core/EtesianChrome.java
-@@ -0,0 +1,239 @@
-+/*
-+ * Copyright (C) 2026 The LineageOS Project
-+ *
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ *      http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+
-+package com.android.settings.core;
-+
-+import android.app.ActionBar;
-+import android.app.Activity;
-+import android.graphics.Color;
-+import android.graphics.Typeface;
-+import android.util.TypedValue;
-+import android.view.View;
-+import android.widget.TextView;
-+import android.widget.Toolbar;
-+
-+import com.android.settings.R;
-+
-+import com.bompotis.etesian.theme.EtesianBackground;
-+import com.bompotis.etesian.toolbar.EtesianToolbar;
-+
-+import java.util.ArrayList;
-+import java.util.List;
-+
-+/**
-+ * Nokia N9 (Etesian) chrome for Settings: the black-screen background (black or the user's
-+ * dark wallpaper, Settings.Secure {@code etesian_dark_bg}) and the system bottom toolbar.
-+ */
-+public final class EtesianChrome {
-+
-+    private EtesianChrome() {}
-+
-+    /** Whether the system toolbar is showing, so Settings' own Back arrows should be hidden. */
-+    public static boolean useSystemToolbar(Activity activity) {
-+        return EtesianToolbar.isAvailable(activity);
-+    }
-+
-+    /**
-+     * Applies the N9 black-screen background to [activity]'s window. Returns whether it is the
-+     * wallpaper, in which case the caller should make its opaque bars transparent.
-+     */
-+    public static boolean applyBackground(Activity activity) {
-+        final EtesianBackground.Style style = EtesianBackground.blackScreen(activity);
-+        EtesianBackground.applyBlackScreen(activity, style);
-+        return style == EtesianBackground.Style.WALLPAPER;
-+    }
-+
-+    /** Makes [views] transparent (null entries are skipped), for the wallpaper background. */
-+    public static void clearBackgrounds(View... views) {
-+        for (View v : views) {
-+            if (v != null) v.setBackgroundColor(Color.TRANSPARENT);
-+        }
-+    }
-+
-+    /**
-+     * Puts the dark N9 toolbar on [activity]: Back on sub-pages, none on the main page, plus
-+     * [items]. Hides the action bar's own Back arrow while the system toolbar shows.
-+     */
-+    public static void applyToolbar(Activity activity, boolean back,
-+            EtesianToolbar.Listener listener, EtesianToolbar.Item... items) {
-+        if (!EtesianToolbar.isAvailable(activity)) {
-+            return;
-+        }
-+        hideBackArrow(activity, null);
-+        final List<EtesianToolbar.Item> list = new ArrayList<>();
-+        for (EtesianToolbar.Item i : items) list.add(i);
-+        EtesianToolbar.of(activity)
-+                .setBack(back)
-+                .setStyle(EtesianToolbar.STYLE_DARK)
-+                .setItems(list, listener != null ? listener : id -> {});
-+    }
-+
-+    /** Hides the action bar's Back arrow (the system toolbar has Back). */
-+    public static void hideBackArrow(Activity activity, Toolbar toolbar) {
-+        final ActionBar actionBar = activity.getActionBar();
-+        if (actionBar != null) {
-+            actionBar.setDisplayHomeAsUpEnabled(false);
-+            actionBar.setHomeButtonEnabled(false);
-+        }
-+        if (toolbar != null) {
-+            toolbar.setNavigationIcon(null);
-+        }
-+    }
-+
-+    /** N9 page title: Nokia Pure Light (300), 26sp, whatever the toolbar style says. */
-+    public static void styleTitle(Toolbar toolbar) {
-+        final Typeface light = Typeface.create(
-+                Typeface.create("etesian-text", Typeface.NORMAL), 300, false);
-+        for (int i = 0; i < toolbar.getChildCount(); i++) {
-+            final View child = toolbar.getChildAt(i);
-+            if (child instanceof TextView) {
-+                final TextView title = (TextView) child;
-+                title.setTypeface(light);
-+                title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-+            }
-+        }
-+    }
-+
-+    /**
-+     * Hides the system toolbar on this activity, as on the N9's main Settings page (sub pages
-+     * have one, usually with only Back).
-+     */
-+    public static void hideToolbar(Activity activity) {
-+        if (!EtesianToolbar.isAvailable(activity)) {
-+            return;
-+        }
-+        EtesianToolbar.of(activity)
-+                .setBack(false)
-+                .setStyle(EtesianToolbar.STYLE_DARK)
-+                .setHidden(true)
-+                .setItems(new ArrayList<>(), id -> {});
-+    }
-+
-+    /**
-+     * Search by pulling down at the top of any Settings screen (the N9 had no search; this
-+     * keeps it without a button). Feed it every touch from the activity's dispatchTouchEvent.
-+     */
-+    public static final class PullToSearch {
-+        private static final float TRIGGER_DP = 110f;
-+        private final Activity mActivity;
-+        private final float mDensity;
-+        private float mDownX;
-+        private float mDownY;
-+        private boolean mTracking;
-+        private boolean mPulling;
-+        private TextView mHint;
-+
-+        public PullToSearch(Activity activity) {
-+            mActivity = activity;
-+            mDensity = activity.getResources().getDisplayMetrics().density;
-+        }
-+
-+        public void onTouch(android.view.MotionEvent ev) {
-+            switch (ev.getActionMasked()) {
-+                case android.view.MotionEvent.ACTION_DOWN:
-+                    mDownX = ev.getRawX();
-+                    mDownY = ev.getRawY();
-+                    // Only from a list that is already at its top.
-+                    mTracking = atTop(mActivity.findViewById(android.R.id.content), ev.getRawX(),
-+                            ev.getRawY());
-+                    mPulling = false;
-+                    break;
-+                case android.view.MotionEvent.ACTION_MOVE: {
-+                    if (!mTracking) break;
-+                    final float dy = ev.getRawY() - mDownY;
-+                    final float dx = Math.abs(ev.getRawX() - mDownX);
-+                    if (!mPulling && (dy < 0 || dx > Math.abs(dy))) {
-+                        if (Math.abs(dy) > 12 * mDensity || dx > 12 * mDensity) mTracking = false;
-+                        break;
-+                    }
-+                    if (dy > 16 * mDensity) mPulling = true;
-+                    if (mPulling) showHint(dy / (TRIGGER_DP * mDensity));
-+                    break;
-+                }
-+                case android.view.MotionEvent.ACTION_UP:
-+                    if (mPulling && ev.getRawY() - mDownY >= TRIGGER_DP * mDensity) openSearch();
-+                    // fall through
-+                case android.view.MotionEvent.ACTION_CANCEL:
-+                    mTracking = false;
-+                    mPulling = false;
-+                    hideHint();
-+                    break;
-+            }
-+        }
-+
-+        /** True when the scrolling view under (x, y), if any, cannot scroll further up. */
-+        private static boolean atTop(View v, float x, float y) {
-+            if (v == null || v.getVisibility() != View.VISIBLE) return true;
-+            final int[] at = new int[2];
-+            v.getLocationOnScreen(at);
-+            if (x < at[0] || y < at[1] || x > at[0] + v.getWidth() || y > at[1] + v.getHeight()) {
-+                return true;
-+            }
-+            if (v.canScrollVertically(-1)) return false;
-+            if (v instanceof android.view.ViewGroup) {
-+                final android.view.ViewGroup g = (android.view.ViewGroup) v;
-+                for (int i = 0; i < g.getChildCount(); i++) {
-+                    if (!atTop(g.getChildAt(i), x, y)) return false;
-+                }
-+            }
-+            return true;
-+        }
-+
-+        private void showHint(float progress) {
-+            if (mHint == null) {
-+                mHint = new TextView(mActivity);
-+                mHint.setTextColor(Color.WHITE);
-+                mHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-+                mHint.setGravity(android.view.Gravity.CENTER);
-+                final int pad = (int) (12 * mDensity);
-+                mHint.setPadding(pad, pad, pad, pad);
-+                mHint.setBackgroundColor(0xE0101010);
-+                final android.widget.FrameLayout.LayoutParams lp =
-+                        new android.widget.FrameLayout.LayoutParams(
-+                                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-+                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-+                                android.view.Gravity.TOP);
-+                ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).addView(mHint, lp);
-+                mHint.setOnApplyWindowInsetsListener((view, insets) -> {
-+                    view.setPadding(pad, pad + insets.getInsets(
-+                            android.view.WindowInsets.Type.statusBars()).top, pad, pad);
-+                    return insets;
-+                });
-+                mHint.requestApplyInsets();
-+            }
-+            final float p = Math.min(1f, progress);
-+            mHint.setText(progress >= 1f ? "Release to search" : "Pull down to search");
-+            mHint.setAlpha(p);
-+            mHint.setTranslationY(-(1f - p) * mHint.getHeight());
-+        }
-+
-+        private void hideHint() {
-+            if (mHint == null) return;
-+            ((android.view.ViewGroup) mActivity.getWindow().getDecorView()).removeView(mHint);
-+            mHint = null;
-+        }
-+
-+        private void openSearch() {
-+            try {
-+                mActivity.startActivity(new android.content.Intent(
-+                        "com.android.settings.action.SETTINGS_SEARCH")
-+                        .setPackage(mActivity.getString(R.string.config_settingsintelligence_package_name)));
-+            } catch (RuntimeException e) {
-+                // No search app.
-+            }
-+        }
-+    }
-+}

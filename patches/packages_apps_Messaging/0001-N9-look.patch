@@ -48,6 +48,647 @@ index 498d1e4..b67c27b 100644
 +        android:color="#FF6E6E73" />
  </selector>
 \ No newline at end of file
+diff --git a/res/drawable-nodpi/n9_stripes_tile.png b/res/drawable-nodpi/n9_stripes_tile.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..23eb45356aa02c4b21ba22b09f3c43ccbd35ed8d
+GIT binary patch
+literal 147
+zcmeAS@N?(olHy`uVBq!ia0vp^0wB!61SBU+%rFB|QJyZ2Ar*6`o;Tz>pupoCI9+gE
+z<CWj?eP?t$G8H8z|E!Iy%&PrpxtXo%rPuQqn}99)9aSv5*e0wqS+>0Y)|!n8S927v
+v+)h~jxZ#DugDSqhU*a0Km;?JAt}|GzIbu-2z4F>Spe+oZu6{1-oD!M<aBnu4
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_cancel_button_sq0.9.png b/res/drawable-xxhdpi/n9_cancel_button_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..ea560e7973b286018d08f25be1e31b032e583bc6
+GIT binary patch
+literal 5820
+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
+HVH5TrF^7(f
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_cancel_button_sq1.9.png b/res/drawable-xxhdpi/n9_cancel_button_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..8da3224fdc4f2e49988f089ef798fb0921a0a677
+GIT binary patch
+literal 6520
+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
+PQ~*$IL#=X%Rm6V*YC_mB
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_dark_button_sq0.9.png b/res/drawable-xxhdpi/n9_dark_button_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..632193ca990a805ec9007a9a3872de49bfd18237
+GIT binary patch
+literal 5881
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_dark_button_sq1.9.png b/res/drawable-xxhdpi/n9_dark_button_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..2fd315d080d634350308f27b80d90cafcfdc4b82
+GIT binary patch
+literal 5813
+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
+V;jrkB)NwRGSIZDq`@k{!e*o8daz+3E
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_search_pill_sq0.9.png b/res/drawable-xxhdpi/n9_search_pill_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..707147139a3a7f3126cce59c2aafa8c1cdbce376
+GIT binary patch
+literal 6426
+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
+Fe*o_apz{C#
+
+literal 0
+HcmV?d00001
+
 diff --git a/res/drawable/ic_archive_small_dark.xml b/res/drawable/ic_archive_small_dark.xml
 index b083778..f96cbad 100644
 --- a/res/drawable/ic_archive_small_dark.xml
@@ -186,6 +827,111 @@ index 0f4e976..a6755d5 100644
          android:width="24dp"
          android:height="24dp"
          android:viewportWidth="24"
+diff --git a/res/drawable/ic_n9_search.xml b/res/drawable/ic_n9_search.xml
+new file mode 100644
+index 0000000..955a3c2
+--- /dev/null
++++ b/res/drawable/ic_n9_search.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style magnifier for the search pill. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="22dp"
++    android:height="22dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF8C8C8C"
++        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_add.xml b/res/drawable/ic_n9_toolbar_add.xml
+new file mode 100644
+index 0000000..fa18f81
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_add.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: new message (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M4,4h16v12H7.2L4,19.2V4zM11,6.5v2.75H8.25v1.5H11v2.75h1.5v-2.75h2.75v-1.5H12.5V6.5H11z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_attach.xml b/res/drawable/ic_n9_toolbar_attach.xml
+new file mode 100644
+index 0000000..072a898
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_attach.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: attach (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_call.xml b/res/drawable/ic_n9_toolbar_call.xml
+new file mode 100644
+index 0000000..b2b24ff
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_call.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: call (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
++</vector>
+diff --git a/res/drawable/ic_n9_toolbar_menu.xml b/res/drawable/ic_n9_toolbar_menu.xml
+new file mode 100644
+index 0000000..2a8613c
+--- /dev/null
++++ b/res/drawable/ic_n9_toolbar_menu.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Etesian toolbar: view menu (drawn monochrome by the system bar). -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M4,7h16v2H4zM4,11h16v2H4zM4,15h16v2H4z" />
++</vector>
 diff --git a/res/drawable/ic_people_add_light.xml b/res/drawable/ic_people_add_light.xml
 index 2da579a..4172240 100644
 --- a/res/drawable/ic_people_add_light.xml
@@ -300,6 +1046,296 @@ index e66d863..04b6027 100644
 -    <corners android:radius="28dp" />
 +    <solid android:color="@android:color/transparent" />
  </shape>
+diff --git a/res/drawable/n9_action_bar_background.xml b/res/drawable/n9_action_bar_background.xml
+new file mode 100644
+index 0000000..79ed566
+--- /dev/null
++++ b/res/drawable/n9_action_bar_background.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 page header: flat page colour with an engraved rule under the title. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item>
++        <color android:color="@color/action_bar_background_color" />
++    </item>
++    <item
++        android:gravity="bottom|fill_horizontal"
++        android:height="2dp"
++        android:left="16dp"
++        android:right="16dp"
++        android:drawable="@drawable/n9_list_rule" />
++</layer-list>
+diff --git a/res/drawable/n9_attach_squircle.xml b/res/drawable/n9_attach_squircle.xml
+new file mode 100644
+index 0000000..d0c7380
+--- /dev/null
++++ b/res/drawable/n9_attach_squircle.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Attach button in the IME strip: grey n=2.8 squircle with a paperclip. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FFE4E4E8"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <group android:translateX="4" android:translateY="4" android:scaleX="0.58" android:scaleY="0.58">
++        <path android:fillColor="#FF6E6E73"
++            android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
++    </group>
++</vector>
+diff --git a/res/drawable/n9_bubble_incoming.xml b/res/drawable/n9_bubble_incoming.xml
+new file mode 100644
+index 0000000..0ad9d53
+--- /dev/null
++++ b/res/drawable/n9_bubble_incoming.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style received bubble (a guess): light gradient, square top-left corner with a tail out to the left. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
++            <corners android:topLeftRadius="0dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="top|left" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_light_top" android:pathData="M0,0H8V8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_bubble_outgoing.xml b/res/drawable/n9_bubble_outgoing.xml
+new file mode 100644
+index 0000000..d526dc2
+--- /dev/null
++++ b/res/drawable/n9_bubble_outgoing.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style sent bubble: cyan gradient, square top-right corner with a tail out to the right. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:right="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:endColor="@color/n9_bubble_out_bottom" />
++            <corners android:topLeftRadius="10dp" android:topRightRadius="0dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="top|right" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_out_top" android:pathData="M0,0H8L0,8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_cancel_button.xml b/res/drawable/n9_cancel_button.xml
+new file mode 100644
+index 0000000..9361942
+--- /dev/null
++++ b/res/drawable/n9_cancel_button.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 lit sheet button (Cancel): white to light grey, grey rim. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <nine-patch android:src="@drawable/n9_cancel_button_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++    <item>
++        <nine-patch android:src="@drawable/n9_cancel_button_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++</selector>
+diff --git a/res/drawable/n9_compose_strip.xml b/res/drawable/n9_compose_strip.xml
+new file mode 100644
+index 0000000..4e6f60c
+--- /dev/null
++++ b/res/drawable/n9_compose_strip.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 composer: white strip with a light rule on top. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item><shape><solid android:color="#FFD0D3D6" /></shape></item>
++    <item android:top="1dp"><shape><solid android:color="#FFFFFFFF" /></shape></item>
++</layer-list>
+diff --git a/res/drawable/n9_conversation_background.xml b/res/drawable/n9_conversation_background.xml
+new file mode 100644
+index 0000000..aeaf58d
+--- /dev/null
++++ b/res/drawable/n9_conversation_background.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 conversation: blue-grey at the top fading to light grey. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++    <gradient android:angle="270" android:startColor="#FF93A9BE" android:centerColor="#FFE8EBEE" android:centerY="0.7" android:endColor="#FFE8EBEE" />
++</shape>
+diff --git a/res/drawable/n9_dark_button.xml b/res/drawable/n9_dark_button.xml
+new file mode 100644
+index 0000000..a7ffa7b
+--- /dev/null
++++ b/res/drawable/n9_dark_button.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 dark lit button (empty state actions). -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <nine-patch android:src="@drawable/n9_dark_button_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++    <item>
++        <nine-patch android:src="@drawable/n9_dark_button_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++</selector>
+diff --git a/res/drawable/n9_emoticon.xml b/res/drawable/n9_emoticon.xml
+new file mode 100644
+index 0000000..7cf5743
+--- /dev/null
++++ b/res/drawable/n9_emoticon.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Emoticon button: grey n=2.8 squircle with a smiley. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FFE4E4E8"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <path android:fillColor="#FF6E6E73"
++        android:pathData="M11,4.5a6.5,6.5 0,1 0,0.01 0zM11,5.8a5.2,5.2 0,1 1,-0.01 0z" />
++    <path android:fillColor="#FF6E6E73"
++        android:pathData="M8.6,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M13.4,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M7.9,12.2h1.2a2,2 0,0 0,3.8 0h1.2a3.2,3.2 0,0 1,-6.2 0z" />
++</vector>
+diff --git a/res/drawable/n9_list_rule.xml b/res/drawable/n9_list_rule.xml
+new file mode 100644
+index 0000000..91498fc
+--- /dev/null
++++ b/res/drawable/n9_list_rule.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 "engraved" rule: a dark line over a light one. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:bottom="1dp">
++        <color android:color="@color/n9_separator" />
++    </item>
++    <item android:top="1dp">
++        <color android:color="@color/n9_separator_highlight" />
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_search_pill.xml b/res/drawable/n9_search_pill.xml
+new file mode 100644
+index 0000000..ba466b7
+--- /dev/null
++++ b/res/drawable/n9_search_pill.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style light grey rounded search field. -->
++<nine-patch xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/n9_search_pill_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
+diff --git a/res/drawable/n9_service_sms.xml b/res/drawable/n9_service_sms.xml
+new file mode 100644
+index 0000000..d2f279e
+--- /dev/null
++++ b/res/drawable/n9_service_sms.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- SMS service icon: green n=2.8 squircle with a white speech bubble. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="22dp" android:height="22dp" android:viewportWidth="22" android:viewportHeight="22">
++    <path android:fillColor="#FF62B700"
++        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M5.5,6.5h11v7h-6.5l-3,2.5v-2.5h-1.5z" />
++</vector>
+diff --git a/res/drawable/n9_sheet_header.xml b/res/drawable/n9_sheet_header.xml
+new file mode 100644
+index 0000000..ab59bdd
+--- /dev/null
++++ b/res/drawable/n9_sheet_header.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 sheet header: light grey gradient with a rule at the bottom. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item><shape><solid android:color="#FFC8C6CA" /></shape></item>
++    <item android:bottom="1dp"><shape><gradient android:angle="270" android:startColor="#FFEEEDEF" android:endColor="#FFE2E0E4" /></shape></item>
++</layer-list>
+diff --git a/res/drawable/n9_stripes.xml b/res/drawable/n9_stripes.xml
+new file mode 100644
+index 0000000..6b09d0c
+--- /dev/null
++++ b/res/drawable/n9_stripes.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 empty state background: charcoal with faint diagonal stripes. -->
++<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
++    android:src="@drawable/n9_stripes_tile" android:tileMode="repeat" />
+diff --git a/res/drawable/n9_unread_badge.xml b/res/drawable/n9_unread_badge.xml
+new file mode 100644
+index 0000000..9d9d67e
+--- /dev/null
++++ b/res/drawable/n9_unread_badge.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9-style green rounded unread badge. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:startColor="@color/n9_green_top"
++        android:endColor="@color/n9_green_bottom" />
++    <stroke
++        android:width="2dp"
++        android:color="#FFFFFF" />
++    <corners android:radius="5dp" />
++</shape>
 diff --git a/res/drawable/send_arrow_background.xml b/res/drawable/send_arrow_background.xml
 index 4434997..c979726 100644
 --- a/res/drawable/send_arrow_background.xml
@@ -575,7 +1611,7 @@ index 4ebb7fe..525f95c 100644
          android:id="@+id/mediapicker_container"
          android:layout_width="match_parent"
 diff --git a/res/layout/contact_picker_fragment.xml b/res/layout/contact_picker_fragment.xml
-index ce32a64..554d648 100644
+index ce32a64..711f83a 100644
 --- a/res/layout/contact_picker_fragment.xml
 +++ b/res/layout/contact_picker_fragment.xml
 @@ -21,13 +21,65 @@
@@ -753,6 +1789,112 @@ index 382796a..f2d771f 100644
 +        android:background="@drawable/n9_list_rule"
 +        android:importantForAccessibility="no" />
  </com.android.messaging.ui.conversationlist.ConversationListItemView>
+diff --git a/res/layout/conversation_list_search_pill.xml b/res/layout/conversation_list_search_pill.xml
+new file mode 100644
+index 0000000..5de5b54
+--- /dev/null
++++ b/res/layout/conversation_list_search_pill.xml
+@@ -0,0 +1,31 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: pull-down "Search" pill at the top of the conversation list. -->
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:paddingStart="16dp"
++    android:paddingEnd="16dp"
++    android:paddingTop="8dp"
++    android:paddingBottom="8dp">
++
++    <EditText
++        android:id="@+id/conversation_list_search_field"
++        android:layout_width="match_parent"
++        android:layout_height="44dp"
++        android:background="@drawable/n9_search_pill"
++        android:drawableEnd="@drawable/ic_n9_search"
++        android:paddingStart="18dp"
++        android:paddingEnd="14dp"
++        android:hint="@string/n9_search_hint"
++        android:textColorHint="@color/n9_search_hint"
++        android:textColor="#191919"
++        android:textSize="16sp"
++        android:singleLine="true"
++        android:inputType="text"
++        android:imeOptions="actionSearch|flagNoExtractUi"
++        android:importantForAutofill="no" />
++</FrameLayout>
+diff --git a/res/layout/n9_conversation_list_empty.xml b/res/layout/n9_conversation_list_empty.xml
+new file mode 100644
+index 0000000..043dee6
+--- /dev/null
++++ b/res/layout/n9_conversation_list_empty.xml
+@@ -0,0 +1,63 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 first run (n9-messaging-empty.png): striped charcoal, a huge light grey sentence, stacked dark buttons. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+id/n9_empty"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@drawable/n9_stripes"
++    android:clickable="true"
++    android:orientation="vertical"
++    android:visibility="gone">
++    <TextView
++        android:id="@+id/n9_empty_text"
++        android:layout_width="match_parent"
++        android:layout_height="0dp"
++        android:layout_weight="1"
++        android:fontFamily="etesian-text"
++        android:textFontWeight="200"
++        android:gravity="center"
++        android:lineSpacingMultiplier="0.95"
++        android:paddingStart="6dp"
++        android:paddingEnd="6dp"
++        android:text="@string/n9_empty_text"
++        android:textColor="#FF8E8E92"
++        android:textSize="44sp" />
++    <TextView
++        android:id="@+id/n9_send_text"
++        android:clickable="true"
++        android:focusable="true"
++        android:gravity="center"
++        android:letterSpacing="0"
++        android:layout_width="match_parent"
++        android:layout_height="50dp"
++        android:layout_marginStart="54dp"
++        android:layout_marginEnd="54dp"
++        android:background="@drawable/n9_dark_button"
++        android:text="@string/n9_send_a_text"
++        android:textAllCaps="false"
++        android:textColor="#FFFFFFFF"
++        android:textSize="18sp"
++        android:textStyle="bold" />
++    <TextView
++        android:id="@+id/n9_add_account"
++        android:clickable="true"
++        android:focusable="true"
++        android:gravity="center"
++        android:letterSpacing="0"
++        android:layout_width="match_parent"
++        android:layout_height="50dp"
++        android:layout_marginStart="54dp"
++        android:layout_marginEnd="54dp"
++        android:layout_marginTop="14dp"
++        android:layout_marginBottom="80dp"
++        android:background="@drawable/n9_dark_button"
++        android:text="@string/n9_add_chat_account"
++        android:textAllCaps="false"
++        android:textColor="#FFFFFFFF"
++        android:textSize="18sp"
++        android:textStyle="bold" />
++</LinearLayout>
 diff --git a/res/layout/preference_material_switch.xml b/res/layout/preference_material_switch.xml
 index 517f83d..32536a9 100644
 --- a/res/layout/preference_material_switch.xml
@@ -1143,6 +2285,25 @@ index 77ee55a..523d476 100644
 -    <color name="attachment_bg_color">@android:color/system_neutral1_0</color>
 +    <color name="attachment_bg_color">#FFFFFF</color>
  </resources>
+diff --git a/res/values/n9_strings.xml b/res/values/n9_strings.xml
+new file mode 100644
+index 0000000..bdf0e0b
+--- /dev/null
++++ b/res/values/n9_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<resources>
++    <!-- N9 look: title of the conversation list page. -->
++    <string name="n9_messages_title">Messages</string>
++    <!-- Etesian toolbar: opens the screen's menu. -->
++    <string name="n9_toolbar_menu">Menu</string>
++    <!-- N9 look: hint of the pull-down search field on the conversation list. -->
++    <string name="n9_search_hint">Search</string>
++</resources>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
 index 4dee609..4b29d69 100644
 --- a/res/values/strings.xml
@@ -1162,7 +2323,7 @@ index 4dee609..4b29d69 100644
 +    <string name="n9_send">Send</string>
  </resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
-index cb035b9..9dd2113 100644
+index cb035b9..0d4571a 100644
 --- a/res/values/styles.xml
 +++ b/res/values/styles.xml
 @@ -20,7 +20,13 @@
@@ -1399,6 +2560,72 @@ index a9f30c4..7bd0280 100644
          int color;
          if (selected) {
              color = mSelectedBubbleColor;
+diff --git a/src/com/android/messaging/ui/EtesianUi.java b/src/com/android/messaging/ui/EtesianUi.java
+new file mode 100644
+index 0000000..50e7e81
+--- /dev/null
++++ b/src/com/android/messaging/ui/EtesianUi.java
+@@ -0,0 +1,60 @@
++/*
++ * SPDX-FileCopyrightText: 2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.messaging.ui;
++
++import android.app.Activity;
++import android.view.Gravity;
++import android.view.Menu;
++import android.view.View;
++import android.widget.PopupMenu;
++
++import com.android.messaging.R;
++
++import com.bompotis.etesian.toolbar.EtesianMenu;
++import com.bompotis.etesian.toolbar.EtesianToolbar;
++
++/**
++ * Helpers for the N9 (Etesian) look: the system toolbar and the view menu that drops down
++ * from the top of the page, in place of the action bar overflow.
++ */
++public final class EtesianUi {
++
++    /** Toolbar item ids. */
++    public static final String ITEM_NEW = "new";
++    public static final String ITEM_CALL = "call";
++    public static final String ITEM_ATTACH = "attach";
++    public static final String ITEM_MENU = "menu";
++
++    /** Hides or shows items of a menu before it is shown. */
++    public interface MenuPreparer {
++        void prepare(Menu menu);
++    }
++
++    private EtesianUi() {
++    }
++
++    /** Whether the system toolbar replaces the FAB and the action bar overflow. */
++    public static boolean isToolbarAvailable(final Activity activity) {
++        return activity != null && EtesianToolbar.isAvailable(activity);
++    }
++
++    /** The "menu" toolbar item. */
++    public static EtesianToolbar.Item menuItem(final Activity activity) {
++        return EtesianToolbar.Item.action(ITEM_MENU, R.drawable.ic_n9_toolbar_menu,
++                activity.getString(R.string.n9_toolbar_menu));
++    }
++
++    /**
++     * Shows [menuRes] as the N9 toolbar menu: a card rising from the bottom over the toolbar.
++     * Taps go to [listener].
++     */
++    public static void showMenu(final Activity activity, final int menuRes,
++            final MenuPreparer preparer, final PopupMenu.OnMenuItemClickListener listener) {
++        EtesianMenu.show(activity, menuRes,
++                preparer == null ? null : preparer::prepare,
++                listener == null ? null : listener::onMenuItemClick);
++    }
++}
 diff --git a/src/com/android/messaging/ui/PlainTextEditText.java b/src/com/android/messaging/ui/PlainTextEditText.java
 index 8d6e784..2b02df2 100644
 --- a/src/com/android/messaging/ui/PlainTextEditText.java
@@ -1454,7 +2681,7 @@ index 66162bf..b7a28f0 100644
  
          mComposeDivider = view.findViewById(R.id.compose_contact_divider);
 diff --git a/src/com/android/messaging/ui/conversation/ComposeMessageView.java b/src/com/android/messaging/ui/conversation/ComposeMessageView.java
-index 9204fa0..d35dd6e 100644
+index 9204fa0..1f349ad 100644
 --- a/src/com/android/messaging/ui/conversation/ComposeMessageView.java
 +++ b/src/com/android/messaging/ui/conversation/ComposeMessageView.java
 @@ -287,6 +287,41 @@ public class ComposeMessageView extends LinearLayout
@@ -2219,705 +3446,6 @@ index e36f782..642eafc 100644
          }
      }
  
-diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
-index 54889a4..6c8b8a9 100644
---- a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
-+++ b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
-@@ -104,9 +104,11 @@ public class ConversationListSwipeHelper implements OnItemTouchListener {
-                     mInitialY = event.getY();
- 
-                     final View viewAtPoint = mRecyclerView.findChildViewUnder(mInitialX, mInitialY);
--                    final ConversationListItemView child = (ConversationListItemView) viewAtPoint;
--                    if (viewAtPoint instanceof ConversationListItemView &&
--                            child != null && child.isSwipeAnimatable()) {
-+                    // N9 look: the search pill row is not a ConversationListItemView.
-+                    final ConversationListItemView child =
-+                            viewAtPoint instanceof ConversationListItemView
-+                                    ? (ConversationListItemView) viewAtPoint : null;
-+                    if (child != null && child.isSwipeAnimatable()) {
-                         // Begin detecting swipe on the target for the rest of the gesture.
-                         mListItemView = child;
-                         if (mListItemView.isAnimating()) {
-diff --git a/src/com/android/messaging/util/ImageUtils.java b/src/com/android/messaging/util/ImageUtils.java
-index 278bad9..0c2e524 100644
---- a/src/com/android/messaging/util/ImageUtils.java
-+++ b/src/com/android/messaging/util/ImageUtils.java
-@@ -26,6 +26,7 @@ import android.graphics.BitmapShader;
- import android.graphics.Canvas;
- import android.graphics.Matrix;
- import android.graphics.Paint;
-+import android.graphics.Path;
- import android.graphics.PorterDuff;
- import android.graphics.Rect;
- import android.graphics.RectF;
-@@ -146,13 +147,15 @@ public class ImageUtils {
-         }
- 
-         bitmapPaint.setAntiAlias(true);
-+        // N9 look: Etesian squircle avatars instead of circles.
-+        final Path n9Squircle = N9Squircle.path(dest.left, dest.top, dest.right, dest.bottom);
-         if (fillBackground) {
-             bitmapPaint.setColor(backgroundColor);
--            canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
-+            canvas.drawPath(n9Squircle, bitmapPaint);
-         }
- 
-         bitmapPaint.setShader(shader);
--        canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
-+        canvas.drawPath(n9Squircle, bitmapPaint);
-         bitmapPaint.setShader(null);
- 
-         if (strokeColor != 0) {
-@@ -162,10 +165,11 @@ public class ImageUtils {
-             stroke.setStyle(Paint.Style.STROKE);
-             final float strokeWidth = 6f;
-             stroke.setStrokeWidth(strokeWidth);
--            canvas.drawCircle(dest.centerX(),
--                    dest.centerX(),
--                    dest.width() / 2f - stroke.getStrokeWidth() / 2f,
--                    stroke);
-+            final float inset = stroke.getStrokeWidth() / 2f;
-+            final RectF strokeRect = new RectF(dest.left + inset, dest.top + inset,
-+                    dest.right - inset, dest.bottom - inset);
-+            canvas.drawPath(N9Squircle.path(strokeRect.left, strokeRect.top, strokeRect.right,
-+                    strokeRect.bottom), stroke);
-         }
-     }
- 
-diff --git a/src/com/android/messaging/util/Typefaces.java b/src/com/android/messaging/util/Typefaces.java
-index eb8562c..0f902bf 100644
---- a/src/com/android/messaging/util/Typefaces.java
-+++ b/src/com/android/messaging/util/Typefaces.java
-@@ -30,7 +30,7 @@ public class Typefaces {
-     public static Typeface getRobotoBold() {
-         Assert.isMainThread();
-         if (sRobotoBold == null) {
--            sRobotoBold = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
-+            sRobotoBold = Typeface.create("etesian-text", Typeface.BOLD);
-         }
-         return sRobotoBold;
-     }
-@@ -38,7 +38,7 @@ public class Typefaces {
-     public static Typeface getRobotoNormal() {
-         Assert.isMainThread();
-         if (sRobotoNormal == null) {
--            sRobotoNormal = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
-+            sRobotoNormal = Typeface.create("etesian-text", Typeface.NORMAL);
-         }
-         return sRobotoNormal;
-     }
-diff --git a/res/drawable-nodpi/n9_stripes_tile.png b/res/drawable-nodpi/n9_stripes_tile.png
-new file mode 100644
-index 0000000000000000000000000000000000000000..23eb45356aa02c4b21ba22b09f3c43ccbd35ed8d
-GIT binary patch
-literal 147
-zcmeAS@N?(olHy`uVBq!ia0vp^0wB!61SBU+%rFB|QJyZ2Ar*6`o;Tz>pupoCI9+gE
-z<CWj?eP?t$G8H8z|E!Iy%&PrpxtXo%rPuQqn}99)9aSv5*e0wqS+>0Y)|!n8S927v
-v+)h~jxZ#DugDSqhU*a0Km;?JAt}|GzIbu-2z4F>Spe+oZu6{1-oD!M<aBnu4
-
-literal 0
-HcmV?d00001
-
-diff --git a/res/drawable/ic_n9_search.xml b/res/drawable/ic_n9_search.xml
-new file mode 100644
-index 0000000..955a3c2
---- /dev/null
-+++ b/res/drawable/ic_n9_search.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style magnifier for the search pill. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="22dp"
-+    android:height="22dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF8C8C8C"
-+        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z" />
-+</vector>
-diff --git a/res/drawable/ic_n9_toolbar_add.xml b/res/drawable/ic_n9_toolbar_add.xml
-new file mode 100644
-index 0000000..fa18f81
---- /dev/null
-+++ b/res/drawable/ic_n9_toolbar_add.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Etesian toolbar: new message (drawn monochrome by the system bar). -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF000000"
-+        android:pathData="M4,4h16v12H7.2L4,19.2V4zM11,6.5v2.75H8.25v1.5H11v2.75h1.5v-2.75h2.75v-1.5H12.5V6.5H11z" />
-+</vector>
-diff --git a/res/drawable/ic_n9_toolbar_attach.xml b/res/drawable/ic_n9_toolbar_attach.xml
-new file mode 100644
-index 0000000..072a898
---- /dev/null
-+++ b/res/drawable/ic_n9_toolbar_attach.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Etesian toolbar: attach (drawn monochrome by the system bar). -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF000000"
-+        android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
-+</vector>
-diff --git a/res/drawable/ic_n9_toolbar_call.xml b/res/drawable/ic_n9_toolbar_call.xml
-new file mode 100644
-index 0000000..b2b24ff
---- /dev/null
-+++ b/res/drawable/ic_n9_toolbar_call.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Etesian toolbar: call (drawn monochrome by the system bar). -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF000000"
-+        android:pathData="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z" />
-+</vector>
-diff --git a/res/drawable/ic_n9_toolbar_menu.xml b/res/drawable/ic_n9_toolbar_menu.xml
-new file mode 100644
-index 0000000..2a8613c
---- /dev/null
-+++ b/res/drawable/ic_n9_toolbar_menu.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Etesian toolbar: view menu (drawn monochrome by the system bar). -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF000000"
-+        android:pathData="M4,7h16v2H4zM4,11h16v2H4zM4,15h16v2H4z" />
-+</vector>
-diff --git a/res/drawable/n9_action_bar_background.xml b/res/drawable/n9_action_bar_background.xml
-new file mode 100644
-index 0000000..79ed566
---- /dev/null
-+++ b/res/drawable/n9_action_bar_background.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 page header: flat page colour with an engraved rule under the title. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item>
-+        <color android:color="@color/action_bar_background_color" />
-+    </item>
-+    <item
-+        android:gravity="bottom|fill_horizontal"
-+        android:height="2dp"
-+        android:left="16dp"
-+        android:right="16dp"
-+        android:drawable="@drawable/n9_list_rule" />
-+</layer-list>
-diff --git a/res/drawable/n9_attach_squircle.xml b/res/drawable/n9_attach_squircle.xml
-new file mode 100644
-index 0000000..d0c7380
---- /dev/null
-+++ b/res/drawable/n9_attach_squircle.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Attach button in the IME strip: grey n=2.8 squircle with a paperclip. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
-+    <path android:fillColor="#FFE4E4E8"
-+        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
-+    <group android:translateX="4" android:translateY="4" android:scaleX="0.58" android:scaleY="0.58">
-+        <path android:fillColor="#FF6E6E73"
-+            android:pathData="M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z" />
-+    </group>
-+</vector>
-diff --git a/res/drawable/n9_bubble_incoming.xml b/res/drawable/n9_bubble_incoming.xml
-new file mode 100644
-index 0000000..0ad9d53
---- /dev/null
-+++ b/res/drawable/n9_bubble_incoming.xml
-@@ -0,0 +1,19 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style received bubble (a guess): light gradient, square top-left corner with a tail out to the left. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:left="7dp">
-+        <shape android:shape="rectangle">
-+            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
-+            <corners android:topLeftRadius="0dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
-+        </shape>
-+    </item>
-+    <item android:gravity="top|left" android:width="8dp" android:height="8dp">
-+        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
-+            <path android:fillColor="@color/n9_bubble_light_top" android:pathData="M0,0H8V8Z" />
-+        </vector>
-+    </item>
-+</layer-list>
-diff --git a/res/drawable/n9_bubble_outgoing.xml b/res/drawable/n9_bubble_outgoing.xml
-new file mode 100644
-index 0000000..d526dc2
---- /dev/null
-+++ b/res/drawable/n9_bubble_outgoing.xml
-@@ -0,0 +1,19 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style sent bubble: cyan gradient, square top-right corner with a tail out to the right. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:right="7dp">
-+        <shape android:shape="rectangle">
-+            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:endColor="@color/n9_bubble_out_bottom" />
-+            <corners android:topLeftRadius="10dp" android:topRightRadius="0dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
-+        </shape>
-+    </item>
-+    <item android:gravity="top|right" android:width="8dp" android:height="8dp">
-+        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
-+            <path android:fillColor="@color/n9_bubble_out_top" android:pathData="M0,0H8L0,8Z" />
-+        </vector>
-+    </item>
-+</layer-list>
-diff --git a/res/drawable/n9_cancel_button.xml b/res/drawable/n9_cancel_button.xml
-new file mode 100644
-index 0000000..8dee048
---- /dev/null
-+++ b/res/drawable/n9_cancel_button.xml
-@@ -0,0 +1,16 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 lit sheet button (Cancel): white to light grey, grey rim. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <shape><corners android:radius="8dp" /><stroke android:width="1dp" android:color="#FFB5B4B8" />
-+            <gradient android:angle="270" android:startColor="#FFD5D5D8" android:endColor="#FFC4C4C8" /></shape>
-+    </item>
-+    <item>
-+        <shape><corners android:radius="8dp" /><stroke android:width="1dp" android:color="#FFB5B4B8" />
-+            <gradient android:angle="270" android:startColor="#FFFFFFFF" android:centerColor="#FFECECEE" android:endColor="#FFDDDDE0" /></shape>
-+    </item>
-+</selector>
-diff --git a/res/drawable/n9_compose_strip.xml b/res/drawable/n9_compose_strip.xml
-new file mode 100644
-index 0000000..4e6f60c
---- /dev/null
-+++ b/res/drawable/n9_compose_strip.xml
-@@ -0,0 +1,10 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 composer: white strip with a light rule on top. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item><shape><solid android:color="#FFD0D3D6" /></shape></item>
-+    <item android:top="1dp"><shape><solid android:color="#FFFFFFFF" /></shape></item>
-+</layer-list>
-diff --git a/res/drawable/n9_conversation_background.xml b/res/drawable/n9_conversation_background.xml
-new file mode 100644
-index 0000000..aeaf58d
---- /dev/null
-+++ b/res/drawable/n9_conversation_background.xml
-@@ -0,0 +1,9 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 conversation: blue-grey at the top fading to light grey. -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android">
-+    <gradient android:angle="270" android:startColor="#FF93A9BE" android:centerColor="#FFE8EBEE" android:centerY="0.7" android:endColor="#FFE8EBEE" />
-+</shape>
-diff --git a/res/drawable/n9_dark_button.xml b/res/drawable/n9_dark_button.xml
-new file mode 100644
-index 0000000..ff169e5
---- /dev/null
-+++ b/res/drawable/n9_dark_button.xml
-@@ -0,0 +1,16 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 dark lit button (empty state actions). -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <shape><corners android:radius="10dp" /><stroke android:width="1dp" android:color="#FF4A4A4E" />
-+            <gradient android:angle="270" android:startColor="#FF1C1C1E" android:endColor="#FF2E2E31" /></shape>
-+    </item>
-+    <item>
-+        <shape><corners android:radius="10dp" /><stroke android:width="1dp" android:color="#FF4A4A4E" />
-+            <gradient android:angle="270" android:startColor="#FF3A3A3D" android:centerColor="#FF242426" android:endColor="#FF141416" /></shape>
-+    </item>
-+</selector>
-diff --git a/res/drawable/n9_emoticon.xml b/res/drawable/n9_emoticon.xml
-new file mode 100644
-index 0000000..7cf5743
---- /dev/null
-+++ b/res/drawable/n9_emoticon.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Emoticon button: grey n=2.8 squircle with a smiley. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="28dp" android:height="28dp" android:viewportWidth="22" android:viewportHeight="22">
-+    <path android:fillColor="#FFE4E4E8"
-+        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
-+    <path android:fillColor="#FF6E6E73"
-+        android:pathData="M11,4.5a6.5,6.5 0,1 0,0.01 0zM11,5.8a5.2,5.2 0,1 1,-0.01 0z" />
-+    <path android:fillColor="#FF6E6E73"
-+        android:pathData="M8.6,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M13.4,9.4m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0M7.9,12.2h1.2a2,2 0,0 0,3.8 0h1.2a3.2,3.2 0,0 1,-6.2 0z" />
-+</vector>
-diff --git a/res/drawable/n9_list_rule.xml b/res/drawable/n9_list_rule.xml
-new file mode 100644
-index 0000000..91498fc
---- /dev/null
-+++ b/res/drawable/n9_list_rule.xml
-@@ -0,0 +1,14 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 "engraved" rule: a dark line over a light one. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:bottom="1dp">
-+        <color android:color="@color/n9_separator" />
-+    </item>
-+    <item android:top="1dp">
-+        <color android:color="@color/n9_separator_highlight" />
-+    </item>
-+</layer-list>
-diff --git a/res/drawable/n9_search_pill.xml b/res/drawable/n9_search_pill.xml
-new file mode 100644
-index 0000000..91b1ca2
---- /dev/null
-+++ b/res/drawable/n9_search_pill.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style light grey rounded search field. -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:shape="rectangle">
-+    <gradient
-+        android:angle="270"
-+        android:startColor="#E6E6E6"
-+        android:endColor="#D0D0D0" />
-+    <stroke
-+        android:width="1dp"
-+        android:color="#BDBDBD" />
-+    <corners android:radius="22dp" />
-+</shape>
-diff --git a/res/drawable/n9_service_sms.xml b/res/drawable/n9_service_sms.xml
-new file mode 100644
-index 0000000..d2f279e
---- /dev/null
-+++ b/res/drawable/n9_service_sms.xml
-@@ -0,0 +1,12 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- SMS service icon: green n=2.8 squircle with a white speech bubble. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="22dp" android:height="22dp" android:viewportWidth="22" android:viewportHeight="22">
-+    <path android:fillColor="#FF62B700"
-+        android:pathData="M11,0C19.2,0 22,2.8 22,11C22,19.2 19.2,22 11,22C2.8,22 0,19.2 0,11C0,2.8 2.8,0 11,0Z" />
-+    <path android:fillColor="#FFFFFFFF" android:pathData="M5.5,6.5h11v7h-6.5l-3,2.5v-2.5h-1.5z" />
-+</vector>
-diff --git a/res/drawable/n9_sheet_header.xml b/res/drawable/n9_sheet_header.xml
-new file mode 100644
-index 0000000..ab59bdd
---- /dev/null
-+++ b/res/drawable/n9_sheet_header.xml
-@@ -0,0 +1,10 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 sheet header: light grey gradient with a rule at the bottom. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item><shape><solid android:color="#FFC8C6CA" /></shape></item>
-+    <item android:bottom="1dp"><shape><gradient android:angle="270" android:startColor="#FFEEEDEF" android:endColor="#FFE2E0E4" /></shape></item>
-+</layer-list>
-diff --git a/res/drawable/n9_stripes.xml b/res/drawable/n9_stripes.xml
-new file mode 100644
-index 0000000..6b09d0c
---- /dev/null
-+++ b/res/drawable/n9_stripes.xml
-@@ -0,0 +1,8 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 empty state background: charcoal with faint diagonal stripes. -->
-+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:src="@drawable/n9_stripes_tile" android:tileMode="repeat" />
-diff --git a/res/drawable/n9_unread_badge.xml b/res/drawable/n9_unread_badge.xml
-new file mode 100644
-index 0000000..9d9d67e
---- /dev/null
-+++ b/res/drawable/n9_unread_badge.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style green rounded unread badge. -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:shape="rectangle">
-+    <gradient
-+        android:angle="270"
-+        android:startColor="@color/n9_green_top"
-+        android:endColor="@color/n9_green_bottom" />
-+    <stroke
-+        android:width="2dp"
-+        android:color="#FFFFFF" />
-+    <corners android:radius="5dp" />
-+</shape>
-diff --git a/res/layout/conversation_list_search_pill.xml b/res/layout/conversation_list_search_pill.xml
-new file mode 100644
-index 0000000..5de5b54
---- /dev/null
-+++ b/res/layout/conversation_list_search_pill.xml
-@@ -0,0 +1,31 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 look: pull-down "Search" pill at the top of the conversation list. -->
-+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:layout_width="match_parent"
-+    android:layout_height="wrap_content"
-+    android:paddingStart="16dp"
-+    android:paddingEnd="16dp"
-+    android:paddingTop="8dp"
-+    android:paddingBottom="8dp">
-+
-+    <EditText
-+        android:id="@+id/conversation_list_search_field"
-+        android:layout_width="match_parent"
-+        android:layout_height="44dp"
-+        android:background="@drawable/n9_search_pill"
-+        android:drawableEnd="@drawable/ic_n9_search"
-+        android:paddingStart="18dp"
-+        android:paddingEnd="14dp"
-+        android:hint="@string/n9_search_hint"
-+        android:textColorHint="@color/n9_search_hint"
-+        android:textColor="#191919"
-+        android:textSize="16sp"
-+        android:singleLine="true"
-+        android:inputType="text"
-+        android:imeOptions="actionSearch|flagNoExtractUi"
-+        android:importantForAutofill="no" />
-+</FrameLayout>
-diff --git a/res/layout/n9_conversation_list_empty.xml b/res/layout/n9_conversation_list_empty.xml
-new file mode 100644
-index 0000000..eadb4c9
---- /dev/null
-+++ b/res/layout/n9_conversation_list_empty.xml
-@@ -0,0 +1,63 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 first run (n9-messaging-empty.png): striped charcoal, a huge light grey sentence, stacked dark buttons. -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:id="@+id/n9_empty"
-+    android:layout_width="match_parent"
-+    android:layout_height="match_parent"
-+    android:background="@drawable/n9_stripes"
-+    android:clickable="true"
-+    android:orientation="vertical"
-+    android:visibility="gone">
-+    <TextView
-+        android:id="@+id/n9_empty_text"
-+        android:layout_width="match_parent"
-+        android:layout_height="0dp"
-+        android:layout_weight="1"
-+        android:fontFamily="etesian-text"
-+        android:textFontWeight="200"
-+        android:gravity="center"
-+        android:lineSpacingMultiplier="0.95"
-+        android:paddingStart="6dp"
-+        android:paddingEnd="6dp"
-+        android:text="@string/n9_empty_text"
-+        android:textColor="#FF8E8E92"
-+        android:textSize="44sp" />
-+    <TextView
-+        android:id="@+id/n9_send_text"
-+        android:clickable="true"
-+        android:focusable="true"
-+        android:gravity="center"
-+        android:letterSpacing="0"
-+        android:layout_width="match_parent"
-+        android:layout_height="50dp"
-+        android:layout_marginStart="54dp"
-+        android:layout_marginEnd="54dp"
-+        android:background="@drawable/n9_dark_button"
-+        android:text="@string/n9_send_a_text"
-+        android:textAllCaps="false"
-+        android:textColor="#FFFFFFFF"
-+        android:textSize="18sp"
-+        android:textStyle="bold" />
-+    <TextView
-+        android:id="@+id/n9_add_account"
-+        android:clickable="true"
-+        android:focusable="true"
-+        android:gravity="center"
-+        android:letterSpacing="0"
-+        android:layout_width="match_parent"
-+        android:layout_height="50dp"
-+        android:layout_marginStart="54dp"
-+        android:layout_marginEnd="54dp"
-+        android:layout_marginTop="14dp"
-+        android:layout_marginBottom="80dp"
-+        android:background="@drawable/n9_dark_button"
-+        android:text="@string/n9_add_chat_account"
-+        android:textAllCaps="false"
-+        android:textColor="#FFFFFFFF"
-+        android:textSize="18sp"
-+        android:textStyle="bold" />
-+</LinearLayout>
-diff --git a/res/values/n9_strings.xml b/res/values/n9_strings.xml
-new file mode 100644
-index 0000000..bdf0e0b
---- /dev/null
-+++ b/res/values/n9_strings.xml
-@@ -0,0 +1,13 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<resources>
-+    <!-- N9 look: title of the conversation list page. -->
-+    <string name="n9_messages_title">Messages</string>
-+    <!-- Etesian toolbar: opens the screen's menu. -->
-+    <string name="n9_toolbar_menu">Menu</string>
-+    <!-- N9 look: hint of the pull-down search field on the conversation list. -->
-+    <string name="n9_search_hint">Search</string>
-+</resources>
-diff --git a/src/com/android/messaging/ui/EtesianUi.java b/src/com/android/messaging/ui/EtesianUi.java
-new file mode 100644
-index 0000000..50e7e81
---- /dev/null
-+++ b/src/com/android/messaging/ui/EtesianUi.java
-@@ -0,0 +1,60 @@
-+/*
-+ * SPDX-FileCopyrightText: 2026 The LineageOS Project
-+ * SPDX-License-Identifier: Apache-2.0
-+ */
-+
-+package com.android.messaging.ui;
-+
-+import android.app.Activity;
-+import android.view.Gravity;
-+import android.view.Menu;
-+import android.view.View;
-+import android.widget.PopupMenu;
-+
-+import com.android.messaging.R;
-+
-+import com.bompotis.etesian.toolbar.EtesianMenu;
-+import com.bompotis.etesian.toolbar.EtesianToolbar;
-+
-+/**
-+ * Helpers for the N9 (Etesian) look: the system toolbar and the view menu that drops down
-+ * from the top of the page, in place of the action bar overflow.
-+ */
-+public final class EtesianUi {
-+
-+    /** Toolbar item ids. */
-+    public static final String ITEM_NEW = "new";
-+    public static final String ITEM_CALL = "call";
-+    public static final String ITEM_ATTACH = "attach";
-+    public static final String ITEM_MENU = "menu";
-+
-+    /** Hides or shows items of a menu before it is shown. */
-+    public interface MenuPreparer {
-+        void prepare(Menu menu);
-+    }
-+
-+    private EtesianUi() {
-+    }
-+
-+    /** Whether the system toolbar replaces the FAB and the action bar overflow. */
-+    public static boolean isToolbarAvailable(final Activity activity) {
-+        return activity != null && EtesianToolbar.isAvailable(activity);
-+    }
-+
-+    /** The "menu" toolbar item. */
-+    public static EtesianToolbar.Item menuItem(final Activity activity) {
-+        return EtesianToolbar.Item.action(ITEM_MENU, R.drawable.ic_n9_toolbar_menu,
-+                activity.getString(R.string.n9_toolbar_menu));
-+    }
-+
-+    /**
-+     * Shows [menuRes] as the N9 toolbar menu: a card rising from the bottom over the toolbar.
-+     * Taps go to [listener].
-+     */
-+    public static void showMenu(final Activity activity, final int menuRes,
-+            final MenuPreparer preparer, final PopupMenu.OnMenuItemClickListener listener) {
-+        EtesianMenu.show(activity, menuRes,
-+                preparer == null ? null : preparer::prepare,
-+                listener == null ? null : listener::onMenuItemClick);
-+    }
-+}
 diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListSearchAdapter.java b/src/com/android/messaging/ui/conversationlist/ConversationListSearchAdapter.java
 new file mode 100644
 index 0000000..8899514
@@ -3018,6 +3546,25 @@ index 0000000..8899514
 +        }
 +    }
 +}
+diff --git a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
+index 54889a4..6c8b8a9 100644
+--- a/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
++++ b/src/com/android/messaging/ui/conversationlist/ConversationListSwipeHelper.java
+@@ -104,9 +104,11 @@ public class ConversationListSwipeHelper implements OnItemTouchListener {
+                     mInitialY = event.getY();
+ 
+                     final View viewAtPoint = mRecyclerView.findChildViewUnder(mInitialX, mInitialY);
+-                    final ConversationListItemView child = (ConversationListItemView) viewAtPoint;
+-                    if (viewAtPoint instanceof ConversationListItemView &&
+-                            child != null && child.isSwipeAnimatable()) {
++                    // N9 look: the search pill row is not a ConversationListItemView.
++                    final ConversationListItemView child =
++                            viewAtPoint instanceof ConversationListItemView
++                                    ? (ConversationListItemView) viewAtPoint : null;
++                    if (child != null && child.isSwipeAnimatable()) {
+                         // Begin detecting swipe on the target for the rest of the gesture.
+                         mListItemView = child;
+                         if (mListItemView.isAnimating()) {
 diff --git a/src/com/android/messaging/ui/conversationlist/FilteredConversationCursor.java b/src/com/android/messaging/ui/conversationlist/FilteredConversationCursor.java
 new file mode 100644
 index 0000000..35e41a1
@@ -3138,6 +3685,52 @@ index 0000000..35e41a1
 +        return mRows.length == 0 || mPosition == mRows.length;
 +    }
 +}
+diff --git a/src/com/android/messaging/util/ImageUtils.java b/src/com/android/messaging/util/ImageUtils.java
+index 278bad9..0c2e524 100644
+--- a/src/com/android/messaging/util/ImageUtils.java
++++ b/src/com/android/messaging/util/ImageUtils.java
+@@ -26,6 +26,7 @@ import android.graphics.BitmapShader;
+ import android.graphics.Canvas;
+ import android.graphics.Matrix;
+ import android.graphics.Paint;
++import android.graphics.Path;
+ import android.graphics.PorterDuff;
+ import android.graphics.Rect;
+ import android.graphics.RectF;
+@@ -146,13 +147,15 @@ public class ImageUtils {
+         }
+ 
+         bitmapPaint.setAntiAlias(true);
++        // N9 look: Etesian squircle avatars instead of circles.
++        final Path n9Squircle = N9Squircle.path(dest.left, dest.top, dest.right, dest.bottom);
+         if (fillBackground) {
+             bitmapPaint.setColor(backgroundColor);
+-            canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
++            canvas.drawPath(n9Squircle, bitmapPaint);
+         }
+ 
+         bitmapPaint.setShader(shader);
+-        canvas.drawCircle(dest.centerX(), dest.centerX(), dest.width() / 2f, bitmapPaint);
++        canvas.drawPath(n9Squircle, bitmapPaint);
+         bitmapPaint.setShader(null);
+ 
+         if (strokeColor != 0) {
+@@ -162,10 +165,11 @@ public class ImageUtils {
+             stroke.setStyle(Paint.Style.STROKE);
+             final float strokeWidth = 6f;
+             stroke.setStrokeWidth(strokeWidth);
+-            canvas.drawCircle(dest.centerX(),
+-                    dest.centerX(),
+-                    dest.width() / 2f - stroke.getStrokeWidth() / 2f,
+-                    stroke);
++            final float inset = stroke.getStrokeWidth() / 2f;
++            final RectF strokeRect = new RectF(dest.left + inset, dest.top + inset,
++                    dest.right - inset, dest.bottom - inset);
++            canvas.drawPath(N9Squircle.path(strokeRect.left, strokeRect.top, strokeRect.right,
++                    strokeRect.bottom), stroke);
+         }
+     }
+ 
 diff --git a/src/com/android/messaging/util/N9Squircle.java b/src/com/android/messaging/util/N9Squircle.java
 new file mode 100644
 index 0000000..09efaea
@@ -3329,3 +3922,25 @@ index 0000000..09efaea
 +        }
 +    }
 +}
+diff --git a/src/com/android/messaging/util/Typefaces.java b/src/com/android/messaging/util/Typefaces.java
+index eb8562c..eb66589 100644
+--- a/src/com/android/messaging/util/Typefaces.java
++++ b/src/com/android/messaging/util/Typefaces.java
+@@ -30,7 +30,7 @@ public class Typefaces {
+     public static Typeface getRobotoBold() {
+         Assert.isMainThread();
+         if (sRobotoBold == null) {
+-            sRobotoBold = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
++            sRobotoBold = Typeface.create("etesian-text", Typeface.BOLD);
+         }
+         return sRobotoBold;
+     }
+@@ -38,7 +38,7 @@ public class Typefaces {
+     public static Typeface getRobotoNormal() {
+         Assert.isMainThread();
+         if (sRobotoNormal == null) {
+-            sRobotoNormal = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
++            sRobotoNormal = Typeface.create("etesian-text", Typeface.NORMAL);
+         }
+         return sRobotoNormal;
+     }

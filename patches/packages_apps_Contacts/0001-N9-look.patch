@@ -34,6 +34,122 @@ index 14aaaf05e..8ae2de46e 100644
    <item
        android:id="@+id/launchscreens_product_logo"
        android:bottom="@dimen/launchscreens_product_logo_bottom">
+diff --git a/res/drawable-xxhdpi/n9_search_box_sq0.9.png b/res/drawable-xxhdpi/n9_search_box_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f81373cd36b0fcfb40e7efc3500c397d3fb6c49
+GIT binary patch
+literal 5622
+zcmZ`-XH-*NmkvErG#~=fK}32nNKrbWBfLaJK&pWtMXL0U^ePxis0u_sgaC>WLr0`Y
+zi-3eCMGzu{CXpJ-+;@J>S~K(G-n-U4d+mMB+3nd+>Oba&Y|OmOAP|Vn*a!v(zLCHa
+z4rT=2QHCm&AkdXIW0;OrXvt=&skgvnSl{`An)}vJlv5g)+duw~^g*(=T(WT{i=DbU
+zO~t|NFZG>8w7=<>ez`#FdRbVzMS`_5U5?rH-pj}1y|$bTw7fdZuA@F2mlIj}Qt7|u
+zBEHgdUcKLAgQ}*M;3=x4NC&^wU3i69+LE3ai3uWnt5PldJaXY^1Wf_$i<g{js6D=O
+z*&RtMjC6PR2oIlujB1D~G<rA9?j0Q+rNXO~c<H-LbyE~YzI+uket(iJjp@Y^&0u_X
+z;z%Th(*sMQ8KR3_R`tfVIb$6p@=UgwbQ)AOH8mg9PtL+zt))pD8?_~6Wk^skF2IMq
+zbtV2%`pJNF{qLV%D!%iPZzntju2;x6*F~tNRY-~+w?dX;6;~w*6eCFn(6{iT4o_^3
+z*ac-9@=x_{e|}dFx=ugM&kC-REAGUZheIbFb>y<_ir>7@^Y+ol_G+O!i|*Zo2vTXt
+zcjeTMpm=CwVQJ}=Zc)PUFy5rPphDs}7qa9vbka(0#_7HSiG0!S7c+i|OTy)+_TPkV
+zy?2G1Jn^*sK$I?`K_W$Ip)4Zwl9)x+k;R?{qG%QZX8B#DBD)r+72<HvWJf-@Aue9A
+zp;mpEpR$2m)f(J?&7ui~UUQ1to9HT5S5bL@Sk(&QC%JO!$Jj~bWf@7n!WnStf3tgN
+zE+T3o{h|s*57GroU|yo)Q321h;GXwnBd02P5HE2fj-NLcY`lhvGdlCBDJb~oAO{JI
+zbA}Ft{(-~f>9&}$9Aq@c+|2Chn9}dfrUfqdkrMnH<Ej1%@1n&anWTjougSW*Hz`iM
+zh;~P*Jk1*zSjU1PPZC$`uzedUm%mS^+KSgE9TkvRIK4d-8B$aX&u?+6niz9m?Mi<x
+zb|GF^J6BAhm$k*`XIPm8S33Ie{08RaD*Gw*XLqtZn}(@(ZjW#4BH9n;Iv={s_GiYc
+z{?wSiPs?>xORiw>CYbh%zc>6Emx-hZ28Op!B8Ab#B|@Gtx0N>(yNzC2j$U(*xy)XR
+zd&Vuys(094e)=S}pM(7hGlQ*E-XgVKq{4}tIWZ=bjBSeETP^mrL*`E%Dn}z2+>vPg
+zYN4pVqo#G_Gb59uE28n+)CQub7gmOo`B$@?IzbO_F9<HtM2yP>)reGdnLcj=wQpZz
+z)q`0ksAk!MT@oN~?d9AZm)a!KqIXUxgpNzKwc~8g2zm=_QA&T=oshcu$4X~eDecmj
+zr;!VU8P}g-g7>AaeD}oZpjwLQqj|dJV~M<_=1gslmt1%Pkb5fuwmb+9<Qd7jX0Pdu
+zd8sF~5!A`&yqPV3I5d<oM4Oqdb#_RG52&Q~EWujlk{r^U6G&k^SFh^e>=Gfg#F-}{
+zgR?z;_{Qen!7Y!Ki^1Ixm}?@W!m++`VViIjF(0~xCq*;X){^(c&uws}_~J%)f^~WH
+z@tROr*#TA}4Wgf;+$(|MEDK+kRN~FNpJ?9lAp1q4fT8v3M1n8Q?r@`#0K_*6-cna%
+zKdH}?biTj#ru=O2@7nlW-_t*2?h^DB_O*0w`LbH;8ZAk#^c%&)ufN8B3~$Rir5<z#
+zIq)>1H8SU(p*So#f9`M2K5m-T=KYYFk<lOB5%X$xGn(=x^)mPSW+y`q@?~|?o!yl|
+zdG7Qcr`uW3G4h@gRC+S#UCep(cXANOv}?ezacS@K(6dF{oX;|#ETsYrtCG%3Gs&%*
+z-ahCEKRNspGAVgn$x?Rx@6TkR=oWjq^Lx2sQpOwzY+jxT13{fKltz<NvWLj%%H&h|
+zM&1)nP{>*~>hu4wO<joinaF(>Bv7GMv}j8!6uHyYWN2Uz%}-DBMo8w%@81%=y}kS1
+zv#q17O?xaXEH?J`^w5VG&ODRrp324b9fwQl*;2<d421YZ3W*SdajfqszIdHBmPbg)
+zuyWMK0v|v$s+stFa-t5Jdg_-pv$;Qb@7}#_4PD_T<*vq8?UytU7eg^{G>)h|_EBG*
+zy3q)fLi~MSQQJ92omdOaBl;n4he^P-6Xd<uPLY3l2EF*R+}<U90fQV`L*H$L&BsV!
+z_Ivz?U}C*}eSz<qVux@ACf75vv!A8F`1@*6GbBL79uQ@Xg<}Q#^%x9q%gJF*`aE&r
+zt&?OAFDySFpI+r?f6u(=%~8HgM&P*4*t|AJiw89m%kY61Glyfny~ss2+gZQ0G0cO5
+z&DnzoSZh;g<6A2!9sz;jp7}>NM-2@PEvv0Mhk&ZQ7De4ZoxqqDI9?Zh5&aZ@4&4e7
+zp=w3|PU2v905Xoir~{e|>UpJ?yjwS^47g;EJjt$~Bb#TEvV3?Msp)^TyW$*r*5#ny
+zz{U+!C`CJRNBxAS)5ZanRhwVc4+J03pmZ%8C!j?zU*hPPK-zz)QFVa8cf0eb+r(%m
+zhX=SFnI-Dnc67)XrFB8fSl2i=B`1gdcIb}t)<8MvCY#TEYbvtwYu2(&pT8<=x4h7u
+z;Em5w75fpg>gj*$oI1AHM=h#QCSG?<BxgEev|`&163ND5<Id-2r$+7*xhOcW{;wF#
+zpxwpBqBT>|_ovb4@&*P5=8QTobDDQ`Uo})G_J=)XPW;@7W72sE1eEzc^|ZqXOD)s(
+zy458Mvhi}tUM|GqtYo+-IUjBm8dSzTdI$EB#T2!bIX1fsBNG=rRE8Y!0dCFqau(Ef
+z!jKGb$AKzm^m;H`72D%>!b(8c@j#yR_!?^KigmlEk~=nP&Y$1L>q)hhF4lUssDxBo
+zY==#PSJQi8@8Tk&a8$<lH}|TC^Q0g2Vo*+dQRP@%z(RWzK4=@10;cY7KEqi9YT*O*
+z|5{ZS$hZnt_5PWQPDK-dI+jM9`BZ0`XX3{9zPwRTDv#NI@;Vk*J>hu;sre#J!;jn@
+z4`qLc+s_`8#93jjU!ew=Y=c2VtQgL>6H*z9uGqwX*VvolVny4~V~P|y_&~ukVGzht
+zuAoVhsz$y(VMeb5l3W=qkaM`Lut8)14ULSLfP^c?Cp?2>vJlJ7a&GaYCx<UAURwgK
+zf!xg5_paKy1_67@YeTdFY2)mMxz<a$bQPeDq_88VT!9o6M;R%uARqT0vZSO?r3f;+
+zdv`66G@=GNlVR0+gtWw3H!04lW$WSW7@+A2tQR`VOYek?po@y^in19&urGNgD-Fx4
+z$=wRB7_0f{ZRdfNn<%&_t6nfa$qxfpD~Xa5$Qmo(Q@6N^INX}M7!b@gy-MH9v#)MJ
+z6RO;z4Ee!BiC<O)IcpI3%u)!`VPKKPFhS6i)gd?I<a?)--$ulR5ypqRX9pvQTWqPn
+zje<4E$t<ADc3xl+iKsifTT>Us#%1=#P;~-@Mz<U}PSz)C+>o05`s~0if;QFe6e?Z3
+zY{?mizU0&v9^?TNZ#%0+1&C!K<T#m82OS}ra1%~uhP35E4C<N@U6a|4f1iKakqKc=
+z|KnuFvZ_94SzGE8F8JnV(u(EG*0b@bW%0O`xPoVEb;czO-eC#tfnPuH@jhZ;7og9t
+z{40OMm==Vxu==4<We3j{b6%CF8;o!1gePlUR`(qYkwXVhbG`0--n*vp_2VxYcWL9;
+z73J2Ptp-%_p4>CE<Yv^ZSSvrtl|W0*F8`8Nwgr7)Z>m{(mYg~!NBj*xWa%1O-EBs;
+zgfmBIWV}jhTKf7K77)MUw-p1r4tVg35gGP78U}KQg4ehs3jz;Ra_n~;%x;t2dc@7}
+zi!CJ+GV0}P4atzHRXX=T<$@M>xfQu6ZbXI-f1mWliLVR`E5Eqf`+)ENr4r$hbNJ0=
+zb9$q<q?EAZF@o-;1!X7-wbZ4H8LMV3Zw|VQBysd9=8FCNn?TBrTfw<upI!_+6LBlh
+zftA#;`p^tM32pD|+v=mqpUl_q%q0-)!`n3@Nx2@}eSdb|R)B4|PE^(mG{gAX(~WSh
+zeg4|84x0Sgo#HiSJ?3tRHXwWBg$H+%NJ`4s<5O|qGFnhuq`aC|>dU9+ZKj<8-;~S6
+zjI}aXKPvjF@m+xGf#bxCk3p+(Ze3c6y-JNyZ5g(ME)+G3n`_?Ofb(55JZKN;jTp27
+zex+EzChaE^i8HVHPJV4T=ZeJ<XPWC+M4N+u^|K4vWR1zj;-6~CkI**#Xxmo5Is926
+z0hd31da(NbnR_xpwxviv1OP1Bg4NqF>+$F4dgLTiys4y?nFHQvAqzX~F_Pqh)nCWx
+z=ZZatM;AKqov9xi^Ca1s7+0S!>}ITbv)Xx8>E7c>;`QicWG#J2B=6N-Hx3x4sE^q_
+zTsUZw?oi84-KGM#mOzm(&h=_@+@47b92_avsy8paod-IUCr}DgfPrF;Xhy0n_i17g
+zeP2dWj6J^{v~Cq}b`r)=6(7>#zzFi%wDpp8)2j`Oi6psXTor_02mUzQB4|M4<Kv8=
+z!XrS3g9In@%{0-GAK~*F5xZZNcB6zWIsIS#^L)-HBo0lW9pt?<B8xz(si}nx@=$!L
+zt!QIg1s39}il%`IiWq8n@!~~Op>18T&s9a}1(7pDFpcDO!1!Y<<?QfcY|2ZVLDOs^
+zDmM`V(LJ%?t;L2%e-aTDuRxo>8NX-pRU%E5+(}YD`WvnRv;1NrIlcBY9H#WbZeN&(
+zPqQflZ7Zk|{&b#)G8lk2(**-%suV~P8U^Uq4?LYnf@Hy<YsS&aXr&=3c}~r*JZw!j
+zMF_}9kpyr&sMOq@98lIMcf0gryl^Z;w`%4z6i2lNmkG+qWeIBBCR5M6@%G}PH`CM8
+z@p)QZ3Q#U?ZXMWbd$||e)JDT>!BRJ*4ov!(SYsQi%(B{-s2i66`LTU4>WTX(x~)cj
+zIpO(gVOtN}RgFXkEmUrM#`7V$dLI4Z9!64htF7Rm4eZ0F=N5jEyD7^&O+It9`OS~s
+zPJ257_`ky_yR6my*M?wMBjee(S9&7Qm~o!UJa{c`b+*ZuuAk{q89mU97uwmdx1=#s
+zJeBC9;^d10%rv#l4XzU}GgD-sgNVK?2XOqNlP9i-Q+LX`CNFb*wZiw>v_Zt24>#7D
+zMHl?AX2KOhe;%+g^^V2EwSE0ylL;$`gF>Nj$vu@)bJ9W2qnzi>!3Z-=p2kcFdxj$2
+z14kLI>hZM`M?e6O<LHdK0sRk?I%-^{Is(8r9d*_<P#2zciL@^OTHHyLk92t+Izr3|
+zBl4;E2&ajHMQX{-Zzsv8d%u3U9&AM)%&GfDh0fdsLga<-0zQ!RCeuKVJ!fk#+*U<6
+zWb>iX>Hs%4_b7Q!8`eDf_&;|-woaY~1nh2FZ7@YI*$*ax^3fQ@RqCA2K>!ABsS9pw
+zXov+4n%=JO`l!iHRz^lf8|)&Lm$n|<Qjn>*;J(V#yql5CT-MB_>A#d9l=M^O12Kd-
+zkyf#>w7lF9LXZDlY$hHIp)V{iXM)b^zS6cM-*MrIUIq}iCdhFxVEdLzC%Q#7=IrFb
+z`rdI%FONB?E%nbIe_#&SE07?)`d}wJL?F<`-Z#-PG2RTOu2ff79}t%Y?u8CVv{r56
+zi;9ZE2?wX!oay=^7=D{$!2gWaWe=&#Q2PQP0C;UaqH@!EDt4mI?^I8DW<H{`>09bj
+zqB;G4pgC(5D*Je<<i0}hVs9qj@4aw{E>E9-)w1dgV54p4Gs}6A#~*OE{ld@pwz>uK
+zPSJQ9nX@tfk{rkSH)vaYUHZFsiU2~{m~SP2G)N-99ba>HaiIZPW6D$DI*oIcsHbNS
+zvW2wHwr+o6Bua-Csp-RxmwM7~)J&{fr1dO)MK*ejUF8C1Cxo}Rx1V5`+{x+Hx?<I=
+zcYq&)Ti8JPDWR^eFaW=?04^%NVP5j7!TeoZAG`YSf5b!s_cx~3$1Su@uMsHiSM=FG
+zD|{!~VNjo^rg#86$jC5|=!E<vS9o<8c^Q}<j3xuU2ow~#8Qi_Ipn3XtT&P4ds+kI=
+znR#nGA5!&17LtQTqjTO^lyA`<?)M4BoJdQq6lWSBD&~B;c@XD2$yzDM#?;YK%kSj9
+zE04DI|0EBV1i8;{Dg#N~xT0fiBDucTyna9pY~Swq^COUO$_hdvk%ERB7$u<=dhOtE
+z>g+ihAzSusqmNGn*rOhptR1%dhFt*W)d_M?Mn;CP!-VQdhJ*B(r`xz)<+L|o7np;^
+zMNMH=as`Qs;x4N(J~+FWi1qK)!N=8scTYEx-Q4uNLZ{{;|Bf2U<Lju`Bv&4!fZMmb
+z?P{>Nu^@+C^-C)OS8;Z1Ye~8xS}dI-d^Iuuw7(G3c{3ijO$7#5OU`$Y&tMTNygehd
+zn}_1asjn4!c0^jRC_k98)+lLXs~?tmd`*<n%jcUi=@_wTv7~w?0zLP~+vn>*fOPCO
+zy>$(sI{f*+d)`6~x_zpne)F00!}ws_`^W6agO4+GIQ4g;gn&BPU?gPP#e=VtHpOs6
+zE~vo%l67D0T=H$(Bi7GHQtlSB<@xL&Q~Bf%7r&ZPsu>Y2lXVWouB#nNy^(EJQc>n6
+zsnH$T3aqlwhe&Zz4im`$2W|iWmyurmBT>6fQwGZw0}uyrBA_w>$i{1U$a`FJ@iRr;
+zQijXrUlQhjvLS8+e9M;d^Wn?t2qe;={dm3RnM#n4PhIa&%$Dj1&@j$ESV;-wz%LSE
+z9#||c|J`?F4kRAPa!Cx>=JpdpkOL=kq7J_{%+Dd@?h!y*7&LYl6Erg<(ijgsvFv?{
+z6%xF)9piR^{C(b=@P69Z1W47tkXS?-@xR!h*z1JD{aN31sQZZbYJB@JcjR-9|0cld
+zTXzRuo~x>;kfbn<X%)W#I<H=lLa8GYfsIt5jB;IjvH`>}t@`r%O%+oU$?(GTVf%pQ
+z?F&n)j^nNuks~sBjY`SU+`8ZZex`1%X?D0JXHd%TYhIfKfRDlwk55xmQzaty?`*eL
+zzJBv&Q{48ihW_+!iiFp)J3uPhM1nqrQC9C^t;rJXQKLa~-Iknp*+)r<5T*=8i?A|7
+z^!-b|HqT{aV-nOsp&w$u`IlVLNdFm`;L;BtAk^ZT3XftOCN+fgM{gm|qAEu}1?((#
+z5t7RD(uM$L=-9=(ZBZI7#1R9Km$lZR$o$RV7ELWJEla69gJ;5_#$ZM91XZ+{asIhK
+z=KCjNk&x$VXIfX*tzS8L@G4xHVe=&V|Di8y^uG_8H8wT|6vG^I@@fNi2@fOaj$_~~
+WrHnPPHCF*X7i6q&4y)63j{h%cObwg>
+
+literal 0
+HcmV?d00001
+
 diff --git a/res/drawable/fab_bg.xml b/res/drawable/fab_bg.xml
 index a6526789b..fff962502 100644
 --- a/res/drawable/fab_bg.xml
@@ -63,6 +179,87 @@ index 796920e20..afada50da 100644
                 <solid android:color="@android:color/white" />
            </shape>
       </item>
+diff --git a/res/drawable/n9_action_call.xml b/res/drawable/n9_action_call.xml
+new file mode 100644
+index 000000000..e0b0d4635
+--- /dev/null
++++ b/res/drawable/n9_action_call.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) call action: green squircle (radius ~28% of the 40dp side). -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33FFFFFF">
++    <item>
++        <shape android:shape="rectangle">
++            <corners android:radius="11dp" />
++            <gradient
++                android:angle="270"
++                android:startColor="#7BBF45"
++                android:endColor="#55A32A" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_action_message.xml b/res/drawable/n9_action_message.xml
+new file mode 100644
+index 000000000..560c95c0a
+--- /dev/null
++++ b/res/drawable/n9_action_message.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) message action: N9-blue squircle (radius ~28% of the 40dp side),
++     inset 4dp inside the 48dp touch target. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33FFFFFF">
++    <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
++        <shape android:shape="rectangle">
++            <corners android:radius="11dp" />
++            <solid android:color="@color/n9_blue" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_contact_card_header.xml b/res/drawable/n9_contact_card_header.xml
+new file mode 100644
+index 000000000..db6c0c204
+--- /dev/null
++++ b/res/drawable/n9_contact_card_header.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) contact card header: dark vertical gradient. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:startColor="@color/n9_card_header_top"
++        android:endColor="@color/n9_card_header_bottom" />
++</shape>
+diff --git a/res/drawable/n9_fastscroll_preview.xml b/res/drawable/n9_fastscroll_preview.xml
+new file mode 100644
+index 000000000..fa672c97f
+--- /dev/null
++++ b/res/drawable/n9_fastscroll_preview.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) fast-scroll letter preview: light squircle with a thin grey border. -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <solid android:color="@color/n9_list_background" />
++    <corners android:radius="22dp" />
++    <stroke android:width="1dp" android:color="@color/n9_separator" />
++    <size android:width="80dp" android:height="80dp" />
++</shape>
+diff --git a/res/drawable/n9_search_box.xml b/res/drawable/n9_search_box.xml
+new file mode 100644
+index 000000000..01066cde7
+--- /dev/null
++++ b/res/drawable/n9_search_box.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) search field: white rounded box with a 1dp separator-grey border,
++     inset so it floats inside the light toolbar. -->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:insetTop="8dp"
++    android:insetBottom="8dp"
++    android:insetRight="8dp">
++    <nine-patch android:src="@drawable/n9_search_box_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++</inset>
 diff --git a/res/drawable/quantum_launchscreen_contacts.xml b/res/drawable/quantum_launchscreen_contacts.xml
 index 4cb718c7b..8ae2de46e 100755
 --- a/res/drawable/quantum_launchscreen_contacts.xml
@@ -175,6 +372,21 @@ index 9f90bc7d0..c7105b2d6 100644
  
      <android.widget.AutoCompleteTextView
          android:id="@+id/search_view"
+diff --git a/res/values-night/bools.xml b/res/values-night/bools.xml
+new file mode 100644
+index 000000000..4c2050966
+--- /dev/null
++++ b/res/values-night/bools.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++ * SPDX-License-Identifier: Apache-2.0
++ * Copyright (C) 2026 The LineageOS Project
++-->
++<!-- N9 look: night resources are the palette for the dark Etesian backgrounds. -->
++<resources>
++    <bool name="n9_light_bars">false</bool>
++</resources>
 diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
 index fc5bb3017..c635f759a 100644
 --- a/res/values-night/colors.xml
@@ -590,7 +802,7 @@ index 9bd8bbe2b..f2fc14c2e 100644
 +
  </resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
-index a4c10b809..bd7228859 100644
+index a4c10b809..25873b71c 100644
 --- a/res/values/styles.xml
 +++ b/res/values/styles.xml
 @@ -23,6 +23,8 @@
@@ -1685,135 +1897,6 @@ index c1616cec7..f25a95694 100644
 +        return ContextCompat.getColor(activity, R.color.actionbar_background_color);
      }
  }
-diff --git a/src/com/android/contacts/util/ViewUtil.java b/src/com/android/contacts/util/ViewUtil.java
-index ccb8a82ec..f7be650d1 100644
---- a/src/com/android/contacts/util/ViewUtil.java
-+++ b/src/com/android/contacts/util/ViewUtil.java
-@@ -63,7 +63,9 @@ public class ViewUtil {
-             OVAL_OUTLINE_PROVIDER = new ViewOutlineProvider() {
-                 @Override
-                 public void getOutline(View view, Outline outline) {
--                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
-+                    // N9 look: squircle outline (radius ~28% of the short side)
-+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
-+                            Math.min(view.getWidth(), view.getHeight()) * 0.28f);
-                 }
-             };
-         } else {
-diff --git a/src/com/android/contacts/widget/QuickContactImageView.java b/src/com/android/contacts/widget/QuickContactImageView.java
-index 2943912c4..fb82f93a8 100644
---- a/src/com/android/contacts/widget/QuickContactImageView.java
-+++ b/src/com/android/contacts/widget/QuickContactImageView.java
-@@ -41,7 +41,8 @@ public class QuickContactImageView extends ImageView {
-     public void setTint(int color) {
-         if (mBitmapDrawable == null || mBitmapDrawable.getBitmap() == null
-                 || mBitmapDrawable.getBitmap().hasAlpha()) {
--            setBackgroundColor(color);
-+            // N9 look: dark contact-card gradient behind placeholder avatars
-+            setBackgroundResource(R.drawable.n9_contact_card_header);
-         } else {
-             setBackground(null);
-         }
-diff --git a/res/drawable/n9_action_call.xml b/res/drawable/n9_action_call.xml
-new file mode 100644
-index 000000000..e0b0d4635
---- /dev/null
-+++ b/res/drawable/n9_action_call.xml
-@@ -0,0 +1,14 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) call action: green squircle (radius ~28% of the 40dp side). -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33FFFFFF">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <corners android:radius="11dp" />
-+            <gradient
-+                android:angle="270"
-+                android:startColor="#7BBF45"
-+                android:endColor="#55A32A" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_action_message.xml b/res/drawable/n9_action_message.xml
-new file mode 100644
-index 000000000..560c95c0a
---- /dev/null
-+++ b/res/drawable/n9_action_message.xml
-@@ -0,0 +1,12 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) message action: N9-blue squircle (radius ~28% of the 40dp side),
-+     inset 4dp inside the 48dp touch target. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33FFFFFF">
-+    <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
-+        <shape android:shape="rectangle">
-+            <corners android:radius="11dp" />
-+            <solid android:color="@color/n9_blue" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_contact_card_header.xml b/res/drawable/n9_contact_card_header.xml
-new file mode 100644
-index 000000000..db6c0c204
---- /dev/null
-+++ b/res/drawable/n9_contact_card_header.xml
-@@ -0,0 +1,8 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) contact card header: dark vertical gradient. -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-+    <gradient
-+        android:angle="270"
-+        android:startColor="@color/n9_card_header_top"
-+        android:endColor="@color/n9_card_header_bottom" />
-+</shape>
-diff --git a/res/drawable/n9_fastscroll_preview.xml b/res/drawable/n9_fastscroll_preview.xml
-new file mode 100644
-index 000000000..fa672c97f
---- /dev/null
-+++ b/res/drawable/n9_fastscroll_preview.xml
-@@ -0,0 +1,8 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) fast-scroll letter preview: light squircle with a thin grey border. -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-+    <solid android:color="@color/n9_list_background" />
-+    <corners android:radius="22dp" />
-+    <stroke android:width="1dp" android:color="@color/n9_separator" />
-+    <size android:width="80dp" android:height="80dp" />
-+</shape>
-diff --git a/res/drawable/n9_search_box.xml b/res/drawable/n9_search_box.xml
-new file mode 100644
-index 000000000..7f63dadfd
---- /dev/null
-+++ b/res/drawable/n9_search_box.xml
-@@ -0,0 +1,13 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) search field: white rounded box with a 1dp separator-grey border,
-+     inset so it floats inside the light toolbar. -->
-+<inset xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:insetTop="8dp"
-+    android:insetBottom="8dp"
-+    android:insetRight="8dp">
-+    <shape android:shape="rectangle">
-+        <solid android:color="@color/n9_search_box_fill" />
-+        <corners android:radius="10dp" />
-+        <stroke android:width="1dp" android:color="@color/n9_separator" />
-+    </shape>
-+</inset>
-diff --git a/res/values-night/bools.xml b/res/values-night/bools.xml
-new file mode 100644
-index 000000000..4c2050966
---- /dev/null
-+++ b/res/values-night/bools.xml
-@@ -0,0 +1,9 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+ * SPDX-License-Identifier: Apache-2.0
-+ * Copyright (C) 2026 The LineageOS Project
-+-->
-+<!-- N9 look: night resources are the palette for the dark Etesian backgrounds. -->
-+<resources>
-+    <bool name="n9_light_bars">false</bool>
-+</resources>
 diff --git a/src/com/android/contacts/util/N9Squircle.java b/src/com/android/contacts/util/N9Squircle.java
 new file mode 100644
 index 000000000..16c606fca
@@ -2067,3 +2150,32 @@ index 000000000..094b02d70
 +        }
 +    }
 +}
+diff --git a/src/com/android/contacts/util/ViewUtil.java b/src/com/android/contacts/util/ViewUtil.java
+index ccb8a82ec..f7be650d1 100644
+--- a/src/com/android/contacts/util/ViewUtil.java
++++ b/src/com/android/contacts/util/ViewUtil.java
+@@ -63,7 +63,9 @@ public class ViewUtil {
+             OVAL_OUTLINE_PROVIDER = new ViewOutlineProvider() {
+                 @Override
+                 public void getOutline(View view, Outline outline) {
+-                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
++                    // N9 look: squircle outline (radius ~28% of the short side)
++                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(),
++                            Math.min(view.getWidth(), view.getHeight()) * 0.28f);
+                 }
+             };
+         } else {
+diff --git a/src/com/android/contacts/widget/QuickContactImageView.java b/src/com/android/contacts/widget/QuickContactImageView.java
+index 2943912c4..fb82f93a8 100644
+--- a/src/com/android/contacts/widget/QuickContactImageView.java
++++ b/src/com/android/contacts/widget/QuickContactImageView.java
+@@ -41,7 +41,8 @@ public class QuickContactImageView extends ImageView {
+     public void setTint(int color) {
+         if (mBitmapDrawable == null || mBitmapDrawable.getBitmap() == null
+                 || mBitmapDrawable.getBitmap().hasAlpha()) {
+-            setBackgroundColor(color);
++            // N9 look: dark contact-card gradient behind placeholder avatars
++            setBackgroundResource(R.drawable.n9_contact_card_header);
+         } else {
+             setBackground(null);
+         }
