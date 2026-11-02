@@ -29,11 +29,11 @@ re-envisioned for today. Everything new, from messages and calls to calendar ent
 list. Apps with big, plain type and nothing on screen that isn't your content.
 
 <p align="center">
-  <img src=".github/readme/swipe.webp" width="300" alt="Swiping between Events, Applications and Open applications">
+  <img src=".github/readme/swipe.webp" width="320" alt="Swiping between Events, Applications and Open applications">
 </p>
 
-<p align="center"><sub>Real screenshots and a screen recording from the reference phone, with made-up calendar,
-feeds and notifications (the launcher's demo mode).</sub></p>
+<p align="center"><sub>Screenshots and a screen recording straight from the reference phone, a test device with
+mock contacts, messages and calendar entries.</sub></p>
 
 It shipped on a single phone and then disappeared. **Etesian brings it back** on top of LineageOS, so it can run on any
 phone LineageOS supports. It's developed and tested on the F(x)tec Pro1-X; another phone on the same LineageOS version
