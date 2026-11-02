@@ -93,7 +93,7 @@ object Feeds {
     fun feeds(ctx: Context): List<Feed> { init(ctx); return feeds }
 
     /** Newest first, across all feeds. */
-    fun items(ctx: Context): List<Item> { init(ctx); return items }
+    fun items(ctx: Context): List<Item> { if (Demo.on(ctx)) return Demo.feeds(); init(ctx); return items }
 
     /** Asks the app to refresh; with [force] false only if its last refresh is old. */
     fun refresh(ctx: Context, force: Boolean, done: (() -> Unit)? = null) {

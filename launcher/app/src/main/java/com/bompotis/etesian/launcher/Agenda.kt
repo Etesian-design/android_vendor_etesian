@@ -32,6 +32,7 @@ object Agenda {
     }
 
     fun today(ctx: Context): List<Entry> {
+        if (Demo.on(ctx)) return Demo.agenda()
         if (ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
         val now = System.currentTimeMillis()
         val end = Calendar.getInstance().apply {

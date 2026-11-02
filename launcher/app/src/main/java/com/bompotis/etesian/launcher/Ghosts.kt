@@ -58,6 +58,7 @@ object Ghosts {
 
     /** The kept ones, newest dismissed first, without the expired ones. */
     fun list(ctx: Context): List<Ghost> {
+        if (Demo.on(ctx)) return emptyList()
         val all = load(ctx)
         val h = keepHours(ctx)
         if (h <= 0f) return all
