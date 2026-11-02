@@ -4,6 +4,7 @@ set -e
 TOP="$(cd "$(dirname "$0")/../../.." && pwd)"
 for dir in "$(dirname "$0")"/*/; do
     proj=$(basename "$dir")                 # e.g. packages_apps_Dialer
+    [ "$proj" = tools ] && continue        # the scripts that make some of the patches
     path="$TOP/${proj//_//}"                # -> packages/apps/Dialer
     for p in "$dir"*.patch; do
         if git -C "$path" apply --check "$p" 2>/dev/null; then
