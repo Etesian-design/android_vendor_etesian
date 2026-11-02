@@ -37,7 +37,7 @@ object RunningApps {
 
     private fun thumbFile(ctx: Context, pkg: String) = File(File(ctx.cacheDir, "thumbs").apply { mkdirs() }, "$pkg.png")
 
-    private const val THUMB_WIDTH = 360
+    private const val THUMB_WIDTH = 720  // a two-column card is about 520 px wide; never scaled up
 
     /** Rebuilds the list from the system's recent tasks; a no-op outside the ROM. */
     fun sync(ctx: Context) {
