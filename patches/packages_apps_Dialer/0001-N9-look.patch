@@ -68,7 +68,7 @@ index b672ad92e..910612f07 100644
          // Handle window insets for padding adjustments
          ViewCompat.setOnApplyWindowInsetsListener(rootView, (view, insets) -> {
 diff --git a/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java b/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
-index de22ef735..2a219c230 100644
+index de22ef735..35ef58c49 100644
 --- a/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
 +++ b/java/com/android/dialer/app/calllog/PhoneCallDetailsHelper.java
 @@ -27,9 +27,11 @@ import android.telephony.TelephonyManager;
@@ -469,6 +469,47 @@ index eb9cba85f..d39bb1670 100644
        if (rippleColor != null) {
          rippleBackground.setColor(rippleColor);
        }
+diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
+new file mode 100644
+index 000000000..0617c037d
+--- /dev/null
++++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) style number display field: white to light grey vertical gradient. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++  <item>
++    <shape android:shape="rectangle">
++      <gradient android:angle="270" android:startColor="@color/n9_dialpad_digits_top" android:endColor="@color/n9_dialpad_digits_bottom"/>
++    </shape>
++  </item>
++  <item android:gravity="bottom" android:height="1dp">
++    <shape android:shape="rectangle">
++      <solid android:color="@color/n9_dialpad_digits_rule"/>
++    </shape>
++  </item>
++</layer-list>
+diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
+new file mode 100644
+index 000000000..58fa6630e
+--- /dev/null
++++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 (Etesian) style dialpad key: white rounded square inset on the grey page,
++     light grey when pressed. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="@color/n9_dialpad_key_ripple">
++  <item>
++    <inset android:inset="3dp">
++      <shape android:shape="rectangle">
++        <solid android:color="@color/n9_dialpad_key"/>
++        <corners android:radius="14dp"/>
++        <stroke android:width="1dp" android:color="@color/n9_dialpad_key_stroke"/>
++      </shape>
++    </inset>
++  </item>
++</ripple>
 diff --git a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
 index 4540c31fe..c0af27c1b 100644
 --- a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
@@ -510,7 +551,7 @@ index 71c297712..e96e363f2 100644
        app:elevation="@dimen/floating_action_button_translation_z"/>
  </view>
 diff --git a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
-index b7fe92ef5..74164804b 100644
+index b7fe92ef5..11ba8a90f 100644
 --- a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
 +++ b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
 @@ -73,6 +73,7 @@
@@ -531,7 +572,7 @@ index b7fe92ef5..74164804b 100644
              android:gravity="center"
              android:importantForAutofill="no"
 diff --git a/java/com/android/dialer/dialpadview/res/values-land/styles.xml b/java/com/android/dialer/dialpadview/res/values-land/styles.xml
-index a04ae2348..e9787f97e 100644
+index a04ae2348..b514f4bc6 100644
 --- a/java/com/android/dialer/dialpadview/res/values-land/styles.xml
 +++ b/java/com/android/dialer/dialpadview/res/values-land/styles.xml
 @@ -20,7 +20,7 @@
@@ -571,7 +612,7 @@ index a04ae2348..e9787f97e 100644
      <item name="android:layout_height">wrap_content</item>
      <item name="android:layout_gravity">left|center_vertical</item>
 diff --git a/java/com/android/dialer/dialpadview/res/values/styles.xml b/java/com/android/dialer/dialpadview/res/values/styles.xml
-index 712af38eac..f36a9017a 100644
+index 712af38eac..a1df6259c 100644
 --- a/java/com/android/dialer/dialpadview/res/values/styles.xml
 +++ b/java/com/android/dialer/dialpadview/res/values/styles.xml
 @@ -25,7 +25,7 @@
@@ -1068,6 +1109,382 @@ index 322d62a91..a29048f74 100644
      <item name="android:colorPrimary">@color/dialer_primary_color</item>
      <item name="colorPrimary">@color/dialer_primary_color</item>
      <item name="android:colorPrimaryDark">@color/dialer_theme_color_dark</item>
+diff --git a/java/com/android/dialer/main/impl/toolbar/res/drawable-night-xxhdpi/search_bar_background_rounded_corners_shape_sq0.9.png b/java/com/android/dialer/main/impl/toolbar/res/drawable-night-xxhdpi/search_bar_background_rounded_corners_shape_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..fe5cc59c2b12a717e6e7eea8633fc94994857069
+GIT binary patch
+literal 5956
+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
+IQnwBJKOf9=@&Et;
+
+literal 0
+HcmV?d00001
+
+diff --git a/java/com/android/dialer/main/impl/toolbar/res/drawable-xxhdpi/search_bar_background_rounded_corners_shape_sq0.9.png b/java/com/android/dialer/main/impl/toolbar/res/drawable-xxhdpi/search_bar_background_rounded_corners_shape_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3eeb41d2ca1f099d4e5c93c35867f8f3d8b1bd00
+GIT binary patch
+literal 7533
+zcmZX3cRX8f+;)^!P&I1SD2j?zv5Fd%nz2K*V$|NFMkuP(-bG`?9t|~OHq_SAq&8Kt
+zY8S0hYOnI1-}}6OJfF||M^5hZJ@-2IxzF{zuIt1Z>TA+c-=YSAK(yLgY6##T4gAu;
+z*MMV*!*VYO#3ik*rfTvccPr1_-GYc&yL|RI&pcpHFfHw6x>x<n)GakD4SjlYevLQ{
+zYG$6V@efqPrb5`s_vm%490h4aVUVZRQg1V_?@ENNIRsoIT+imPcjPzEC?SjU7OeY>
+zXPntp&u}njok<gl%k0QCe;jf)5`yH%(Fhpv3FO^=7-k<(P_2Bhv0Yi=TS5KR4E*D~
+zxB2>q?^i!^c6WCdcXmG8KRPn!t7i?;Z??#2=W2hGR`%!p#0G^&S0Uw(uFiXLOZr7W
+z#|UhKJ9l7TW!=P<Pec7#U@7?0&xJ?t(DwMi*@O0S{zPTLoft#LDA;RxQh}bXLE8gq
+zX?yV(JdRLVSwRAUusM|X;NFWH8B}eXk$n`|Sy>B3MZ5`Ssf+jtE4PB|?Ddpy!4ld_
+z`jGLrf_mHOa1Z;{7&Jmz>LG;|gclo$XCX+hL-fW-+xMv<0-Qvbf8vp0&}#%XdxvqP
+zrrQ4N(V$MhTsy+A`<4?ql7h<Lrl#co4M+_S3@GrY_dATv%;@wR)~?(!0q$|8$*W0C
+z`Y!%_H?wBWP4}4c%C0#f`<{8@7nmV977UlKCGlu8_IO{nyDlY_#qNxSTw#cf<%y(E
+z>TBmEqXzNn89#OND6v>rJ&Fj^z{G+P@Lff^>J1o}3TG@KwQi%t#P5puI{!55nHKx`
+z%tXiGW}W=@XWct@?kw4kZe45m02_om3Ep&>*E!>Eh?kYzE0lS8zq|S#OZ-*Gp?9yL
+z1W74#w`Sf9#w56RuQwMH%~iSN2wicNoy9ZmNP2L1Av1gR-KpS68?c*Lv5*Fn##es$
+z7!y8-%O#C3`KBzPmNYFX6-lqA#*bw}z+dE3^1*Ocl{b4-d4E$dY_Vh?c}=(c&Lf;b
+zlai8p1(K0EcfRlJ)K1pfQ4S|-1Ru8Ta%om<3%E=_5oKYPvc{=0sgEFYN;yC8DQZE=
+z4Z$O`4Og(XRLL7%C`&C!A==e+`ULKv!GgEmN>ZADfk7XgF&{`01U_xXciQo;xcCOA
+zp&~0fo5V%AWL34slP{?q+mFChe1)c!E)(7a<C4%uhyIC6Xt04}Dc1x45yn`QT~u}f
+z>2Pc2C~N$~c<sN8lJ8I6p{MRovyC|`L$GS*<{ZuW5&8L^RlnB5Qy8l^9)d^XVGW_;
+zS1q?kq~AoLoi5(sS+vtW--_^k`&Q0(RWwab9gDER;je-b)L>qFdI|{w&-m#?TF<@6
+zrA%25h1+<~=L&65*x(zjGpp&NcY+sCh7cw2m2$i)8wm%E#^FDEbGmwYb#nz&YdAUG
+zjsF5$&e0E(@lRH~k4)LnJH*uA=DpgL^c7h-4waFK8dg?{!(gbtNjvaHrXvvaOpypi
+z8@5}HuhgOctj9=tUb1fjOZZ4A*7&{^pAC+Br(u!#R7A+I^X%GL2X!|+(#-=W0Ksl<
+zuJ`n%EB*TYTcg}0Jmm`M=~FlJ`F(S}!hYzPFAXnp?Hv-gG=OQ43pu@BDp+Qn2!(-7
+z;pIGFdiB%{cv6np?^+A-{u8COFXDetm3fYfw4lvtyj%P7ap;!997`C3I)g6x=;)|^
+zdwcuS<_cCz%e)js7u$of;LuiWKd58bFrij!*+NfWe{sK@N>^9cIw&X_i#CNrLgpzS
+zYJGcQkgX9~=P}b5(e<OnY?IF_Gg~;*>;`QrJ2$uKu;SkMC2!R6cJlJagP>VtzdJ59
+z3PyHR-OO<`AF9HsiNE!}VT_GoHqB+rwRcEe(DX2X#Gq}Q^hWs<Oia#y*lra={|&5a
+zBE+PYT^d(+7}|a~U30MpKncoJGr_V)9S3n7B0SmrGaGzAsQQ#+m`2vLlKH7y5(#-t
+zH4IOu65G1nL6f}Pg`8OrTv@W<!dSz=VBVBch<@%dMa;ZPxWx4$v?L5{CXDAz?*8Xp
+zeChuD`Q9r>7SQT`V+~%&HT6d1;-bxHoAl><o#%Z=S9=S<ypOSxC1WN!!@euCM?a!a
+z8>C`}cn;dZ)vh^P=H*5rl7{I0{PN$?V)6si<&mQ9<IS<RlF2u#O&k-q&p0e8JA+PE
+zo?PU{zM__1_pH0MnZU@HWk#PWmf0_&pkR9Lu|WA~+%+9DC8#aDZRtzL9kOpjp_-zk
+z@<w9<Gqomn{ZZT5pEEiCeL0H>s2V>U%NS+!G(TVYsO-_BM{D&8ZKS65RpcOb{aMtk
+zrG8Uq(^JtyJv}`a#|)73YzzMB+0LUWU*A+uiH6~m#UqujqDL{WHL|7h^71N7E0fBc
+zN(Lk5xpFNi%B%I>SAp)e)wWia&CG9{y?Ta6>Lo$-=_y{U(-;&sHQi-(VNV(V)YHS>
+z_V=ubKAQI(+NIpYr&#Egim&YS`K(*!`g&ALtuAw3DH3($S5o6et~lK9fYh)@F%Y2y
+zBHh9!rr|j!RtGDK*Fsq48M3C8Bg&oa5|MaU0a?X=QKT<Z7NsldrgvSkm%27OiRH#+
+zyx8v^9tnKR2_j;Kq?{QggHq}7^^3FZZi3UP4<-XTC6}=*H+igk`%mYk^1E`=bh!Fi
+z$Na?D*7oeb&ws@E>VcH^WRu7|{=zqx>R!jOZCMG@LlB30RC+i6r6TKZLB7h$rn#3K
+zw?p=!Xhe&NaJf)C!I;bAf^feBdKL6ULLcS8;Og$K%g8|UwNr#eCuH1JMla0-hin(l
+z{4L0zU}~UvB4>)TisILP46Ike7eqnW`2)VCy1F`%Tl^Nah9xB>uGZEMw@))!13m=!
+zy$TKr5|$yzDYef|)-IM?l;)syD`+|LVFq6J6QM)<`zF(KqbFOIm%B^JuV0fXDJZlo
+zknLQhdMuu~($y6<hj$xph_d|~liruuNK)w7Ue<XQbSruJr{ru8Jp(84Q)b7$^vn4e
+zJgMBo(XZ&~`C_$Ya6T6s+sKMfpla%RJ<MUNbad26;MSu9`$Xn}#Cx7EsH-=u4h8FT
+zSLmd=QI;?3Fdm6@S3p$71&$2DzKaM8)AyUnop9{M+s4L5S|cWQ9R9^p9C37PEU&D^
+zJW}-FVBc>!?k;x>38`jeKRrDyYa)D5aGjPGlbV{^f9j)sv%W4?>9WNsVz+(%mK}go
+zAJ^tuUAm+10h125M+Gf(ZF`?jQXPiO!y!c_$2#U6%`06Fgfj8jehzkaUPl(w5d#2H
+zH<+S$3J*4Jlc&sk`iP{B|2{o<Q$$bk4n>Vce+YloH(+aT|1&N9)hH##j4^czzk$7+
+z9-aH!DUu$qoo1rkabZ+td1lR>=V?>lqV)0@Jg0mt4!ltw9v(hHj;Eafq#az^ds_U$
+zX2u)(`}vtL>_qTuPa<`&2nILOkGK7P32*Ubq^f30AV5OG(;}&kRU2Nv8r6|xWvZ|c
+z*Wp`2ioGHoMWD198=xAByT24ZRtL{2YYpvwMp^!M%4VmQ*0Xu`sRgK)5qoUg4Q6F>
+zJv-b|R8$nT-l9uKyu&XJ4e9>~Tw7OEm=&})S|3_9k;T!9V8Nt|=PzD7b)WC}7jCCs
+zaI=Cv&;8l_lT*d{Z7*HX+TEfUZs)=9!R8Qp*aA=v!<&*eP#Y(&LjS9j9q{XwI6P!1
+zWp2*u3dr`Nar<lpIa6IN{v%bhY$jP0KI^^a>W4z9x_JN)4-Msz+wRMq7`V*A)Hw}v
+zXX0M;@3rC6;a`+bzTaGWP5Gxks)e?9{k)q_g^=Ub<}foot;R`=(Vo29=suMu9rE?t
+z{0}QD-;sEmpSRQDSUj*{hWC0Z9*dCuT-I;8W0qHg#53lv#R<jhmYX1H?p(&kew1gf
+z{Bn+V>R+kvuMI87N0YLHf`bi3S#~#2P0)cv+q$s1Ic{g1wi|8qzkZ+QP1`won9h6m
+z_gzOb`Tk1VsdC9;pt{rK@%t_3^8M&i8op$^ji9+Z9rK6#=e&^_hGyhCj9v#J1&L77
+zQON$GKl#_O*)3huqxSaMosipl_q7<kJkBp)F1HDogocLtDu4XtR?Vn6J1c^edg9~h
+zmBpUFR@54NH4$o`NT#(<*6>5sSjbV3uRi$bkC^11olACj?5{bQBhkkvz8Mf8+fk~i
+z0Wr+&nbrWW)L3`_8WWZxFzB0fNY6oAYq8K0jF%qByGfLLegQLY<wwTH<A8_}Q{6^j
+z0M_MH>yW7s@_lbu<sR9?r%?JA9TJ2rMEUpZ8|iP!3uXRQm<WGjv%50P`Z=D=I^z*&
+z=ZEhw#-~}-Y{cI~8e|w8eD*C}(aCJgFXF?fwdxG8s4xFCuU#KuijQ@#nV<QRNX)4m
+ziqCi47QgGH48RZ%AArtTe_sIC(r3R+t*=CZZ&QWyI9t^ewf#d&6-;dj%^zvIc|`Dl
+zVUcDJ*4qqW@ejegiBKUXYD4(SR$1=wrvXEFk)co*8#!+zJ%VCtS*$2=<(@(^jT_Fx
+z%d7v6@sK(%--o8APe?Z|VpQGvm(9ApiCqfZ(BWOP(FR*cAIA6Q=<`U>^Rc{ZVnwko
+zA=$2S$;F3_-w<f%nqYA|j)G`}F1^+BLHVo`6xJTv+4OaRa!mU5vK$&0g(+*#J+arP
+zPz4dah4gMp9Dn++0$4f<KJ%>%jc{9%b0iw^u|n2-q)CqqfvsT*$7utX!rVFG2taZG
+zkVK(6*WKUDZ)R|B=A#xIqK%+T!56W4+o>=Y8iK_GYjblGVMTREg?JY0o`)<&6gc+*
+zXB%;*1Rdnp+?<$bkpUPur7-=Wj?jsT?=y=bW6L2}Z{re*lal}Ei7eWo)%Gx2T3(*U
+zrco+mi@FdM!FBq9#KR}dM6L6*CpRY!Rs`a6)kRwGlbQ9AGZv0A4{)r=(_jt3Ltg3=
+ze(xEI!ie9bqtI!)zgOjH)WKvBhh=~31!y4zjjkVLBcDK(o4D@p?tU7~O-OAv5@ud(
+z5tktrPlr_*d3sa|<lpb}W$AN&A{n!)i}>2xd~J0gsJGXQ$*0JNCEenEuDSrLu#-`5
+zRG*p2{|>EXXQ|NV)1>>3OK*!5+<7c+GW0lg_KB4!iw(}ha=t&RuUSwWy}MiaNj@R^
+z;VT=twOd)CImY?BKGoEG;dmA!rr{}aAy(nF3KviIAJaFleFa)*?4mP$E&so<{`c^@
+z@6Us*hVVYGip%JWWfam4REN!k8Z3J`89~;G<yw$beyS&xGN2Rmes03sW+NOag`Y|X
+zVv|@7TFcxEBzkkQ*-avY;~uU2%mtX4ovz*02Mb&a=RV5fBN8=MbeZ*u^7k1If?m90
+zZY_N@xHTv-X93UNI5=fwfv!0gTh&Bh%ph0!63NX<a(kLdaQna#MW@#T{u(KAl=hI}
+z?EBxOJ(M$O(i<eQtEEkA8&+ux1(*svr3rEC`04-YW05))&*FX}okHu*sK`qZoATcS
+z&~4`qe_uxu1aqgT3v~nP`VLl&E!tTe+WrAMXx2#2@PP#GrXPd~bw`)IE;ZEu68Ok1
+z<oli?+}LAJbuhR8(}0$-htlvJ+<{TqQm)q{kBj9&nJZl0oUAU{K5WrA)|H<Fg1&s$
+zAH8$wOI{9ts408-clDOUh9|k8@-I1Rmx{nrgk|y4>JQNYlL{^4!Q_&z9?FKxg3gdH
+zyS?soQ@&0^V(RR^o_x2Gr4QeGejF<lKr`*PO6vhKSV}5gadyRm$&oOidld#wEv0%_
+zIPdTVA6ZX`CLu+zYVB6T!9nt@{2Pno8z?OZAiGGDq^HI@??In}ZP=pW5I}Vp=<Abx
+z<ye(p>$S+r&4n?kSD^uc6ipU>RKF(Obl(ojpr^~Y=rO$4HE=l4GbJGGKjgDE&|@ai
+zaG*%1_9B=sJIj8RfU*I-xHwr`85v38?Y{#T1}$JP7_6x8kYwraYa-<jGc=>4qX+)O
+zPGAv-m5y@BKq8yYY?^?6sT>#nCOtS~Brg^VcF8VA;$Uz{w_LsHq|rj#BVR#?T=Je3
+zBeCGP!{8vudC%WOpRjpo+|G@hKZ3+98*mbPrw!KbLg*Q!8YbHUeUoD6yg4Zc28hYr
+z&$7R*iJB*KDcx}N{BfwWKeRfS<2E1~>pXPm$i~6pc0S~90jGip6etDX@a9}|xksrM
+zDVOYhxGAp%F@sapa#1=qN0`C%baf>_Y^9mSLbecWY%%!e;G9+dq35&umVzv~1flp5
+zzX;kfouo^H4?mr$WB{`z3sd}lH;9qA9hiR?H2Jn5FE{i&cLqp*q&>ydp1;9HCV_bv
+z7iZ_M_QMzzW=nvP2~hlf0*44;U)U~Pcf|(*z1zit@kp+lH=O`guL}=5t}H4lqS)hP
+z+_Q4VV0Z>q9#@WccWn2|C2s*_ob0E|wm*O6o^hG}9U#M=byS&F#_$fRK&2Q)bK`RN
+z?l8Rp`~{qO6T$ktVJ$EPF@2M$qN+@`fA|HN02E)NzXjz}N?ZhPkZ^w|C$oCmP*CNj
+zQ#h&1wzxpkhysfSc1Dj=L4Iz-wA&DlPAVdHXR7QjR9-%A6=fwcI{dmh>2KmN)wp|Z
+z!r#Bo-VlwXO@){u=|8{R`4kg~ZlSFsEk)2N0|6%Ls|=c>lgGz3M2y*hXQGqE^N{zc
+zsSMN2zGYGLD&LR|h_uqu(j6CWtS3kPul?V^C^9lvvHUJLcG$TyAUOR2G8x|ffrdJr
+zmX|4EuF{B!+sE?FJM>|D03EM(+Qyl-PX?`a+5&K@3U{%bC=sHjV+QK&#ZWu?mNRem
+z0A$^9fmpqfMju`|ek++<DPObPJXchKODTwR+?5sv_P5MrJN^q)BM7uL{~}kj?^~(o
+z<ovNqmkwVUhZXT~X=cAsIcL*O`?-v0l2D7}*WURXbGzI79fXOx9#P(=Aop?QHqeH@
+zm`3C7f~1?f=X^(A+*j)U`3WQkmh*de3LW=L%7@D0sQ<|Fr-<!B?&vBsIS$W|(P^OO
+z4-n7Hs(l@5b+tyoFc6#n;lq>oxj?2EZTIH(gV%3V6tc@Y%o9b&L(WHyI92?wBri__
+zlj;^apUUv^lpjgd&)i&pChG;2N=i(O1*m1k#L~ZxZ7*>52-59KW@kNvlF}?L{O6B0
+zd(?~70kiYfi8J2FT2=a3q4*n2@pFW@II6jhkk&y@<K{^l@zyFo|1d!Bcwjo|!mvyk
+zu{*8gUO%_W%_FO3_km(qEDyF8G$|R{IYm!&u)k8<h3bm|-t=F;-cL7r^j97rw=_LG
+zw&37Y4Wr2Ui$l~q7hwK5Sp<cvkXL6j69523(z}?Ow^mHJs{G#;fG%6N?WWjkE*_Co
+zP^h?e?b^Oh>(TlAVRE&Xfq?;5J53?rNAoR?`xj-32eXm(sK(IC%WhzEMs6s$Xlj;8
+zNhzJ|;Udg0d`;JAlzuR8y&IXI_sYVE4itQM9si3c|M{`H#2`;G3Xqo%yxz^*+e@||
+ztj@@xc9|?DMzM(A^6`pgmQ{l+%<0(~D-%YtT1$v;=|4McVPU~ONOqc2ee^}S2?7BR
+z`T12-ti1m7s;EJIORv3x&(Awr5FqCxjF|pMzDGp7ec-=Y81*5?(f9F5d7yDi$Rgkc
+zD9v72%^#f!r^m|@-aoE1we22z_RzQZQT~-ocC);9F7f0wm)vFgdC_P@6CVGc@Ey)g
+zk_|m-jd*Lu_3ZazO-tiFen8ZYx>P(4Ft~quDqAQ|BcJJtNf}q?B(mLB2?Kn-&)#V9
+zbQX2N1!SZv%gz<VV`IC-n-paEr=M^B+S=;HBCpw_B%t2cyv{Fh?(*FqOoZhV_-{VP
+z!DMKJW551+WfPDIh;=cRgb-t6<7|uo2-)N*Mp8Z>$)!v8UCs&_qU*dQyTPS!9i*#P
+z+R$J;?uysQ`91C6${CPKEtZ|>V(RBtbv)BW7hN$fEY$!=^SRblZpG7I-QaMZ;8)@#
+zl;ffNjc)qwjx*)|AbJ9IogofUu4coOQC2qm@At^aNV9qh73isD@F>T`d2~$77a$}L
+zx?EYwe0GwASig&aUwwF6#UGZhjLQD=(N~6q3uf!smYGvxbsOy+f-vyL+j1)GD=VMv
+z^DoKSOrQYMr;n{<!)9yva)++-!WhKH&24oZ1F~?qw{0sSRaD0jG20%ztug#KbUE-7
+z!4-eS4L6GH=K=5Rw8T6=nhj8eq_<ZaWm!~L+FqQDA(wmN40bMx=m5h7jnDw|0`^Id
+z_eT}|{Q}w>o^$gS;W0IS&I<^2v+rWIaj_ibZ&nr-R{wRLz6rf_#aYdiqv7#iiv2i=
+zg4(uoFPC`;8qdBgc57PWJVHvs2)(_;TJhn{J#?Omo7j!p%HegRPyViQP^R+7d2<q3
+z64Zg_t_RaY&;AiRLs5WLcHx5&V6gmSyUpx73xfgX`qV*zWvf3ffb+7(k~nikqF5;0
+zg-7AR1Lu{#^rs<2IG`*C<u$mQSAFXC{zGygPZ55Pl>u-&h=7Y=(H-05Jp3+gclAm-
+zCmTIxRINQ{Mg19S0`!cUEj$O4CmYt%x3$VUoId>73wb6J;4wl%rXl*6MOtcI4}`0b
+zQwa!j7f)?3<7V;0=E`(o{k;6H^0#Hr|NP)jgld34!6D2PWW_??5ar%>`@@ayC#Nb`
+z#8O48=efrwEQLTx8uQ6q50K44fHj~0y+=i`xQ0@dCrS2w45|`u<A!@~8Ka<}@O)S)
+zz(zfQ6^{M3mMpI#Hn&+U_H)mq@^S8i2XV_pl~4Qo(rNsF^ZOW%;1vRw^M96*9ypJ;
+zJ^fUQ%b9cM&hg)z9L?(W%TpoH;-Ubp<~08f?={~+tSZGtZ#8jZJJPmf>~Jy!HVN|N
+z5;aZD2Z8x9k1L-Pm6dV8A#y`e58h|Gh0Z$vt!`9wsVKq|Fj7w5>pvkq-ig0|v+Ems
+z#DO3Jk@S+_D{OWtuK(P$msnwcb#i1qg33<jq$MSNKAreZ#Bqq25YA(-N`EW5Gk%mN
+zy(PkuKn+TS0#w5#J6q!p)8`{4A%SueVVm)abZ0lOi0!i-3)ViP3H7WEj3<U&VLbLN
+zg%MMcr12+!3mD-{i|~s=@v0O$YR@?}Pdn%!0-*nA@Q<0f-~tCYm{XOHyfdT?uG7&a
+zTwJ^w1>n&U+fA%0P8v{jrkx+G-AIVCea#-b3?{I#*;U~)aClw*g^zG8UI_S#k0s?6
+z*Vc3NmDny)v7u<!QHT&0a0IH~C#rqFH77xkb~3o{pZgSGFLr}RLh*(*<Ek*wfEJ!G
+zuzx*`U!5)5y=qZ<G-C<|R)vAn5WqJi#bHVY!^(+u3U5O#1y!}ysMUWtjrngh?Ck7(
+z+}#JnUu&`Jh<tZnE$dEvcCkAioJ4i`@Zqcer+W_ljZeYUs(TzXc0kvvoWv32UezDz
+z`=JkM0dfpj19)tYgAF|u8vcclCVQaZ*D^v&c553@)m8XLv+B(Thh-F|_Gcis#Y7ak
+z9!2S{R237hrbm6kL9<5#i3mNLp2$~{U9<FjiEL%+*L<HS>I!hdopbJ9x0-g6vW(0)
+zFZRefttSsraaS*UP9%N$>j0g6^0E_(WI?J+Mffd8cT4NlxW<6(ZlT5}-}x-oIIKDb
+z50inUWrIsa`>r_SsyG-%DK$3!ee+IcFPZnV^y<qx)^c)M+m{+vlnPGr63*-|ZfeTR
+zkh^6WyK?vYOGm7Fa9uz7ijUc$|GqLjzoo>g=H>^o2=3?PmmU1^52DfxIP9{z-hg>$
+zs_-<lMj*$gJhmqit9>wVJ;{V^KOdb|C0o<laX&qBlt^(w4=*+pk|3To#Qly7xX0p<
+sWtNzf6z3o`^78l`)7RVV|Lc;x>>TC@%`^E2d`1OntLv*(!>q&q4}f;BJ^%m!
+
+literal 0
+HcmV?d00001
+
+diff --git a/java/com/android/dialer/main/impl/toolbar/res/drawable-xxhdpi/search_bar_background_rounded_corners_sq0.9.png b/java/com/android/dialer/main/impl/toolbar/res/drawable-xxhdpi/search_bar_background_rounded_corners_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7d122ceb5fff6acd3c2b8103a0116e9c6f90db3
+GIT binary patch
+literal 3156
+zcmZ`+X*3&(vri}zTL~3gk=DKzvDMNx)}&}+rzl!ft7@-Wqm3;nB~+{xwHA@8+G-8g
+z7J6;%Ra;P(s(s(8&-<VE;eB}T!_1sHXJ*d%&6zXvn*_AEF$b$4D*yoCK$;j>oLj=V
+zq=A^vb&>l*9{|8EgfzHi6_UG_H=QVKEf`l&ubuE0mzr}g9@2d=N!eri!k}!d6Za`-
+z#^kHD(kbIUB1vPu^GdaRrKkoT8a5{?wv2Z+F}M|&u>7i{Oj#0d1eaEH7Jn2!{2+A5
+zId>;Guj1zyV)i=n%SN>8@j_rwP+sY5z)Dqp(@l1SNfha#`ue41V^ARwjulYN`8iSo
+zb_C`cZxI!l6&Z$@)p=s<SSroyp~tl+VZuy$X7#fyk$_f)R@(On7U65PHa$!nH5`0k
+z*I{tRlg~G&u&}UoQ@T7ILXsAWu50I`ThMng<fmq*4B<diU>vr^V2hLCM)t&=nQJ(g
+zuC@E}dL4WzXqkS(1yl-|$%kPbP|auqlxtQf@t@o{S@ItH)JdJo%O~GyU2EQ>`qB9}
+z6*nQ9vBb;$LJcm{q{(;zGTI*gsL=$5+v|!C(Dnt^05yxYM+Evi4>f{^!*9iQ-AGJa
+zDkwf?Iu!VaC7kgygDG($@?qlQy?#H#sx4540c*zGst8?=F6d&vC~>y7!x3JASCwy#
+za7^`BJo0kU*i0hoev8Bq2L2NJ`Y@(~^RbNJldGJb-#pEBHrIxY2}S$_rm#3o`SnVJ
+zDhy{_5qE{)YXnFrx(AyhqmI9LAM()Gu_ipk8%SonNStuy_v&)6E3BAJRiu80`@OWH
+zHuAsX!_<T~XU0-}wDr_J_#$GsvWX@_SSjq}2T29qWIl!zha>2&HT{<AB+FuJ`AG}(
+zooYmkK4<{j28?2|L9;)`8x<8ADhuZW&cLTsS_#yoA~dGIXN9YikM8Bh3Yd>eH(7wq
+z?pwD1_D~=9dK#9G`woeK;bMs~;-j4OCnVERY1!l)Ny^2Ngoy26kZT-qFw5S=Z5*M%
+zE!zj@L1?lZLN`6Hr!2ai{s{QC6y26J;krS6t{8Tv?<_egNLQN|nSx`)%^ILm(b8X4
+z=JV+a9>MRJ%m0P0H1!6mRFyq&_{>j9F^8P2)^T-akG<LPcN@x^xvFA)F(<w|`N012
+z>qkE7sFDOX0m{as1S|bE6BRS@I;7fI>YHs-uEa_4(H|JWvv|Wu_SdC?-`hPL4r>Wg
+zbT^e=sg*A!ts=5(sx@dB&Rxd+52!}BWoz4Y#xxfqFSWn6&((Rg{0j@GAS1`~2})yC
+zdz7?4znlM-<Gd)%`y00B>{v=&&Tz}JUDAy?+;MNh4IU!80TZbv2921oFlXyO*Bwna
+zAnF7uN#-z9$Qr;qk}SvjVP8NQ#UORyhWpcZ@`od0N?NU7Y5Tj#(EVg|ra$)`3~gUx
+zbfn{?39OUhxIFR4DW+f2^?>0nMt9Vr7`b{<)!yQ@RQaC8>B+#*&M|*O?)(J?%I+o)
+zOpmepigwBe#1c%&u=M6f3l;DmFYG{cRk<|zK4C>N!FEg66mHq3bLF(>hRFWNoO!Yb
+z$8&o~0Ndt0LI8wmy>r9TEL3e`!ml@=?~^ARHv=nlD%l=bzI)TgtmcKLKpVTEG={Di
+zZl0T4fVEKTtOSjl+?g>WAnpBLFHGzVV4KtBByL<cEL&`k>$-=t41`!uB`~&+xA(o`
+zmc4z+Tk<UM?E^^OL#}B%7Vqj3E`L`YhbOn|)dZl^n+8jt0^4*))MS&zY<^`3f-xP_
+zzP8^xN`ZdsgbG$0;4e8P2npXz(ZkiqHr~H>BE|d-xKyOCK+?#UxlyppE*|G7SYS16
+zLU}B0prlhAc)w{Dx9Yh&V)}b1@E$d9IZoT()4!AnS!NYo&)lG*HsULFJom~GT)8DX
+z<d_@OB}zDOLcl`j%8N62cgoVxa+n7Y>Zn-r2SdfbH%6i);N5Q<<kroRWwS}aPF)v<
+zgQcL4^pD9$>HNIUx~IK7`)#?E1Tr-sB+>PLiN3;M+_8c$tUonzZZqj9#vtzdc5cj2
+zBTqmnGO$cxjJ$9csth}2jX^J!{JHLgVo%f#P$Vp&kJ1tBcx}sU{XEtDAa0&6Ei|ZD
+z)=b$JHJ+n5matWsm?bu^6$*gi3b5n6OJp`>>2(@L_3j$NOGWYDWMW;M4p`#f+t>*y
+z8PIvsxyG<TP-A!;r0z<gL6wO#M(+Q1NA@6W2pW@<DP{~GtMmUw{qGv)ySzb#Ji3Ne
+z1oK^;>@zuw1Xn-LR|weHS^s}9)QYke+9Y|NcZ$NmS{PjV2ak5Mn<7r5K|vupzphBe
+zQ_-M3%rUt|S6P0YW_<2MEFxjd-FZhMtcB)6Uz*~<^Kfb0F}D-giI&GVTsR`U@)-ZC
+zmsJ@Q8L>j{TS9vTvukDv$^?lqcROii3Cmgwt-go<cl+_pmXMXGA}6Twt&h`vF~@JI
+z_Yu3DPDgK#0quTp7?i52AIKujw&xX!xbYUo+(Et*k-N-^cD&RA6b9-cQ_itOHe4+L
+z7^ms4fyUvre4B_SGDzZlT0W;vc_Cl~&%Rml>{7XRiIMPx>d(aWdY649YXQS7DXDQe
+z*|WE;IP1nGDVZ#L5Daed$#SusB)azDo~m}{luX`U+N{l9$+B@dDxFqj6lbI@6AX@7
+z#+7CUmz=E8EoIBtVEi@0hg=OWG;L7wuNTaP0oBar$G$AM3V9AyZJ^FNhtUW8yj5pj
+zh)$!0f0-rjMF@)4)9x;fN?>?47eJS#U+Btf+6~u26ia1$?8|NXf8v6@^_^S%VWOH2
+zUKW1-xg$~cdwg+1Gu?-l4H-=9raAm<p!v|N#*Fs<B^d_JDY!iA*B#s@-Q87I%>jx?
+zIFyaP$8kG_z#E5$6RJt?z@h1yT5ZCMC7CLUe|vWIg}lH13`Ii;{eaWF1w)cL%_;CL
+z%nId)f$h^!PInm2!{ML1?Kbn86)0SB%)yZ&J*Dd>x?U@2S;~q^^FV-dum>a5rWfNQ
+zF!VdtYPDM3b%XkS-6aELNeOWcm|s{H&3&7ZoE#?EH?|7nxpwm%GCd##b-r;4y7ySm
+zw=M8fD#`jyU&E+2;?`@MJL#0m1nS!?N00c3maBWZ5f2!clT>6T8fmm(?f}aHZ2FF!
+zJ*7blxw>FH=xw`l5}h`wZ&p3}qEsLBhxt>fhO^%83cfq(;Af)8zSPDJ@ZMyY(o>sX
+zB*8gvy4v}b&wf~|xwq9i#WBTj3V6v8lyDYMmiy5~wf5>yj%THp_{Ur*Au@f0<9}jP
+z!CBON2b2U{eB40!c8T6mNj1&u+dT_2-nzaEJG~Nnsi?51QqEQl+eA||6-HRyqzU%(
+z?0H-sfU+UPM2g;9OUC9Ao{=EsK1}(g|NOFaotdYeJP@FeeX5X>Z%e3BM60;LRYf`w
+zUo<vaw(G9UC2jPIZxc(LcK3+;l?Hw!l4g<LpXPEGTbj@leY03;LHvJ?cm}G4T2me^
+zLW}AhP_9k2mNo@y0HUPweHJoU1(}VF6G?9L3lt?E6BV_=%Gr*YLi-wIfWw?kQwuPJ
+zp+VvCyx~T6!?#4y&tHsR+D5YsdW#ZHO4bjY{~p>Md1G1`hCPW7d!gr7Ac-oT^Nsu%
+zud+B9q(RC2srAs7{#7JHh0msJzuD@qbB1B$R&_kcd*yi}j`Wot0^iP7i+5|`)Op|$
+zR;W|&w7e(a)nnZTJEv#u>U2)}aiy2YD+#+>b$kjbD;oeMp!T5m4Vnndh!T1KXPJ2z
+z)G1cKN2AxG8Q=U=^iA1yg)Fto4wI`E8C#(7$OCDcm#aEt-nvhKdPXQf2&*cqv^O`b
+z(O^umw1)qYSHwnTt~eil=^AkP57DzGy-oovRFqvNqqU|blVG^IcC#+mt?MqAYCcT5
+z$=3gFjT-VB?+9aA`j!6l#OJrKuqN~8+rmRL*J|~jzf@*_++wGL(6S%Pw&oQ@X!2;X
+zHQ?-i)N|Y2PI~x;p)@5l;_*C`&gM3<#Z~jhZYr4TaF`ak9h;GE^p`;Lb;=>GA`SdC
+zXrXvHn8{b9yZ*Nu{R$~0C*j38!&S|meY|;~i8?KIWSo)0Z(rJU|GKVCzgaJ>+N*9S
+i{xN2RqK;wNj|!_96^qRbkU#$x07ye~gKC7!i~j<(4dpxl
+
+literal 0
+HcmV?d00001
+
+diff --git a/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners.xml b/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners.xml
+index 2acd72f1f..ede1b9cd5 100644
+--- a/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners.xml
++++ b/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners.xml
+@@ -18,10 +18,7 @@
+     android:color="@color/dialer_ripple_color">
+ 
+     <item android:id="@android:id/mask">
+-        <shape android:shape="rectangle">
+-            <solid android:color="@android:color/white" />
+-            <corners android:radius="28dp" />
+-        </shape>
++        <nine-patch android:src="@drawable/search_bar_background_rounded_corners_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
+     </item>
+ 
+   <item android:drawable="@drawable/search_bar_background_rounded_corners_shape" />
+diff --git a/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners_shape.xml b/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners_shape.xml
+index 62f1e6134..de1d8cf94 100644
+--- a/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners_shape.xml
++++ b/java/com/android/dialer/main/impl/toolbar/res/drawable/search_bar_background_rounded_corners_shape.xml
+@@ -14,8 +14,4 @@
+   ~ See the License for the specific language governing permissions and
+   ~ limitations under the License
+   -->
+-<shape xmlns:android="http://schemas.android.com/apk/res/android"
+-  android:shape="rectangle">
+-  <solid android:color="?attr/colorBackgroundSearchBar"/>
+-  <corners android:radius="28dp"/>
+-</shape>
++<nine-patch xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/search_bar_background_rounded_corners_shape_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
 diff --git a/java/com/android/dialer/theme/base/res/values-night/theme_dialer_light.xml b/java/com/android/dialer/theme/base/res/values-night/theme_dialer_light.xml
 deleted file mode 100644
 index 97133e397..000000000
@@ -1124,7 +1541,7 @@ index 1e92e3c95..ecb7f6a28 100644
    </style>
  </resources>
 diff --git a/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml b/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
-index b9ea10c95..a1d54ec23 100644
+index b9ea10c95..b9a6a094c 100644
 --- a/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
 +++ b/java/com/android/dialer/theme/base/res/values/theme_dialer_light.xml
 @@ -23,13 +23,13 @@
@@ -1268,6 +1685,38 @@ index 70c91d7ad..f6eaa8e3d 100644
      <item name="cardElevation">0dp</item>
    </style>
  
+diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
+new file mode 100644
+index 000000000..0d402f6e4
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: white text on the dark Etesian backgrounds. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++  <item android:state_enabled="false" android:color="#8C8C8C"/>
++  <item android:color="#FFFFFF"/>
++</selector>
+diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
+new file mode 100644
+index 000000000..853004bd4
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 look: grey text on the dark Etesian backgrounds. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++  <item android:state_enabled="false" android:color="#6E6E6E"/>
++  <item android:color="#B0B0B0"/>
++</selector>
 diff --git a/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml
 index ef8c996e7..9979238b8 100644
 --- a/java/com/android/dialer/theme/hidden/res/color/dialer_primary_text_color.xml
@@ -1339,6 +1788,33 @@ index 99fda0728..a4233194e 100644
 +  <color name="rounded_dialpad_bg_color">#F2101010</color>
 +  <color name="searchbar_icon_color">#FFFFFF</color>
  </resources>
+diff --git a/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
+new file mode 100644
+index 000000000..ea4fba998
+--- /dev/null
++++ b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: The LineageOS Project
++  SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 (Etesian) palette for the dark Etesian backgrounds: white and grey text, dark grey
++     dial pad keys. Only used when the user picks a dark background (see app/BaseActivity). -->
++<resources>
++  <bool name="n9_light_bars">false</bool>
++  <color name="n9_icon">#DDDDDD</color>
++  <color name="n9_icon_secondary">#B0B0B0</color>
++  <color name="n9_call_notification_background">#1E1E1E</color>
++  <color name="n9_dialpad_text">#FFFFFF</color>
++  <color name="n9_dialpad_text_secondary">#B0B0B0</color>
++  <color name="n9_dialpad_key">#2A2A2A</color>
++  <color name="n9_dialpad_key_stroke">#3A3A3A</color>
++  <color name="n9_dialpad_key_ripple">#33FFFFFF</color>
++  <color name="n9_dialpad_digits_top">#2A2A2A</color>
++  <color name="n9_dialpad_digits_bottom">#141414</color>
++  <color name="n9_dialpad_digits_rule">#000000</color>
++</resources>
 diff --git a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
 index 41c5fd1c5..3f8396740 100644
 --- a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
@@ -1383,425 +1859,6 @@ index c894da3ff..df609f6b6 100644
 +  <color name="searchbar_icon_color">#191919</color>
 +  <color name="dialer_theme_color_light">#00A5E5</color>
  </resources>
-diff --git a/java/com/android/dialer/util/DrawableConverter.java b/java/com/android/dialer/util/DrawableConverter.java
-index 22fe22c8b..e3365b0c0 100644
---- a/java/com/android/dialer/util/DrawableConverter.java
-+++ b/java/com/android/dialer/util/DrawableConverter.java
-@@ -89,11 +89,8 @@ public class DrawableConverter {
-     Bitmap bitmap = drawableToBitmap(photo);
-     if (bitmap != null) {
-       Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
--      RoundedBitmapDrawable drawable =
--          RoundedBitmapDrawableFactory.create(context.getResources(), scaledBitmap);
--      drawable.setAntiAlias(true);
--      drawable.setCornerRadius(drawable.getIntrinsicHeight() / 2);
--      return drawable;
-+      // N9 look: Etesian squircle instead of a circle
-+      return new N9Squircle.BitmapDrawable(scaledBitmap);
-     }
-     return null;
-   }
-diff --git a/java/com/android/dialer/widget/DialerFloatingActionButton.java b/java/com/android/dialer/widget/DialerFloatingActionButton.java
-index 22df64802..a3b3e489f 100644
---- a/java/com/android/dialer/widget/DialerFloatingActionButton.java
-+++ b/java/com/android/dialer/widget/DialerFloatingActionButton.java
-@@ -47,18 +47,35 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
-  */
- public class DialerFloatingActionButton extends FloatingActionButton {
- 
-+  // N9 look: hidden for good when the Etesian system toolbar offers its action instead.
-+  private boolean suppressed;
-+
-   public DialerFloatingActionButton(Context context, AttributeSet attributeSet) {
-     super(context, attributeSet);
-   }
- 
-+  /** Hides the button and ignores later {@link #show()} calls while suppressed. */
-+  public void setSuppressed(boolean suppressed) {
-+    this.suppressed = suppressed;
-+    if (suppressed) {
-+      hide();
-+    }
-+  }
-+
-   @Override
-   public void show() {
-+    if (suppressed) {
-+      return;
-+    }
-     super.show();
-     setClickable(true);
-   }
- 
-   @Override
-   public void show(@Nullable OnVisibilityChangedListener onVisibilityChangedListener) {
-+    if (suppressed) {
-+      return;
-+    }
-     super.show(onVisibilityChangedListener);
-     setClickable(true);
-   }
-diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
-index 7ad802073..dd7fac240 100644
---- a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
-+++ b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
-@@ -3,8 +3,9 @@
-   android:color="#80FFFFFF">
-   <item>
-     <shape
--      android:shape="oval">
--      <solid android:color="@color/dialer_call_green"/>
-+      android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-+      <gradient android:angle="270" android:startColor="#7BBF45" android:endColor="#55A32A"/>
-     </shape>
-   </item>
- </ripple>
-diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
-index abfd56ecf..89ca007ff 100644
---- a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
-+++ b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
-@@ -3,8 +3,9 @@
-   android:color="#80FFFFFF">
-   <item>
-     <shape
--      android:shape="oval">
--      <solid android:color="#DF0000"/>
-+      android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-+      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
-     </shape>
-   </item>
- </ripple>
-diff --git a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
-index 3caa1fb15..89ca007ff 100644
---- a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
-+++ b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
-@@ -3,8 +3,9 @@
-   android:color="#80FFFFFF">
-   <item>
-     <shape
--      android:shape="oval">
--      <solid android:color="@color/dialer_end_call_button_color"/>
-+      android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-+      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
-     </shape>
-   </item>
- </ripple>
-diff --git a/java/com/android/incallui/commontheme/res/values-night/colors.xml b/java/com/android/incallui/commontheme/res/values-night/colors.xml
-deleted file mode 100644
-index c3f722851..000000000
---- a/java/com/android/incallui/commontheme/res/values-night/colors.xml
-+++ /dev/null
-@@ -1,5 +0,0 @@
--<?xml version="1.0" encoding="utf-8"?>
--<resources>
--    <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
--    <color name="incall_end_call_icon_color">@android:color/black</color>
--</resources>
-diff --git a/java/com/android/incallui/commontheme/res/values/colors.xml b/java/com/android/incallui/commontheme/res/values/colors.xml
-index 3c328b6cf..dee2986ff 100644
---- a/java/com/android/incallui/commontheme/res/values/colors.xml
-+++ b/java/com/android/incallui/commontheme/res/values/colors.xml
-@@ -22,6 +22,6 @@
-   <!-- Background color for spam. This color must match one of background_colors_dark in call UI. -->
-   <color name="incall_call_spam_background_color">@color/blocked_contact_background</color>
- 
--  <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
-+  <color name="incall_button_background_color">#E6FFFFFF</color>
-   <color name="incall_end_call_icon_color">@android:color/white</color>
- </resources>
-diff --git a/java/com/android/incallui/commontheme/res/values/styles.xml b/java/com/android/incallui/commontheme/res/values/styles.xml
-index 637827301..d30103e77 100644
---- a/java/com/android/incallui/commontheme/res/values/styles.xml
-+++ b/java/com/android/incallui/commontheme/res/values/styles.xml
-@@ -20,12 +20,14 @@
-   <style name="Dialer.Incall.TextAppearance" parent="android:TextAppearance.Material">
-     <item name="android:textColor">?android:attr/textColorSecondary</item>
-     <item name="android:textSize">18sp</item>
-+    <item name="android:fontFamily">etesian-text</item>
-   </style>
- 
-   <style name="Dialer.Incall.TextAppearance.Large">
--    <item name="android:textColor">?android:attr/textColorPrimary</item>
-+    <item name="android:textColor">@android:color/white</item>
-     <item name="android:textSize">36sp</item>
--    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
-+    <item name="android:fontFamily">etesian-text</item>
-+    <item name="android:textFontWeight">300</item>
-   </style>
- 
-   <style name="Dialer.Incall.TextAppearance.Label">
-@@ -43,7 +45,7 @@
- 
-   <style name="Incall.Button.End" parent="android:Widget.Material.Button">
-     <item name="android:background">@drawable/incall_end_call_background</item>
--    <item name="android:elevation">8dp</item>
-+    <item name="android:elevation">0dp</item>
-     <item name="android:layout_height">@dimen/incall_end_call_button_size</item>
-     <item name="android:layout_width">@dimen/incall_end_call_button_size</item>
-     <item name="android:padding">8dp</item>
-diff --git a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
-index 73db41314..d74087613 100644
---- a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
-+++ b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
-@@ -69,6 +69,8 @@
-         android:layout_gravity="center_horizontal"
-         android:singleLine="true"
-         android:textAppearance="@style/Dialer.Incall.TextAppearance"
-+        android:textSize="24sp"
-+        android:textFontWeight="300"
-         tools:gravity="center"/>
-   </ViewAnimator>
- </LinearLayout>
-diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
-index c8bd29568..ba20fd0da 100644
---- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
-+++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
-@@ -13,7 +13,8 @@
-       <item
-         android:id="@android:id/mask"
-         android:gravity="center">
--        <shape android:shape="oval">
-+        <shape android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-           <solid android:color="@android:color/white"/>
-         </shape>
-       </item>
-diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
-index b0f310b40..7e6a8a6e1 100644
---- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
-+++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
-@@ -1,5 +1,6 @@
- <?xml version="1.0" encoding="utf-8"?>
- <shape xmlns:android="http://schemas.android.com/apk/res/android"
--  android:shape="oval">
-+  android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-   <solid android:color="@color/incall_button_background"/>
- </shape>
-diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
-index 10fe29731..56b79769e 100644
---- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
-+++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
-@@ -27,7 +27,8 @@
-       <item
-         android:id="@android:id/mask"
-         android:gravity="center">
--        <shape android:shape="oval">
-+        <shape android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-           <solid android:color="@android:color/white"/>
-         </shape>
-       </item>
-diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
-index f7ffa4d50..82a3eae20 100644
---- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
-+++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
-@@ -1,5 +1,6 @@
- <?xml version="1.0" encoding="utf-8"?>
- <shape xmlns:android="http://schemas.android.com/apk/res/android"
--  android:shape="oval">
--  <solid android:color="@android:color/transparent"/>
-+  android:shape="rectangle">
-+      <corners android:radius="16dp"/>
-+  <solid android:color="#26FFFFFF"/>
- </shape>
-diff --git a/java/com/android/incallui/theme/res/values-night/colors.xml b/java/com/android/incallui/theme/res/values-night/colors.xml
-deleted file mode 100644
-index d6522b152..000000000
---- a/java/com/android/incallui/theme/res/values-night/colors.xml
-+++ /dev/null
-@@ -1,15 +0,0 @@
--<?xml version="1.0" encoding="utf-8"?>
--<resources>
--    <color name="incall_background_gradient_top">@color/dialer_theme_color_dark</color>
--    <color name="incall_background_gradient_middle">@color/dialer_theme_color_dark</color>
--    <color name="incall_background_gradient_bottom">@color/dialer_theme_color_dark</color>
--    <color name="incall_background_multiwindow">@color/dialer_theme_color_dark</color>
--    <color name="incall_button_icon_color">@android:color/black</color>
--    <!-- There is a nearby, more-convenient universe in which the following neutral colors are
--         automatically adapted and do not need to be specified separately in this -night variant.
--         If the RTT banner items become invisible again in the future, try changing these to
--         _900 and _800 respectively, or just removing them.
--         (That more-convenient behavior is already seen with searchbar_icon_color elsewhere.) -->
--    <color name="incall_banner_icon_color">@android:color/system_neutral1_100</color>
--    <color name="incall_banner_timer_color">@android:color/system_neutral1_200</color>
--</resources>
-diff --git a/java/com/android/incallui/theme/res/values/colors.xml b/java/com/android/incallui/theme/res/values/colors.xml
-index a1e586374..ffad9981a 100644
---- a/java/com/android/incallui/theme/res/values/colors.xml
-+++ b/java/com/android/incallui/theme/res/values/colors.xml
-@@ -51,11 +51,11 @@
-     <item>#841F10</item>
-   </array>
- 
--  <color name="incall_background_gradient_top">@android:color/system_accent1_600</color>
--  <color name="incall_background_gradient_middle">@android:color/system_accent1_500</color>
--  <color name="incall_background_gradient_bottom">@android:color/system_accent1_400</color>
-+  <color name="incall_background_gradient_top">#2E2E2E</color>
-+  <color name="incall_background_gradient_middle">#212121</color>
-+  <color name="incall_background_gradient_bottom">#141414</color>
- 
--  <color name="incall_background_multiwindow">@android:color/system_accent1_500</color>
-+  <color name="incall_background_multiwindow">#1E1E1E</color>
- 
-   <color name="incall_background_gradient_spam_top">#E5A30B0B</color>
-   <color name="incall_background_gradient_spam_middle">#D6C01111</color>
-@@ -65,6 +65,6 @@
- 
-   <color name="incall_button_icon_color">@android:color/black</color>
- 
--  <color name="incall_banner_icon_color">@android:color/system_neutral1_900</color>
--  <color name="incall_banner_timer_color">@android:color/system_neutral1_800</color>
-+  <color name="incall_banner_icon_color">#E0E0E0</color>
-+  <color name="incall_banner_timer_color">#BDBDBD</color>
- </resources>
-diff --git a/java/com/android/incallui/theme/res/values/styles.xml b/java/com/android/incallui/theme/res/values/styles.xml
-index bfedd14d6..488cd54b9 100644
---- a/java/com/android/incallui/theme/res/values/styles.xml
-+++ b/java/com/android/incallui/theme/res/values/styles.xml
-@@ -27,7 +27,8 @@
-     <item name="dialpad_style">@style/InCallDialpad</item>
-     <item name="android:windowAnimationStyle">@null</item>
-     <item name="android:windowBackground">@color/dialer_theme_color_dark</item>
--    <item name="android:windowShowWallpaper">true</item>
-+    <item name="android:windowShowWallpaper">false</item>
-+    <item name="android:fontFamily">etesian-text</item>
-     <item name="bottomSheetDialogTheme">@style/TransparentBottomSheetDialogTheme</item>
-   </style>
- 
-@@ -42,10 +43,10 @@
-     <item name="dialpad_key_letters_size_for_single_alphabet">@dimen/incall_dialpad_key_letters_size_for_single_alphabet</item>
-     <item name="dialpad_key_numbers_size">@dimen/incall_dialpad_key_numbers_size</item>
-     <item name="dialpad_end_key_spacing">@dimen/incall_end_call_spacing</item>
--    <item name="dialpad_elevation">10dp</item>
--    <item name="dialpad_text_color">@color/dialer_theme_color_light</item>
--    <item name="dialpad_text_color_primary">@color/dialer_theme_color_light</item>
--    <item name="dialpad_text_color_secondary">@color/dialer_secondary_text_color</item>
-+    <item name="dialpad_elevation">0dp</item>
-+    <item name="dialpad_text_color">#191919</item>
-+    <item name="dialpad_text_color_primary">#191919</item>
-+    <item name="dialpad_text_color_secondary">#8C8C8C</item>
-   </style>
- 
-   <style name="AfterCallNotificationTheme" parent="Dialer.ThemeBase.NoActionBar">
-diff --git a/java/com/android/incallui/video/impl/VideoCallFragment.java b/java/com/android/incallui/video/impl/VideoCallFragment.java
-index 3b11743d9..9311a8897 100644
---- a/java/com/android/incallui/video/impl/VideoCallFragment.java
-+++ b/java/com/android/incallui/video/impl/VideoCallFragment.java
-@@ -122,7 +122,9 @@ public class VideoCallFragment extends Fragment
-           int x = view.getWidth() / 2;
-           int y = view.getHeight() / 2;
-           int radius = Math.min(x, y);
--          outline.setOval(x - radius, y - radius, x + radius, y + radius);
-+          // N9 look: self-preview thumbnail is a Etesian squircle, not a circle
-+          outline.setPath(
-+              com.android.dialer.util.N9Squircle.path(x - radius, y - radius, x + radius, y + radius));
-         }
-       };
- 
-diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
-new file mode 100644
-index 000000000..0617c037d
---- /dev/null
-+++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_digits_bg.xml
-@@ -0,0 +1,14 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) style number display field: white to light grey vertical gradient. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+  <item>
-+    <shape android:shape="rectangle">
-+      <gradient android:angle="270" android:startColor="@color/n9_dialpad_digits_top" android:endColor="@color/n9_dialpad_digits_bottom"/>
-+    </shape>
-+  </item>
-+  <item android:gravity="bottom" android:height="1dp">
-+    <shape android:shape="rectangle">
-+      <solid android:color="@color/n9_dialpad_digits_rule"/>
-+    </shape>
-+  </item>
-+</layer-list>
-diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
-new file mode 100644
-index 000000000..58fa6630e
---- /dev/null
-+++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) style dialpad key: white rounded square inset on the grey page,
-+     light grey when pressed. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="@color/n9_dialpad_key_ripple">
-+  <item>
-+    <inset android:inset="3dp">
-+      <shape android:shape="rectangle">
-+        <solid android:color="@color/n9_dialpad_key"/>
-+        <corners android:radius="14dp"/>
-+        <stroke android:width="1dp" android:color="@color/n9_dialpad_key_stroke"/>
-+      </shape>
-+    </inset>
-+  </item>
-+</ripple>
-diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
-new file mode 100644
-index 000000000..0d402f6e4
---- /dev/null
-+++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_primary_text_color.xml
-@@ -0,0 +1,10 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+  SPDX-FileCopyrightText: The LineageOS Project
-+  SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 look: white text on the dark Etesian backgrounds. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+  <item android:state_enabled="false" android:color="#8C8C8C"/>
-+  <item android:color="#FFFFFF"/>
-+</selector>
-diff --git a/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
-new file mode 100644
-index 000000000..853004bd4
---- /dev/null
-+++ b/java/com/android/dialer/theme/hidden/res/color-night/dialer_secondary_text_color.xml
-@@ -0,0 +1,10 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+  SPDX-FileCopyrightText: The LineageOS Project
-+  SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 look: grey text on the dark Etesian backgrounds. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+  <item android:state_enabled="false" android:color="#6E6E6E"/>
-+  <item android:color="#B0B0B0"/>
-+</selector>
-diff --git a/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
-new file mode 100644
-index 000000000..ea4fba998
---- /dev/null
-+++ b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+  SPDX-FileCopyrightText: The LineageOS Project
-+  SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 (Etesian) palette for the dark Etesian backgrounds: white and grey text, dark grey
-+     dial pad keys. Only used when the user picks a dark background (see app/BaseActivity). -->
-+<resources>
-+  <bool name="n9_light_bars">false</bool>
-+  <color name="n9_icon">#DDDDDD</color>
-+  <color name="n9_icon_secondary">#B0B0B0</color>
-+  <color name="n9_call_notification_background">#1E1E1E</color>
-+  <color name="n9_dialpad_text">#FFFFFF</color>
-+  <color name="n9_dialpad_text_secondary">#B0B0B0</color>
-+  <color name="n9_dialpad_key">#2A2A2A</color>
-+  <color name="n9_dialpad_key_stroke">#3A3A3A</color>
-+  <color name="n9_dialpad_key_ripple">#33FFFFFF</color>
-+  <color name="n9_dialpad_digits_top">#2A2A2A</color>
-+  <color name="n9_dialpad_digits_bottom">#141414</color>
-+  <color name="n9_dialpad_digits_rule">#000000</color>
-+</resources>
 diff --git a/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml
 new file mode 100644
 index 000000000..c8d31892d
@@ -1829,6 +1886,24 @@ index 000000000..c8d31892d
 +  <color name="n9_dialpad_digits_bottom">#DCDCDC</color>
 +  <color name="n9_dialpad_digits_rule">#C8C8C8</color>
 +</resources>
+diff --git a/java/com/android/dialer/util/DrawableConverter.java b/java/com/android/dialer/util/DrawableConverter.java
+index 22fe22c8b..e3365b0c0 100644
+--- a/java/com/android/dialer/util/DrawableConverter.java
++++ b/java/com/android/dialer/util/DrawableConverter.java
+@@ -89,11 +89,8 @@ public class DrawableConverter {
+     Bitmap bitmap = drawableToBitmap(photo);
+     if (bitmap != null) {
+       Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+-      RoundedBitmapDrawable drawable =
+-          RoundedBitmapDrawableFactory.create(context.getResources(), scaledBitmap);
+-      drawable.setAntiAlias(true);
+-      drawable.setCornerRadius(drawable.getIntrinsicHeight() / 2);
+-      return drawable;
++      // N9 look: Etesian squircle instead of a circle
++      return new N9Squircle.BitmapDrawable(scaledBitmap);
+     }
+     return null;
+   }
 diff --git a/java/com/android/dialer/util/N9Squircle.java b/java/com/android/dialer/util/N9Squircle.java
 new file mode 100644
 index 000000000..c696856f7
@@ -2020,3 +2095,304 @@ index 000000000..c696856f7
 +        }
 +    }
 +}
+diff --git a/java/com/android/dialer/widget/DialerFloatingActionButton.java b/java/com/android/dialer/widget/DialerFloatingActionButton.java
+index 22df64802..a3b3e489f 100644
+--- a/java/com/android/dialer/widget/DialerFloatingActionButton.java
++++ b/java/com/android/dialer/widget/DialerFloatingActionButton.java
+@@ -47,18 +47,35 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
+  */
+ public class DialerFloatingActionButton extends FloatingActionButton {
+ 
++  // N9 look: hidden for good when the Etesian system toolbar offers its action instead.
++  private boolean suppressed;
++
+   public DialerFloatingActionButton(Context context, AttributeSet attributeSet) {
+     super(context, attributeSet);
+   }
+ 
++  /** Hides the button and ignores later {@link #show()} calls while suppressed. */
++  public void setSuppressed(boolean suppressed) {
++    this.suppressed = suppressed;
++    if (suppressed) {
++      hide();
++    }
++  }
++
+   @Override
+   public void show() {
++    if (suppressed) {
++      return;
++    }
+     super.show();
+     setClickable(true);
+   }
+ 
+   @Override
+   public void show(@Nullable OnVisibilityChangedListener onVisibilityChangedListener) {
++    if (suppressed) {
++      return;
++    }
+     super.show(onVisibilityChangedListener);
+     setClickable(true);
+   }
+diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
+index 7ad802073..dd7fac240 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/answer_answer_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="@color/dialer_call_green"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#7BBF45" android:endColor="#55A32A"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
+index abfd56ecf..89ca007ff 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/answer_decline_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="#DF0000"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
+index 3caa1fb15..89ca007ff 100644
+--- a/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
++++ b/java/com/android/incallui/commontheme/res/drawable/incall_end_call_background.xml
+@@ -3,8 +3,9 @@
+   android:color="#80FFFFFF">
+   <item>
+     <shape
+-      android:shape="oval">
+-      <solid android:color="@color/dialer_end_call_button_color"/>
++      android:shape="rectangle">
++      <corners android:radius="16dp"/>
++      <gradient android:angle="270" android:startColor="#E04542" android:endColor="#C42320"/>
+     </shape>
+   </item>
+ </ripple>
+diff --git a/java/com/android/incallui/commontheme/res/values-night/colors.xml b/java/com/android/incallui/commontheme/res/values-night/colors.xml
+deleted file mode 100644
+index c3f722851..000000000
+--- a/java/com/android/incallui/commontheme/res/values-night/colors.xml
++++ /dev/null
+@@ -1,5 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<resources>
+-    <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
+-    <color name="incall_end_call_icon_color">@android:color/black</color>
+-</resources>
+diff --git a/java/com/android/incallui/commontheme/res/values/colors.xml b/java/com/android/incallui/commontheme/res/values/colors.xml
+index 3c328b6cf..dee2986ff 100644
+--- a/java/com/android/incallui/commontheme/res/values/colors.xml
++++ b/java/com/android/incallui/commontheme/res/values/colors.xml
+@@ -22,6 +22,6 @@
+   <!-- Background color for spam. This color must match one of background_colors_dark in call UI. -->
+   <color name="incall_call_spam_background_color">@color/blocked_contact_background</color>
+ 
+-  <color name="incall_button_background_color">@android:color/system_neutral1_50</color>
++  <color name="incall_button_background_color">#E6FFFFFF</color>
+   <color name="incall_end_call_icon_color">@android:color/white</color>
+ </resources>
+diff --git a/java/com/android/incallui/commontheme/res/values/styles.xml b/java/com/android/incallui/commontheme/res/values/styles.xml
+index 637827301..102fd26cd 100644
+--- a/java/com/android/incallui/commontheme/res/values/styles.xml
++++ b/java/com/android/incallui/commontheme/res/values/styles.xml
+@@ -20,12 +20,14 @@
+   <style name="Dialer.Incall.TextAppearance" parent="android:TextAppearance.Material">
+     <item name="android:textColor">?android:attr/textColorSecondary</item>
+     <item name="android:textSize">18sp</item>
++    <item name="android:fontFamily">etesian-text</item>
+   </style>
+ 
+   <style name="Dialer.Incall.TextAppearance.Large">
+-    <item name="android:textColor">?android:attr/textColorPrimary</item>
++    <item name="android:textColor">@android:color/white</item>
+     <item name="android:textSize">36sp</item>
+-    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
++    <item name="android:fontFamily">etesian-text</item>
++    <item name="android:textFontWeight">300</item>
+   </style>
+ 
+   <style name="Dialer.Incall.TextAppearance.Label">
+@@ -43,7 +45,7 @@
+ 
+   <style name="Incall.Button.End" parent="android:Widget.Material.Button">
+     <item name="android:background">@drawable/incall_end_call_background</item>
+-    <item name="android:elevation">8dp</item>
++    <item name="android:elevation">0dp</item>
+     <item name="android:layout_height">@dimen/incall_end_call_button_size</item>
+     <item name="android:layout_width">@dimen/incall_end_call_button_size</item>
+     <item name="android:padding">8dp</item>
+diff --git a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
+index 73db41314..d74087613 100644
+--- a/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
++++ b/java/com/android/incallui/contactgrid/res/layout/incall_contactgrid_bottom_row.xml
+@@ -69,6 +69,8 @@
+         android:layout_gravity="center_horizontal"
+         android:singleLine="true"
+         android:textAppearance="@style/Dialer.Incall.TextAppearance"
++        android:textSize="24sp"
++        android:textFontWeight="300"
+         tools:gravity="center"/>
+   </ViewAnimator>
+ </LinearLayout>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
+index c8bd29568..ba20fd0da 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background.xml
+@@ -13,7 +13,8 @@
+       <item
+         android:id="@android:id/mask"
+         android:gravity="center">
+-        <shape android:shape="oval">
++        <shape android:shape="rectangle">
++      <corners android:radius="16dp"/>
+           <solid android:color="@android:color/white"/>
+         </shape>
+       </item>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
+index b0f310b40..7e6a8a6e1 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_checked.xml
+@@ -1,5 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+-  android:shape="oval">
++  android:shape="rectangle">
++      <corners android:radius="16dp"/>
+   <solid android:color="@color/incall_button_background"/>
+ </shape>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
+index 10fe29731..56b79769e 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_more.xml
+@@ -27,7 +27,8 @@
+       <item
+         android:id="@android:id/mask"
+         android:gravity="center">
+-        <shape android:shape="oval">
++        <shape android:shape="rectangle">
++      <corners android:radius="16dp"/>
+           <solid android:color="@android:color/white"/>
+         </shape>
+       </item>
+diff --git a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
+index f7ffa4d50..82a3eae20 100644
+--- a/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
++++ b/java/com/android/incallui/incall/impl/res/drawable/incall_button_background_unchecked.xml
+@@ -1,5 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <shape xmlns:android="http://schemas.android.com/apk/res/android"
+-  android:shape="oval">
+-  <solid android:color="@android:color/transparent"/>
++  android:shape="rectangle">
++      <corners android:radius="16dp"/>
++  <solid android:color="#26FFFFFF"/>
+ </shape>
+diff --git a/java/com/android/incallui/theme/res/values-night/colors.xml b/java/com/android/incallui/theme/res/values-night/colors.xml
+deleted file mode 100644
+index d6522b152..000000000
+--- a/java/com/android/incallui/theme/res/values-night/colors.xml
++++ /dev/null
+@@ -1,15 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<resources>
+-    <color name="incall_background_gradient_top">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_gradient_middle">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_gradient_bottom">@color/dialer_theme_color_dark</color>
+-    <color name="incall_background_multiwindow">@color/dialer_theme_color_dark</color>
+-    <color name="incall_button_icon_color">@android:color/black</color>
+-    <!-- There is a nearby, more-convenient universe in which the following neutral colors are
+-         automatically adapted and do not need to be specified separately in this -night variant.
+-         If the RTT banner items become invisible again in the future, try changing these to
+-         _900 and _800 respectively, or just removing them.
+-         (That more-convenient behavior is already seen with searchbar_icon_color elsewhere.) -->
+-    <color name="incall_banner_icon_color">@android:color/system_neutral1_100</color>
+-    <color name="incall_banner_timer_color">@android:color/system_neutral1_200</color>
+-</resources>
+diff --git a/java/com/android/incallui/theme/res/values/colors.xml b/java/com/android/incallui/theme/res/values/colors.xml
+index a1e586374..ffad9981a 100644
+--- a/java/com/android/incallui/theme/res/values/colors.xml
++++ b/java/com/android/incallui/theme/res/values/colors.xml
+@@ -51,11 +51,11 @@
+     <item>#841F10</item>
+   </array>
+ 
+-  <color name="incall_background_gradient_top">@android:color/system_accent1_600</color>
+-  <color name="incall_background_gradient_middle">@android:color/system_accent1_500</color>
+-  <color name="incall_background_gradient_bottom">@android:color/system_accent1_400</color>
++  <color name="incall_background_gradient_top">#2E2E2E</color>
++  <color name="incall_background_gradient_middle">#212121</color>
++  <color name="incall_background_gradient_bottom">#141414</color>
+ 
+-  <color name="incall_background_multiwindow">@android:color/system_accent1_500</color>
++  <color name="incall_background_multiwindow">#1E1E1E</color>
+ 
+   <color name="incall_background_gradient_spam_top">#E5A30B0B</color>
+   <color name="incall_background_gradient_spam_middle">#D6C01111</color>
+@@ -65,6 +65,6 @@
+ 
+   <color name="incall_button_icon_color">@android:color/black</color>
+ 
+-  <color name="incall_banner_icon_color">@android:color/system_neutral1_900</color>
+-  <color name="incall_banner_timer_color">@android:color/system_neutral1_800</color>
++  <color name="incall_banner_icon_color">#E0E0E0</color>
++  <color name="incall_banner_timer_color">#BDBDBD</color>
+ </resources>
+diff --git a/java/com/android/incallui/theme/res/values/styles.xml b/java/com/android/incallui/theme/res/values/styles.xml
+index bfedd14d6..3a3098cda 100644
+--- a/java/com/android/incallui/theme/res/values/styles.xml
++++ b/java/com/android/incallui/theme/res/values/styles.xml
+@@ -27,7 +27,8 @@
+     <item name="dialpad_style">@style/InCallDialpad</item>
+     <item name="android:windowAnimationStyle">@null</item>
+     <item name="android:windowBackground">@color/dialer_theme_color_dark</item>
+-    <item name="android:windowShowWallpaper">true</item>
++    <item name="android:windowShowWallpaper">false</item>
++    <item name="android:fontFamily">etesian-text</item>
+     <item name="bottomSheetDialogTheme">@style/TransparentBottomSheetDialogTheme</item>
+   </style>
+ 
+@@ -42,10 +43,10 @@
+     <item name="dialpad_key_letters_size_for_single_alphabet">@dimen/incall_dialpad_key_letters_size_for_single_alphabet</item>
+     <item name="dialpad_key_numbers_size">@dimen/incall_dialpad_key_numbers_size</item>
+     <item name="dialpad_end_key_spacing">@dimen/incall_end_call_spacing</item>
+-    <item name="dialpad_elevation">10dp</item>
+-    <item name="dialpad_text_color">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_primary">@color/dialer_theme_color_light</item>
+-    <item name="dialpad_text_color_secondary">@color/dialer_secondary_text_color</item>
++    <item name="dialpad_elevation">0dp</item>
++    <item name="dialpad_text_color">#191919</item>
++    <item name="dialpad_text_color_primary">#191919</item>
++    <item name="dialpad_text_color_secondary">#8C8C8C</item>
+   </style>
+ 
+   <style name="AfterCallNotificationTheme" parent="Dialer.ThemeBase.NoActionBar">
+diff --git a/java/com/android/incallui/video/impl/VideoCallFragment.java b/java/com/android/incallui/video/impl/VideoCallFragment.java
+index 3b11743d9..9311a8897 100644
+--- a/java/com/android/incallui/video/impl/VideoCallFragment.java
++++ b/java/com/android/incallui/video/impl/VideoCallFragment.java
+@@ -122,7 +122,9 @@ public class VideoCallFragment extends Fragment
+           int x = view.getWidth() / 2;
+           int y = view.getHeight() / 2;
+           int radius = Math.min(x, y);
+-          outline.setOval(x - radius, y - radius, x + radius, y + radius);
++          // N9 look: self-preview thumbnail is a Etesian squircle, not a circle
++          outline.setPath(
++              com.android.dialer.util.N9Squircle.path(x - radius, y - radius, x + radius, y + radius));
+         }
+       };
+ 

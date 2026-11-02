@@ -265,370 +265,6 @@ index ac52c8e..8f20e8c 100644
          private val ALLOWED_FULLSCREEN_PWA_VALUES = arrayOf("fullscreen", "standalone")
      }
  }
-diff --git a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
-index 9cc8982..ec30b35 100644
---- a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
-+++ b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
-@@ -23,6 +23,7 @@ import androidx.constraintlayout.widget.Group
- import androidx.core.view.ViewCompat
- import androidx.core.view.WindowInsetsCompat
- import androidx.core.view.isVisible
-+import androidx.core.view.updateLayoutParams
- import com.google.android.material.progressindicator.LinearProgressIndicator
- import org.lineageos.jelly.R
- import org.lineageos.jelly.ext.requireActivity
-@@ -83,12 +84,14 @@ class UrlBarLayout @JvmOverloads constructor(
- 
-             loadingProgressIndicator.progress = value
-         }
--    private var isLoading = false
--        set(value) {
-+    var isLoading = false
-+        private set(value) {
-             field = value
- 
-             loadingProgressIndicator.isVisible = value
-+            onLoadingChangedCallback?.invoke(value)
-         }
-+    var onLoadingChangedCallback: ((Boolean) -> Unit)? = null
- 
-     var url: String? = null
-         set(value) {
-@@ -122,6 +125,28 @@ class UrlBarLayout @JvmOverloads constructor(
- 
-     // Callbacks
-     var onMoreButtonClickCallback: (() -> Unit)? = null
-+
-+    /**
-+     * N9: the menu lives on the system toolbar, so the in-bar overflow button can be hidden.
-+     */
-+    var isMoreButtonVisible = true
-+        set(value) {
-+            field = value
-+
-+            // The URL group drives the button's visibility, so collapse it instead
-+            val size = moreButtonSize
-+            val margin = moreButtonMarginEnd
-+            moreButton.isEnabled = value
-+            moreButton.alpha = if (value) 1f else 0f
-+            moreButton.updateLayoutParams<LayoutParams> {
-+                width = if (value) size else 0
-+                marginEnd = if (value) margin else 0
-+            }
-+        }
-+    private val moreButtonSize by lazy { moreButton.layoutParams.width }
-+    private val moreButtonMarginEnd by lazy {
-+        (moreButton.layoutParams as LayoutParams).marginEnd
-+    }
-     var onLoadUrlCallback: ((url: String) -> Unit)? = null
-     var onStartSearchCallback: ((query: String) -> Unit)? = null
-     var onSearchPositionChangeCallback: ((next: Boolean) -> Unit)? = null
-diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
-index c570449..97ada47 100644
---- a/app/src/main/res/layout/activity_main.xml
-+++ b/app/src/main/res/layout/activity_main.xml
-@@ -14,6 +14,9 @@
-         android:id="@+id/appBarLayout"
-         android:layout_width="0dp"
-         android:layout_height="wrap_content"
-+        android:background="@color/n9_window"
-+        app:elevation="0dp"
-+        app:liftOnScroll="false"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toTopOf="parent">
-diff --git a/app/src/main/res/layout/url_bar_layout.xml b/app/src/main/res/layout/url_bar_layout.xml
-index 7db412b..9446150 100644
---- a/app/src/main/res/layout/url_bar_layout.xml
-+++ b/app/src/main/res/layout/url_bar_layout.xml
-@@ -7,7 +7,7 @@
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     android:layout_width="match_parent"
-     android:layout_height="match_parent"
--    android:background="?attr/colorSurface">
-+    android:background="@color/n9_window">
- 
-     <!-- URL group -->
-     <androidx.constraintlayout.widget.Group
-@@ -22,16 +22,18 @@
-         android:layout_width="0dp"
-         android:layout_height="0dp"
-         android:layout_marginStart="16dp"
--        android:layout_marginTop="8dp"
-+        android:layout_marginTop="7dp"
-         android:layout_marginEnd="4dp"
--        android:layout_marginBottom="8dp"
--        android:backgroundTint="?attr/colorSurfaceVariant"
--        app:cardCornerRadius="32dp"
-+        android:layout_marginBottom="7dp"
-+        android:backgroundTint="@color/n9_white"
-+        app:cardCornerRadius="10dp"
-+        app:cardElevation="0dp"
-+        app:strokeColor="@color/n9_separator"
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toStartOf="@+id/moreButton"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toTopOf="parent"
--        app:strokeWidth="0dp">
-+        app:strokeWidth="1dp">
- 
-         <androidx.constraintlayout.widget.ConstraintLayout
-             android:layout_width="match_parent"
-@@ -50,7 +52,7 @@
-                 app:layout_constraintBottom_toBottomOf="parent"
-                 app:layout_constraintStart_toStartOf="parent"
-                 app:layout_constraintTop_toTopOf="parent"
--                app:tint="?attr/colorOnSurface" />
-+                app:tint="@color/n9_text" />
- 
-             <ImageButton
-                 android:id="@+id/secureButton"
-@@ -65,7 +67,7 @@
-                 app:layout_constraintStart_toEndOf="@+id/incognitoIcon"
-                 app:layout_constraintTop_toTopOf="parent"
-                 app:layout_goneMarginStart="14dp"
--                app:tint="?attr/colorOnSurface" />
-+                app:tint="@color/n9_text" />
- 
-             <org.lineageos.jelly.ui.AutoCompleteTextViewExt
-                 android:id="@+id/autoCompleteTextView"
-@@ -83,10 +85,11 @@
-                 android:maxLines="1"
-                 android:nextFocusLeft="@id/autoCompleteTextView"
-                 android:nextFocusUp="@id/autoCompleteTextView"
--                android:popupBackground="?attr/colorSurface"
-+                android:popupBackground="@color/n9_surface"
-                 android:popupElevation="0dp"
-                 android:selectAllOnFocus="true"
--                android:textColor="?attr/colorOnSurface"
-+                android:textColor="@color/n9_text"
-+                android:textColorHint="@color/n9_text_secondary"
-                 android:hint="@string/url_bar_auto_complete_hint"
-                 app:layout_constraintBottom_toBottomOf="parent"
-                 app:layout_constraintEnd_toEndOf="parent"
-@@ -108,7 +111,7 @@
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintTop_toTopOf="parent"
--        app:tint="?attr/colorOnSurfaceVariant" />
-+        app:tint="@color/n9_text" />
- 
-     <!-- Search group -->
-     <androidx.constraintlayout.widget.Group
-@@ -129,23 +132,25 @@
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintStart_toStartOf="parent"
-         app:layout_constraintTop_toTopOf="parent"
--        app:tint="?attr/colorOnSurfaceVariant" />
-+        app:tint="@color/n9_text" />
- 
-     <com.google.android.material.card.MaterialCardView
-         android:id="@+id/searchCardView"
-         android:layout_width="0dp"
-         android:layout_height="0dp"
-         android:layout_marginStart="4dp"
--        android:layout_marginTop="8dp"
-+        android:layout_marginTop="7dp"
-         android:layout_marginEnd="4dp"
--        android:layout_marginBottom="8dp"
--        android:backgroundTint="?attr/colorSurfaceVariant"
--        app:cardCornerRadius="32dp"
-+        android:layout_marginBottom="7dp"
-+        android:backgroundTint="@color/n9_white"
-+        app:cardCornerRadius="10dp"
-+        app:cardElevation="0dp"
-+        app:strokeColor="@color/n9_separator"
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toStartOf="@+id/searchPreviousButton"
-         app:layout_constraintStart_toEndOf="@+id/searchCancelButton"
-         app:layout_constraintTop_toTopOf="parent"
--        app:strokeWidth="0dp">
-+        app:strokeWidth="1dp">
- 
-         <androidx.constraintlayout.widget.ConstraintLayout
-             android:layout_width="match_parent"
-@@ -192,7 +197,7 @@
-                 app:layout_constraintBottom_toBottomOf="parent"
-                 app:layout_constraintEnd_toEndOf="parent"
-                 app:layout_constraintTop_toTopOf="parent"
--                app:tint="?attr/colorOnSurface" />
-+                app:tint="@color/n9_text" />
- 
-         </androidx.constraintlayout.widget.ConstraintLayout>
- 
-@@ -208,7 +213,7 @@
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toStartOf="@+id/searchNextButton"
-         app:layout_constraintTop_toTopOf="parent"
--        app:tint="?attr/colorOnSurfaceVariant" />
-+        app:tint="@color/n9_text" />
- 
-     <ImageButton
-         android:id="@+id/searchNextButton"
-@@ -221,16 +226,18 @@
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintTop_toTopOf="parent"
--        app:tint="?attr/colorOnSurfaceVariant" />
-+        app:tint="@color/n9_text" />
- 
-     <com.google.android.material.progressindicator.LinearProgressIndicator
-         android:id="@+id/loadingProgressIndicator"
-         android:layout_width="match_parent"
--        android:layout_height="2dp"
-+        android:layout_height="3dp"
-         android:max="100"
-         android:progress="22"
-         android:visibility="gone"
--        app:indicatorColor="?attr/colorAccent"
-+        app:indicatorColor="@color/n9_blue"
-+        app:trackColor="@android:color/transparent"
-+        app:trackThickness="3dp"
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent" />
-diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
-index 79b0683..83dd69d 100644
---- a/app/src/main/res/values/colors.xml
-+++ b/app/src/main/res/values/colors.xml
-@@ -5,4 +5,16 @@
- -->
- <resources>
-     <color name="colorDelete">#F44336</color>
-+
-+    <!-- N9 (Etesian blanco) palette -->
-+    <color name="n9_window">#E9E9E9</color>
-+    <color name="n9_surface">#F4F4F4</color>
-+    <color name="n9_white">#FFFFFF</color>
-+    <color name="n9_text">#191919</color>
-+    <color name="n9_text_secondary">#8C8C8C</color>
-+    <color name="n9_separator">#D6D6D6</color>
-+    <color name="n9_blue">#00A5E5</color>
-+    <color name="n9_blue_container">#CCEDFA</color>
-+    <color name="n9_green">#62AE2E</color>
-+    <color name="n9_red">#D42D2A</color>
- </resources>
-diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
-index e27ef8a..673aeee 100644
---- a/app/src/main/res/values/strings.xml
-+++ b/app/src/main/res/values/strings.xml
-@@ -256,4 +256,10 @@
- 
-     <!-- Media session -->
-     <string name="media_session_destroy_action">Stop</string>
-+
-+    <!-- N9 system toolbar -->
-+    <string name="n9_toolbar_stop">Stop</string>
-+    <string name="n9_start_address_hint">Enter address or search</string>
-+    <string name="n9_start_top_sites">Top sites</string>
-+    <string name="n9_start_bookmarks">Bookmarks</string>
- </resources>
-diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
-index d9deed5..aa7d945 100644
---- a/app/src/main/res/values/styles.xml
-+++ b/app/src/main/res/values/styles.xml
-@@ -5,11 +5,43 @@
- -->
- <resources xmlns:tools="http://schemas.android.com/tools">
- 
--    <style name="Theme.Jelly" parent="Theme.Material3.DayNight">
-+    <style name="Theme.Jelly" parent="Theme.Material3.Light">
-         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">true</item>
-         <item name="android:navigationBarColor">@android:color/transparent</item>
-         <item name="android:statusBarColor">@android:color/transparent</item>
--        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
-+        <item name="android:windowLightStatusBar">true</item>
-+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
-+        <!-- N9 static light palette (pinned; no dynamic colour, no dark mode) -->
-+        <item name="android:fontFamily">etesian-text</item>
-+        <item name="fontFamily">etesian-text</item>
-+        <item name="android:windowBackground">@color/n9_window</item>
-+        <item name="android:colorBackground">@color/n9_window</item>
-+        <item name="colorPrimary">@color/n9_blue</item>
-+        <item name="colorOnPrimary">@color/n9_white</item>
-+        <item name="colorPrimaryContainer">@color/n9_blue_container</item>
-+        <item name="colorOnPrimaryContainer">@color/n9_text</item>
-+        <item name="colorSecondary">@color/n9_blue</item>
-+        <item name="colorOnSecondary">@color/n9_white</item>
-+        <item name="colorSecondaryContainer">@color/n9_blue_container</item>
-+        <item name="colorOnSecondaryContainer">@color/n9_text</item>
-+        <item name="colorTertiary">@color/n9_green</item>
-+        <item name="colorAccent">@color/n9_blue</item>
-+        <item name="colorError">@color/n9_red</item>
-+        <item name="colorSurface">@color/n9_surface</item>
-+        <item name="colorOnSurface">@color/n9_text</item>
-+        <item name="colorSurfaceVariant">@color/n9_separator</item>
-+        <item name="colorOnSurfaceVariant">@color/n9_text</item>
-+        <item name="colorSurfaceContainerLowest">@color/n9_white</item>
-+        <item name="colorSurfaceContainerLow">@color/n9_surface</item>
-+        <item name="colorSurfaceContainer">@color/n9_surface</item>
-+        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
-+        <item name="colorSurfaceContainerHighest">@color/n9_white</item>
-+        <item name="colorOutline">@color/n9_separator</item>
-+        <item name="colorOutlineVariant">@color/n9_separator</item>
-+        <item name="android:textColorPrimary">@color/n9_text</item>
-+        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
-+        <item name="android:textColorLink">@color/n9_blue</item>
-+        <item name="elevationOverlayEnabled">false</item>
-         <item name="alertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
-         <item name="materialAlertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
-         <item name="autoCompleteTextViewStyle">@style/Theme.Jelly.AutoCompleteTextViewStyle</item>
-@@ -22,6 +54,8 @@
- 
-     <style name="Theme.Jelly.ToolbarTheme" parent="Widget.Material3.Toolbar">
-         <item name="contentInsetStart">0dp</item>
-+        <item name="contentInsetEnd">0dp</item>
-+        <item name="android:background">@color/n9_window</item>
-     </style>
- 
-     <style name="Theme.Jelly.BottomSheetLayout">
-@@ -84,6 +118,9 @@
-     <!-- Search bar autocomplete text style -->
-     <style name="Theme.Jelly.AutoCompleteTextViewStyle" parent="Widget.AppCompat.AutoCompleteTextView">
-         <item name="android:textSize">16sp</item>
-+        <item name="android:textColor">@color/n9_text</item>
-+        <item name="android:textColorHint">@color/n9_text_secondary</item>
-+        <item name="android:fontFamily">etesian-text</item>
-     </style>
- 
-     <!-- Settings activity theme. -->
-@@ -94,7 +131,9 @@
-     <!-- Alert dialog theme. -->
-     <style name="Theme.Jelly.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-         <item name="android:colorBackground">?attr/colorSurface</item>
--        <item name="dialogCornerRadius">16dp</item>
-+        <item name="dialogCornerRadius">10dp</item>
-+        <item name="colorSurface">@color/n9_surface</item>
-+        <item name="colorPrimary">@color/n9_blue</item>
-     </style>
- 
-     <!-- Settings switch theme. -->
-@@ -107,12 +146,14 @@
- 
-     <!-- Collapsing toolbar style -->
-     <style name="Theme.Jelly.Settings.ToolbarCollapsed" parent="@android:style/TextAppearance.DeviceDefault.Widget.ActionBar.Title">
--        <item name="android:fontFamily">sans-serif</item>
-+        <item name="android:fontFamily">etesian-text</item>
-+        <item name="android:textColor">@color/n9_text</item>
-         <item name="android:textSize">20sp</item>
-     </style>
- 
-     <style name="Theme.Jelly.Settings.ToolbarExpanded" parent="Theme.Jelly.Settings.ToolbarCollapsed">
--        <item name="android:textSize">36sp</item>
-+        <item name="android:textSize">32sp</item>
-+        <item name="android:fontFamily">sans-serif-light</item>
-         <item name="android:drawablePadding">10dp</item>
-     </style>
- 
-@@ -144,7 +185,7 @@
-         <item name="android:ellipsize">end</item>
-         <item name="android:maxLines">1</item>
-         <item name="android:textColor">?attr/colorOnSurface</item>
--        <item name="android:textSize">16sp</item>
-+        <item name="android:textSize">18sp</item>
-         <item name="drawableTint">?attr/colorOnSurface</item>
-     </style>
- 
 diff --git a/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt b/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt
 new file mode 100644
 index 0000000..e2e10dc
@@ -926,3 +562,531 @@ index 0000000..e2e10dc
 +        }
 +    }
 +}
+diff --git a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
+index 9cc8982..ec30b35 100644
+--- a/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
++++ b/app/src/main/java/org/lineageos/jelly/ui/UrlBarLayout.kt
+@@ -23,6 +23,7 @@ import androidx.constraintlayout.widget.Group
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.WindowInsetsCompat
+ import androidx.core.view.isVisible
++import androidx.core.view.updateLayoutParams
+ import com.google.android.material.progressindicator.LinearProgressIndicator
+ import org.lineageos.jelly.R
+ import org.lineageos.jelly.ext.requireActivity
+@@ -83,12 +84,14 @@ class UrlBarLayout @JvmOverloads constructor(
+ 
+             loadingProgressIndicator.progress = value
+         }
+-    private var isLoading = false
+-        set(value) {
++    var isLoading = false
++        private set(value) {
+             field = value
+ 
+             loadingProgressIndicator.isVisible = value
++            onLoadingChangedCallback?.invoke(value)
+         }
++    var onLoadingChangedCallback: ((Boolean) -> Unit)? = null
+ 
+     var url: String? = null
+         set(value) {
+@@ -122,6 +125,28 @@ class UrlBarLayout @JvmOverloads constructor(
+ 
+     // Callbacks
+     var onMoreButtonClickCallback: (() -> Unit)? = null
++
++    /**
++     * N9: the menu lives on the system toolbar, so the in-bar overflow button can be hidden.
++     */
++    var isMoreButtonVisible = true
++        set(value) {
++            field = value
++
++            // The URL group drives the button's visibility, so collapse it instead
++            val size = moreButtonSize
++            val margin = moreButtonMarginEnd
++            moreButton.isEnabled = value
++            moreButton.alpha = if (value) 1f else 0f
++            moreButton.updateLayoutParams<LayoutParams> {
++                width = if (value) size else 0
++                marginEnd = if (value) margin else 0
++            }
++        }
++    private val moreButtonSize by lazy { moreButton.layoutParams.width }
++    private val moreButtonMarginEnd by lazy {
++        (moreButton.layoutParams as LayoutParams).marginEnd
++    }
+     var onLoadUrlCallback: ((url: String) -> Unit)? = null
+     var onStartSearchCallback: ((query: String) -> Unit)? = null
+     var onSearchPositionChangeCallback: ((next: Boolean) -> Unit)? = null
+diff --git a/app/src/main/res/drawable-xxhdpi/n9_url_field.9.png b/app/src/main/res/drawable-xxhdpi/n9_url_field.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4b12b7e00e94dc01cdcaa35f558257de2ad616b
+GIT binary patch
+literal 8009
+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
+Df6e9l
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index c570449..97ada47 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -14,6 +14,9 @@
+         android:id="@+id/appBarLayout"
+         android:layout_width="0dp"
+         android:layout_height="wrap_content"
++        android:background="@color/n9_window"
++        app:elevation="0dp"
++        app:liftOnScroll="false"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent">
+diff --git a/app/src/main/res/layout/url_bar_layout.xml b/app/src/main/res/layout/url_bar_layout.xml
+index 7db412b..3a51466 100644
+--- a/app/src/main/res/layout/url_bar_layout.xml
++++ b/app/src/main/res/layout/url_bar_layout.xml
+@@ -7,7 +7,7 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+-    android:background="?attr/colorSurface">
++    android:background="@color/n9_window">
+ 
+     <!-- URL group -->
+     <androidx.constraintlayout.widget.Group
+@@ -22,11 +22,13 @@
+         android:layout_width="0dp"
+         android:layout_height="0dp"
+         android:layout_marginStart="16dp"
+-        android:layout_marginTop="8dp"
++        android:layout_marginTop="7dp"
+         android:layout_marginEnd="4dp"
+-        android:layout_marginBottom="8dp"
+-        android:backgroundTint="?attr/colorSurfaceVariant"
+-        app:cardCornerRadius="32dp"
++        android:layout_marginBottom="7dp"
++        android:backgroundTint="@android:color/transparent"
++        app:cardCornerRadius="10dp"
++        app:cardElevation="0dp"
++        app:strokeColor="@color/n9_separator"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/moreButton"
+         app:layout_constraintStart_toStartOf="parent"
+@@ -34,6 +36,7 @@
+         app:strokeWidth="0dp">
+ 
+         <androidx.constraintlayout.widget.ConstraintLayout
++            android:background="@drawable/n9_url_field"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+ 
+@@ -50,7 +53,7 @@
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+             <ImageButton
+                 android:id="@+id/secureButton"
+@@ -65,7 +68,7 @@
+                 app:layout_constraintStart_toEndOf="@+id/incognitoIcon"
+                 app:layout_constraintTop_toTopOf="parent"
+                 app:layout_goneMarginStart="14dp"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+             <org.lineageos.jelly.ui.AutoCompleteTextViewExt
+                 android:id="@+id/autoCompleteTextView"
+@@ -83,10 +86,11 @@
+                 android:maxLines="1"
+                 android:nextFocusLeft="@id/autoCompleteTextView"
+                 android:nextFocusUp="@id/autoCompleteTextView"
+-                android:popupBackground="?attr/colorSurface"
++                android:popupBackground="@color/n9_surface"
+                 android:popupElevation="0dp"
+                 android:selectAllOnFocus="true"
+-                android:textColor="?attr/colorOnSurface"
++                android:textColor="@color/n9_text"
++                android:textColorHint="@color/n9_text_secondary"
+                 android:hint="@string/url_bar_auto_complete_hint"
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+@@ -108,7 +112,7 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <!-- Search group -->
+     <androidx.constraintlayout.widget.Group
+@@ -129,18 +133,20 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <com.google.android.material.card.MaterialCardView
+         android:id="@+id/searchCardView"
+         android:layout_width="0dp"
+         android:layout_height="0dp"
+         android:layout_marginStart="4dp"
+-        android:layout_marginTop="8dp"
++        android:layout_marginTop="7dp"
+         android:layout_marginEnd="4dp"
+-        android:layout_marginBottom="8dp"
+-        android:backgroundTint="?attr/colorSurfaceVariant"
+-        app:cardCornerRadius="32dp"
++        android:layout_marginBottom="7dp"
++        android:backgroundTint="@android:color/transparent"
++        app:cardCornerRadius="10dp"
++        app:cardElevation="0dp"
++        app:strokeColor="@color/n9_separator"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/searchPreviousButton"
+         app:layout_constraintStart_toEndOf="@+id/searchCancelButton"
+@@ -148,6 +154,7 @@
+         app:strokeWidth="0dp">
+ 
+         <androidx.constraintlayout.widget.ConstraintLayout
++            android:background="@drawable/n9_url_field"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+ 
+@@ -192,7 +199,7 @@
+                 app:layout_constraintBottom_toBottomOf="parent"
+                 app:layout_constraintEnd_toEndOf="parent"
+                 app:layout_constraintTop_toTopOf="parent"
+-                app:tint="?attr/colorOnSurface" />
++                app:tint="@color/n9_text" />
+ 
+         </androidx.constraintlayout.widget.ConstraintLayout>
+ 
+@@ -208,7 +215,7 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toStartOf="@+id/searchNextButton"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <ImageButton
+         android:id="@+id/searchNextButton"
+@@ -221,16 +228,18 @@
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+-        app:tint="?attr/colorOnSurfaceVariant" />
++        app:tint="@color/n9_text" />
+ 
+     <com.google.android.material.progressindicator.LinearProgressIndicator
+         android:id="@+id/loadingProgressIndicator"
+         android:layout_width="match_parent"
+-        android:layout_height="2dp"
++        android:layout_height="3dp"
+         android:max="100"
+         android:progress="22"
+         android:visibility="gone"
+-        app:indicatorColor="?attr/colorAccent"
++        app:indicatorColor="@color/n9_blue"
++        app:trackColor="@android:color/transparent"
++        app:trackThickness="3dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent" />
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 79b0683..83dd69d 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -5,4 +5,16 @@
+ -->
+ <resources>
+     <color name="colorDelete">#F44336</color>
++
++    <!-- N9 (Etesian blanco) palette -->
++    <color name="n9_window">#E9E9E9</color>
++    <color name="n9_surface">#F4F4F4</color>
++    <color name="n9_white">#FFFFFF</color>
++    <color name="n9_text">#191919</color>
++    <color name="n9_text_secondary">#8C8C8C</color>
++    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_blue">#00A5E5</color>
++    <color name="n9_blue_container">#CCEDFA</color>
++    <color name="n9_green">#62AE2E</color>
++    <color name="n9_red">#D42D2A</color>
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index e27ef8a..673aeee 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -256,4 +256,10 @@
+ 
+     <!-- Media session -->
+     <string name="media_session_destroy_action">Stop</string>
++
++    <!-- N9 system toolbar -->
++    <string name="n9_toolbar_stop">Stop</string>
++    <string name="n9_start_address_hint">Enter address or search</string>
++    <string name="n9_start_top_sites">Top sites</string>
++    <string name="n9_start_bookmarks">Bookmarks</string>
+ </resources>
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index d9deed5..86ee879 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -5,11 +5,43 @@
+ -->
+ <resources xmlns:tools="http://schemas.android.com/tools">
+ 
+-    <style name="Theme.Jelly" parent="Theme.Material3.DayNight">
++    <style name="Theme.Jelly" parent="Theme.Material3.Light">
+         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">true</item>
+         <item name="android:navigationBarColor">@android:color/transparent</item>
+         <item name="android:statusBarColor">@android:color/transparent</item>
+-        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
++        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
++        <!-- N9 static light palette (pinned; no dynamic colour, no dark mode) -->
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="fontFamily">etesian-text</item>
++        <item name="android:windowBackground">@color/n9_window</item>
++        <item name="android:colorBackground">@color/n9_window</item>
++        <item name="colorPrimary">@color/n9_blue</item>
++        <item name="colorOnPrimary">@color/n9_white</item>
++        <item name="colorPrimaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnPrimaryContainer">@color/n9_text</item>
++        <item name="colorSecondary">@color/n9_blue</item>
++        <item name="colorOnSecondary">@color/n9_white</item>
++        <item name="colorSecondaryContainer">@color/n9_blue_container</item>
++        <item name="colorOnSecondaryContainer">@color/n9_text</item>
++        <item name="colorTertiary">@color/n9_green</item>
++        <item name="colorAccent">@color/n9_blue</item>
++        <item name="colorError">@color/n9_red</item>
++        <item name="colorSurface">@color/n9_surface</item>
++        <item name="colorOnSurface">@color/n9_text</item>
++        <item name="colorSurfaceVariant">@color/n9_separator</item>
++        <item name="colorOnSurfaceVariant">@color/n9_text</item>
++        <item name="colorSurfaceContainerLowest">@color/n9_white</item>
++        <item name="colorSurfaceContainerLow">@color/n9_surface</item>
++        <item name="colorSurfaceContainer">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHigh">@color/n9_surface</item>
++        <item name="colorSurfaceContainerHighest">@color/n9_white</item>
++        <item name="colorOutline">@color/n9_separator</item>
++        <item name="colorOutlineVariant">@color/n9_separator</item>
++        <item name="android:textColorPrimary">@color/n9_text</item>
++        <item name="android:textColorSecondary">@color/n9_text_secondary</item>
++        <item name="android:textColorLink">@color/n9_blue</item>
++        <item name="elevationOverlayEnabled">false</item>
+         <item name="alertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
+         <item name="materialAlertDialogTheme">@style/Theme.Jelly.AlertDialog</item>
+         <item name="autoCompleteTextViewStyle">@style/Theme.Jelly.AutoCompleteTextViewStyle</item>
+@@ -22,6 +54,8 @@
+ 
+     <style name="Theme.Jelly.ToolbarTheme" parent="Widget.Material3.Toolbar">
+         <item name="contentInsetStart">0dp</item>
++        <item name="contentInsetEnd">0dp</item>
++        <item name="android:background">@color/n9_window</item>
+     </style>
+ 
+     <style name="Theme.Jelly.BottomSheetLayout">
+@@ -84,6 +118,9 @@
+     <!-- Search bar autocomplete text style -->
+     <style name="Theme.Jelly.AutoCompleteTextViewStyle" parent="Widget.AppCompat.AutoCompleteTextView">
+         <item name="android:textSize">16sp</item>
++        <item name="android:textColor">@color/n9_text</item>
++        <item name="android:textColorHint">@color/n9_text_secondary</item>
++        <item name="android:fontFamily">etesian-text</item>
+     </style>
+ 
+     <!-- Settings activity theme. -->
+@@ -94,7 +131,9 @@
+     <!-- Alert dialog theme. -->
+     <style name="Theme.Jelly.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+         <item name="android:colorBackground">?attr/colorSurface</item>
+-        <item name="dialogCornerRadius">16dp</item>
++        <item name="dialogCornerRadius">10dp</item>
++        <item name="colorSurface">@color/n9_surface</item>
++        <item name="colorPrimary">@color/n9_blue</item>
+     </style>
+ 
+     <!-- Settings switch theme. -->
+@@ -107,12 +146,14 @@
+ 
+     <!-- Collapsing toolbar style -->
+     <style name="Theme.Jelly.Settings.ToolbarCollapsed" parent="@android:style/TextAppearance.DeviceDefault.Widget.ActionBar.Title">
+-        <item name="android:fontFamily">sans-serif</item>
++        <item name="android:fontFamily">etesian-text</item>
++        <item name="android:textColor">@color/n9_text</item>
+         <item name="android:textSize">20sp</item>
+     </style>
+ 
+     <style name="Theme.Jelly.Settings.ToolbarExpanded" parent="Theme.Jelly.Settings.ToolbarCollapsed">
+-        <item name="android:textSize">36sp</item>
++        <item name="android:textSize">32sp</item>
++        <item name="android:fontFamily">sans-serif-light</item>
+         <item name="android:drawablePadding">10dp</item>
+     </style>
+ 
+@@ -144,7 +185,7 @@
+         <item name="android:ellipsize">end</item>
+         <item name="android:maxLines">1</item>
+         <item name="android:textColor">?attr/colorOnSurface</item>
+-        <item name="android:textSize">16sp</item>
++        <item name="android:textSize">18sp</item>
+         <item name="drawableTint">?attr/colorOnSurface</item>
+     </style>
+ 

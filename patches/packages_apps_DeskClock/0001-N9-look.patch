@@ -14,6 +14,77 @@ index 7b36dbb3e..911bdc90b 100644
      ],
      required: [
          "com.android.deskclock_allowlist",
+diff --git a/res/anim/n9_editor_enter.xml b/res/anim/n9_editor_enter.xml
+new file mode 100644
+index 000000000..3d9afd5ef
+--- /dev/null
++++ b/res/anim/n9_editor_enter.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9: the alarm editor slides up from the bottom of the screen. -->
++<translate xmlns:android="http://schemas.android.com/apk/res/android"
++    android:duration="320"
++    android:fromYDelta="100%p"
++    android:interpolator="@android:interpolator/decelerate_cubic"
++    android:toYDelta="0" />
+diff --git a/res/anim/n9_editor_exit.xml b/res/anim/n9_editor_exit.xml
+new file mode 100644
+index 000000000..6a9a8067f
+--- /dev/null
++++ b/res/anim/n9_editor_exit.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9: the alarm editor slides back down, revealing the clock behind it. -->
++<translate xmlns:android="http://schemas.android.com/apk/res/android"
++    android:duration="280"
++    android:fromYDelta="0"
++    android:interpolator="@android:interpolator/accelerate_cubic"
++    android:toYDelta="100%p" />
+diff --git a/res/color/n9_check_tint.xml b/res/color/n9_check_tint.xml
+new file mode 100644
+index 000000000..a655aa1f0
+--- /dev/null
++++ b/res/color/n9_check_tint.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 checkbox: orange when checked, mid grey outline otherwise. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="#FFF07A1E" />
++    <item android:color="@color/n9_check_off" />
++</selector>
+diff --git a/res/color/n9_switch_thumb.xml b/res/color/n9_switch_thumb.xml
+new file mode 100644
+index 000000000..92913332e
+--- /dev/null
++++ b/res/color/n9_switch_thumb.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="@color/white" />
++    <item android:color="@color/n9_text_secondary" />
++</selector>
+diff --git a/res/color/n9_switch_thumb_white.xml b/res/color/n9_switch_thumb_white.xml
+new file mode 100644
+index 000000000..006c0ab91
+--- /dev/null
++++ b/res/color/n9_switch_thumb_white.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:color="#FFFFFFFF" />
++</selector>
+diff --git a/res/color/n9_switch_track.xml b/res/color/n9_switch_track.xml
+new file mode 100644
+index 000000000..529b8f076
+--- /dev/null
++++ b/res/color/n9_switch_track.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 toggle: orange when on, pale grey when off. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true" android:color="#FFF07A1E" />
++    <item android:color="@color/n9_switch_off" />
++</selector>
 diff --git a/res/color/tab_tint_color.xml b/res/color/tab_tint_color.xml
 index ef013a321..23e3048bc 100644
 --- a/res/color/tab_tint_color.xml
@@ -25,6 +96,766 @@ index ef013a321..23e3048bc 100644
 -    <item android:color="@color/white_50p" />
 +    <item android:color="@color/n9_text_secondary" />
  </selector>
+diff --git a/res/drawable-xxhdpi/n9_add_button_sq0.9.png b/res/drawable-xxhdpi/n9_add_button_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..2027ea1596e71d83ead878f1792b46647937c3d1
+GIT binary patch
+literal 6167
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_button_negative_sq0.9.png b/res/drawable-xxhdpi/n9_button_negative_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7871f351ba2b4cecae4c3116a104abdab78578ad
+GIT binary patch
+literal 4295
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_button_negative_sq1.9.png b/res/drawable-xxhdpi/n9_button_negative_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..924214d2d4a413784390f69c8a4dbe7efa27b8a2
+GIT binary patch
+literal 5267
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_button_positive_sq0.9.png b/res/drawable-xxhdpi/n9_button_positive_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..1dc1efefd11a206c820684df1098117fadddce70
+GIT binary patch
+literal 3549
+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
+At^fc4
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_button_positive_sq1.9.png b/res/drawable-xxhdpi/n9_button_positive_sq1.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..a06662c6acabc922783369ebb2bc21d0e19d503a
+GIT binary patch
+literal 4253
+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
+Ghy4q1c6^Kg
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_pill_light_sq0.9.png b/res/drawable-xxhdpi/n9_pill_light_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..caea7e076ab088ee08adaac55312c5de1beb7736
+GIT binary patch
+literal 6563
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/res/drawable-xxhdpi/n9_pill_orange_sq0.9.png b/res/drawable-xxhdpi/n9_pill_orange_sq0.9.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3856fe56d3355026365a6d21c42a0f6370575750
+GIT binary patch
+literal 6197
+zcmZvBXEYpM&_2=oE;iB2>OBY|605A<#UjyrZ_#`7B}x#z+i0tk5JU?hQ4?89^xhZ2
+z>gDzO_Wz&v{c!I+=ecvg%$a#+=DG2@+A0*J45T<XI23BCQ2qNe<bDMa6W;HkDpCj>
+zoJZGcP<exZd`y8!BJ*J2X1E0myPhxpXhBJT3MBQRHp$V8i+&;jUU|+Xf=i9hLHrnh
+zUtN?2|Hr!soInynD9aI`M}#mkI{u5sV_bY{+z03EVQQ*G)|}H56PeV1trcp8A9Cq2
+zQA&$DjBW2DFHcLxbLbNkQ)%lJPpNp9EZZwO+HY?{u`pk=r7<YccCw=T#waM7WF$2%
+zwIG<dDUtYD#0x1&$=itf7H-KJAz0xPen!AN3rLS3ViY}O&#KopF#fT4jE#LuEhZgo
+ziLbP7O#31uq05{=#<yD|Ic0n#KV30;z3})4r{AUwZybF1#U_P<$Co8CaFIgc4KQrG
+zF~vWnM#k*29*?SAyOlQMIrq2F0Z$`%ldwNr9NQ)<d|Q;F8}kFp*%-UriJQ5BIM8!B
+z@ktCRABuZb>XB)#jdM_|F+YB=Ambmj{h1OHHQTma4i8_&pHdr1<;X4rv)(C+L9!sP
+z_;rkbFY2u=qr@^__c9#fB8xw;uS8LUKyYLNoEVH+=SnM&H<b!6)6LBI)>BkjisT3L
+z(s96>6`U#JLHRL&5^{C=Y~V>j@zGh;A&t~Tc<AmKUu>4_HM#qycIn>oWmjVqPuqSZ
+zYkrS56DQgZuRc7lQ9Ji8Q`}XAqx-ktk%Wu024Cb#)Bqg<P2k-BOyE_aMjCf1gO{2D
+zdgy0U;*)VYxX!{Du#NH*T#P)~ydpc}zami5(>=L7M=JE|W@J3P=^|t`kU+xWqRRQ8
+z^jEz(mt5Irm+w%AimcLTp{u*YwM9|9;smB3%HugP*f)u_OOm?u>@p9GiHL8D^fej#
+zQHYG_nK9lAsvC8Lb0Pz*AMT|F4ivBn!7#ioc<7Xwy1{2Hi048m4)C+|#2y6P<Rfsb
+zA0BW;sj^erK;&(T_p&}H$=A=W&Y|cpJ0DoUka`F@J)q4IRCAc3zkWreb{Ui+(|}pu
+zH+dw`;qv42qYz^is>ny)*JXPq8AGgm*Fii$nS+u;QOA3~tBE<JJ+Z^KOC;7Xa14v3
+zJ;8Nxk(Vg-TG9fZfRPEN77k@WsaKSX4}kqYmc9dsBak(`36X8h;+jRWim*(Bm=rLy
+zQCZBvbymK0g6(iTeyhkMwC$XSZ3qAK8S3AZp=Uu4B?481aek50e*S{v=mXGdL6NvO
+z4&YW@pt0a2`b=^F>07NfLF<JVfhhH5CNT|Xub0p`7K(b$0z?rZo7VQWo$MX#xBP=o
+zHm;m&NzkvS`~a|cWPQd$$Qk2RaDCr}U64?dzn1z-`D~~y)xV_q#8%|BPSW8OT79Ax
+z&Jcw}I{D5t1z{M_?xs3vWq7T|CJmHx$JlpY-6<0&nR<Hg=<rBkdSck^O--GGlBohC
+zV7zsW549%oYo&FOV6{6Pmc?P|g8l}gPC|4T_P_9=#7k<m7%B2^;L)+&ZKJk^>q+FE
+zs^($yq?&@}84|q#4@A*0lzQ`0wcQqOqNt_N@8EKsqUGcCA~A?m3Os&*LA+3*dt#M^
+zoAvKhIKi06Zhg>IH9w}LBM_^kY?K~ezkWUsCRXYpIw;U!%G>YG^YwR=tC3fvgSLC7
+zUxm2ieoB^B0=WDJNZ<VBlf78730ZF(yBJv!t3G)iF0OUgA#*AkoFRN$O%@hFeYVGP
+zonoQdl2U%UKKJv~n}B_Qtul9VcdBW-Yt$AaxpSkCUcRglYsWFBH!^<wGma<cHiQ&f
+zDrz_=?z*_!_*d-f$td1rqt)N=43khUg8Li~K2<p{+8Zj`Hx7GmY&Z^EkqF58{6=!#
+zU#fblo&aV|ob)Rz9%)@e04#?Tt)x>y%D1q<-D}m-I#Nx4yzYzs+uPqIghoN{1Prau
+z{g`JnLMt$9BK+TBsesN_#H!78R=r1W8D9x<2dC!u<<PHZznaw|MKo>~$8{bDyA!UO
+zs*+0rufI+~rn|b&ck3;;jkwPb2|d2P4|RYE2XDUE;oxT&z0~q=ytwVag^NlWhGtYc
+zGf(64K+dzrAs6HzngaP5O6l3D`4rYK*1tt84r6dIG1pZRd@732T`D@~{lG(6wA+ka
+zO_%!T2~R%Fm8Um9`NA$1;@(0XdKlI;fBuo7JhAAAl-obTXZ6E&{)5P*BxZYZ_8`T0
+z-~K(q-VJT-h$^fzR(EMv@=JP+XpeiYY~GOoUJ4jLm3f328@$sw!wl~wcYa#xtD7jY
+zTa)~0G0dDY0>iidbS4|X>LOL=(cgtju2gh+;w>9=p!k?Ok#o9h6QheQx>T0G6Kl7g
+z4EfocE8iXP>EcY~B}-0qzY6Q#K(J(^-=A3JJ;rD_fPZ{Oi*Y(&oV%3DuZ|j$d!%}A
+zx(<jS5w6<I;+LplTnH$UXl$t^8V8-zl`_&ZS`GJ^?EjKiXvKNJvmo6&H^MZ)04ZE9
+z-&k)Oq&lHAE0yj3qG9x2ktTZ-;WE40c=gg@J;I#+=j)ummy2NpE^arVYSDehcae1L
+z(LMjd@2C>YfhJYGM4@;2+s}jE_&JBItkm6Tm|j9}M7uB@;gV_pEFqPVxmstg{beNV
+z1M(hS!imJL6IgBR`yv2`u-3HCxU!rUq%zs|`Sj^LBzT{?F7(wElX3_ow50Qe#%hWH
+zsEXeMU1P#=b~ki`&-zd$>&e3~8~P7zNb7?2sJrvG;uYhLX<xG8&U(2XvO$)&(@LeM
+zc0#5&lm}oVM)MZ%*cI=X^xuH9fnH1ehs*<`;h2M(Paj7l_!$ot;NIF_Q>>NpXAX~+
+z&DJzNn+_2~vKICav8*tp-<|G^xE7u5{C1R_Z%+MMKyf*cHTPLfiYs1@JmPD?WStoz
+z=WNHw!T##rwq=i<rLf;z|F8h%&W7)21WXcDul{2{dMWW)K*fE-Thd95I(iAu1zle<
+z=|p4mfxnc!A-F12Lt4kPptAOAy3W;s$IhWu0XA9J?ZS*EFFlGiAx%n<$i({BD#F}a
+z6=e8iQZPe)LxsK5U%2u;mTAbk{df%FqWyjqqezL>=p{y@FtYNXuOA&IbG>E?Bt>Jh
+zjd7g?EK2zrKI%^e)s%HzSi5*rW6eY-_|(U5s1`VOC2RVmUO2Z3A`>*2Ds&1qqRzsq
+zUhVv<oFDq3n1b0YU~(qYC_UjwHzp8ee=e2#6HX;+8_0j3y3qh9<i3d%J3ztKCnQl&
+z=X)HTvN-*{QAJdsn_|Hu{JZOdc2=cSi<fNCya*e_$5#r8eTD6LH;!8E@U?zA)#m8m
+zjd}`jeb!V9nqT9K^!fcgWxG9Vi$Pu9kA&_rfz2hAkqdWAo%fW^ADQxG;To+Bsu91Z
+z?)9iM*$Kf$YKg+q%@()dva7#xtByFy&tK++WPE4lsQRlLOE>W(HT5?o17oAn18}jZ
+znAi-v77d>w`G1#oUPOY<t~ko9NFg)MeSmHfGEjg+ZO)R(H{DP{AC}gi+A8)0Nm{8Y
+zbRIc?su<4e@GAeY=+1NW%XD$@YQKB7X13wsfuhZ_06xrf?9C;LmNo3qi|J=UPW{Pz
+zHkLKeRm7a_StZ_KYeK5fK&((`{Z76_K`PqvajE%^EJZ6Z7>hG8rb@P1vmHE%8p<?I
+zbOmmN;of^$6)U&z$&Tb!Q%K{)3jAqk(zUC!fFs-bl#oQRar58e!QDIL#SF)W_KBaP
+zHjG!tji}Z8jWrgAw$9#dkrSp`5QGtH;2WL4cKbE7WlRJ#6QioJD${i_bP4dgG=1@%
+zrAzX;JB|-^)D9ZZOUDsdhyXI|n#U6}u#bBuic*7%+hIH|wah)gQ_z0Td|GME8^>~<
+zsOcsV4`~^1RW0)aXeU*3IgK|pm+{z4lEXf=;Jy636u1XjO020<_~lp4CEQ4M+*(31
+zXUKpZq}3=a6N5~_956f2Pg&na#B?l4b&PycPZ37_O&Swm0TPqulz~XQ=?Np>{dQ|H
+z&r`;=D)Fzi`Yz_GFW^i7M9f+OJ}Ira3lx{;uJeK4{D!?_a1V_oBexAqNI+)1wlQ|i
+z3~f$$3wBCFmxLhB67GGK`>|LR7H6{<9kE18{}#wT8VkH!QteAnEKWu><8zRyqZz2i
+zs@(M#7~Gja<WZ8gla^r-<Q?{J2YQUeNGnU(u(Wco2=IDqmrK5>r1h)kqJ=y4g6$9t
+zYJZ|R8}-lO5=Q`X#7RU8xT&E|wQp#UuKDpqKxJdcQca152YJYPv*ycPh2C9pC)(~8
+zZE}ZYh>r}0lEY2`z^sLnuX7It5mq!M^HxtH7p?LSCWsXC8M4AUiXR!QCB-c6hgkLK
+zbDX;+Ak&OBGRv`>6TORhyf=QzUwXbVTO1x~$y}exXI)^7r^DP1`S0m3xS=6p@#2~J
+zM@o-=^KD|?3pqWMi5;a=WQ$Cq2+54Qf;&T<kk*v5BF8zi^6G?#gRlgS_4f34<%8KM
+zk)1Dz8Xh0JLcip*YxfNVA+ClT=qV^r!MTd_%Pe`IbPvWAPYb_?5|TLVNA4T=tfiT-
+zX6GZ!duVaZb6MzUJ^+01?c1E#3m03f?O><Umf5!vVGo?~^-cr@3Eh5<{)F{Wa7M(m
+z+0p7wE!(|f$JD&)bs|8#_DIpooK#?zMFr56-8~h3PT;s5dhF{HBaW&+VUeT3dvPv$
+zXuw>CV4cb%ct>02Q4<`)5fwU`Fo6e_cS*9M`=k^oKz@UR^X!C-LLl|oNga^0vQ%#&
+zGGb|=JzX-o5O{QqK6aYB9I~@)R_-ARx<_?UdO?e82UnGUsz7|z>Y<K?dgedjyt2?C
+z<OC|=yz)<IdN&mwS@`8b)xOT+xVEjK<hUV&fW<3^KlWS|pai(?MH)b&g{IN&7md!M
+z%w&wbjOi%=DD6(+$aK;|acRL|_|O+C^dUpV#=r$9b+s?a;gM`1@%1-i-fw#$y#W>T
+zs$CDNj6C)2H_2#wRckSa=POfUli}51HtU3mRmFZ&+o^xCCXaAK5`EJ(`wjHuv5T>T
+zqbn(EH(i4!@<_lx_9vrF8SuAM5&X~^w$KzQ&I2l{sok=u4}a(4#XQ0Os^p@l32zS7
+zFdN|)P7~`q9KQtAt>L2ns`O9w?7ewnJNXHhM(4i_p6Rn+rsRM?sZV7r8XAI((hW5y
+zh?|cIz|`Ub30n}^uB@HWd0(s>j{Tw%uEA(Ek{_<B7p~#<^^#NphZU@}E)O+;-Qx|F
+zjd;@+91rC5vyC?Ui_~jfc|%a{dOreWc!YD@XFOd>Q7-F#?;?j(M)RlJ^mVvmLO~BD
+z>SmXViFg`j&9}ogG7uOjPSWvBLOFwlwA$N?Fak$co=Br)_y5Semt?P@_cNfZKAcVu
+zAb+QX!=c=9lQu*&G8&e~Z6-$lVTh>xhMGfpw`%!PgtX~)S&1k#m11?Z1MY(?c6}`l
+zu6`z6vTfg4)(FnWoL;Pr<Z~O!eKw)@{ztJ&U_fQfIy)sp|A94;6RgasIgTZXD$C6C
+z*)0cTY`4iObKb-97ri!DK|I){QkggrZRpcahb|r<5Ky!GWaN~z2DkIC&g4h3v{GZd
+z=FZ5lZD7g1SyZRRFWU3Sr8n^6^lZ%4JC6A@jshqY`t8Itg)UF^#t>RLSfn$K1*HB`
+zgSK<2v>b>eZ*eM9PX4}lPgc&rOn*K4`jnecH1Z*A$+fjd7=^FZ4%0XDe?$xGA<m`i
+zpP6Y-5kwrkQ5JX>&lFhXlVN)|<JA;e2YwyZ<}ptfFFuMhXo3%{3|Z^@BOa~Fr1sdX
+zesIkBAH+{qjxYG3c@lg3+_fh`fFC53<g~0fz(JSQpu#>_P}9iqOPk}(e6Vv%92Ih`
+zSpFaNp2qloMRx%DLa>AF?H>F6eD@pgcrXYQE|Hrc0rs-*vTZT4j=Rd8e;|y})<h<N
+ztXho3#4W6$D~|jvM*oabSh6AIG}Fs(<H$al?WdroGXCE-GO*Z4K9|n>U<R0&I`Das
+z6S^aZK~zZ(@ede2kUhMW{u6kzwuidzXJ1jeK5P>1?Bd<RZ?IWJxdPWxyyHY;jW2tC
+zZtrV_4<DTPylL0i#v1^5$MHp8|4R;i*-V3n>4Hv)sPHtrfggtZuV10puIsmDWs&W^
+z2<crF6NAQ!Qa^+)n`rE~LvVf}#s+%5!{lE+es_CtbtOXi`LapF^tC5|`!Qtrhg(`_
+zrc9u19k|$8DzWv|r1n28#+!D;Tk&syFVbFaZphyU%5>LMt0L?<HYrl}k^eebR@)lC
+z_Jg6mEkw9RtL_;F@HCwPni{ZUn&Q6f)nu!<!fkf^kyJa{eOcPKE)Fazp-P<3hYG#=
+z-CZ`^x3&JMNO<;f-2TesqoWG+M<xm&)|bgqGI71exx%+7xKCn`QYg5b3Q&OS@?M-v
+z=iuqDaEzGg#d{5tbAUAT>GSwmuj0FzkgDz}WYkmKm8u+;3j0gAVBPkNr!Q~RWIciQ
+z=!vw%A3XQ~n^0Vi2=>g6X{*~WfZ9LD8qdPYbZ1#@t~vN{(9dqsN#^36x)+So(O_1c
+zId9O!*d_O~bshD6!w2RW$8Ke?h*DEWY2iZ-uvGVPd>d5x9b|esAwT<uDU9%JFXa&O
+zHv=-?c+J*WQz-B+p&iA5_7PJ)##hQ~xdiD4t68;Jc$J&z#=_acIKRUpw%wPcil!GK
+z&rnOGBH<Upp?u@F#NqeD?0=(U8-K{KN^<Sc_jpy_(8Qv#lXIVP6_C&N?Igt`D`QFJ
+zXnx+lBZ1IFFty?OO32!@DX0tk-@Cqa3pLjz{t5;`{5K+E?YY;%LW2jVcptj<7kmwk
+z|BTTM(<I8(v`V?>dg8^}SwZ2X;x`H6#{{yxhW!<kSteV7xAwWW{{DM5r=$-)*?9y`
+z+J$>QxSC_b^XSfo99ZfU{y=-jP-hT3i#fcSRHysNWdDl_;_5r+v?79UgKB<`;P;N%
+zbgeHv#C`9GFJ4G;qn;9+9b#*72YT9F)4hYKR|^y%PKWQYcQxkyGt9WF0){QVPIFgd
+zLalLo8!GD$8V@fM&Kioq>*rdA6UmF*c*Ri1-S$C+Z4)ogi{)sc&-l3Uk(JkWBHMRA
+zSA(T1(&<i3&1J6iU$vDheMQY*yBh8OM14P?PpwEKo>z}Y%JNHkE9<*Ba%HBXtdj)M
+z*wzSa`0s?0x-kWVjUl;u(huzV=atID%Kg4+Gc$-Cmollvn}OSfUC*!_^LI67$70NW
+z-zmkMlDj{IR_kAI#8@0~T5k%Jk>kT)1gnX34l${yRG!R!Qf=Fk;>>p^9x+)~ZO_R$
+zTq`Y1>(xOY!a&*8c#I(^UVsu*|D79;!v7~DRYG(ul#RAQ4p;3NdD_;QVd<f}Wn+?Y
+z;q1^t53V;Uppt`(E}lqb0$fov{G;L4$K(;xF@}5~xdv%q_AZxFiD|p-!)Gx*|ERM5
+z==t=XT4?M;Mqc8F)MU-@MotL5u+vpAAYdlu;r7p-BazQAFYEpkYxI1-rzNYy!>nen
+zj(tk!ko~?m(GbOp8JjI(J;c#!$BS=bF?MTGGs*R@fL|4sL9DyaEI=UnL^!8%KV?W4
+zklpMEOiuRvbJiU%8s$f4jgc3Q6BBHC9Q!R(J|6Fkrqme(LkMq}0lWy)rF%*6VH+>H
+zRVg4RsW$UXcT_sJ%;Gr6A0?ZQjp#p^CG3ive=Fb?RY|tYY++5gW6voXE)vY(so6T<
+zJ@Ry>*Qm852#MzBhgFhEqY3Ci0HsW5;L6A^a}h1)U48^<>hLbWAjEV9YM@s|rUSCU
+z_fl3B<W%+~j6{p5{Vy?f7j|E?`e)kG0}2E$BZ=CUVapB4kT;|k)|<V99V+Mo;hU)l
+zqL&pW3F<5~%d$3K1fb}3N-sR4Mj!6Pdy)A2Ht3PfR+sP6RGGQ%`NSRKy|Jf8d)3}j
+zcqe~o%Im&ux(m$=s%Ge-U}rwgf=O0;(PF3n{>g+3OBi9RH(n6)&X$JPDgoqRU-2KS
+zvfn<t;Mw8-t$%Zfc{b<OW{k>~X1Q%-6{+|VlE~}u=hODk(Pr4_ofz<627&faH^S1g
+zvf|$EZSdFf$(q*wUEVLDvLXV*(GZGO(W5(DvSupAni#9t`|ki8H6?9moq}cL{{SN9
+B3a|hG
+
+literal 0
+HcmV?d00001
+
 diff --git a/res/drawable/clock_analog_dial.xml b/res/drawable/clock_analog_dial.xml
 index 2a5f148d4..ee8d3bf7c 100644
 --- a/res/drawable/clock_analog_dial.xml
@@ -184,6 +1015,172 @@ index bd5359340..f13d69528 100644
 +    <path android:fillColor="@color/n9_dial_second"
 +        android:pathData="M588,576a12,12 0 1,1 0,24a12,12 0 1,1 0,-24z" />
  </vector>
+diff --git a/res/drawable/ic_n9_back.xml b/res/drawable/ic_n9_back.xml
+new file mode 100644
+index 000000000..3bc07ea51
+--- /dev/null
++++ b/res/drawable/ic_n9_back.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 toolbar back arrow. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="28dp"
++    android:height="28dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M20,10.6H7.6l5,-5L10.6,3.6 2.2,12l8.4,8.4 2,-2 -5,-5H20z" />
++</vector>
+diff --git a/res/drawable/ic_n9_chevron.xml b/res/drawable/ic_n9_chevron.xml
+new file mode 100644
+index 000000000..424108570
+--- /dev/null
++++ b/res/drawable/ic_n9_chevron.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 list chevron. -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@color/n9_chevron"
++        android:pathData="M8.6,4.4l2.1,-2.1 9.7,9.7 -9.7,9.7 -2.1,-2.1 7.6,-7.6z" />
++</vector>
+diff --git a/res/drawable/n9_add_button.xml b/res/drawable/n9_add_button.xml
+new file mode 100644
+index 000000000..3aaad74dc
+--- /dev/null
++++ b/res/drawable/n9_add_button.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 small rounded "+" button: white to light grey, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <nine-patch android:src="@drawable/n9_add_button_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_alarm_row.xml b/res/drawable/n9_alarm_row.xml
+new file mode 100644
+index 000000000..e43682477
+--- /dev/null
++++ b/res/drawable/n9_alarm_row.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 list row: flat, with a light hairline under a darker one at the bottom. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#22000000">
++    <item>
++        <layer-list>
++            <item>
++                <color android:color="@color/n9_row" />
++            </item>
++            <item android:gravity="bottom" android:height="2dp">
++                <shape android:shape="rectangle">
++                    <solid android:color="@color/n9_hairline_highlight" />
++                </shape>
++            </item>
++            <item android:gravity="bottom" android:height="1dp" android:bottom="1dp">
++                <shape android:shape="rectangle">
++                    <solid android:color="@color/n9_hairline" />
++                </shape>
++            </item>
++        </layer-list>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_button_negative.xml b/res/drawable/n9_button_negative.xml
+new file mode 100644
+index 000000000..d2cd1f563
+--- /dev/null
++++ b/res/drawable/n9_button_negative.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 style rounded-square ("squircle") button background. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <nine-patch android:src="@drawable/n9_button_negative_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <nine-patch android:src="@drawable/n9_button_negative_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_button_positive.xml b/res/drawable/n9_button_positive.xml
+new file mode 100644
+index 000000000..35db92649
+--- /dev/null
++++ b/res/drawable/n9_button_positive.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 style rounded-square ("squircle") button background. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <nine-patch android:src="@drawable/n9_button_positive_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++    <item>
++        <inset android:insetTop="4dp" android:insetBottom="4dp">
++        <nine-patch android:src="@drawable/n9_button_positive_sq1" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++        </inset>
++    </item>
++</selector>
+diff --git a/res/drawable/n9_key_round.xml b/res/drawable/n9_key_round.xml
+new file mode 100644
+index 000000000..c58435560
+--- /dev/null
++++ b/res/drawable/n9_key_round.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 round keypad key: white to light grey circle, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <shape android:shape="oval">
++            <gradient
++                android:angle="270"
++                android:endColor="@color/n9_key_bottom"
++                android:startColor="@color/n9_key_top" />
++            <stroke
++                android:width="1dp"
++                android:color="@color/n9_key_stroke" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_pill_light.xml b/res/drawable/n9_pill_light.xml
+new file mode 100644
+index 000000000..ac639a145
+--- /dev/null
++++ b/res/drawable/n9_pill_light.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 secondary pill button: light grey gradient, thin grey border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <nine-patch android:src="@drawable/n9_pill_light_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++</ripple>
+diff --git a/res/drawable/n9_pill_orange.xml b/res/drawable/n9_pill_orange.xml
+new file mode 100644
+index 000000000..f2728a3fc
+--- /dev/null
++++ b/res/drawable/n9_pill_orange.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 primary pill button: orange gradient, darker orange border. -->
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="#33000000">
++    <item>
++        <nine-patch android:src="@drawable/n9_pill_orange_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
++    </item>
++</ripple>
 diff --git a/res/layout-land/desk_clock.xml b/res/layout-land/desk_clock.xml
 index 148f568f0..e772881c2 100644
 --- a/res/layout-land/desk_clock.xml
@@ -261,7 +1258,7 @@ index 148f568f0..e772881c2 100644
          </androidx.constraintlayout.widget.ConstraintLayout>
  
 diff --git a/res/layout-land/timer_item.xml b/res/layout-land/timer_item.xml
-index de5acef6a..569b4216a 100644
+index de5acef6a..f2c5753da 100644
 --- a/res/layout-land/timer_item.xml
 +++ b/res/layout-land/timer_item.xml
 @@ -14,7 +14,7 @@
@@ -342,7 +1339,7 @@ index 77a162039..35a75e5b4 100644
      <LinearLayout
          android:layout_width="match_parent"
 diff --git a/res/layout/alarm_clock.xml b/res/layout/alarm_clock.xml
-index 627ffa617..3959861aa 100644
+index 627ffa617..abb8359a9 100644
 --- a/res/layout/alarm_clock.xml
 +++ b/res/layout/alarm_clock.xml
 @@ -20,29 +20,81 @@
@@ -889,7 +1886,7 @@ index d71498b77..fea352aa3 100644
          android:paddingEnd="30dp"
          android:paddingStart="3dp"
 diff --git a/res/layout/timer_item.xml b/res/layout/timer_item.xml
-index f9c6a9fe9..e1327c533 100644
+index f9c6a9fe9..059bf85a5 100644
 --- a/res/layout/timer_item.xml
 +++ b/res/layout/timer_item.xml
 @@ -23,7 +23,7 @@
@@ -963,7 +1960,7 @@ index 74c0017fd..30a4565f1 100644
              app:iconGravity="textStart"
              app:layout_constraintStart_toEndOf="@id/column_1_right"
 diff --git a/res/layout/timer_setup_view.xml b/res/layout/timer_setup_view.xml
-index e45117cd7..fdb9fe8ec 100644
+index e45117cd7..aa88fe82a 100644
 --- a/res/layout/timer_setup_view.xml
 +++ b/res/layout/timer_setup_view.xml
 @@ -60,8 +60,9 @@
@@ -1023,6 +2020,78 @@ index d7dca6bef..127e80e37 100644
  
      <LinearLayout
          android:layout_width="match_parent"
+diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
+new file mode 100644
+index 000000000..f1516113f
+--- /dev/null
++++ b/res/values-night/colors.xml
+@@ -0,0 +1,66 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 palette on a dark Etesian background (black, dark grey or wallpaper). Clock forces night
++     mode only for those backgrounds, so the light N9 look never comes from here. -->
++<resources>
++    <!-- Theme surfaces stay opaque: dialogs and popups draw on them. -->
++    <color name="n9_window">#FF161616</color>
++    <color name="n9_surface">#FF1E1E1E</color>
++    <color name="n9_text">#FFFFFFFF</color>
++    <color name="n9_text_secondary">#FFB0B0B0</color>
++    <color name="n9_separator">#33FFFFFF</color>
++    <color name="n9_blue_container">#FF0B3A4C</color>
++    <color name="n9_neg_top">#33FFFFFF</color>
++    <color name="n9_neg_bottom">#1FFFFFFF</color>
++    <color name="n9_track">#33FFFFFF</color>
++
++    <!-- Pages are transparent so the window background shows. -->
++    <color name="n9_page">#00000000</color>
++    <color name="n9_clock_page">#00000000</color>
++    <color name="n9_editor_page">#00000000</color>
++    <color name="n9_row">#14FFFFFF</color>
++    <color name="n9_hairline">#33FFFFFF</color>
++    <color name="n9_hairline_highlight">#00000000</color>
++    <color name="n9_divider">#33FFFFFF</color>
++    <color name="n9_text_dark">#FFFFFFFF</color>
++    <color name="n9_text_alarm_time">#FFFFFFFF</color>
++    <color name="n9_text_grey">#FFB0B0B0</color>
++    <color name="n9_text_dim">#FF909090</color>
++    <color name="n9_icon">#FFFFFFFF</color>
++    <color name="n9_chevron">#FFFFFFFF</color>
++    <color name="n9_pill_light_top">#33FFFFFF</color>
++    <color name="n9_pill_light_bottom">#1FFFFFFF</color>
++    <color name="n9_pill_light_stroke">#40FFFFFF</color>
++    <color name="n9_key_top">#33FFFFFF</color>
++    <color name="n9_key_bottom">#1FFFFFFF</color>
++    <color name="n9_key_stroke">#40FFFFFF</color>
++    <color name="n9_field">#14FFFFFF</color>
++    <color name="n9_field_stroke">#40FFFFFF</color>
++    <color name="n9_switch_off">#40FFFFFF</color>
++    <color name="n9_fade">#00000000</color>
++    <color name="n9_editor_switch_off">#40FFFFFF</color>
++    <color name="n9_check_off">#FFB0B0B0</color>
++
++    <color name="n9_aclock_label">#FFB0B0B0</color>
++    <color name="n9_aclock_day">#FFD0D0D0</color>
++    <color name="n9_aclock_date">#FFFFFFFF</color>
++    <color name="n9_aclock_dial_top">#FF3A3A3A</color>
++    <color name="n9_aclock_dial_mid">#FF2C2C2C</color>
++    <color name="n9_aclock_dial_bottom">#FF1E1E1E</color>
++    <color name="n9_aclock_dial_highlight">#FF4A4A4A</color>
++    <color name="n9_dial_rim">#FF555555</color>
++    <color name="n9_dial_face_top">#FF3A3A3A</color>
++    <color name="n9_dial_face_bottom">#FF1E1E1E</color>
++    <color name="n9_dial_hand">#FFFFFFFF</color>
++    <color name="n9_dial_second">#FFD0D0D0</color>
++
++    <color name="n9_editor_ring_rim">#FF5A5A5A</color>
++    <color name="n9_editor_ring_top">#FF4A4A4A</color>
++    <color name="n9_editor_ring_bottom">#FF2A2A2A</color>
++    <color name="n9_editor_ring_tick">#FF8A8A8A</color>
++
++    <bool name="n9_light_bars">false</bool>
++</resources>
 diff --git a/res/values/colors.xml b/res/values/colors.xml
 index 0cf8067f2..8ca99bf68 100644
 --- a/res/values/colors.xml
@@ -1136,7 +2205,7 @@ index 1cbd61deb..289699307 100644
 +    <string name="n9_delete_alarm" translatable="false">Delete alarm</string>
  </resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
-index 33a71dda4..369fe4acf 100644
+index 33a71dda4..b8c7ab125 100644
 --- a/res/values/styles.xml
 +++ b/res/values/styles.xml
 @@ -19,25 +19,27 @@
@@ -1287,7 +2356,7 @@ index 33a71dda4..369fe4acf 100644
 +    </style>
  </resources>
 diff --git a/res/values/themes.xml b/res/values/themes.xml
-index 9c481b7e7..722feb40a 100644
+index 9c481b7e7..1dd94fe33 100644
 --- a/res/values/themes.xml
 +++ b/res/values/themes.xml
 @@ -17,7 +17,40 @@
@@ -1366,7 +2435,7 @@ index 9c481b7e7..722feb40a 100644
      </style>
  </resources>
 diff --git a/res/values/themes_settingslib.xml b/res/values/themes_settingslib.xml
-index cd9facc9e..7bbd3d3f6 100644
+index cd9facc9e..e2de668cc 100644
 --- a/res/values/themes_settingslib.xml
 +++ b/res/values/themes_settingslib.xml
 @@ -15,7 +15,12 @@
@@ -1789,8 +2858,213 @@ index f74974b2c..39af38a65 100644
              mScrollHandler.setSmoothScrollStableId(mSelectedAlarm.id);
              mAlarmUpdateHandler.asyncUpdateAlarm(mSelectedAlarm, true, false);
              mSelectedAlarm = null;
+diff --git a/src/com/android/deskclock/alarms/N9AlarmDialView.java b/src/com/android/deskclock/alarms/N9AlarmDialView.java
+new file mode 100644
+index 000000000..ab515ff89
+--- /dev/null
++++ b/src/com/android/deskclock/alarms/N9AlarmDialView.java
+@@ -0,0 +1,199 @@
++/*
++ * N9 (Etesian) style alarm time dial: outer silver ring carries the minute knob,
++ * inner black disc carries the hour knob.
++ */
++package com.android.deskclock.alarms;
++
++import android.content.Context;
++import android.graphics.Canvas;
++import android.graphics.Color;
++import android.graphics.Paint;
++import android.graphics.RadialGradient;
++import android.graphics.Shader;
++import android.graphics.Typeface;
++import android.util.AttributeSet;
++import android.view.MotionEvent;
++import android.view.View;
++
++import com.android.deskclock.R;
++
++public class N9AlarmDialView extends View {
++
++    public interface OnTimeChangedListener {
++        void onTimeChanged(int hourOfDay, int minute);
++    }
++
++    private static final int DRAG_NONE = 0;
++    private static final int DRAG_MINUTE = 1;
++    private static final int DRAG_HOUR = 2;
++
++    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Paint mText = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final float mDp;
++
++    private int mHour;
++    private int mMinute;
++    private boolean m24Hour = true;
++    private int mDrag = DRAG_NONE;
++    private OnTimeChangedListener mListener;
++
++    private float mCx, mCy, mOuterR, mInnerR, mKnobR;
++    private RadialGradient mOuterShader, mInnerShader;
++
++    public N9AlarmDialView(Context context) {
++        this(context, null);
++    }
++
++    public N9AlarmDialView(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        mDp = getResources().getDisplayMetrics().density;
++        mText.setTextAlign(Paint.Align.CENTER);
++        mText.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
++    }
++
++    public void setOnTimeChangedListener(OnTimeChangedListener l) {
++        mListener = l;
++    }
++
++    public void set24Hour(boolean is24) {
++        m24Hour = is24;
++        invalidate();
++    }
++
++    public void setTime(int hourOfDay, int minute) {
++        mHour = ((hourOfDay % 24) + 24) % 24;
++        mMinute = ((minute % 60) + 60) % 60;
++        invalidate();
++    }
++
++    public int getHour() { return mHour; }
++    public int getMinute() { return mMinute; }
++
++    @Override
++    protected void onMeasure(int widthSpec, int heightSpec) {
++        int w = MeasureSpec.getSize(widthSpec);
++        int h = MeasureSpec.getMode(heightSpec) == MeasureSpec.UNSPECIFIED
++                ? w : MeasureSpec.getSize(heightSpec);
++        int s = Math.min(w, h);
++        setMeasuredDimension(w, s);
++    }
++
++    @Override
++    protected void onSizeChanged(int w, int h, int ow, int oh) {
++        mCx = w / 2f;
++        mCy = h / 2f;
++        mOuterR = Math.min(w, h) / 2f - 4 * mDp;
++        mInnerR = mOuterR * 0.58f;
++        mKnobR = mOuterR * 0.13f;
++        mOuterShader = new RadialGradient(mCx, mCy - mOuterR * 0.3f, mOuterR * 1.3f,
++                getContext().getColor(R.color.n9_editor_ring_top),
++                getContext().getColor(R.color.n9_editor_ring_bottom), Shader.TileMode.CLAMP);
++        mInnerShader = new RadialGradient(mCx, mCy - mInnerR * 0.3f, mInnerR * 1.3f,
++                0xFF3A3A3A, 0xFF141414, Shader.TileMode.CLAMP);
++    }
++
++    private float minuteTrackR() { return (mOuterR + mInnerR) / 2f; }
++    private float hourTrackR() { return mInnerR - mKnobR - 6 * mDp; }
++
++    @Override
++    protected void onDraw(Canvas c) {
++        if (mOuterR <= 0) return;
++        mPaint.setStyle(Paint.Style.FILL);
++        mPaint.setShader(null);
++        // soft shadow + white rim
++        mPaint.setColor(0x33000000);
++        c.drawCircle(mCx, mCy + 2 * mDp, mOuterR + 2 * mDp, mPaint);
++        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_rim));
++        c.drawCircle(mCx, mCy, mOuterR + 1.5f * mDp, mPaint);
++        mPaint.setShader(mOuterShader);
++        c.drawCircle(mCx, mCy, mOuterR, mPaint);
++        mPaint.setShader(mInnerShader);
++        c.drawCircle(mCx, mCy, mInnerR, mPaint);
++        mPaint.setShader(null);
++
++        // minute ticks on silver ring
++        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_tick));
++        mPaint.setStrokeWidth(1.5f * mDp);
++        for (int i = 0; i < 60; i += 5) {
++            double a = Math.toRadians(i * 6 - 90);
++            float r1 = mOuterR - 3 * mDp, r2 = mOuterR - 8 * mDp;
++            c.drawLine(mCx + (float) Math.cos(a) * r1, mCy + (float) Math.sin(a) * r1,
++                    mCx + (float) Math.cos(a) * r2, mCy + (float) Math.sin(a) * r2, mPaint);
++        }
++
++        // minute knob
++        double ma = Math.toRadians(mMinute * 6 - 90);
++        float mx = mCx + (float) Math.cos(ma) * minuteTrackR();
++        float my = mCy + (float) Math.sin(ma) * minuteTrackR();
++        drawKnob(c, mx, my, 0xFF2A1E18, 0xFF0A0706, Color.WHITE,
++                String.format(java.util.Locale.US, "%02d", mMinute));
++
++        // hour knob
++        int positions = m24Hour ? 24 : 12;
++        int hourPos = mHour % positions;
++        double ha = Math.toRadians(hourPos * (360.0 / positions) - 90);
++        float hx = mCx + (float) Math.cos(ha) * hourTrackR();
++        float hy = mCy + (float) Math.sin(ha) * hourTrackR();
++        int shown = m24Hour ? mHour : (mHour % 12 == 0 ? 12 : mHour % 12);
++        drawKnob(c, hx, hy, 0xFFF2F2F2, 0xFFBEBEBE, 0xFF2A2A2A,
++                String.format(java.util.Locale.US, m24Hour ? "%02d" : "%d", shown));
++    }
++
++    private void drawKnob(Canvas c, float x, float y, int top, int bottom, int textColor,
++            String label) {
++        mPaint.setShader(null);
++        mPaint.setColor(0x55000000);
++        c.drawCircle(x, y + 1.5f * mDp, mKnobR, mPaint);
++        mPaint.setShader(new RadialGradient(x, y - mKnobR * 0.4f, mKnobR * 1.4f,
++                top, bottom, Shader.TileMode.CLAMP));
++        c.drawCircle(x, y, mKnobR, mPaint);
++        mPaint.setShader(null);
++        mText.setColor(textColor);
++        mText.setTextSize(mKnobR * 0.85f);
++        c.drawText(label, x, y - (mText.descent() + mText.ascent()) / 2f, mText);
++    }
++
++    @Override
++    public boolean onTouchEvent(MotionEvent e) {
++        float dx = e.getX() - mCx, dy = e.getY() - mCy;
++        float dist = (float) Math.hypot(dx, dy);
++        switch (e.getActionMasked()) {
++            case MotionEvent.ACTION_DOWN:
++                if (dist > mOuterR + mKnobR) return false;
++                mDrag = dist > mInnerR ? DRAG_MINUTE : DRAG_HOUR;
++                getParent().requestDisallowInterceptTouchEvent(true);
++                // fall through
++            case MotionEvent.ACTION_MOVE:
++                if (mDrag == DRAG_NONE) return false;
++                double deg = Math.toDegrees(Math.atan2(dy, dx)) + 90;
++                if (deg < 0) deg += 360;
++                if (mDrag == DRAG_MINUTE) {
++                    int m = (int) Math.round(deg / 6.0) % 60;
++                    if (m != mMinute) { mMinute = m; changed(); }
++                } else {
++                    int positions = m24Hour ? 24 : 12;
++                    int p = (int) Math.round(deg / (360.0 / positions)) % positions;
++                    int h = m24Hour ? p : (mHour >= 12 ? p + 12 : p);
++                    if (h != mHour) { mHour = h; changed(); }
++                }
++                return true;
++            case MotionEvent.ACTION_UP:
++                if (mDrag != DRAG_NONE) performClick();
++                // fall through
++            case MotionEvent.ACTION_CANCEL:
++                mDrag = DRAG_NONE;
++                return true;
++        }
++        return super.onTouchEvent(e);
++    }
++
++    @Override
++    public boolean performClick() {
++        return super.performClick();
++    }
++
++    private void changed() {
++        invalidate();
++        if (mListener != null) mListener.onTimeChanged(mHour, mMinute);
++    }
++}
 diff --git a/src/com/android/deskclock/alarms/TimePickerDialogFragment.java b/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
-index 582fff5dd..10410b477 100644
+index 582fff5dd..2900249e4 100644
 --- a/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
 +++ b/src/com/android/deskclock/alarms/TimePickerDialogFragment.java
 @@ -17,20 +17,37 @@
@@ -2477,628 +3751,6 @@ index 5bdc52ad2..f906b48e4 100644
              text.setSpan(new ForegroundColorSpan(highlightColor), startIdx, endIdx, 0);
          }
          mTimeView.setText(text);
-diff --git a/src/com/android/deskclock/widget/ToolbarBaseActivity.java b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
-index 2aed7e95e..61570beb2 100644
---- a/src/com/android/deskclock/widget/ToolbarBaseActivity.java
-+++ b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
-@@ -17,6 +17,8 @@
- package com.android.deskclock.widget;
- 
- import android.app.ActionBar;
-+import android.content.Context;
-+import android.content.res.Configuration;
- import android.graphics.BlendMode;
- import android.graphics.BlendModeColorFilter;
- import android.os.Bundle;
-@@ -31,15 +33,37 @@ import androidx.fragment.app.FragmentActivity;
- import com.android.deskclock.R;
- import com.android.deskclock.ThemeUtils;
- 
-+import com.bompotis.etesian.theme.EtesianBackground;
-+
- /**
-  * A base Activity that has a toolbar layout
-  */
- public class ToolbarBaseActivity extends FragmentActivity {
- 
-+    /** The Etesian "Apps" background read at creation. */
-+    private EtesianBackground.Style mEtesianStyle;
-+
-+    @Override
-+    protected void attachBaseContext(Context newBase) {
-+        super.attachBaseContext(newBase);
-+        // Night resources hold the N9 palette for dark backgrounds; force the uiMode both ways
-+        // (before any inflation) so the system dark theme never changes the light N9 look.
-+        mEtesianStyle = EtesianBackground.content(newBase);
-+        final Configuration override = new Configuration();
-+        override.uiMode = (newBase.getResources().getConfiguration().uiMode
-+                & ~Configuration.UI_MODE_NIGHT_MASK)
-+                | (mEtesianStyle.dark
-+                        ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
-+        applyOverrideConfiguration(override);
-+    }
-+
-     @Override
-     protected void onCreate(@Nullable Bundle savedInstanceState) {
-         super.onCreate(savedInstanceState);
-         super.setContentView(R.layout.toolbar_base_layout);
-+        if (mEtesianStyle.dark) {
-+            EtesianBackground.apply(this, mEtesianStyle);
-+        }
- 
-         final Toolbar toolbar = findViewById(R.id.action_bar);
-         setActionBar(toolbar);
-@@ -87,6 +111,15 @@ public class ToolbarBaseActivity extends FragmentActivity {
-         }
-     }
- 
-+    @Override
-+    protected void onResume() {
-+        super.onResume();
-+        // The user changed the Etesian background while we were away: rebuild in the new look.
-+        if (mEtesianStyle != EtesianBackground.content(this)) {
-+            recreate();
-+        }
-+    }
-+
-     @Override
-     public boolean onNavigateUp() {
-         if (!super.onNavigateUp()) {
-diff --git a/res/anim/n9_editor_enter.xml b/res/anim/n9_editor_enter.xml
-new file mode 100644
-index 000000000..3d9afd5ef
---- /dev/null
-+++ b/res/anim/n9_editor_enter.xml
-@@ -0,0 +1,7 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9: the alarm editor slides up from the bottom of the screen. -->
-+<translate xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:duration="320"
-+    android:fromYDelta="100%p"
-+    android:interpolator="@android:interpolator/decelerate_cubic"
-+    android:toYDelta="0" />
-diff --git a/res/anim/n9_editor_exit.xml b/res/anim/n9_editor_exit.xml
-new file mode 100644
-index 000000000..6a9a8067f
---- /dev/null
-+++ b/res/anim/n9_editor_exit.xml
-@@ -0,0 +1,7 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9: the alarm editor slides back down, revealing the clock behind it. -->
-+<translate xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:duration="280"
-+    android:fromYDelta="0"
-+    android:interpolator="@android:interpolator/accelerate_cubic"
-+    android:toYDelta="100%p" />
-diff --git a/res/color/n9_check_tint.xml b/res/color/n9_check_tint.xml
-new file mode 100644
-index 000000000..a655aa1f0
---- /dev/null
-+++ b/res/color/n9_check_tint.xml
-@@ -0,0 +1,6 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 checkbox: orange when checked, mid grey outline otherwise. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_checked="true" android:color="#FFF07A1E" />
-+    <item android:color="@color/n9_check_off" />
-+</selector>
-diff --git a/res/color/n9_switch_thumb.xml b/res/color/n9_switch_thumb.xml
-new file mode 100644
-index 000000000..92913332e
---- /dev/null
-+++ b/res/color/n9_switch_thumb.xml
-@@ -0,0 +1,5 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_checked="true" android:color="@color/white" />
-+    <item android:color="@color/n9_text_secondary" />
-+</selector>
-diff --git a/res/color/n9_switch_thumb_white.xml b/res/color/n9_switch_thumb_white.xml
-new file mode 100644
-index 000000000..006c0ab91
---- /dev/null
-+++ b/res/color/n9_switch_thumb_white.xml
-@@ -0,0 +1,4 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:color="#FFFFFFFF" />
-+</selector>
-diff --git a/res/color/n9_switch_track.xml b/res/color/n9_switch_track.xml
-new file mode 100644
-index 000000000..529b8f076
---- /dev/null
-+++ b/res/color/n9_switch_track.xml
-@@ -0,0 +1,6 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 toggle: orange when on, pale grey when off. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_checked="true" android:color="#FFF07A1E" />
-+    <item android:color="@color/n9_switch_off" />
-+</selector>
-diff --git a/res/drawable/ic_n9_back.xml b/res/drawable/ic_n9_back.xml
-new file mode 100644
-index 000000000..3bc07ea51
---- /dev/null
-+++ b/res/drawable/ic_n9_back.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 toolbar back arrow. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="28dp"
-+    android:height="28dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="#FF000000"
-+        android:pathData="M20,10.6H7.6l5,-5L10.6,3.6 2.2,12l8.4,8.4 2,-2 -5,-5H20z" />
-+</vector>
-diff --git a/res/drawable/ic_n9_chevron.xml b/res/drawable/ic_n9_chevron.xml
-new file mode 100644
-index 000000000..424108570
---- /dev/null
-+++ b/res/drawable/ic_n9_chevron.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 list chevron. -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="24dp"
-+    android:height="24dp"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="@color/n9_chevron"
-+        android:pathData="M8.6,4.4l2.1,-2.1 9.7,9.7 -9.7,9.7 -2.1,-2.1 7.6,-7.6z" />
-+</vector>
-diff --git a/res/drawable/n9_add_button.xml b/res/drawable/n9_add_button.xml
-new file mode 100644
-index 000000000..3798b43b2
---- /dev/null
-+++ b/res/drawable/n9_add_button.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 small rounded "+" button: white to light grey, thin grey border. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33000000">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <corners android:radius="12dp" />
-+            <gradient
-+                android:angle="270"
-+                android:endColor="@color/n9_key_bottom"
-+                android:startColor="@color/n9_key_top" />
-+            <stroke
-+                android:width="1dp"
-+                android:color="@color/n9_key_stroke" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_alarm_row.xml b/res/drawable/n9_alarm_row.xml
-new file mode 100644
-index 000000000..e43682477
---- /dev/null
-+++ b/res/drawable/n9_alarm_row.xml
-@@ -0,0 +1,22 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 list row: flat, with a light hairline under a darker one at the bottom. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#22000000">
-+    <item>
-+        <layer-list>
-+            <item>
-+                <color android:color="@color/n9_row" />
-+            </item>
-+            <item android:gravity="bottom" android:height="2dp">
-+                <shape android:shape="rectangle">
-+                    <solid android:color="@color/n9_hairline_highlight" />
-+                </shape>
-+            </item>
-+            <item android:gravity="bottom" android:height="1dp" android:bottom="1dp">
-+                <shape android:shape="rectangle">
-+                    <solid android:color="@color/n9_hairline" />
-+                </shape>
-+            </item>
-+        </layer-list>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_button_negative.xml b/res/drawable/n9_button_negative.xml
-new file mode 100644
-index 000000000..4a3de7e4b
---- /dev/null
-+++ b/res/drawable/n9_button_negative.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 style rounded-square ("squircle") button background. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+        <shape android:shape="rectangle">
-+            <corners android:radius="12dp" />
-+            <solid android:color="@color/n9_separator" />
-+        </shape>
-+        </inset>
-+    </item>
-+    <item>
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+        <shape android:shape="rectangle">
-+            <corners android:radius="12dp" />
-+            <gradient android:angle="270" android:startColor="@color/n9_neg_top" android:endColor="@color/n9_neg_bottom" />
-+            <stroke android:width="1dp" android:color="@color/n9_separator" />
-+        </shape>
-+        </inset>
-+    </item>
-+</selector>
-diff --git a/res/drawable/n9_button_positive.xml b/res/drawable/n9_button_positive.xml
-new file mode 100644
-index 000000000..1ec9e9f2b
---- /dev/null
-+++ b/res/drawable/n9_button_positive.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 style rounded-square ("squircle") button background. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+        <shape android:shape="rectangle">
-+            <corners android:radius="12dp" />
-+            <solid android:color="@color/n9_navy_bottom" />
-+        </shape>
-+        </inset>
-+    </item>
-+    <item>
-+        <inset android:insetTop="4dp" android:insetBottom="4dp">
-+        <shape android:shape="rectangle">
-+            <corners android:radius="12dp" />
-+            <gradient android:angle="270" android:startColor="@color/n9_navy_top" android:endColor="@color/n9_navy_bottom" />
-+            <stroke android:width="1dp" android:color="@color/n9_navy_bottom" />
-+        </shape>
-+        </inset>
-+    </item>
-+</selector>
-diff --git a/res/drawable/n9_key_round.xml b/res/drawable/n9_key_round.xml
-new file mode 100644
-index 000000000..c58435560
---- /dev/null
-+++ b/res/drawable/n9_key_round.xml
-@@ -0,0 +1,16 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 round keypad key: white to light grey circle, thin grey border. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33000000">
-+    <item>
-+        <shape android:shape="oval">
-+            <gradient
-+                android:angle="270"
-+                android:endColor="@color/n9_key_bottom"
-+                android:startColor="@color/n9_key_top" />
-+            <stroke
-+                android:width="1dp"
-+                android:color="@color/n9_key_stroke" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_pill_light.xml b/res/drawable/n9_pill_light.xml
-new file mode 100644
-index 000000000..c8ef3f045
---- /dev/null
-+++ b/res/drawable/n9_pill_light.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 secondary pill button: light grey gradient, thin grey border. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33000000">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <corners android:radius="24dp" />
-+            <gradient
-+                android:angle="270"
-+                android:endColor="@color/n9_pill_light_bottom"
-+                android:startColor="@color/n9_pill_light_top" />
-+            <stroke
-+                android:width="1dp"
-+                android:color="@color/n9_pill_light_stroke" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/drawable/n9_pill_orange.xml b/res/drawable/n9_pill_orange.xml
-new file mode 100644
-index 000000000..561021857
---- /dev/null
-+++ b/res/drawable/n9_pill_orange.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 primary pill button: orange gradient, darker orange border. -->
-+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:color="#33000000">
-+    <item>
-+        <shape android:shape="rectangle">
-+            <corners android:radius="24dp" />
-+            <gradient
-+                android:angle="270"
-+                android:endColor="#FFF07010"
-+                android:startColor="#FFFF9A3C" />
-+            <stroke
-+                android:width="1dp"
-+                android:color="#FFD06008" />
-+        </shape>
-+    </item>
-+</ripple>
-diff --git a/res/values-night/colors.xml b/res/values-night/colors.xml
-new file mode 100644
-index 000000000..f1516113f
---- /dev/null
-+++ b/res/values-night/colors.xml
-@@ -0,0 +1,66 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: 2026 The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 palette on a dark Etesian background (black, dark grey or wallpaper). Clock forces night
-+     mode only for those backgrounds, so the light N9 look never comes from here. -->
-+<resources>
-+    <!-- Theme surfaces stay opaque: dialogs and popups draw on them. -->
-+    <color name="n9_window">#FF161616</color>
-+    <color name="n9_surface">#FF1E1E1E</color>
-+    <color name="n9_text">#FFFFFFFF</color>
-+    <color name="n9_text_secondary">#FFB0B0B0</color>
-+    <color name="n9_separator">#33FFFFFF</color>
-+    <color name="n9_blue_container">#FF0B3A4C</color>
-+    <color name="n9_neg_top">#33FFFFFF</color>
-+    <color name="n9_neg_bottom">#1FFFFFFF</color>
-+    <color name="n9_track">#33FFFFFF</color>
-+
-+    <!-- Pages are transparent so the window background shows. -->
-+    <color name="n9_page">#00000000</color>
-+    <color name="n9_clock_page">#00000000</color>
-+    <color name="n9_editor_page">#00000000</color>
-+    <color name="n9_row">#14FFFFFF</color>
-+    <color name="n9_hairline">#33FFFFFF</color>
-+    <color name="n9_hairline_highlight">#00000000</color>
-+    <color name="n9_divider">#33FFFFFF</color>
-+    <color name="n9_text_dark">#FFFFFFFF</color>
-+    <color name="n9_text_alarm_time">#FFFFFFFF</color>
-+    <color name="n9_text_grey">#FFB0B0B0</color>
-+    <color name="n9_text_dim">#FF909090</color>
-+    <color name="n9_icon">#FFFFFFFF</color>
-+    <color name="n9_chevron">#FFFFFFFF</color>
-+    <color name="n9_pill_light_top">#33FFFFFF</color>
-+    <color name="n9_pill_light_bottom">#1FFFFFFF</color>
-+    <color name="n9_pill_light_stroke">#40FFFFFF</color>
-+    <color name="n9_key_top">#33FFFFFF</color>
-+    <color name="n9_key_bottom">#1FFFFFFF</color>
-+    <color name="n9_key_stroke">#40FFFFFF</color>
-+    <color name="n9_field">#14FFFFFF</color>
-+    <color name="n9_field_stroke">#40FFFFFF</color>
-+    <color name="n9_switch_off">#40FFFFFF</color>
-+    <color name="n9_fade">#00000000</color>
-+    <color name="n9_editor_switch_off">#40FFFFFF</color>
-+    <color name="n9_check_off">#FFB0B0B0</color>
-+
-+    <color name="n9_aclock_label">#FFB0B0B0</color>
-+    <color name="n9_aclock_day">#FFD0D0D0</color>
-+    <color name="n9_aclock_date">#FFFFFFFF</color>
-+    <color name="n9_aclock_dial_top">#FF3A3A3A</color>
-+    <color name="n9_aclock_dial_mid">#FF2C2C2C</color>
-+    <color name="n9_aclock_dial_bottom">#FF1E1E1E</color>
-+    <color name="n9_aclock_dial_highlight">#FF4A4A4A</color>
-+    <color name="n9_dial_rim">#FF555555</color>
-+    <color name="n9_dial_face_top">#FF3A3A3A</color>
-+    <color name="n9_dial_face_bottom">#FF1E1E1E</color>
-+    <color name="n9_dial_hand">#FFFFFFFF</color>
-+    <color name="n9_dial_second">#FFD0D0D0</color>
-+
-+    <color name="n9_editor_ring_rim">#FF5A5A5A</color>
-+    <color name="n9_editor_ring_top">#FF4A4A4A</color>
-+    <color name="n9_editor_ring_bottom">#FF2A2A2A</color>
-+    <color name="n9_editor_ring_tick">#FF8A8A8A</color>
-+
-+    <bool name="n9_light_bars">false</bool>
-+</resources>
-diff --git a/src/com/android/deskclock/alarms/N9AlarmDialView.java b/src/com/android/deskclock/alarms/N9AlarmDialView.java
-new file mode 100644
-index 000000000..ab515ff89
---- /dev/null
-+++ b/src/com/android/deskclock/alarms/N9AlarmDialView.java
-@@ -0,0 +1,199 @@
-+/*
-+ * N9 (Etesian) style alarm time dial: outer silver ring carries the minute knob,
-+ * inner black disc carries the hour knob.
-+ */
-+package com.android.deskclock.alarms;
-+
-+import android.content.Context;
-+import android.graphics.Canvas;
-+import android.graphics.Color;
-+import android.graphics.Paint;
-+import android.graphics.RadialGradient;
-+import android.graphics.Shader;
-+import android.graphics.Typeface;
-+import android.util.AttributeSet;
-+import android.view.MotionEvent;
-+import android.view.View;
-+
-+import com.android.deskclock.R;
-+
-+public class N9AlarmDialView extends View {
-+
-+    public interface OnTimeChangedListener {
-+        void onTimeChanged(int hourOfDay, int minute);
-+    }
-+
-+    private static final int DRAG_NONE = 0;
-+    private static final int DRAG_MINUTE = 1;
-+    private static final int DRAG_HOUR = 2;
-+
-+    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-+    private final Paint mText = new Paint(Paint.ANTI_ALIAS_FLAG);
-+    private final float mDp;
-+
-+    private int mHour;
-+    private int mMinute;
-+    private boolean m24Hour = true;
-+    private int mDrag = DRAG_NONE;
-+    private OnTimeChangedListener mListener;
-+
-+    private float mCx, mCy, mOuterR, mInnerR, mKnobR;
-+    private RadialGradient mOuterShader, mInnerShader;
-+
-+    public N9AlarmDialView(Context context) {
-+        this(context, null);
-+    }
-+
-+    public N9AlarmDialView(Context context, AttributeSet attrs) {
-+        super(context, attrs);
-+        mDp = getResources().getDisplayMetrics().density;
-+        mText.setTextAlign(Paint.Align.CENTER);
-+        mText.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
-+    }
-+
-+    public void setOnTimeChangedListener(OnTimeChangedListener l) {
-+        mListener = l;
-+    }
-+
-+    public void set24Hour(boolean is24) {
-+        m24Hour = is24;
-+        invalidate();
-+    }
-+
-+    public void setTime(int hourOfDay, int minute) {
-+        mHour = ((hourOfDay % 24) + 24) % 24;
-+        mMinute = ((minute % 60) + 60) % 60;
-+        invalidate();
-+    }
-+
-+    public int getHour() { return mHour; }
-+    public int getMinute() { return mMinute; }
-+
-+    @Override
-+    protected void onMeasure(int widthSpec, int heightSpec) {
-+        int w = MeasureSpec.getSize(widthSpec);
-+        int h = MeasureSpec.getMode(heightSpec) == MeasureSpec.UNSPECIFIED
-+                ? w : MeasureSpec.getSize(heightSpec);
-+        int s = Math.min(w, h);
-+        setMeasuredDimension(w, s);
-+    }
-+
-+    @Override
-+    protected void onSizeChanged(int w, int h, int ow, int oh) {
-+        mCx = w / 2f;
-+        mCy = h / 2f;
-+        mOuterR = Math.min(w, h) / 2f - 4 * mDp;
-+        mInnerR = mOuterR * 0.58f;
-+        mKnobR = mOuterR * 0.13f;
-+        mOuterShader = new RadialGradient(mCx, mCy - mOuterR * 0.3f, mOuterR * 1.3f,
-+                getContext().getColor(R.color.n9_editor_ring_top),
-+                getContext().getColor(R.color.n9_editor_ring_bottom), Shader.TileMode.CLAMP);
-+        mInnerShader = new RadialGradient(mCx, mCy - mInnerR * 0.3f, mInnerR * 1.3f,
-+                0xFF3A3A3A, 0xFF141414, Shader.TileMode.CLAMP);
-+    }
-+
-+    private float minuteTrackR() { return (mOuterR + mInnerR) / 2f; }
-+    private float hourTrackR() { return mInnerR - mKnobR - 6 * mDp; }
-+
-+    @Override
-+    protected void onDraw(Canvas c) {
-+        if (mOuterR <= 0) return;
-+        mPaint.setStyle(Paint.Style.FILL);
-+        mPaint.setShader(null);
-+        // soft shadow + white rim
-+        mPaint.setColor(0x33000000);
-+        c.drawCircle(mCx, mCy + 2 * mDp, mOuterR + 2 * mDp, mPaint);
-+        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_rim));
-+        c.drawCircle(mCx, mCy, mOuterR + 1.5f * mDp, mPaint);
-+        mPaint.setShader(mOuterShader);
-+        c.drawCircle(mCx, mCy, mOuterR, mPaint);
-+        mPaint.setShader(mInnerShader);
-+        c.drawCircle(mCx, mCy, mInnerR, mPaint);
-+        mPaint.setShader(null);
-+
-+        // minute ticks on silver ring
-+        mPaint.setColor(getContext().getColor(R.color.n9_editor_ring_tick));
-+        mPaint.setStrokeWidth(1.5f * mDp);
-+        for (int i = 0; i < 60; i += 5) {
-+            double a = Math.toRadians(i * 6 - 90);
-+            float r1 = mOuterR - 3 * mDp, r2 = mOuterR - 8 * mDp;
-+            c.drawLine(mCx + (float) Math.cos(a) * r1, mCy + (float) Math.sin(a) * r1,
-+                    mCx + (float) Math.cos(a) * r2, mCy + (float) Math.sin(a) * r2, mPaint);
-+        }
-+
-+        // minute knob
-+        double ma = Math.toRadians(mMinute * 6 - 90);
-+        float mx = mCx + (float) Math.cos(ma) * minuteTrackR();
-+        float my = mCy + (float) Math.sin(ma) * minuteTrackR();
-+        drawKnob(c, mx, my, 0xFF2A1E18, 0xFF0A0706, Color.WHITE,
-+                String.format(java.util.Locale.US, "%02d", mMinute));
-+
-+        // hour knob
-+        int positions = m24Hour ? 24 : 12;
-+        int hourPos = mHour % positions;
-+        double ha = Math.toRadians(hourPos * (360.0 / positions) - 90);
-+        float hx = mCx + (float) Math.cos(ha) * hourTrackR();
-+        float hy = mCy + (float) Math.sin(ha) * hourTrackR();
-+        int shown = m24Hour ? mHour : (mHour % 12 == 0 ? 12 : mHour % 12);
-+        drawKnob(c, hx, hy, 0xFFF2F2F2, 0xFFBEBEBE, 0xFF2A2A2A,
-+                String.format(java.util.Locale.US, m24Hour ? "%02d" : "%d", shown));
-+    }
-+
-+    private void drawKnob(Canvas c, float x, float y, int top, int bottom, int textColor,
-+            String label) {
-+        mPaint.setShader(null);
-+        mPaint.setColor(0x55000000);
-+        c.drawCircle(x, y + 1.5f * mDp, mKnobR, mPaint);
-+        mPaint.setShader(new RadialGradient(x, y - mKnobR * 0.4f, mKnobR * 1.4f,
-+                top, bottom, Shader.TileMode.CLAMP));
-+        c.drawCircle(x, y, mKnobR, mPaint);
-+        mPaint.setShader(null);
-+        mText.setColor(textColor);
-+        mText.setTextSize(mKnobR * 0.85f);
-+        c.drawText(label, x, y - (mText.descent() + mText.ascent()) / 2f, mText);
-+    }
-+
-+    @Override
-+    public boolean onTouchEvent(MotionEvent e) {
-+        float dx = e.getX() - mCx, dy = e.getY() - mCy;
-+        float dist = (float) Math.hypot(dx, dy);
-+        switch (e.getActionMasked()) {
-+            case MotionEvent.ACTION_DOWN:
-+                if (dist > mOuterR + mKnobR) return false;
-+                mDrag = dist > mInnerR ? DRAG_MINUTE : DRAG_HOUR;
-+                getParent().requestDisallowInterceptTouchEvent(true);
-+                // fall through
-+            case MotionEvent.ACTION_MOVE:
-+                if (mDrag == DRAG_NONE) return false;
-+                double deg = Math.toDegrees(Math.atan2(dy, dx)) + 90;
-+                if (deg < 0) deg += 360;
-+                if (mDrag == DRAG_MINUTE) {
-+                    int m = (int) Math.round(deg / 6.0) % 60;
-+                    if (m != mMinute) { mMinute = m; changed(); }
-+                } else {
-+                    int positions = m24Hour ? 24 : 12;
-+                    int p = (int) Math.round(deg / (360.0 / positions)) % positions;
-+                    int h = m24Hour ? p : (mHour >= 12 ? p + 12 : p);
-+                    if (h != mHour) { mHour = h; changed(); }
-+                }
-+                return true;
-+            case MotionEvent.ACTION_UP:
-+                if (mDrag != DRAG_NONE) performClick();
-+                // fall through
-+            case MotionEvent.ACTION_CANCEL:
-+                mDrag = DRAG_NONE;
-+                return true;
-+        }
-+        return super.onTouchEvent(e);
-+    }
-+
-+    @Override
-+    public boolean performClick() {
-+        return super.performClick();
-+    }
-+
-+    private void changed() {
-+        invalidate();
-+        if (mListener != null) mListener.onTimeChanged(mHour, mMinute);
-+    }
-+}
 diff --git a/src/com/android/deskclock/widget/N9AnalogClock.java b/src/com/android/deskclock/widget/N9AnalogClock.java
 new file mode 100644
 index 000000000..466923da9
@@ -3514,3 +4166,70 @@ index 000000000..acd86f9b3
 +                getResources().getDisplayMetrics());
 +    }
 +}
+diff --git a/src/com/android/deskclock/widget/ToolbarBaseActivity.java b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
+index 2aed7e95e..61570beb2 100644
+--- a/src/com/android/deskclock/widget/ToolbarBaseActivity.java
++++ b/src/com/android/deskclock/widget/ToolbarBaseActivity.java
+@@ -17,6 +17,8 @@
+ package com.android.deskclock.widget;
+ 
+ import android.app.ActionBar;
++import android.content.Context;
++import android.content.res.Configuration;
+ import android.graphics.BlendMode;
+ import android.graphics.BlendModeColorFilter;
+ import android.os.Bundle;
+@@ -31,15 +33,37 @@ import androidx.fragment.app.FragmentActivity;
+ import com.android.deskclock.R;
+ import com.android.deskclock.ThemeUtils;
+ 
++import com.bompotis.etesian.theme.EtesianBackground;
++
+ /**
+  * A base Activity that has a toolbar layout
+  */
+ public class ToolbarBaseActivity extends FragmentActivity {
+ 
++    /** The Etesian "Apps" background read at creation. */
++    private EtesianBackground.Style mEtesianStyle;
++
++    @Override
++    protected void attachBaseContext(Context newBase) {
++        super.attachBaseContext(newBase);
++        // Night resources hold the N9 palette for dark backgrounds; force the uiMode both ways
++        // (before any inflation) so the system dark theme never changes the light N9 look.
++        mEtesianStyle = EtesianBackground.content(newBase);
++        final Configuration override = new Configuration();
++        override.uiMode = (newBase.getResources().getConfiguration().uiMode
++                & ~Configuration.UI_MODE_NIGHT_MASK)
++                | (mEtesianStyle.dark
++                        ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
++        applyOverrideConfiguration(override);
++    }
++
+     @Override
+     protected void onCreate(@Nullable Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         super.setContentView(R.layout.toolbar_base_layout);
++        if (mEtesianStyle.dark) {
++            EtesianBackground.apply(this, mEtesianStyle);
++        }
+ 
+         final Toolbar toolbar = findViewById(R.id.action_bar);
+         setActionBar(toolbar);
+@@ -87,6 +111,15 @@ public class ToolbarBaseActivity extends FragmentActivity {
+         }
+     }
+ 
++    @Override
++    protected void onResume() {
++        super.onResume();
++        // The user changed the Etesian background while we were away: rebuild in the new look.
++        if (mEtesianStyle != EtesianBackground.content(this)) {
++            recreate();
++        }
++    }
++
+     @Override
+     public boolean onNavigateUp() {
+         if (!super.onNavigateUp()) {
