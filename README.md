@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/readme/phone.png" width="760" alt="Etesian's lock screen, Events view and Applications view">
+  <img src=".github/readme/phone.png" width="760" alt="Etesian on a phone: the Events view, the Applications grid and Open applications">
 </p>
 
 <h1 align="center">Etesian</h1>
@@ -27,6 +27,13 @@
 No home button, no back button, just swipes from the edge of the screen. Its influence is the Nokia N9's Swipe UI,
 re-envisioned for today. Everything new, from messages and calls to calendar entries and news, in one calm
 list. Apps with big, plain type and nothing on screen that isn't your content.
+
+<p align="center">
+  <img src=".github/readme/swipe.webp" width="300" alt="Swiping between Events, Applications and Open applications">
+</p>
+
+<p align="center"><sub>Real screenshots and a screen recording from the reference phone, with made-up calendar,
+feeds and notifications (the launcher's demo mode).</sub></p>
 
 It shipped on a single phone and then disappeared. **Etesian brings it back** on top of LineageOS, so it can run on any
 phone LineageOS supports. It's developed and tested on the F(x)tec Pro1-X; another phone on the same LineageOS version
