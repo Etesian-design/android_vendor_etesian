@@ -888,9 +888,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         }
     }
 
-    /** Thumbnail scaled to fill the width and anchored to the top of the window, like N9 cards. An app left in the
-     *  other orientation (landscape on a portrait card) is fitted whole and centred instead: cropping it to fill
-     *  would show only a corner of it. */
+    /** Thumbnail scaled to fill the width and anchored to the top of the window, like N9 cards. */
     private class TopCropImageView(ctx: Context) : ImageView(ctx) {
         init { scaleType = ScaleType.MATRIX }
         override fun setFrame(l: Int, t: Int, r: Int, b: Int): Boolean {
@@ -901,14 +899,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         fun updateMatrix() {
             val d = drawable ?: return
             if (width == 0 || d.intrinsicWidth <= 0) return
-            val turned = (d.intrinsicWidth > d.intrinsicHeight) != (width > height)
-            if (!turned) {
-                val s = maxOf(width.toFloat() / d.intrinsicWidth, height.toFloat() / d.intrinsicHeight)
-                imageMatrix = Matrix().apply { setScale(s, s) }
-                return
-            }
-            val s = minOf(width.toFloat() / d.intrinsicWidth, height.toFloat() / d.intrinsicHeight)
-            imageMatrix = Matrix().apply { setScale(s, s); postTranslate((width - d.intrinsicWidth * s) / 2, (height - d.intrinsicHeight * s) / 2) }
+            val s = maxOf(width.toFloat() / d.intrinsicWidth, height.toFloat() / d.intrinsicHeight)
+            imageMatrix = Matrix().apply { setScale(s, s) }
         }
     }
 

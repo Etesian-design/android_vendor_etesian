@@ -45,10 +45,17 @@ object SystemTasks {
             ?: return null.also { android.util.Log.w("Etesian", "no snapshot for $taskId") }
         // Android 17 no longer hands out the buffer itself; wrapToBitmap() replaces it.
         val hw = snap.javaClass.getMethod("wrapToBitmap").invoke(snap) as? Bitmap ?: return null
-        val soft = hw.copy(Bitmap.Config.ARGB_8888, false)
+        val copy = hw.copy(Bitmap.Config.ARGB_8888, false)
         hw.recycle()
+        // An app the phone was turned for (landscape, or the keyboard slid out) is snapshotted at that rotation. The
+        // launcher stays at the natural, portrait one, so turn the picture back by the difference, as Launcher3
+        // does: it fills the portrait card and stands upright the way the phone is held.
+        val rotation = runCatching { snap.javaClass.getMethod("getRotation").invoke(snap) as Int }.getOrDefault(0)
+        val soft = if (rotation == 0) copy
+            else Bitmap.createBitmap(copy, 0, 0, copy.width, copy.height, android.graphics.Matrix().apply { setRotate(90f * rotation) }, true)
+                .also { copy.recycle() }
         runCatching { snap.javaClass.getMethod("closeBuffer").invoke(snap) }
-        android.util.Log.d("Etesian", "snapshot $taskId ${soft.width}x${soft.height}")  // the device tests read this
+        android.util.Log.d("Etesian", "snapshot $taskId ${soft.width}x${soft.height} rotation $rotation")  // the device tests read this
         if (soft.width <= width) soft
         else Bitmap.createScaledBitmap(soft, width, soft.height * width / soft.width, true).also { soft.recycle() }
     }.onFailure { android.util.Log.w("Etesian", "snapshot $taskId", it) }.getOrNull()
