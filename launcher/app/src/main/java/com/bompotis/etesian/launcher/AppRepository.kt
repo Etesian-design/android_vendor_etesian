@@ -48,11 +48,9 @@ object AppRepository {
         // Rendered at the largest icon size so every size setting stays sharp.
         val size = ctx.dp(Prefs.ICON_SIZE_MAX.toFloat())
         val density = ctx.resources.displayMetrics.densityDpi
-        val demo = Demo.on(ctx)
         val all = la.getActivityList(null, user)
             // Hide the launcher itself, but keep its "Etesian settings" entry.
             .filter { it.componentName.className != HomeActivity::class.java.name }
-            .filter { !demo || it.componentName.packageName in Demo.APPS }
             .map {
                 AppInfo(
                     it.componentName,
@@ -62,12 +60,11 @@ object AppRepository {
                     user,
                 )
             }
-        privateApps = PrivateSpace.profile(ctx)?.takeIf { !demo && PrivateSpace.on(ctx) && !PrivateSpace.locked(ctx, it) }?.let { p ->
+        privateApps = PrivateSpace.profile(ctx)?.takeIf { PrivateSpace.on(ctx) && !PrivateSpace.locked(ctx, it) }?.let { p ->
             runCatching { la.getActivityList(null, p) }.getOrDefault(emptyList()).map {
                 AppInfo(it.componentName, it.label.toString(), IconFactory.render(it.getIcon(density), size, it.componentName), false, p)
             }.sortedBy { it.label.lowercase() }
         }.orEmpty()
-        if (demo) return all.sortedBy { it.label.lowercase() }
         val order = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_ORDER, "")!!.split('\n').filter { it.isNotEmpty() }
         val index = order.withIndex().associate { it.value to it.index }
@@ -85,7 +82,6 @@ object AppRepository {
             .getString(KEY_ORDER, "")!!.split('\n').filter { it.isNotEmpty() }
 
     fun saveLayout(ctx: Context, keys: List<String>) {
-        if (Demo.on(ctx)) return // the owner's layout stays as it was
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(KEY_ORDER, keys.joinToString("\n"))
             .apply()

@@ -36,7 +36,6 @@ object Weather {
 
     fun refresh(ctx: Context, done: () -> Unit) {
         if (!Prefs.weatherEnabled(ctx)) { current = null; done(); return }
-        if (Demo.on(ctx)) { current = Demo.weather(Prefs.weatherFahrenheit(ctx)).also { publish(ctx, it) }; lastKey = ""; done(); return }
         val fahrenheit = Prefs.weatherFahrenheit(ctx)
         val city = Prefs.weatherCity(ctx)
         // A changed city or unit makes the cached reading stale.
