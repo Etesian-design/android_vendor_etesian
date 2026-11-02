@@ -136,8 +136,6 @@ class EventsService : NotificationListenerService() {
         refresh()
     }
 
-    /** In demo mode only this app's sample notifications (TestNotifyReceiver), none of the owner's. */
-    private fun refresh() = EventsStore.update(runCatching { activeNotifications }.getOrNull()
-        ?.let { all -> if (Demo.on(this)) all.filter { it.packageName == packageName }.toTypedArray() else all },
+    private fun refresh() = EventsStore.update(runCatching { activeNotifications }.getOrNull(),
         runCatching { currentRanking }.getOrNull())
 }
