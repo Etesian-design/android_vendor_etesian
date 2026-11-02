@@ -109,8 +109,8 @@ class EmergencyCardActivity : Activity() {
     private fun button(label: String, negative: Boolean, onClick: () -> Unit) = TextView(this).apply {
         text = label; setTextColor(N9.TEXT); textSize = 16f; typeface = N9.FONT_BOLD; gravity = Gravity.CENTER
         contentDescription = label
-        background = if (negative) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(0xFFE2332E.toInt(), 0xFFB01814.toInt())).apply { cornerRadius = dp(8f).toFloat() }
+        background = if (negative) FieldDrawable(intArrayOf(0xFFE2332E.toInt(), 0xFFB01814.toInt()),
+            0xFF8E1210.toInt(), resources.displayMetrics.density, shade = false)
             else N9.button(context)
         setOnClickListener { onClick() }
     }
