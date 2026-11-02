@@ -38,7 +38,8 @@ object EventsReply {
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or
                 android.text.InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE
             contentDescription = "Reply field"
-            backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF1A1A1A.toInt())
+            background = FieldDrawable(0xFFFFFFFF.toInt(), 0xFFB4B4B8.toInt(), ctx.resources.displayMetrics.density)
+            setPadding(ctx.dp(16f), ctx.dp(10f), ctx.dp(16f), ctx.dp(10f))
         }
         fun send() {
             val text = field.text?.toString()?.trim().orEmpty()
