@@ -38,15 +38,17 @@ object SystemTasks {
     fun snapshot(taskId: Int, width: Int): Bitmap? = runCatching {
         val cls = Class.forName("android.window.TaskSnapshotManager")
         val mgr = cls.getMethod("getInstance").invoke(null)
-        val any = 3 // TaskSnapshotManager.RESOLUTION_ANY
-        val snap = cls.getMethod("getTaskSnapshot", Int::class.java, Int::class.java)
-            .invoke(mgr, taskId, any)
+        // TaskSnapshotManager.RESOLUTION_HIGH, else ANY: ANY hands back the half-size copy when there is one, and its
+        // text breaks up once the card scales it.
+        val get = cls.getMethod("getTaskSnapshot", Int::class.java, Int::class.java)
+        val snap = (runCatching { get.invoke(mgr, taskId, 1) }.getOrNull() ?: get.invoke(mgr, taskId, 3))
             ?: return null.also { android.util.Log.w("Etesian", "no snapshot for $taskId") }
         // Android 17 no longer hands out the buffer itself; wrapToBitmap() replaces it.
         val hw = snap.javaClass.getMethod("wrapToBitmap").invoke(snap) as? Bitmap ?: return null
         val soft = hw.copy(Bitmap.Config.ARGB_8888, false)
         hw.recycle()
         runCatching { snap.javaClass.getMethod("closeBuffer").invoke(snap) }
+        android.util.Log.d("Etesian", "snapshot $taskId ${soft.width}x${soft.height}")  // the device tests read this
         if (soft.width <= width) soft
         else Bitmap.createScaledBitmap(soft, width, soft.height * width / soft.width, true).also { soft.recycle() }
     }.onFailure { android.util.Log.w("Etesian", "snapshot $taskId", it) }.getOrNull()
