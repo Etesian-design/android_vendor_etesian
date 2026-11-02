@@ -99,7 +99,7 @@ class ShareActivity : Activity() {
         })
         panel.addView(LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            background = GradientDrawable().apply { setColor(0xFFFFFFFF.toInt()); cornerRadius = dp(6f).toFloat(); setStroke(dp(1.5f), 0xFFCFCFD3.toInt()) }
+            background = FieldDrawable(0xFFFFFFFF.toInt(), 0xFFB4B4B8.toInt(), resources.displayMetrics.density)
             setPadding(dp(12f), dp(4f), dp(8f), dp(4f))
             addView(ImageView(context).apply { setImageDrawable(Glyphs.drawable("search", 0xFF4A4A4A.toInt())) }, LinearLayout.LayoutParams(dp(24f), dp(24f)))
             addView(field, LinearLayout.LayoutParams(0, dp(44f), 1f))

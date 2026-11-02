@@ -98,3 +98,47 @@ interface HomePage {
     /** True while the view needs horizontal swipes for itself (e.g. dismissing entries). */
     fun holdsPaging(): Boolean = false
 }
+
+/**
+ * The N9 text field's shape (blanco textedit background): a squircle as tall as the field (n = 2.8, the icons' curve),
+ * cut in half and pulled apart, joined by straight edges. Taller fields keep corners [corner] tall. A 1px [rim], and a
+ * faint shade along the top for the N9's inset look.
+ */
+class FieldDrawable(private val fill: Int, private val rim: Int, private val density: Float, private val corner: Float = 0f) :
+    android.graphics.drawable.Drawable() {
+    private val path = android.graphics.Path()
+    private val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = fill }
+    private val rimPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        style = android.graphics.Paint.Style.STROKE; strokeWidth = density; color = rim
+    }
+    private val shadePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    var rimColor: Int
+        get() = rimPaint.color
+        set(v) { rimPaint.color = v; invalidateSelf() }
+
+    override fun onBoundsChange(b: android.graphics.Rect) {
+        val inset = density / 2
+        val l = b.left + inset; val t = b.top + inset; val r = b.right - inset; val bt = b.bottom - inset
+        val s = minOf(bt - t, if (corner > 0) corner else bt - t, r - l) / 2   // the squircle's radius
+        path.reset()
+        // a quarter of the n = 2.8 squircle at each corner, centred (cx, cy), from angle a0 to a0 + 90°
+        fun quarter(cx: Float, cy: Float, a0: Int) {
+            for (i in 0..24) {
+                val a = Math.toRadians(a0 + i * 90.0 / 24)
+                val c = Math.cos(a); val sn = Math.sin(a)
+                val x = cx + s * Math.signum(c) * Math.pow(Math.abs(c), 2 / 2.8)
+                val y = cy + s * Math.signum(sn) * Math.pow(Math.abs(sn), 2 / 2.8)
+                if (path.isEmpty) path.moveTo(x.toFloat(), y.toFloat()) else path.lineTo(x.toFloat(), y.toFloat())
+            }
+        }
+        quarter(r - s, bt - s, 0); quarter(l + s, bt - s, 90); quarter(l + s, t + s, 180); quarter(r - s, t + s, 270)
+        path.close()
+        shadePaint.shader = android.graphics.LinearGradient(0f, t, 0f, t + 4 * density, 0x14000000, 0, android.graphics.Shader.TileMode.CLAMP)
+    }
+
+    override fun draw(c: android.graphics.Canvas) { c.drawPath(path, fillPaint); c.drawPath(path, shadePaint); c.drawPath(path, rimPaint) }
+    override fun setAlpha(alpha: Int) { fillPaint.alpha = alpha; rimPaint.alpha = alpha; invalidateSelf() }
+    override fun setColorFilter(cf: android.graphics.ColorFilter?) { fillPaint.colorFilter = cf; rimPaint.colorFilter = cf; invalidateSelf() }
+    @Deprecated("Deprecated in Java") override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+    override fun getOutline(o: android.graphics.Outline) { o.setPath(path) }
+}

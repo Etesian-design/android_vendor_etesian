@@ -67,8 +67,10 @@ shot() { adb exec-out screencap -p > "$SHOTS/$1.png"; }
 pref_switch() {
   local was=""; for _ in 1 2 3; do
     sh_ am start -W --activity-clear-task -n com.bompotis.etesian.launcher/.SettingsActivity --es section "$1" >/dev/null 2>&1; sleep 1.5
-    local row; row=$(sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | tr '>' '\n' |
-      awk -v t="text=\"$2\"" 'index($0,t){f=1} f&&/switchWidget/{print; exit}')
+    local row s; for s in 0 1 2; do  # scrolls down when the switch is below the fold
+      row=$(sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | tr '>' '\n' |
+        awk -v t="text=\"$2\"" 'index($0,t){f=1} f&&/switchWidget/{print; exit}')
+      [ -n "$row" ] && break; sh_ input swipe 540 1700 540 600 300; sleep 0.8; done
     local now=0; echo "$row" | grep -q 'checked="true"' && now=1; [ -z "$was" ] && was=$now
     [ -z "$3" ] || [ "$3" = "$now" ] && break
     local b; b=$(echo "$row" | grep -o '\[[0-9,]*\]\[[0-9,]*\]' | tr '[],' '   '); set -- "$1" "$2" "$3" $b

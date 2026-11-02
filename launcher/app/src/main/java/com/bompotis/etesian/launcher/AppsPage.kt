@@ -112,7 +112,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         isSingleLine = true
         imeOptions = EditorInfo.IME_ACTION_GO or EditorInfo.IME_FLAG_NO_EXTRACT_UI
         setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
-        background = GradientDrawable().apply { cornerRadius = dp(22f).toFloat(); setColor(0xFF262626.toInt()) }
+        background = FieldDrawable(0xFF262626.toInt(), 0xFF393839.toInt(), resources.displayMetrics.density)  // N9 field: squircle-half ends
         visibility = GONE
         addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}

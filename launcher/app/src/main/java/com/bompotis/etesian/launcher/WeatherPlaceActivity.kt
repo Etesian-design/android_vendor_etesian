@@ -39,6 +39,8 @@ class WeatherPlaceActivity : Activity() {
         field = EditText(this).apply {
             hint = "Town or city"; setSingleLine(true); textSize = 19f; typeface = N9.FONT
             setTextColor(N9.TEXT); setHintTextColor(N9.TEXT_SECONDARY)
+            background = FieldDrawable(0xFF262626.toInt(), 0xFF393839.toInt(), resources.displayMetrics.density)
+            setPadding(dp(16f), dp(10f), dp(16f), dp(10f))
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setText(Prefs.weatherCity(this@WeatherPlaceActivity))
             setOnEditorActionListener { _, _, _ -> main.removeCallbacks(search); find(); true }
