@@ -12,7 +12,8 @@ import android.content.Intent
 /**
  * For the on-device tests only (not exported; `am broadcast -n` from a root shell): posts silent
  * sample notifications — kind "message" (heads-up, Reply + Mark as read), "progress" (an ongoing
- * live update), "mails" (count=N email notifications), "cancel" removes them; "widget" places a launcher widget. The channel has no sound or vibration.
+ * live update), "mails" (count=N email notifications), "cancel" removes them; "widget" places a launcher widget; "demo" (on
+ * true / false) switches demo mode (Demo.kt). The channel has no sound or vibration.
  */
 class TestNotifyReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
@@ -103,6 +104,8 @@ class TestNotifyReceiver : BroadcastReceiver() {
             "copy" -> ctx.getSystemService(android.content.ClipboardManager::class.java)
                 .setPrimaryClip(android.content.ClipData.newPlainText("test", intent.getStringExtra("text") ?: "Etesian clipboard test"))
             // Places the launcher widget [cls] (e.g. BelleGearClock) on the Widgets view, no picker.
+            // Demo mode (Demo.kt): made-up data for screenshots; restart the launcher after switching it.
+            "demo" -> Demo.set(ctx, intent.getBooleanExtra("on", true))
             "widget" -> intent.getStringExtra("cls")?.let { WidgetsPage.current?.addForTest(it) }
             // "count" sample mails (CATEGORY_EMAIL, as the mail app posts them): more than the Belle Mail widget shows at once
             "mails" -> for (i in 1..intent.getIntExtra("count", 12)) nm.notify(ID_MAIL + i, Notification.Builder(ctx, CHANNEL)

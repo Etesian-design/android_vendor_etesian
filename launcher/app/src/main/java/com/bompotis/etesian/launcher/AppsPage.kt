@@ -440,6 +440,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
 
     /** Places folders and applications in the stored order; new installs go at the end. */
     private fun arrange(apps: List<AppInfo>): MutableList<GridEntry> {
+        if (Demo.on(context)) return apps.map { GridEntry.App(it) }.toMutableList()
         val byKey = apps.associateBy { it.component.flattenToString() }
         val stored = Folders.load(context)
         val inFolder = stored.values.flatMap { it.second }.toSet()
@@ -467,6 +468,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
     }
 
     private fun saveLayout() {
+        if (Demo.on(context)) return
         AppRepository.saveLayout(context, items.filterNot { (it as? GridEntry.Folder)?.private == true }.map { it.key })
         Folders.save(context, items.filterIsInstance<GridEntry.Folder>())
     }
