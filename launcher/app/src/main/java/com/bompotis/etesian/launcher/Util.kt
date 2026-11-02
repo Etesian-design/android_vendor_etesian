@@ -25,16 +25,12 @@ object N9 {
 
     /**
      * A dark N9 button, lit from the top like its icons (measured): a fill from #181818 at the
-     * top to #080808 at the bottom, a 1px #393839 rim, softly rounded corners (not a pill).
+     * top to #080808 at the bottom, a 1px #393839 rim, squircle-half ends (not a pill).
      */
     fun button(context: Context): android.graphics.drawable.Drawable {
         val d = context.resources.displayMetrics.density
-        return android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(0xFF1C1C1C.toInt(), 0xFF101010.toInt(), 0xFF080808.toInt())).apply {
-            cornerRadius = 6 * d
-            setStroke(Math.max(1, d.toInt()), 0xFF393839.toInt())
-        }
+        // its ends: a squircle as tall as the button, cut in half (blanco button background)
+        return FieldDrawable(intArrayOf(0xFF1C1C1C.toInt(), 0xFF101010.toInt(), 0xFF080808.toInt()), 0xFF393839.toInt(), d, shade = false)
     }
     /**
      * An edit-mode toolbar button (n9-grid-edit.png): compact, centred in the bar, a dark lit face
@@ -45,13 +41,7 @@ object N9 {
         text = label
         setTextColor(TEXT); textSize = 16f; typeface = FONT_BOLD
         gravity = android.view.Gravity.CENTER
-        background = android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(0xFF1C1C1C.toInt(), 0xFF101010.toInt(), 0xFF080808.toInt())).apply {
-            // N9 dark button: corners 21% of the height, 1px #393839 rim
-            cornerRadius = 0.21f * EDIT_BUTTON_H * d
-            setStroke(Math.max(1, d.toInt()), 0xFF393839.toInt())
-        }
+        background = button(context)  // N9 dark button: squircle-half ends, 1px #393839 rim
         setOnClickListener { onClick() }
     }
 
@@ -100,14 +90,15 @@ interface HomePage {
 }
 
 /**
- * The N9 text field's shape (blanco textedit background): a squircle as tall as the field (n = 2.8, the icons' curve),
- * cut in half and pulled apart, joined by straight edges. Taller fields keep corners [corner] tall. A 1px [rim], and a
- * faint shade along the top for the N9's inset look.
+ * The N9 text field's and button's shape (blanco textedit and button backgrounds): a squircle as tall as the field
+ * (n = 2.8, the icons' curve), cut in half and pulled apart, joined by straight edges. Taller ones keep corners [corner]
+ * tall. A 1px [rim]; [fills] top to bottom (a button's lit face), and for fields a faint [shade] along the top (inset).
  */
-class FieldDrawable(private val fill: Int, private val rim: Int, private val density: Float, private val corner: Float = 0f) :
-    android.graphics.drawable.Drawable() {
+class FieldDrawable(private val fills: IntArray, private val rim: Int, private val density: Float, private val corner: Float = 0f,
+    private val shade: Boolean = true) : android.graphics.drawable.Drawable() {
+    constructor(fill: Int, rim: Int, density: Float, corner: Float = 0f) : this(intArrayOf(fill), rim, density, corner, true)
     private val path = android.graphics.Path()
-    private val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = fill }
+    private val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = fills[0] }
     private val rimPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         style = android.graphics.Paint.Style.STROKE; strokeWidth = density; color = rim
     }
@@ -134,9 +125,10 @@ class FieldDrawable(private val fill: Int, private val rim: Int, private val den
         quarter(r - s, bt - s, 0); quarter(l + s, bt - s, 90); quarter(l + s, t + s, 180); quarter(r - s, t + s, 270)
         path.close()
         shadePaint.shader = android.graphics.LinearGradient(0f, t, 0f, t + 4 * density, 0x14000000, 0, android.graphics.Shader.TileMode.CLAMP)
+        if (fills.size > 1) fillPaint.shader = android.graphics.LinearGradient(0f, t, 0f, bt, fills, null, android.graphics.Shader.TileMode.CLAMP)
     }
 
-    override fun draw(c: android.graphics.Canvas) { c.drawPath(path, fillPaint); c.drawPath(path, shadePaint); c.drawPath(path, rimPaint) }
+    override fun draw(c: android.graphics.Canvas) { c.drawPath(path, fillPaint); if (shade) c.drawPath(path, shadePaint); c.drawPath(path, rimPaint) }
     override fun setAlpha(alpha: Int) { fillPaint.alpha = alpha; rimPaint.alpha = alpha; invalidateSelf() }
     override fun setColorFilter(cf: android.graphics.ColorFilter?) { fillPaint.colorFilter = cf; rimPaint.colorFilter = cf; invalidateSelf() }
     @Deprecated("Deprecated in Java") override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT

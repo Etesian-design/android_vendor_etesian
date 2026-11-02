@@ -770,10 +770,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         h.name.setText(f.name)
         // N9: the name is plain text; in edit mode it becomes a field for renaming.
         h.name.isEnabled = editMode
-        h.name.background = if (editMode) GradientDrawable().apply {
-            cornerRadius = dp(20f).toFloat()
-            setColor(0x59FFFFFF)
-        } else null
+        h.name.background = if (editMode) FieldDrawable(0x59FFFFFF, 0, resources.displayMetrics.density) else null
         h.name.setPadding(dp(14f), dp(8f), dp(14f), dp(8f))
         h.apps.removeAllViews()
         h.apps.columnCount = cols
