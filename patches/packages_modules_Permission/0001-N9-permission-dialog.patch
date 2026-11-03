@@ -1,0 +1,140 @@
+diff --git a/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
+index f86ab91746..b194d0919a 100644
+--- a/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
++++ b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
+@@ -285,9 +285,98 @@ class GrantPermissionsViewHandlerImpl(
+             updateAll()
+         }
+ 
++        harmattanStyle(rootView)
+         return rootView
+     }
+ 
++    /**
++     * Harmattan (N9 QueryDialog, mock 15): over a 90% black backdrop, the permission's glyph on a
++     * lit green squircle, the question in large light type, and stacked fixed-width N9 buttons:
++     * Allow (blue) / Only this time / Don't allow.
++     */
++    private fun harmattanStyle(root: ViewGroup) {
++        val d = mActivity.resources.displayMetrics.density
++        root.setBackgroundColor(0xE6000000.toInt())
++        (root as? android.widget.ScrollView)?.isFillViewport = true
++        root.findViewById<View>(R.id.grant_singleton)?.let {
++            it.background = null
++            it.layoutParams = it.layoutParams?.apply { height = ViewGroup.LayoutParams.MATCH_PARENT }
++            (it as? LinearLayout)?.gravity = Gravity.CENTER
++        }
++        root.findViewById<View>(R.id.grant_dialog)?.apply {
++            background = null; elevation = 0f; clipToOutline = false
++        }
++        messageView?.apply {
++            setTextColor(0xFFFFFFFF.toInt()); textSize = 26f; gravity = Gravity.CENTER
++            typeface = android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL)
++        }
++        detailMessageView?.apply { setTextColor(0xFFC8C8C8.toInt()); gravity = Gravity.CENTER }
++        iconView?.let { iv ->
++            (iv.parent as? LinearLayout)?.apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
++            iv.layoutParams = iv.layoutParams.apply { width = (88 * d).toInt(); height = (88 * d).toInt() }
++            (iv.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin = (16 * d).toInt()
++        }
++        val list = buttons.filterNotNull()
++        (list.firstOrNull()?.parent as? LinearLayout)?.let { box ->
++            box.orientation = LinearLayout.VERTICAL
++            box.gravity = Gravity.CENTER_HORIZONTAL
++            for (i in 0 until box.childCount) {
++                val c = box.getChildAt(i)
++                if (c is android.widget.Space) c.visibility = View.GONE
++            }
++        }
++        list.forEach { b ->
++            val allow = b.id == R.id.permission_allow_button || b.id == R.id.permission_allow_foreground_only_button ||
++                b.id == R.id.permission_allow_all_button
++            val h = (52 * d).toInt()
++            b.background = android.graphics.drawable.GradientDrawable(
++                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
++                if (allow) intArrayOf(0xFF5AA0FF.toInt(), 0xFF3A7BE0.toInt())
++                else intArrayOf(0xFF3A3A3C.toInt(), 0xFF232325.toInt(), 0xFF1A1A1C.toInt())).apply {
++                cornerRadius = 0.21f * h
++                setStroke(Math.max(1, d.toInt()), if (allow) 0xFF2E64C0.toInt() else 0xFF4A4A4C.toInt())
++            }
++            b.setTextColor(0xFFFFFFFF.toInt())
++            b.isAllCaps = false
++            b.textSize = 18f
++            b.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
++            b.minHeight = h
++            b.layoutParams = (b.layoutParams as? ViewGroup.MarginLayoutParams ?: ViewGroup.MarginLayoutParams(0, 0)).apply {
++                width = (280 * d).toInt(); height = h
++                topMargin = (7 * d).toInt(); bottomMargin = (7 * d).toInt(); marginStart = 0; marginEnd = 0
++            }
++            b.stateListAnimator = null
++        }
++    }
++
++    /** The permission's glyph in white on a lit green N9 squircle (n = 2.8). */
++    private fun harmattanIcon(glyph: android.graphics.drawable.Drawable?): android.graphics.drawable.Drawable {
++        val d = mActivity.resources.displayMetrics.density
++        val px = (88 * d).toInt()
++        val bmp = android.graphics.Bitmap.createBitmap(px, px, android.graphics.Bitmap.Config.ARGB_8888)
++        val c = android.graphics.Canvas(bmp)
++        val shape = android.graphics.Path()
++        val r = px / 2f
++        for (i in 0..128) {
++            val t = 2 * Math.PI * i / 128
++            val x = r + r * Math.signum(Math.cos(t)) * Math.pow(Math.abs(Math.cos(t)), 2.0 / 2.8)
++            val y = r + r * Math.signum(Math.sin(t)) * Math.pow(Math.abs(Math.sin(t)), 2.0 / 2.8)
++            if (i == 0) shape.moveTo(x.toFloat(), y.toFloat()) else shape.lineTo(x.toFloat(), y.toFloat())
++        }
++        shape.close()
++        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
++        p.shader = android.graphics.LinearGradient(0f, 0f, 0f, px.toFloat(), 0xFF9BDB1C.toInt(), 0xFF3A9A00.toInt(),
++            android.graphics.Shader.TileMode.CLAMP)
++        c.drawPath(shape, p)
++        glyph?.mutate()?.let { g ->
++            g.setTint(0xFFFFFFFF.toInt())
++            val inset = (px * 0.27f).toInt()
++            g.setBounds(inset, inset, px - inset, px - inset)
++            g.draw(c)
++        }
++        return android.graphics.drawable.BitmapDrawable(mActivity.resources, bmp)
++    }
++
+     private fun getLottieDrawable(@RawRes rawResId: Int): LottieDrawable {
+         val composition = LottieCompositionFactory.fromRawResSync(mActivity, rawResId).value!!
+         val scale = LOCATION_ACCURACY_IMAGE_DIAMETER / composition.bounds.width()
+@@ -332,7 +421,10 @@ class GrantPermissionsViewHandlerImpl(
+     }
+ 
+     override fun updateWindowAttributes(outLayoutParams: LayoutParams) {
+-        // No-op
++        // Harmattan: the dialog fills the screen with its own 90% backdrop.
++        outLayoutParams.width = LayoutParams.MATCH_PARENT
++        outLayoutParams.height = LayoutParams.MATCH_PARENT
++        outLayoutParams.dimAmount = 0f
+     }
+ 
+     private fun setButtonVisibilities(visibilities: BooleanArray?) {
+@@ -359,9 +451,11 @@ class GrantPermissionsViewHandlerImpl(
+ 
+     private fun updateDescription() {
+         if (groupIcon != null) {
+-            iconView!!.setImageDrawable(groupIcon!!.loadDrawable(mActivity))
++            iconView!!.setImageDrawable(harmattanIcon(groupIcon!!.loadDrawable(mActivity)))
++            iconView!!.imageTintList = null
+         }
+-        messageView!!.text = groupMessage
++        // Harmattan (mock 15): the question in plain light type, no bold app name.
++        messageView!!.text = groupMessage?.toString()
+     }
+ 
+     private fun updateDetailDescription() {
+@@ -402,8 +496,9 @@ class GrantPermissionsViewHandlerImpl(
+                             R.string.grant_dialog_button_change_to_precise_location
+                         )
+                 } else {
++                    // Harmattan (mock 15): plain "Allow"; it still grants while in use only.
+                     buttons[pos]?.text =
+-                        mActivity.resources.getString(R.string.grant_dialog_button_allow_foreground)
++                        mActivity.resources.getString(R.string.grant_dialog_button_allow)
+                 }
+             }
+             if ((pos == DENY_BUTTON || pos == DENY_AND_DONT_ASK_AGAIN_BUTTON)) {
