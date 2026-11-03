@@ -7,7 +7,9 @@ unlock
 P=/data/data/$LAUNCHER/shared_prefs/widgets.xml
 sh_ cp $P /data/local/tmp/wfbak.xml
 wp=$(pref_switch home Widgets 1)
-# Five 4x2 notes widgets: more than one screen holds.
+# Five 4x2 notes widgets: more than one screen holds. Added to the scrolling list (fixed screens would
+# refuse those that do not fit), whatever layout the phone had; that layout is put back at the end.
+was_layout=$(pref_list home "Widgets layout" "One scrolling list")
 sh_ "echo \"<?xml version='1.0' encoding='utf-8' standalone='yes' ?><map><string name=\\\"widget_items\\\"></string></map>\" > /data/local/tmp/wempty.xml"
 widgets_put /data/local/tmp/wempty.xml; home
 widgets_pane
@@ -15,7 +17,7 @@ for _ in 1 2 3 4 5; do sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es ki
 saved() { sh_ cat $P | grep -o "name=\"$1\">[^<]*" | cut -d'>' -f2 | tr ',' '\n' | grep -c .; }
 n_list=$(saved widget_items)
 check "five widgets on the list ($n_list)" '[ "$n_list" = 5 ]'
-was_layout=$(pref_list home "Widgets layout" "Fixed screens (no scrolling)")
+pref_list home "Widgets layout" "Fixed screens (no scrolling)" >/dev/null
 was_screens=$(pref_list home "Widget screens" "2")
 home; widgets_pane; sleep 1
 count() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | grep -o 'class="android.appwidget.AppWidgetHostView"' | grep -c .; }
