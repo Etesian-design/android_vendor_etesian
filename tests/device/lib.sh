@@ -40,6 +40,8 @@ burst() { # x y n
 }
 # Adds the launcher widget named [label] to the Widgets pane through its own picker.
 widgets_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = widgets ] && break; sh_ input swipe 100 1700 1000 1700 300; sleep 1.5; done; }
+# The Applications view, by its pane tag (not an app name: the number of widget screens between varies).
+apps_pane() { home; for _ in 1 2 3 4 5 6; do [ "$(home_pane)" = apps ] && break; sh_ input swipe 100 1700 1000 1700 300; sleep 1.5; done; }
 add_widget() {
   widgets_pane
   for _ in 1 2 3 4 5 6; do sh_ input swipe 540 1800 540 400 200; done; sleep 1
