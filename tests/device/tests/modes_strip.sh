@@ -11,7 +11,11 @@ sh_ settings put secure etesian_extra_modes 0; menu
 check "off: no Mode strip" '! dump | grep -q "content-desc=\"Mode: "'
 sh_ input keyevent BACK; sleep 1
 sh_ settings put secure etesian_extra_modes 1; menu
-check "on: Mode strip" 'dump | grep -q "content-desc=\"Mode: Off\""'
+check "on: Mode strip" 'dump | grep -q "content-desc=\"Mode: "'
+# The runner keeps Do Not Disturb on for silence; the steps below need it off (the runner's silent
+# ringer keeps it quiet meanwhile), and it is put back at the end.
+if [ "$zen" != 0 ]; then set -- $(strip_bounds); sh_ input tap $(( $1 + 20 )) $(( ($2+$4)/2 )); sleep 1.5; fi
+check "strip starts at Off" 'dump | grep -q "content-desc=\"Mode: Off\""'
 shot modes_strip
 set -- $(strip_bounds)
 # Do Not Disturb is the second segment: tap about a third of the way along.
@@ -31,7 +35,7 @@ sh_ input keyevent BACK; sleep 1; menu
 set -- $(strip_bounds); sh_ input tap $(( $1 + 20 )) $(( ($2+$4)/2 )); sleep 1.5
 check "Off turns it off" '[ "$(sh_ settings get global zen_mode)" = 0 ]'
 sh_ input keyevent BACK; sleep 1
-[ "$zen" != 0 ] && sh_ cmd notification set_dnd on >/dev/null
+set_zen "$zen"
 [ "$old" = null ] && sh_ settings delete secure etesian_extra_modes >/dev/null || sh_ settings put secure etesian_extra_modes "$old"
 check "launcher did not crash" '! crashed $LAUNCHER'
 home
