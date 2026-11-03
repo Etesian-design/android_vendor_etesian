@@ -9,7 +9,7 @@ check "faces sized to the widget, day/date inside" 'grep -q "fun fitFace" $J/Bel
 check "LCD frame hugs its digits" 'grep -q "android:layout_width=\"wrap_content\" android:layout_height=\"wrap_content\" android:layout_gravity=\"center\"" $R/layout/bc_lcdclock.xml'
 check "Belle clocks have no panel" '! grep -q belle_panel $R/layout/belle_clock.xml && ! grep -q belle_panel $R/layout/belle_analog.xml'
 check "flip clock digits size to the tile" 'grep -q autoSizeTextType $R/layout/bc_flipclock.xml'
-check "Storybook clocks match (transparent m-clock/m-analog, gear day/date)" '! grep -q "bw-panel bw-mclock" ~/Git/etesian-design/src/stories/belle/BelleWidget.vue && grep -q "bw-gear .bw-dayname" ~/Git/etesian-design/src/stories/belle/BelleWidget.vue'
+check "Storybook clocks match (transparent m-clock/m-analog, gear day/date)" '! grep -q "bw-panel bw-mclock" ~/Git/etesian-design/src/shell/widgets/BelleWidget.vue && grep -q "bw-gear .bw-dayname" ~/Git/etesian-design/src/shell/widgets/BelleWidget.vue'
 # Device: place a large clock alone on an emptied Widgets view; its face must be most of the screen width.
 unlock
 wp=$(pref_switch home Widgets 1)
