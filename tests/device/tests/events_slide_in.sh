@@ -8,6 +8,7 @@ post() { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind ${1:-messag
 events_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = events ] && break; sh_ input swipe 1000 1700 100 1700 300; sleep 1.5; done; sleep 1; }
 apps_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = apps ] && break; sh_ input swipe 100 1700 1000 1700 300; sleep 1.5; done; sleep 1; }
 old=$(sh_ settings get secure etesian_extra_bubbles)
+peeks_on
 sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
 sh_ settings put secure etesian_extra_bubbles 1
 post cancel; unlock
@@ -55,3 +56,4 @@ sh_ rm -rf /sdcard/slide
 check "launcher did not crash" '! crashed $LAUNCHER'
 check "systemui did not crash" '! crashed com.android.systemui'
 home
+peeks_off

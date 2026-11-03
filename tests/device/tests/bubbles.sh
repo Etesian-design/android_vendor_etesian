@@ -8,6 +8,7 @@ bubble_shown() { sh_ dumpsys window windows | grep -q "EtesianBubble"; }
 post() { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind ${1:-message} >/dev/null; }
 sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
 old=$(sh_ settings get secure etesian_extra_bubbles)
+peeks_on
 unlock; home
 sh_ am start -n $LAUNCHER/.SettingsActivity >/dev/null; sleep 2
 sh_ settings put secure etesian_extra_bubbles 1
@@ -55,3 +56,4 @@ post cancel
 [ "$old" = null ] && sh_ settings delete secure etesian_extra_bubbles >/dev/null || sh_ settings put secure etesian_extra_bubbles "$old"
 check "systemui did not crash" '! crashed com.android.systemui'
 home
+peeks_off

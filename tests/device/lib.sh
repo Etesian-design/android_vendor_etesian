@@ -140,3 +140,8 @@ widgets_only() {
   widgets_prefs /data/local/tmp/wempty.xml; widgets_pane
   sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind widget --es cls "$1" >/dev/null; sleep 3; }
 widgets_restore() { widgets_prefs /data/local/tmp/wbak.xml; sh_ rm -f /data/local/tmp/wbak.xml; }
+set_zen() { adb shell cmd notification set_dnd $(echo "$1" | sed 's/^1$/priority/;s/^2$/on/;s/^3$/alarms/;s/^0$/off/') >/dev/null; }
+# Bubbles and heads-ups are pop-ups, which Do Not Disturb hides: tests of them let pop-ups through
+# for their duration. The runner's silent ringer and the test channel's lack of sound keep it quiet.
+peeks_on() { _zen_peek=$(sh_ settings get global zen_mode); set_zen 0; }
+peeks_off() { set_zen "${_zen_peek:-2}"; }
