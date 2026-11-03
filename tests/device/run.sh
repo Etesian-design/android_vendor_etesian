@@ -2,10 +2,14 @@
 # On-device regression tests for the Etesian ROM. Needs adb root. Usage: run.sh [test-name...]
 cd "$(dirname "$0")" && . ./lib.sh
 adb root >/dev/null 2>&1; sleep 2
-# Silent for the whole run: Do Not Disturb in total silence and no touch sounds; both put back at the end or on Ctrl-C.
-_zen0=$(adb shell settings get global zen_mode | tr -d '\r'); _sys0=$(adb shell cmd media_session volume --stream 1 --get | grep -o "is [0-9]*" | cut -d" " -f2)
-quiet_on() { adb shell settings put global zen_mode 2; adb shell cmd media_session volume --stream 1 --set 0 >/dev/null; }
-quiet_off() { adb shell settings put global zen_mode "${_zen0:-0}"; adb shell cmd media_session volume --stream 1 --set "${_sys0:-5}" >/dev/null; }
+# Silent for the whole run: Do Not Disturb in total silence and the ringer silent (no ring, notification
+# or touch sounds even when a test turns Do Not Disturb off); both put back at the end or on Ctrl-C.
+# Android 17 ignores zen_mode written through settings and refuses volume 0 from the shell, hence
+# set_dnd and set-ringer-mode.
+_zen0=$(adb shell settings get global zen_mode | tr -d '\r'); _ring0=$(adb shell settings get global mode_ringer | tr -d '\r')
+set_zen() { adb shell cmd notification set_dnd $(echo "$1" | sed 's/^1$/priority/;s/^2$/on/;s/^3$/alarms/;s/^0$/off/') >/dev/null; }
+quiet_on() { set_zen 2; adb shell cmd audio set-ringer-mode SILENT; }
+quiet_off() { set_zen "${_zen0:-0}"; adb shell cmd audio set-ringer-mode $(echo "${_ring0:-2}" | sed 's/0/SILENT/;s/1/VIBRATE/;s/2/NORMAL/'); }
 quiet_on; trap quiet_off EXIT
 # The user's own settings (extras, Widgets view): every test must leave them as it found them.
 user_state() { unlock >/dev/null; sh_ settings list secure | grep '^etesian_extra_' | sort; echo "widgets=$(pref_switch home Widgets)"; }
