@@ -3,7 +3,7 @@
 # leaves outside and the squircle fills, one a small-radius rectangle fills and the squircle leaves outside.
 unlock
 sp=$(pref_switch apps "Pull down to search" 1)
-home; for _ in 1 2 3; do sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | grep -q 'text="Torrent Player"' && break; sh_ input swipe 900 1200 100 1200 250; sleep 1.2; done
+apps_pane
 sh_ input swipe 540 300 540 2050 1200; sleep 1.5
 b=$(sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | grep -o 'class="android.widget.EditText"[^>]*' | grep -o 'bounds="[^"]*"' | head -1 | grep -o '[0-9]\+' | tr '\n' ' ')
 check "pull down opens the search field" '[ -n "$b" ]'
