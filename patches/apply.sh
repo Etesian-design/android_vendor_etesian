@@ -1,8 +1,9 @@
 #!/bin/bash
 # Re-applies Etesian's changes to upstream LineageOS projects (after a repo sync).
 set -e
-TOP="$(cd "$(dirname "$0")/../../.." && pwd)"
-for dir in "$(dirname "$0")"/*/; do
+HERE="$(cd "$(dirname "$0")" && pwd)"        # absolute: git -C below changes directory
+TOP="$(cd "$HERE/../../.." && pwd)"
+for dir in "$HERE"/*/; do
     proj=$(basename "$dir")                 # e.g. packages_apps_Dialer
     [ "$proj" = tools ] && continue        # the scripts that make some of the patches
     path="$TOP/${proj//_//}"                # -> packages/apps/Dialer
