@@ -14,10 +14,13 @@ if sh_ logcat -d -s N9VolumeTones | grep -q 'tone ringer\|tone silent'; then
 else
   music=$(sh_ "cmd media_session volume --stream 3 --get" | grep -o 'volume is [0-9]*' | grep -o '[0-9]*')
   max=$(sh_ "cmd media_session volume --stream 3 --get" | grep -o 'range \[[0-9]*\.\.[0-9]*' | grep -o '[0-9]*$')
+  # Total silence locks the media volume; alarms-only lets it move and still keeps rings and
+  # notifications quiet (nothing plays here, tones are off). The runner's mode is put back after.
+  zen=$(sh_ settings get global zen_mode); set_zen 3
   sh_ "cmd media_session volume --stream 3 --set $max" >/dev/null; sleep 0.5; sh_ logcat -c
   sh_ input keyevent VOLUME_UP; sleep 1
   check "media at max: Up again picks the max tone" "sh_ logcat -d -s N9VolumeTones | grep -q 'tone max.*(off)'"
-  sh_ "cmd media_session volume --stream 3 --set $music" >/dev/null
+  sh_ "cmd media_session volume --stream 3 --set $music" >/dev/null; set_zen "$zen"
 fi
 check "nothing played while off" "! sh_ logcat -d -s N9VolumeTones | grep 'tone' | grep -vq '(off)'"
 [ -n "$ring" ] && sh_ "cmd media_session volume --stream 2 --set $ring" >/dev/null
