@@ -135,7 +135,9 @@ class WindowDrag(
         val t = SurfaceControl.Transaction()
         apps.forEach { target ->
             val b = target.screenSpaceBounds
-            // The screen's own rounded corners, which the window keeps while it moves.
+            // The screen's own rounded corners, which the window keeps while it moves. The radius
+            // only applies within a crop (Android 17 no longer falls back to the window's bounds).
+            t.setWindowCrop(target.leash, b.width(), b.height())
             t.setCornerRadius(target.leash, cornerRadius)
             val distance = p * (if (edge == Edge.LEFT || edge == Edge.RIGHT) b.width() else b.height())
             when (edge) {
@@ -150,6 +152,7 @@ class WindowDrag(
             val scale = HOME_SCALE + (1 - HOME_SCALE) * p
             t.setScale(target.leash, scale, scale)
             t.setPosition(target.leash, b.left + b.width() * (1 - scale) / 2, b.top + b.height() * (1 - scale) / 2)
+            t.setWindowCrop(target.leash, b.width(), b.height())
             t.setCornerRadius(target.leash, cornerRadius / scale)
             t.setAlpha(target.leash, HOME_LIGHT + (1 - HOME_LIGHT) * p)
         }
