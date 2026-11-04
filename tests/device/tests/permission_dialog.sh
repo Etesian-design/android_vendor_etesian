@@ -1,10 +1,10 @@
 # N9 permission dialog (mock 15): the app's squircle icon, a light centred question and stacked N9
 # buttons (Allow blue, the rest dark). Shown by revoking the camera app's Camera permission (no picture is taken) and opening it;
-# nothing is granted or recorded (Back denies). The dialog ships in the ROM's Permission APEX
+# nothing is granted or recorded (Back denies). The dialog ships in the ROM (system or APEX)
 # (patches/packages_modules_Permission), not as an adb-installed update.
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }
 APP=org.lineageos.aperture
-check "PermissionController is the ROM's (APEX) copy" 'sh_ pm path com.android.permissioncontroller | grep -q ^package:/apex/'
+check "PermissionController is the ROM's copy, not an update in /data" 'p=$(sh_ pm path com.android.permissioncontroller); [ -n "$p" ] && ! echo "$p" | grep -q ^package:/data/'
 unlock; home
 sh_ pm revoke $APP android.permission.CAMERA 2>/dev/null; sh_ pm clear-permission-flags $APP android.permission.CAMERA user-set user-fixed 2>/dev/null
 sh_ monkey -p $APP -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 4

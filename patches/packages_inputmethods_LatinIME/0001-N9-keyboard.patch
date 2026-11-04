@@ -966,7 +966,7 @@ index 9577d0913..4f81562e1 100644
          final TypedArray a = context.obtainStyledAttributes(attrs,
                  R.styleable.SuggestionStripView, defStyle, R.style.SuggestionStripView);
 diff --git a/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java b/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
-index 1d6cd126f..93c5b6b88 100644
+index 1d6cd126f..83c8f5667 100644
 --- a/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
 +++ b/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
 @@ -75,6 +75,11 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
@@ -1145,7 +1145,17 @@ index 1d6cd126f..93c5b6b88 100644
          view.setLayoutParams(params);
      }
  
-@@ -612,6 +735,22 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -340,7 +463,8 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+         final ColorStateList tint = getToolKeyTintList();
+         chip.setTextColor(tint);
+         chip.setCompoundDrawableTintList(tint);
+-        chip.setBackgroundTintList(ColorStateList.valueOf(
++        // N9: the ends are squircle halves (n = 2.8), not the pill's semicircles.
++        chip.setBackground(new SquircleEndsDrawable(
+                 InlineSuggestionsStrip.getChipBackgroundColor(tint.getDefaultColor())));
+         chip.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                 match.getType() == ClipboardSuggestion.Type.CODE
+@@ -612,6 +736,22 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
              mListener.showImportantNoticeContents();
              return;
          }
@@ -1168,3 +1178,46 @@ index 1d6cd126f..93c5b6b88 100644
          if (view == mFloatKey) {
              mListener.toggleFloatingKeyboard();
              return;
+@@ -661,4 +801,42 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+             maybeShowImportantNoticeTitle();
+         }
+     }
++
++    /** A filled bar whose ends are the halves of a squircle (|x|^2.8 + |y|^2.8 = 1). */
++    static final class SquircleEndsDrawable extends android.graphics.drawable.Drawable {
++        private final android.graphics.Paint mPaint =
++                new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
++        private final android.graphics.Path mPath = new android.graphics.Path();
++
++        SquircleEndsDrawable(final int color) { mPaint.setColor(color); }
++
++        @Override
++        protected void onBoundsChange(final android.graphics.Rect b) {
++            mPath.reset();
++            final float r = b.height() / 2f, cy = b.exactCenterY();
++            final float left = b.left + r, right = b.right - r;
++            // Right end, top to bottom, then left end, bottom to top.
++            for (int i = 0; i <= 32; i++) {
++                final double t = -Math.PI / 2 + Math.PI * i / 32;
++                final float x = right + r * (float) superellipse(Math.cos(t));
++                final float y = cy + r * (float) superellipse(Math.sin(t));
++                if (i == 0) mPath.moveTo(x, y); else mPath.lineTo(x, y);
++            }
++            for (int i = 0; i <= 32; i++) {
++                final double t = Math.PI / 2 + Math.PI * i / 32;
++                mPath.lineTo(left + r * (float) superellipse(Math.cos(t)),
++                        cy + r * (float) superellipse(Math.sin(t)));
++            }
++            mPath.close();
++        }
++
++        private static double superellipse(final double v) {
++            return Math.signum(v) * Math.pow(Math.abs(v), 2 / 2.8);
++        }
++
++        @Override public void draw(final android.graphics.Canvas canvas) { canvas.drawPath(mPath, mPaint); }
++        @Override public void setAlpha(final int alpha) { mPaint.setAlpha(alpha); invalidateSelf(); }
++        @Override public void setColorFilter(final android.graphics.ColorFilter cf) { mPaint.setColorFilter(cf); }
++        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
++    }
+ }

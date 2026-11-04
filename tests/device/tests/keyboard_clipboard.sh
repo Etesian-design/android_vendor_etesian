@@ -16,5 +16,14 @@ sh_ input keyevent BACK; sleep 1; sh_ input tap $cx $cy; sleep 2
 w=$(wdump); shot keyboard_clipboard
 check "clipboard suggestion shown in the keyboard strip" 'echo "$w" | grep -q "$K:id/clipboard_suggestion_strip" && echo "$w" | grep -o "<node[^>]*package=\"$K\"[^>]*>" | grep -q "text=\"cliptest42\""'
 check "the N9 strip keeps attach, emoticon and Send beside it" 'echo "$w" | grep -q "$K:id/etesian_strip_attach" && echo "$w" | grep -q "$K:id/etesian_strip_emoticon" && echo "$w" | grep -q "$K:id/etesian_strip_send"'
+# N9 squircle rule: the chip's ends are squircle halves. 0.27r in from the right end, 0.75r above the middle,
+# a pill is empty (0.73^2 + 0.75^2 > 1) while an n = 2.8 squircle is filled (0.73^2.8 + 0.75^2.8 < 1).
+set -- $(echo "$w" | grep -o "<node[^>]*text=\"cliptest42\"[^>]*package=\"$K\"[^>]*>" | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' ')
+shape=$(python3 -c "
+from PIL import Image; im=Image.open('$SHOTS/keyboard_clipboard.png').convert('L'); l,t,r_,b=$1,$2,$3,$4
+r=(b-t)/2; cy=(t+b)/2; g=lambda x,y: im.getpixel((int(x),int(y)))
+body=g(r_-r, cy+r*0.9); out=g(r_+4, cy); end=g(r_-0.27*r, cy-0.75*r)
+print(int(abs(end-body) < abs(end-out)), body, out, end)")
+check "clipboard chip ends are squircle halves, not a pill ($shape)" '[ "${shape%% *}" = 1 ]'
 check "keyboard did not crash" '! crashed $K'
 sh_ input keyevent BACK; sleep 0.5; sh_ am force-stop $M
