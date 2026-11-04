@@ -40,6 +40,17 @@
             android:exported="true"
             android:permission="com.bompotis.etesian.feeds.permission.READ" />
 
+        <!-- The launcher's way into an item (Events, the Belle widgets): rebuilds the Feeds task
+             (Feeds › feed or All posts › reader) from a task of its own, see OpenActivity. -->
+        <activity
+            android:name=".OpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:permission="com.bompotis.etesian.feeds.permission.READ"
+            android:taskAffinity="com.bompotis.etesian.feeds.open"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <provider
             android:name=".FeedsProvider"
             android:authorities="com.bompotis.etesian.feeds"

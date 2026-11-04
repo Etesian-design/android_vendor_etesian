@@ -24,8 +24,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
+import android.app.Instrumentation;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,9 +54,11 @@ import java.util.WeakHashMap;
  *                 id -> onToolbarItem(id));
  * </pre>
  *
- * Call it again whenever the items change (e.g. another tab is selected). The toolbar follows
- * the activity: it is shown while the activity is in front and re-sent when it resumes. If the
- * system toolbar is unavailable ({@link #isAvailable}), draw your own bar instead.
+ * Call it again whenever the items change (e.g. another tab is selected). The bar is drawn in
+ * the activity's own window, over the navigation bar inset, so it is part of the page: it comes
+ * and goes with the page's own transitions and is in its snapshot. SystemUI is told the page
+ * draws its own bar and draws nothing there. If the toolbar is off ({@link #isAvailable}), draw
+ * your own bar instead.
  */
 public final class EtesianToolbar {
 
@@ -117,6 +127,10 @@ public final class EtesianToolbar {
             return new Item(id, iconRes, null, label, true, selected);
         }
 
+        public static Item tab(String id, Icon icon, String label, boolean selected) {
+            return new Item(id, 0, icon, label, true, selected);
+        }
+
         public Item setEnabled(boolean enabled) {
             mEnabled = enabled;
             return this;
@@ -172,6 +186,12 @@ public final class EtesianToolbar {
                         == 1;
     }
 
+    /** The bottom bar, not the side strip (which stays SystemUI's, over every app). */
+    private boolean inWindow() {
+        return isAvailable(mActivity) && Settings.Secure.getInt(mActivity.getContentResolver(),
+                "etesian_toolbar_mode", 0) != 1;
+    }
+
     /** The toolbar for [activity] (one per activity). */
     public static EtesianToolbar of(Activity activity) {
         EtesianToolbar t = sInstances.get(activity);
@@ -190,6 +210,11 @@ public final class EtesianToolbar {
     private List<Item> mItems;
     private Listener mListener;
     private boolean mRegistered;
+    private EtesianToolbarView mView;
+    /** Set by {@link #setShown}: the page slides the bar itself (full screen viewers). */
+    private Boolean mShown;
+    /** Whether the navigation bar is showing (the page's own full screen hides it). */
+    private boolean mNavVisible = true;
 
     private final BroadcastReceiver mClicks = new BroadcastReceiver() {
         @Override
@@ -213,8 +238,21 @@ public final class EtesianToolbar {
 
             @Override
             public void onActivityDestroyed(Activity a) {
-                clear();
                 sInstances.remove(a);
+                // SystemUI keeps one bar per task and activity class: when another page of the
+                // same class is still open in the task (a settings section over the main page),
+                // its bar stays; clearing here would take it away.
+                for (java.util.Map.Entry<Activity, EtesianToolbar> e : sInstances.entrySet()) {
+                    final Activity o = e.getKey();
+                    if (o != a && !o.isDestroyed() && o.getTaskId() == a.getTaskId()
+                            && o.getComponentName().equals(a.getComponentName())) {
+                        a.unregisterActivityLifecycleCallbacks(this);
+                        unregisterClicks();
+                        e.getValue().resend();
+                        return;
+                    }
+                }
+                clear();
             }
 
             @Override public void onActivityCreated(Activity a, Bundle b) {}
@@ -268,9 +306,7 @@ public final class EtesianToolbar {
         return setItems(Arrays.asList(items), listener);
     }
 
-    /** Hands the toolbar back to the user's own buttons. */
-    public void clear() {
-        mItems = null;
+    private void unregisterClicks() {
         if (mRegistered) {
             try {
                 mActivity.unregisterReceiver(mClicks);
@@ -278,12 +314,134 @@ public final class EtesianToolbar {
             }
             mRegistered = false;
         }
+    }
+
+    private void resend() {
+        if (mItems != null) send();
+    }
+
+    /** Hands the toolbar back to the user's own buttons. */
+    public void clear() {
+        mItems = null;
+        showInWindow();
+        unregisterClicks();
         mActivity.sendBroadcast(new Intent(ACTION_CLEAR).setPackage(SYSTEMUI)
                 .putExtra(EXTRA_TASK, mActivity.getTaskId())
                 .putExtra(EXTRA_COMPONENT, mActivity.getComponentName().flattenToString()));
     }
 
+    /** Draws the bar in the activity's window, or removes it when the page has none. */
+    private void showInWindow() {
+        if (!(mActivity.getWindow().getDecorView() instanceof FrameLayout)) return;
+        final FrameLayout decor = (FrameLayout) mActivity.getWindow().getDecorView();
+        if (mHidden || mItems == null || !inWindow()) {
+            if (mView != null) decor.removeView(mView);
+            mView = null;
+            return;
+        }
+        if (mView == null) {
+            mView = new EtesianToolbarView(mActivity);
+            // Over the decor's own navigation bar background, without a shadow.
+            mView.setOutlineProvider(null);
+            mView.setTranslationZ(10000f);
+            // Exactly the navigation bar inset: SystemUI keeps it the bar's height while this
+            // page is in front and drops it under the keyboard, so the bar goes with it.
+            mView.setOnApplyWindowInsetsListener((v, dispatched) -> {
+                // The window's own insets: a page that isn't edge-to-edge has the navigation bar
+                // consumed by the decor before it reaches its children.
+                final WindowInsets root = v.getRootWindowInsets();
+                final WindowInsets insets = root != null ? root : dispatched;
+                // The height even while the page hides the navigation bar (full screen), so the
+                // bar can slide out and back in whole.
+                final int h = insets.getInsetsIgnoringVisibility(
+                        WindowInsets.Type.navigationBars()).bottom;
+                final ViewGroup.LayoutParams lp = v.getLayoutParams();
+                if (lp.height != h) {
+                    lp.height = h;
+                    v.setLayoutParams(lp);
+                }
+                mNavVisible = insets.isVisible(WindowInsets.Type.navigationBars());
+                applyShown();
+                return dispatched;
+            });
+            decor.addView(mView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    EtesianToolbarView.barHeightPx(mActivity), Gravity.BOTTOM));
+            mView.requestApplyInsets();
+        }
+        applyShown();
+        mView.bind(theme(), mBack, Settings.Secure.getInt(mActivity.getContentResolver(),
+                "etesian_toolbar_back_side", 0) == 1, mItems, mListener, this::back);
+    }
+
+    /**
+     * Slides the bar out of view, down past the bottom edge, or back in, over [durationMs], as
+     * the N9's full screen viewers do with their bars (the Gallery: a tap shows the top and
+     * bottom bars, the next slides them away). From then on the page decides when it shows;
+     * otherwise it shows whenever the navigation bar does.
+     */
+    public EtesianToolbar setShown(boolean shown, long durationMs) {
+        mShown = shown;
+        if (mView != null) {
+            mView.animate().cancel();
+            mSliding = false;
+            if (durationMs <= 0 || mView.getHeight() == 0) {
+                applyShown();
+            } else {
+                mSliding = true;
+                mView.setVisibility(View.VISIBLE);
+                mView.animate().translationY(shown ? 0f : mView.getHeight())
+                        .setDuration(durationMs)
+                        .withEndAction(() -> {
+                            mSliding = false;
+                            applyShown();
+                        }).start();
+            }
+        }
+        return this;
+    }
+
+    private boolean mSliding;
+
+    /** Puts the bar where it belongs now (not while it slides). */
+    private void applyShown() {
+        if (mView == null || mSliding) return;
+        final boolean show = mView.getLayoutParams().height > 0
+                && (mShown != null ? mShown : mNavVisible);
+        mView.setTranslationY(show ? 0f : mView.getLayoutParams().height);
+        mView.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    /** The app's say, else the user's choice, else the page's theme (a dark page, a dark bar). */
+    private EtesianToolbarView.Theme theme() {
+        if ("dark".equals(mStyle)) return EtesianToolbarView.BELLE_DARK;
+        if ("light".equals(mStyle)) return EtesianToolbarView.N9_LIGHT;
+        if (Settings.Secure.getInt(mActivity.getContentResolver(), "etesian_toolbar_style", 0)
+                == 1) {
+            return EtesianToolbarView.BELLE_DARK;
+        }
+        final TypedArray a = mActivity.getTheme().obtainStyledAttributes(
+                new int[] {android.R.attr.isLightTheme});
+        final boolean light = a.getBoolean(0, true);
+        a.recycle();
+        return light ? EtesianToolbarView.N9_LIGHT : EtesianToolbarView.BELLE_DARK;
+    }
+
+    /** Back as the key: through the window, so the page's back callbacks and animation run. */
+    private void back() {
+        new Thread(() -> {
+            final Instrumentation i = new Instrumentation();
+            try {
+                i.sendKeySync(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK));
+                i.sendKeySync(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK));
+            } catch (RuntimeException e) {
+                android.util.Log.w("EtesianToolbar", "Back", e);
+            }
+        }, "EtesianToolbarBack").start();
+    }
+
     private void send() {
+        showInWindow();
         if (!mRegistered) {
             mActivity.registerReceiver(mClicks, new IntentFilter(mClickAction),
                     Context.RECEIVER_NOT_EXPORTED);
@@ -302,6 +460,8 @@ public final class EtesianToolbar {
                 .putExtra(EXTRA_BACK, mBack)
                 .putExtra("style", mStyle)
                 .putExtra("hidden", mHidden)
+                // drawn here, in the page: SystemUI draws nothing and takes no touches for it
+                .putExtra("inapp", inWindow())
                 .putParcelableArrayListExtra(EXTRA_ITEMS, items)
                 .putExtra(EXTRA_CALLBACK, callback));
     }

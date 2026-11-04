@@ -21,7 +21,9 @@ import android.view.View
  * the app with its bar (a task snapshot holds only the app's own window, not the bar).
  */
 object TaskToolbars {
-    class State(val back: Boolean, val items: List<Bundle>, val style: String?, val hidden: Boolean, val height: Int)
+    class State(val back: Boolean, val items: List<Bundle>, val style: String?, val hidden: Boolean, val height: Int,
+        /** The app draws the bar in its own window, so the snapshot already holds it. */
+        val inApp: Boolean = false)
 
     private val states = HashMap<Int, State>()
     private val listeners = mutableSetOf<(Int) -> Unit>()
@@ -42,6 +44,7 @@ object TaskToolbars {
                     i.getStringExtra("style"),
                     i.getBooleanExtra("hidden", false),
                     i.getIntExtra("height", 0),
+                    i.getBooleanExtra("inapp", false),
                 )
                 listeners.toList().forEach { it(task) }
             }
@@ -94,7 +97,7 @@ class CardBar(ctx: Context) : View(ctx) {
 
     fun bind(s: TaskToolbars.State?, dark: Boolean, screenHeight: Int) {
         this.dark = dark
-        ratio = if (s == null || s.hidden || s.height <= 0) 0f else s.height / screenHeight.toFloat()
+        ratio = if (s == null || s.hidden || s.inApp || s.height <= 0) 0f else s.height / screenHeight.toFloat()
         back = s?.back ?: true
         icons = s?.items.orEmpty().filter { it.getBoolean("enabled", true) }.map { b ->
             b.getParcelable("icon", Icon::class.java)?.loadDrawable(context)?.mutate()?.also { d ->

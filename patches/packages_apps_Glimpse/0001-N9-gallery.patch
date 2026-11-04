@@ -58,7 +58,7 @@ index e1feb1a..26a0bb3 100644
      }
  }
 diff --git a/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt b/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
-index 599b59b..70b2faa 100644
+index 599b59b..5435cee 100644
 --- a/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
 +++ b/app/src/main/java/org/lineageos/glimpse/ViewActivity.kt
 @@ -33,9 +33,11 @@ import androidx.viewpager2.widget.ViewPager2
@@ -260,7 +260,7 @@ index 599b59b..70b2faa 100644
                  }
              }
          }
-@@ -567,6 +544,151 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+@@ -567,6 +544,156 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
          )
      }
  
@@ -268,6 +268,13 @@ index 599b59b..70b2faa 100644
 +     * N9: the bars slide in over the photo from the top and bottom edges.
 +     */
 +    private fun slideBars(visible: Boolean) {
++        // The N9 toolbar is drawn in this window: it slides with the top bar, in from the
++        // bottom edge and back out the same way (opening full screen it starts out of view).
++        if (useSystemToolbar) {
++            EtesianToolbar.of(this).setShown(
++                visible, if (appBarLayout.height == 0) 0L else BARS_ANIMATION_DURATION
++            )
++        }
 +        listOf(appBarLayout to -1, bottomSheetLinearLayout to 1).forEach { (bar, direction) ->
 +            bar.animate().cancel()
 +            if (visible) {
@@ -300,11 +307,9 @@ index 599b59b..70b2faa 100644
 +            return
 +        }
 +
++        // Kept in full screen too: the bar is only slid out of view (slideBars), so nothing
++        // else (the default bar) ever shows in its place.
 +        val systemToolbar = EtesianToolbar.of(this)
-+        if (viewModel.fullscreenMode.value) {
-+            systemToolbar.clear()
-+            return
-+        }
 +
 +        val media = viewModel.displayedMedia.value
 +        val readOnly = viewModel.readOnly.value
@@ -412,7 +417,7 @@ index 599b59b..70b2faa 100644
      private fun updateSheetsHeight() {
          appBarLayout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
          bottomSheetLinearLayout.measure(
-@@ -599,6 +721,13 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
+@@ -599,6 +726,13 @@ class ViewActivity : AppCompatActivity(R.layout.activity_view) {
      companion object {
          private val LOG_TAG = ViewActivity::class.simpleName!!
  
@@ -643,6 +648,21 @@ index 3441779..9f42211 100644
      /**
       * Toggle fullscreen mode.
       */
+diff --git a/app/src/main/res/color/n9_tab_icon.xml b/app/src/main/res/color/n9_tab_icon.xml
+new file mode 100644
+index 0000000..f4052e1
+--- /dev/null
++++ b/app/src/main/res/color/n9_tab_icon.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:color="@android:color/white" android:state_checked="true" />
++    <item android:color="#FFBDBDBD" />
++</selector>
 diff --git a/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml b/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml
 index c02ccf3..04b2be4 100644
 --- a/app/src/main/res/drawable/bg_media_viewer_bottom_sheet.xml
@@ -669,6 +689,48 @@ index cacd151..04b2be4 100644
          </shape>
      </item>
  </selector>
+diff --git a/app/src/main/res/drawable/bg_n9_tab_bar.xml b/app/src/main/res/drawable/bg_n9_tab_bar.xml
+new file mode 100644
+index 0000000..49e9947
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_n9_tab_bar.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 dark toolbar: near-black vertical gradient -->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <gradient
++        android:angle="270"
++        android:endColor="#FF000000"
++        android:startColor="#FF2A2A2A" />
++</shape>
+diff --git a/app/src/main/res/drawable/bg_n9_tab_item.xml b/app/src/main/res/drawable/bg_n9_tab_item.xml
+new file mode 100644
+index 0000000..ccdc152
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_n9_tab_item.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 toolbar: the selected tab is a slightly lighter block -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true">
++        <shape android:shape="rectangle">
++            <gradient
++                android:angle="270"
++                android:endColor="#FF1C1C1C"
++                android:startColor="#FF4A4A4A" />
++        </shape>
++    </item>
++    <item android:drawable="@android:color/transparent" />
++</selector>
 diff --git a/app/src/main/res/drawable/bg_thumbnail.xml b/app/src/main/res/drawable/bg_thumbnail.xml
 index a732680..dcb9a96 100644
 --- a/app/src/main/res/drawable/bg_thumbnail.xml
@@ -681,6 +743,27 @@ index a732680..dcb9a96 100644
 +    <!-- N9: square thumbnails -->
 +    <solid android:color="#FF111111" />
  </shape>
+diff --git a/app/src/main/res/drawable/ic_menu.xml b/app/src/main/res/drawable/ic_menu.xml
+new file mode 100644
+index 0000000..8484411
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_menu.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: Material Design Authors / Google LLC
++     SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="#000000"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="@android:color/white"
++        android:pathData="M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z" />
++</vector>
 diff --git a/app/src/main/res/layout-sw600dp/fragment_main.xml b/app/src/main/res/layout-sw600dp/fragment_main.xml
 index 2d16233..fe42bac 100644
 --- a/app/src/main/res/layout-sw600dp/fragment_main.xml
@@ -778,7 +861,7 @@ index 829b08c..f8c067d 100644
          <Space
              android:layout_width="16dp"
 diff --git a/app/src/main/res/layout/album_thumbnail_view.xml b/app/src/main/res/layout/album_thumbnail_view.xml
-index b56efc5..8ea02d0 100644
+index b56efc5..e424345 100644
 --- a/app/src/main/res/layout/album_thumbnail_view.xml
 +++ b/app/src/main/res/layout/album_thumbnail_view.xml
 @@ -27,6 +27,8 @@
@@ -924,7 +1007,7 @@ index d80c0f7..0165f61 100644
 +    <color name="n9_viewer_bar">#B3000000</color>
  </resources>
 diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
-index e5f63c5..2554e63 100644
+index e5f63c5..cf1b1d3 100644
 --- a/app/src/main/res/values/strings.xml
 +++ b/app/src/main/res/values/strings.xml
 @@ -154,4 +154,8 @@
@@ -1076,81 +1159,3 @@ index daae313..1d1a527 100644
          <item name="android:listPreferredItemPaddingLeft">24dp</item>
          <item name="android:listPreferredItemPaddingStart">24dp</item>
          <item name="alertDialogTheme">@style/Theme.SettingsLib.AlertDialog</item>
-diff --git a/app/src/main/res/color/n9_tab_icon.xml b/app/src/main/res/color/n9_tab_icon.xml
-new file mode 100644
-index 0000000..f4052e1
---- /dev/null
-+++ b/app/src/main/res/color/n9_tab_icon.xml
-@@ -0,0 +1,9 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:color="@android:color/white" android:state_checked="true" />
-+    <item android:color="#FFBDBDBD" />
-+</selector>
-diff --git a/app/src/main/res/drawable/bg_n9_tab_bar.xml b/app/src/main/res/drawable/bg_n9_tab_bar.xml
-new file mode 100644
-index 0000000..49e9947
---- /dev/null
-+++ b/app/src/main/res/drawable/bg_n9_tab_bar.xml
-@@ -0,0 +1,13 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 dark toolbar: near-black vertical gradient -->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:shape="rectangle">
-+    <gradient
-+        android:angle="270"
-+        android:endColor="#FF000000"
-+        android:startColor="#FF2A2A2A" />
-+</shape>
-diff --git a/app/src/main/res/drawable/bg_n9_tab_item.xml b/app/src/main/res/drawable/bg_n9_tab_item.xml
-new file mode 100644
-index 0000000..ccdc152
---- /dev/null
-+++ b/app/src/main/res/drawable/bg_n9_tab_item.xml
-@@ -0,0 +1,17 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 toolbar: the selected tab is a slightly lighter block -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_checked="true">
-+        <shape android:shape="rectangle">
-+            <gradient
-+                android:angle="270"
-+                android:endColor="#FF1C1C1C"
-+                android:startColor="#FF4A4A4A" />
-+        </shape>
-+    </item>
-+    <item android:drawable="@android:color/transparent" />
-+</selector>
-diff --git a/app/src/main/res/drawable/ic_menu.xml b/app/src/main/res/drawable/ic_menu.xml
-new file mode 100644
-index 0000000..8484411
---- /dev/null
-+++ b/app/src/main/res/drawable/ic_menu.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: Material Design Authors / Google LLC
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="24dp"
-+    android:height="24dp"
-+    android:tint="#000000"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="@android:color/white"
-+        android:pathData="M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z" />
-+</vector>

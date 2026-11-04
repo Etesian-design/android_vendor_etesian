@@ -3,6 +3,8 @@ plugins {
 }
 
 android {
+    // The N9 toolbar library (vendor/etesian/toolbar), as the ROM build links it.
+    sourceSets["main"].java.srcDir("../../toolbar/src")
     namespace = "com.bompotis.etesian.launcher"
     compileSdk {
         version = release(37)

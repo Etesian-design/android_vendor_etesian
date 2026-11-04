@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- N9 page push: Back: the page under comes back from the left -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="false" android:zAdjustment="normal">
+    <translate
+        android:fromXDelta="-100%p" android:toXDelta="0"
+        android:duration="300"
+        android:interpolator="@android:interpolator/decelerate_cubic" />
+</set>

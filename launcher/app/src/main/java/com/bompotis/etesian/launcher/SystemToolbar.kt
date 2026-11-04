@@ -1,74 +1,41 @@
 package com.bompotis.etesian.launcher
 
 import android.app.Activity
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.drawable.Icon
-import android.os.Bundle
-import android.provider.Settings
+import com.bompotis.etesian.toolbar.EtesianToolbar
 
 /**
- * The launcher's own screens on the system N9 toolbar: the same messages the etesian-toolbar
- * library (com.bompotis.etesian.toolbar.EtesianToolbar) sends, kept here so the launcher still builds
- * outside the platform tree.
+ * The launcher's own screens on the N9 toolbar, through the etesian-toolbar library (its sources
+ * are compiled into the Gradle build too), which draws the bar in each page's own window.
  */
 class SystemToolbar(private val activity: Activity) {
     class Item(val id: String, val icon: Int, val label: String, val tab: Boolean = false, val selected: Boolean = false,
                val tint: Boolean = true, val bitmap: android.graphics.Bitmap? = null,
                /** a lone button's side: left when true, else right */ val alignStart: Boolean = false)
 
-    private val action = "com.bompotis.etesian.toolbar.CLICK.${activity.packageName}.${System.identityHashCode(activity)}"
-    private var listener: ((String) -> Unit)? = null
-    private var registered = false
-    private val clicks = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            intent.getStringExtra("id")?.let { listener?.invoke(it) }
-        }
-    }
+    private val bar get() = EtesianToolbar.of(activity)
 
-    /** [style] "dark" / "light" (null: SystemUI decides); [hidden]: no bar at all on this page. */
+    /**
+     * [style] "dark" / "light" (null: the page's theme decides); [hidden]: no bar at all on this page.
+     * The bar is drawn in this page's own window (the toolbar library), so it moves with the page.
+     */
     fun set(back: Boolean, items: List<Item>, style: String? = null, hidden: Boolean = false, onItem: (String) -> Unit) {
-        listener = onItem
-        if (!registered) {
-            activity.registerReceiver(clicks, IntentFilter(action), Context.RECEIVER_NOT_EXPORTED)
-            registered = true
+        val list = items.map {
+            val icon = if (it.bitmap != null) Icon.createWithBitmap(it.bitmap)
+                else Icon.createWithResource(activity.packageName, it.icon)
+            (if (it.tab) EtesianToolbar.Item.tab(it.id, icon, it.label, it.selected)
+                else EtesianToolbar.Item.action(it.id, icon, it.label))
+                .setTinted(it.tint).setAlignStart(it.alignStart)
         }
-        val bundles = ArrayList(items.map {
-            Bundle().apply {
-                putString("id", it.id); putString("label", it.label)
-                putParcelable("icon", if (it.bitmap != null) Icon.createWithBitmap(it.bitmap)
-                    else Icon.createWithResource(activity.packageName, it.icon))
-                putBoolean("tab", it.tab); putBoolean("selected", it.selected); putBoolean("enabled", true); putBoolean("tint", it.tint)
-                putString("align", if (it.alignStart) "start" else "end")
-            }
-        })
-        val callback = PendingIntent.getBroadcast(activity, System.identityHashCode(activity),
-            Intent(action).setPackage(activity.packageName),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
-        activity.sendBroadcast(Intent("com.bompotis.etesian.toolbar.SET").setPackage("com.android.systemui")
-            .putExtra("task", activity.taskId)
-            .putExtra("component", activity.componentName.flattenToString())
-            .putExtra("back", back)
-            .putExtra("style", style)
-            .putExtra("hidden", hidden)
-            .putParcelableArrayListExtra("items", bundles)
-            .putExtra("callback", callback))
+        bar.setStyle(when (style) { "dark" -> EtesianToolbar.STYLE_DARK; "light" -> EtesianToolbar.STYLE_LIGHT; else -> EtesianToolbar.STYLE_DEFAULT })
+            .setHidden(hidden).setBack(back).setItems(list) { onItem(it) }
     }
 
-    fun clear() {
-        if (registered) { runCatching { activity.unregisterReceiver(clicks) }; registered = false }
-        activity.sendBroadcast(Intent("com.bompotis.etesian.toolbar.CLEAR").setPackage("com.android.systemui")
-            .putExtra("task", activity.taskId)
-            .putExtra("component", activity.componentName.flattenToString()))
-    }
+    fun clear() = bar.clear()
 
     companion object {
         /** Whether the system toolbar is showing (N9 mode, toolbar on). */
-        fun available(ctx: Context) =
-            Settings.Secure.getInt(ctx.contentResolver, "etesian_gestures", 0) == 1 &&
-                Settings.Secure.getInt(ctx.contentResolver, "etesian_bottom_bar", 1) == 1
+        fun available(ctx: Context) = EtesianToolbar.isAvailable(ctx)
     }
 }
