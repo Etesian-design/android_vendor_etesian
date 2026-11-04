@@ -19,6 +19,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.ViewConfiguration
+import android.view.WindowManagerGlobal
 import com.bompotis.etesian.launcher.Platform
 import com.bompotis.etesian.launcher.Prefs
 import kotlin.math.abs
@@ -33,7 +34,7 @@ import kotlin.math.abs
 class EdgeGestures(private val ctx: Context) {
 
     enum class Edge { LEFT, RIGHT, TOP, BOTTOM }
-    enum class Action { MINIMISE, CLOSE, BACK, NONE }
+    enum class Action { MINIMISE, CLOSE, BACK, PEEK, NONE }
 
     /** Latest SystemUI state flags (notification shade, keyguard, ...). */
     @Volatile var systemUiState = 0L
@@ -60,18 +61,11 @@ class EdgeGestures(private val ctx: Context) {
     private var backHint: BackHint? = null
     private var taskId = -1
 
-    // Bottom swipe and hold: the first row of applications peeks in under the window.
-    private val holdDelay = 350L
+    // Bottom swipe (N9, the only behaviour): the first row of applications comes up under the window.
     private val main = android.os.Handler(Looper.getMainLooper())
     private var peek: AppPeek? = null
-    private var holdX = 0f
-    private var holdY = 0f
-    private var lastInward = 0f
-    private val holdCheck = Runnable {
-        if (edge == Edge.BOTTOM && drag != null && peek == null) {
-            peek = AppPeek(ctx).takeUnless { it.isEmpty }?.also { it.show(lastInward.toInt()) }
-        }
-    }
+    /** The application rests on the row, waiting for a tap (true: an icon was tapped). */
+    private var parked: ((Float, Float) -> Unit)? = null
 
     private val sideBar = SideBar(ctx) { perform(it) }
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
@@ -132,6 +126,12 @@ class EdgeGestures(private val ctx: Context) {
             if (onBar) monitor?.pilferPointers()
         }
         if (onBar) { sideBar.onTouch(e); return }
+        // Parked on the app row: every touch is the row's, and the tap ends it.
+        parked?.let { tap ->
+            if (e.actionMasked == MotionEvent.ACTION_DOWN) monitor?.pilferPointers()
+            if (e.actionMasked == MotionEvent.ACTION_UP) { parked = null; tap(e.rawX, e.rawY) }
+            return
+        }
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> onDown(e)
             MotionEvent.ACTION_MOVE -> if (edge != null) onMove(e)
@@ -143,6 +143,21 @@ class EdgeGestures(private val ctx: Context) {
 
     private val statusBarHeight = ctx.resources.getDimensionPixelSize(
         ctx.resources.getIdentifier("status_bar_height", "dimen", "android"))
+
+    /**
+     * The screen as it is now, in the input monitor's coordinates. Not our resources: home is
+     * portrait-only and its process keeps a portrait configuration, so with the phone in landscape
+     * (2026-11-04) a swipe down measured against 2160 px never got past half way and nothing closed.
+     */
+    private fun screen(): Pair<Int, Int> {
+        val mode = ctx.getSystemService(android.hardware.display.DisplayManager::class.java)
+            .getDisplay(Display.DEFAULT_DISPLAY).mode
+        val a = mode.physicalWidth; val b = mode.physicalHeight
+        val rot = runCatching { WindowManagerGlobal.getWindowManagerService()!!.defaultDisplayRotation }.getOrDefault(0)
+        return if (rot % 2 == 1) maxOf(a, b) to minOf(a, b) else minOf(a, b) to maxOf(a, b)
+    }
+    private var screenW = 0
+    private var screenH = 0
 
     /** The band under the status bar where a swipe down still closes the application. */
     private val topBand = 24 * density
@@ -157,8 +172,9 @@ class EdgeGestures(private val ctx: Context) {
 
     private fun onDown(e: MotionEvent) {
         reset()
-        val w = ctx.resources.displayMetrics.widthPixels
-        val h = ctx.resources.displayMetrics.heightPixels
+        screen().let { screenW = it.first; screenH = it.second }
+        val w = screenW
+        val h = screenH
         val x = e.rawX
         val y = e.rawY
         val n9 = n9Mode()
@@ -203,7 +219,7 @@ class EdgeGestures(private val ctx: Context) {
     private fun openStatusMenu() {
         // While recording, the red dot sits on the right of the status bar (with the system
         // icons): a tap there asks "Stop recording?" instead (approved "Recording dot").
-        if (com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > ctx.resources.displayMetrics.widthPixels / 2f) {
+        if (com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > screenW / 2f) {
             com.bompotis.etesian.launcher.Recorder.askToStop(ctx)
             return
         }
@@ -232,12 +248,7 @@ class EdgeGestures(private val ctx: Context) {
             Edge.TOP -> Action.CLOSE
             Edge.LEFT -> if (back == Prefs.BACK_LEFT) Action.BACK else Action.MINIMISE
             Edge.RIGHT -> if (back == Prefs.BACK_RIGHT) Action.BACK else Action.MINIMISE
-            Edge.BOTTOM -> when (Prefs.bottomAction(ctx)) {
-                Prefs.ACTION_BACK -> Action.BACK
-                Prefs.ACTION_CLOSE -> Action.CLOSE
-                Prefs.ACTION_NONE -> Action.NONE
-                else -> Action.MINIMISE
-            }
+            Edge.BOTTOM -> Action.PEEK
         }
     }
 
@@ -261,13 +272,13 @@ class EdgeGestures(private val ctx: Context) {
                 monitor?.pilferPointers()
                 if (action == Action.BACK) backHint = BackHint(ctx, edge!!).also { it.show(downX, downY) }
                 else drag = WindowDrag(ctx, edge!!, taskId, closing = action == Action.CLOSE).also { it.begin() }
+                if (action == Action.PEEK) peek = AppPeek(ctx).takeUnless { it.isEmpty }?.also { it.show() }
             } else if (abs(across(e)) > slop * 2 && (edge != Edge.TOP || belowBar)) {
                 reset()
             }
             return
         }
-        val travel = if (edge == Edge.LEFT || edge == Edge.RIGHT) ctx.resources.displayMetrics.widthPixels
-            else ctx.resources.displayMetrics.heightPixels
+        val travel = if (edge == Edge.LEFT || edge == Edge.RIGHT) screenW else screenH
         val progress = (d / travel).coerceIn(0f, 1f)
         drag?.update(progress, across(e))
         // Curved back: in from the side, then down.
@@ -281,16 +292,7 @@ class EdgeGestures(private val ctx: Context) {
         } else {
             backHint?.update(d)
         }
-        if (edge == Edge.BOTTOM && drag != null) {
-            peek?.hover(e.rawX, e.rawY)
-            // Restart the hold timer whenever the finger really moves.
-            if (peek == null && (abs(e.rawX - holdX) > slop || abs(e.rawY - holdY) > slop)) {
-                holdX = e.rawX; holdY = e.rawY
-                lastInward = d
-                main.removeCallbacks(holdCheck)
-                main.postDelayed(holdCheck, holdDelay)
-            }
-        }
+        if (edge == Edge.BOTTOM) peek?.hover(e.rawX, e.rawY)
     }
 
     /** While a minimise swipe could still end as Back, the chevron says so. */
@@ -325,9 +327,16 @@ class EdgeGestures(private val ctx: Context) {
         val peeked = peek
         when {
             cancelled -> { window?.cancel(); hint?.hide() }
-            peeked != null -> {
-                // Let go over an icon: open it. Elsewhere: the application stays.
-                if (peeked.launchAt(e.rawX, e.rawY)) window?.commitQuiet() else window?.cancel()
+            peeked != null && window != null -> when {
+                // Let go over an icon: open it.
+                peeked.launchAt(e.rawX, e.rawY) -> window.commitQuiet()
+                // N9: the application drops onto the row and stays there; the user has to tap an
+                // icon or the application (back to it). 2026-11-04: it sprang back instead.
+                else -> {
+                    peek = null
+                    window.settle(peeked.rowHeight / screenH.toFloat())
+                    parked = { x, y -> if (peeked.tap(x, y)) window.commitQuiet() else window.cancel() }
+                }
             }
             hint != null -> { hint.hide(); if (d > backMin) sendBack() }
             window != null -> {
@@ -351,7 +360,6 @@ class EdgeGestures(private val ctx: Context) {
         statusTap = false
         belowBar = false
         onHome = false
-        main.removeCallbacks(holdCheck)
         peek?.hide()
         peek = null
         edge = null

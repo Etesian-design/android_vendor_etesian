@@ -133,7 +133,16 @@ object Feeds {
             .putExtras(itemExtras(id, link, feedUrl))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-    /** A widget row's fill-in for [openItem]'s template; extras only, so every row has its own. */
+    /**
+     * A widget list's click template: [openItem] without extras. Intent.fillIn never replaces extras
+     * the template already has, so with them (2026-11-04: openItem("", "")) every row opened the
+     * empty item, which the app shows as the posts list.
+     */
+    fun itemTemplate(): Intent =
+        Intent().setComponent(ComponentName(PACKAGE, "$PACKAGE.OpenActivity"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** A widget row's fill-in for [itemTemplate]; extras only, so every row has its own. */
     fun itemFillIn(item: Item): Intent = Intent().putExtras(itemExtras(item.id, item.link, item.feedUrl))
 
     private fun itemExtras(id: String, link: String, feedUrl: String?) = Bundle().apply {

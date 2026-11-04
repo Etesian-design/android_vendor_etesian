@@ -17,9 +17,10 @@ import com.bompotis.etesian.launcher.Prefs
 import com.bompotis.etesian.launcher.RunningApps
 
 /**
- * N9: swipe up from the bottom and hold, and the first row of the Applications view slides up
- * into the gap under the application, each icon zooming out slightly, with a sound. Letting go
- * over an icon opens it.
+ * N9: swipe up from the bottom and the first row of the Applications view slides up into the gap
+ * under the application, each icon zooming out slightly, with a sound. Letting go over an icon
+ * opens it; letting go elsewhere parks it: the application rests on top of the row until a tap
+ * opens an icon or a tap on the application goes back to it.
  */
 class AppPeek(private val ctx: Context) {
     private val wm = ctx.getSystemService(WindowManager::class.java)
@@ -31,10 +32,13 @@ class AppPeek(private val ctx: Context) {
 
     val isEmpty get() = apps.isEmpty()
 
-    /** Shows the row in the bottom [height] pixels revealed by the swipe. */
-    fun show(height: Int) {
+    private val size = (Prefs.iconSizeDp(ctx) * density).toInt()
+    /** The strip the row sits in: the application rests on top of it. */
+    val rowHeight = size + (36 * density).toInt()
+
+    /** Shows the row at the bottom of the screen, in [rowHeight]. */
+    fun show() {
         if (apps.isEmpty()) return
-        val size = (Prefs.iconSizeDp(ctx) * density).toInt()
         val row = LinearLayout(ctx).apply { gravity = Gravity.CENTER }
         apps.forEachIndexed { i, app ->
             val icon = ImageView(ctx).apply {
@@ -49,9 +53,10 @@ class AppPeek(private val ctx: Context) {
                 .setStartDelay(i * 30L).setDuration(220).setInterpolator(DecelerateInterpolator()).start()
         }
         val frame = FrameLayout(ctx).apply {
-            addView(row, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, size, Gravity.CENTER))
+            addView(row, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, size, Gravity.BOTTOM)
+                .apply { bottomMargin = (rowHeight - size) / 2 })
         }
-        val lp = WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, height,
+        val lp = WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, rowHeight,
             WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -93,6 +98,17 @@ class AppPeek(private val ctx: Context) {
             ctx.getSystemService(LauncherApps::class.java).startMainActivity(app.component, app.user, bounds, null)
         }.onSuccess { RunningApps.touch(ctx, app.component.packageName) }
         return true
+    }
+
+    /**
+     * Stays up after the finger lifts. The edge gesture monitor sends it the next tap (its overlay
+     * window can't take touches: Android keeps secure overlays untouchable): on an icon it opens
+     * that application, anywhere else (the application above) it goes back to it.
+     */
+    fun tap(x: Float, y: Float): Boolean {
+        val opened = launchAt(x, y)
+        hide()
+        return opened
     }
 
     fun hide() {

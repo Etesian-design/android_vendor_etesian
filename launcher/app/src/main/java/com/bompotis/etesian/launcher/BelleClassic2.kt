@@ -974,7 +974,7 @@ class BelleRssWidget : AppWidgetProvider() {
                     setOnClickFillInIntent(R.id.bc_item, Feeds.itemFillIn(item))
                 }
             }
-            BelleWidgets.list(ctx, v, R.id.bc_items, R.id.bc_empty, rows, 9000 + id * 8, Feeds.openItem("", ""))
+            BelleWidgets.list(ctx, v, R.id.bc_items, R.id.bc_empty, rows, 9000 + id * 8, Feeds.itemTemplate())
             v.setOnClickPendingIntent(R.id.bc_header, BelleWidgets.activity(ctx, 9000 + id * 8 + 5, Feeds.openApp()))
             v.setOnClickPendingIntent(R.id.bc_refresh, android.app.PendingIntent.getBroadcast(ctx, 9000 + id * 8 + 6,
                 Intent(ctx, BelleRssWidget::class.java).setAction(REFRESH),

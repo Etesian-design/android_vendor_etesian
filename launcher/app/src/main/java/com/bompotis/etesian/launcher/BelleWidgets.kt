@@ -231,7 +231,7 @@ class BelleFeedsWidget : AppWidgetProvider() {
                     setOnClickFillInIntent(R.id.belle_item, Feeds.itemFillIn(item))
                 }
             }
-            BelleWidgets.list(ctx, views, R.id.belle_rows, R.id.belle_empty, rows, 21, Feeds.openItem("", ""))
+            BelleWidgets.list(ctx, views, R.id.belle_rows, R.id.belle_empty, rows, 21, Feeds.itemTemplate())
             AppWidgetManager.getInstance(ctx).updateAppWidget(ids, views)
         }
     }

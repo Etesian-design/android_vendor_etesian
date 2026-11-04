@@ -164,19 +164,21 @@ class WindowDrag(
         if (ended) return
         // Swiped in from the left edge, the window leaves to the right: the next one comes from there.
         if (!closing && (edge == Edge.LEFT || edge == Edge.RIGHT)) RestoreTransition.fromRight = edge == Edge.LEFT
+        // Close first, then show Open applications: 2026-11-04 it was the other way round, so the
+        // closed application's card stayed there, full size, as if nothing had closed.
         if (!running) {
             ended = true
-            HomeActivity.showSwitcherStill(ctx)
             if (closing) closeTask()
+            HomeActivity.showSwitcherStill(ctx)
             return
         }
         if (controller == null) { finishWhenReady = true; return }
         ended = true
         animateTo(from = progress, to = 1f) {
             finish(toHome = true)
+            if (closing) closeTask()
             // The transient launch doesn't deliver our intent; make sure home shows Open applications.
             HomeActivity.showSwitcherStill(ctx)
-            if (closing) closeTask()
         }
     }
 
@@ -191,6 +193,16 @@ class WindowDrag(
         ended = true
         if (controller == null) { finishWhenReady = true; ended = false; return }
         finish(toHome = true)
+    }
+
+    /**
+     * Rests the window at [to] (the app peek: just above the row of applications) and keeps the
+     * transition open until [commitQuiet] (an icon opened) or [cancel] (back to the application).
+     */
+    fun settle(to: Float) {
+        if (ended) return
+        if (controller == null) { progress = to; return }
+        animateTo(from = progress, to = to) { progress = to }
     }
 
     /** Lets go early: the window springs back and the app carries on. */
