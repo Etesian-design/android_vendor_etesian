@@ -32,6 +32,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -126,7 +127,9 @@ final class EtesianToolbarView extends LinearLayout {
         // N9 (measured, 480 px wide): the first and last button centres sit 44 px from the
         // edges whatever the count, the others evenly between them; a lone one sits at its side
         // (Back on its side, an app item by its alignment, default end).
-        final int cell = Math.round(getResources().getDisplayMetrics().widthPixels * 88f / 480f);
+        // Measured in portrait: scale by the short side, or landscape pushed the end buttons ~200 px in.
+        final DisplayMetrics dm = getResources().getDisplayMetrics();
+        final int cell = Math.round(Math.min(dm.widthPixels, dm.heightPixels) * 88f / 480f);
         if (all.size() == 1) {
             final View only = all.get(0);
             final boolean start = only == backButton ? !backRight

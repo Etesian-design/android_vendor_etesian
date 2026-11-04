@@ -18,6 +18,26 @@ sh_ am start -n com.android.messaging/.ui.conversationlist.ConversationListActiv
 # (2026-11-04: a page that isn't edge-to-edge got a 0 px bar, the inset consumed by the decor).
 new_msg() { dump | tr '>' '\n' | grep 'package="com.android.messaging"' | grep -i 'content-desc="Start new conversation"' | grep -o 'bounds="\[[0-9]*,[0-9]*\]' | grep -o ',[0-9]*' | tr -d ,; }
 check "Messaging: its bar is in its own window (New message at y=$(new_msg))" '[ "$(new_msg)" -gt 1900 ] 2>/dev/null'
+# 2026-11-04 (user): Back in the bar did nothing in Messaging, Gallery... (it injected a key, which
+# needs INJECT_EVENTS). A tap on it now goes back.
+back_xy() { dump | tr '>' '\n' | grep 'content-desc="Back"' | head -1 | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' '; }
+sh_ input tap 540 400; sleep 3
+before=$(top_activity)
+set -- $(back_xy)
+if [ -n "$1" ]; then sh_ input tap $((($1 + $3) / 2)) $((($2 + $4) / 2)); sleep 2; fi
+check "Messaging: Back in the bar goes back ($before -> $(top_activity))" '[ -n "$1" ] && [ "$(top_activity)" != "$before" ]'
+# 2026-11-04 (user): in landscape the end buttons sat ~200 px in from the edges.
+sh_ settings put system accelerometer_rotation 0; sh_ settings put system user_rotation 1; sleep 2
+sh_ am start -a android.settings.WIFI_SETTINGS >/dev/null; sleep 3
+bx=$(back_xy | cut -d' ' -f1)
+check "landscape: Back sits at the left edge (x=$bx)" '[ -n "$bx" ] && [ "$bx" -lt 120 ]'
+sh_ settings put system user_rotation 0; sleep 2
+# 2026-11-04: in Calendar the decor pads its children for the navigation bar, and the bar sat a
+# bar's height above the bottom edge over an empty strip (taps there did nothing).
+sh_ am start -n org.lineageos.etar/com.android.calendar.AllInOneActivity >/dev/null; sleep 3
+cal_btn_y() { dump | tr '>' '\n' | grep 'package="org.lineageos.etar"' | grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | sed 's/.*,\([0-9]*\)\]"$/\1/' | sort -n | tail -1; }
+cy=$(cal_btn_y)
+check "Calendar: its bar sits on the bottom edge (lowest button ends at y=$cy)" '[ -n "$cy" ] && [ "$cy" -gt 2080 ]'
 check "page animation is the N9 push" 'sh_ cmd overlay lookup --verbose android android:anim/activity_open_enter | grep -q "from default configuration of com.bompotis.etesian.overlay.framework"'
 
 id=$(sh_ content query --uri content://media/external/images/media --projection _id | grep -o '_id=[0-9]*' | head -1 | cut -d= -f2)
@@ -28,7 +48,10 @@ if [ -n "$id" ]; then
     check "Gallery: a tap slides its bar in, in its own window ($(back_pkg))" '[ "$(back_pkg)" = org.lineageos.glimpse ]'
     sh_ input tap 540 1000; sleep 1.5
     check "Gallery: the next tap slides it away, no bar behind it ($(back_pkg))" '[ -z "$(back_pkg)" ]'
-    sh_ input keyevent BACK; sleep 1
+    sh_ input tap 540 1000; sleep 1.5
+    set -- $(back_xy)
+    if [ -n "$1" ]; then sh_ input tap $((($1 + $3) / 2)) $((($2 + $4) / 2)); sleep 2; fi
+    check "Gallery: Back in the bar leaves the photo ($(top_activity))" '! top_activity | grep -q "org.lineageos.glimpse/.ViewActivity"' 
 else
     bad "Gallery: no photo on the phone to open"
 fi

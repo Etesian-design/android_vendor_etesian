@@ -30,7 +30,6 @@ object Prefs {
     const val GESTURES = "gestures"
     const val BACK_GESTURE = "back_gesture"
     const val CLOSE_DISTANCE = "close_distance"
-    const val BOTTOM_ACTION = "bottom_action"
 
     // Gesture choices (ROM only).
     const val GESTURES_N9 = "n9"
@@ -113,7 +112,6 @@ object Prefs {
         of(ctx).edit().putString(BACK_GESTURE, BACK_CURVED).apply()
         return BACK_CURVED
     }
-    fun bottomAction(ctx: Context) = of(ctx).getString(BOTTOM_ACTION, ACTION_MINIMISE)!!
     fun sideBarSide(ctx: Context) = of(ctx).getString(SIDEBAR_SIDE, "right")!!
     /** Bar centre as a percentage of the screen height. */
     fun sideBarPosition(ctx: Context) = of(ctx).getString(SIDEBAR_POSITION, "45")!!.toInt()

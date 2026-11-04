@@ -24,7 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
-import android.app.Instrumentation;
+import android.os.SystemClock;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -32,6 +32,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.widget.FrameLayout;
 
@@ -355,11 +356,12 @@ public final class EtesianToolbar {
                 // bar can slide out and back in whole.
                 final int h = insets.getInsetsIgnoringVisibility(
                         WindowInsets.Type.navigationBars()).bottom;
-                final ViewGroup.LayoutParams lp = v.getLayoutParams();
+                final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) v.getLayoutParams();
                 if (lp.height != h) {
                     lp.height = h;
                     v.setLayoutParams(lp);
                 }
+                fitBottom(decor);
                 mNavVisible = insets.isVisible(WindowInsets.Type.navigationBars());
                 applyShown();
                 return dispatched;
@@ -367,11 +369,24 @@ public final class EtesianToolbar {
             decor.addView(mView, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     EtesianToolbarView.barHeightPx(mActivity), Gravity.BOTTOM));
+            // The decor pads its children for the navigation bar in some apps (Calendar): the bar
+            // then sat a bar's height above the bottom, over an empty strip (2026-11-04).
+            decor.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> fitBottom(decor));
             mView.requestApplyInsets();
         }
         applyShown();
         mView.bind(theme(), mBack, Settings.Secure.getInt(mActivity.getContentResolver(),
                 "etesian_toolbar_back_side", 0) == 1, mItems, mListener, this::back);
+    }
+
+    /** Puts the bar on the window's bottom edge, under any padding the decor has. */
+    private void fitBottom(FrameLayout decor) {
+        if (mView == null) return;
+        final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mView.getLayoutParams();
+        if (lp.bottomMargin != -decor.getPaddingBottom()) {
+            lp.bottomMargin = -decor.getPaddingBottom();
+            mView.setLayoutParams(lp);
+        }
     }
 
     /**
@@ -427,17 +442,17 @@ public final class EtesianToolbar {
         return light ? EtesianToolbarView.N9_LIGHT : EtesianToolbarView.BELLE_DARK;
     }
 
-    /** Back as the key: through the window, so the page's back callbacks and animation run. */
+    /**
+     * Back as the key, into this window's own input pipeline, so the page's back callbacks and animation
+     * run as for the system Back. 2026-11-04: Instrumentation.sendKeySync needs INJECT_EVENTS, so in
+     * Messaging, Gallery... the button did nothing (SecurityException).
+     */
     private void back() {
-        new Thread(() -> {
-            final Instrumentation i = new Instrumentation();
-            try {
-                i.sendKeySync(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK));
-                i.sendKeySync(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK));
-            } catch (RuntimeException e) {
-                android.util.Log.w("EtesianToolbar", "Back", e);
-            }
-        }, "EtesianToolbarBack").start();
+        final long now = SystemClock.uptimeMillis();
+        final Window w = mActivity.getWindow();
+        w.injectInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, 0));
+        w.injectInputEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
+                KeyEvent.KEYCODE_BACK, 0));
     }
 
     private void send() {

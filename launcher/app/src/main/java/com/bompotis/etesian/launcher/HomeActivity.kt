@@ -173,8 +173,10 @@ class HomeActivity : ComponentActivity() {
         when {
             requested >= 0 -> showPage(requested, animate = resumed)
             wasEditing -> Unit
-            // Home pressed while already home: back to Applications, scrolled to the top.
-            resumed -> { showPage(PAGE_APPS); apps.scrollToTop() }
+            // Home pressed while already home: back to Applications, scrolled to the top. Android
+            // pauses us before delivering the intent, so "already home" is the window's focus, not
+            // [resumed] (2026-11-04: Home on Open applications or Events did nothing).
+            resumed || focused -> { showPage(PAGE_APPS); apps.scrollToTop() }
             // Leaving an application minimises it into Open applications, as on the N9.
             RunningApps.entries.isNotEmpty() -> showPage(PAGE_SWITCHER, animate = false)
         }
@@ -248,6 +250,14 @@ class HomeActivity : ComponentActivity() {
         N9Defaults.applyOnce(this)
         pages.getOrNull(pager.currentPage)?.second?.onShown()
         eventsShowing(true)
+    }
+
+    /** Home has the input focus: it is what's on screen, with no application or dialog over it. */
+    private var focused = false
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        focused = hasFocus
     }
 
     override fun onPause() {

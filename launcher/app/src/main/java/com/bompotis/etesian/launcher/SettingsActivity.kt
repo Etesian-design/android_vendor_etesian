@@ -548,10 +548,6 @@ class SettingsActivity : AppCompatActivity() {
                 list(bar, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
                 list(bar, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
                 list(bar, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
-                list(gestures, Prefs.BOTTOM_ACTION, "Swipe up from the bottom",
-                    arrayOf("Minimise", "Back", "Close", "Nothing"),
-                    arrayOf(Prefs.ACTION_MINIMISE, Prefs.ACTION_BACK, Prefs.ACTION_CLOSE, Prefs.ACTION_NONE),
-                    Prefs.ACTION_MINIMISE)
 
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,
