@@ -314,8 +314,9 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         section(EventsClassifier.Section.CALENDAR, agendaRows)
         // Feed: the user's RSS feeds alongside apps filed under Feed.
         val feedRows = if (Feeds.feeds(context).isEmpty()) emptyList()
-            else Feeds.items(context).take(FEED_ROWS).map { Row.FeedEntry(it) }
-                .ifEmpty { listOf(Row.Message(if (Feeds.refreshing) "Refreshing\u2026" else "No feed items yet")) }
+            else Feeds.forEvents(Feeds.items(context)).take(FEED_ROWS).map { Row.FeedEntry(it) }
+                .ifEmpty { listOf(Row.Message(if (Feeds.refreshing) "Refreshing\u2026"
+                    else if (Feeds.items(context).isNotEmpty()) "No unread feed items" else "No feed items yet")) }
         section(EventsClassifier.Section.FEED, feedRows)
         val low = bySection[EventsClassifier.Section.LOW].orEmpty()
         if (low.isNotEmpty()) {
@@ -671,7 +672,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 addView(meta, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4f) })
             }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
             setOnClickListener {
-                runCatching { context.startActivity(Feeds.openItem(id, link)) }
+                runCatching { context.startActivity(Feeds.openItem(id, link, feedUrl = null)) }
             }
         }
 

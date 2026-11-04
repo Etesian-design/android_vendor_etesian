@@ -28,6 +28,8 @@ android_app {
         "SystemUISharedLib",
         // Android extras → Share network: the Wi-Fi QR code.
         "zxing-core",
+        // The N9 toolbar drawn in each page's own window (SystemToolbar).
+        "etesian-toolbar",
     ],
     kotlincflags: ["-Xjvm-default=all"],
     // Above the Gradle/test builds, so a ROM update always replaces an installed test copy.

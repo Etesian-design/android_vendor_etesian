@@ -10,7 +10,7 @@ check "provider lists feeds" '[ "$(sh_ content query --uri content://$FEEDS/feed
 check "provider lists items" '[ "$(sh_ content query --uri content://$FEEDS/items | grep -c ^Row)" -gt 0 ]'
 check "provider state call" 'sh_ content call --uri content://$FEEDS --method state | grep -q refreshing'
 # The first item opens in the app's reader (as from Events), in the app's task.
-ID=$(sh_ content query --uri content://$FEEDS/items | head -1 | sed 's/.*, id=//')
+ID=$(sh_ content query --uri content://$FEEDS/items | head -1 | sed 's/.*, id=//; s/, read=.*//')
 sh_ am start -n $FEEDS/.ReaderActivity --es feed_item "'$ID'" >/dev/null; sleep 2
 check "reader opens in the feeds app" 'top_activity | grep -q "$FEEDS/.ReaderActivity"'
 check "reader is not in the home task" '[ "$(task_type $FEEDS/.ReaderActivity)" = standard ]'

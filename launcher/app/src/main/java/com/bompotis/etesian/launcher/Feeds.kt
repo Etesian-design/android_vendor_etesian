@@ -28,6 +28,8 @@ object Feeds {
         val link: String,
         val time: Long,
         val id: String,
+        /** Opened (or marked read) in the app: gone from Events, no orange dot on the widgets. */
+        val read: Boolean = false,
     )
 
     const val PACKAGE = "com.bompotis.etesian.feeds"
@@ -73,9 +75,10 @@ object Feeds {
                     val col = { n: String -> c.getColumnIndexOrThrow(n) }
                     val fu = col("feedUrl"); val ft = col("feedTitle"); val t = col("title"); val s = col("summary")
                     val l = col("link"); val d = col("time"); val id = col("id")
+                    val r = c.getColumnIndex("read")  // -1 from an older Feeds app
                     buildList {
                         while (c.moveToNext()) add(Item(c.getString(fu), c.getString(ft), c.getString(t),
-                            c.getString(s), c.getString(l), c.getLong(d), c.getString(id)))
+                            c.getString(s), c.getString(l), c.getLong(d), c.getString(id), r >= 0 && c.getInt(r) == 1))
                     }
                 }
             }.getOrNull().orEmpty()
@@ -94,6 +97,9 @@ object Feeds {
 
     /** Newest first, across all feeds. */
     fun items(ctx: Context): List<Item> { init(ctx); return items }
+
+    /** What the Events view lists: only the unread ones (read ones leave it; the widgets keep them). */
+    fun forEvents(items: List<Item>): List<Item> = items.filter { !it.read }
 
     /** Asks the app to refresh; with [force] false only if its last refresh is old. */
     fun refresh(ctx: Context, force: Boolean, done: (() -> Unit)? = null) {
@@ -117,11 +123,26 @@ object Feeds {
             .setComponent(ComponentName(PACKAGE, "$PACKAGE.MainActivity"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-    /** The Feeds app's reader for one item. */
-    fun openItem(id: String, link: String): Intent =
-        Intent().setComponent(ComponentName(PACKAGE, "$PACKAGE.ReaderActivity"))
-            .putExtra("feed_item", id).putExtra("link", link)
+    /**
+     * Opens one item in the app's reader. Goes through the app's OpenActivity, which rebuilds its
+     * task so back is always the same: to [feedUrl]'s posts (widgets) or All posts (Events, null).
+     * Starting the reader directly only brought an already open Feeds to the front.
+     */
+    fun openItem(id: String, link: String, feedUrl: String? = null): Intent =
+        Intent().setComponent(ComponentName(PACKAGE, "$PACKAGE.OpenActivity"))
+            .putExtras(itemExtras(id, link, feedUrl))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    /** A widget row's fill-in for [openItem]'s template; extras only, so every row has its own. */
+    fun itemFillIn(item: Item): Intent = Intent().putExtras(itemExtras(item.id, item.link, item.feedUrl))
+
+    private fun itemExtras(id: String, link: String, feedUrl: String?) = Bundle().apply {
+        putString(EXTRA_ID, id); putString(EXTRA_LINK, link); putString(EXTRA_FEED, feedUrl.orEmpty())
+    }
+
+    const val EXTRA_ID = "feed_item"
+    const val EXTRA_LINK = "link"
+    const val EXTRA_FEED = "feed"
 
     /**
      * Once: hands the launcher's own old subscriptions (prefs "feeds", key "list") to the app.

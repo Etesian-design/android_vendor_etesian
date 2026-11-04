@@ -228,7 +228,7 @@ class BelleFeedsWidget : AppWidgetProvider() {
                     val ago = if (item.time > 0) " · " + DateUtils.getRelativeTimeSpanString(item.time, System.currentTimeMillis(),
                         DateUtils.MINUTE_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE) else ""
                     setTextViewText(R.id.belle_sub, item.feedTitle + ago)
-                    setOnClickFillInIntent(R.id.belle_item, Intent().putExtra("feed_item", item.id).putExtra("link", item.link))
+                    setOnClickFillInIntent(R.id.belle_item, Feeds.itemFillIn(item))
                 }
             }
             BelleWidgets.list(ctx, views, R.id.belle_rows, R.id.belle_empty, rows, 21, Feeds.openItem("", ""))

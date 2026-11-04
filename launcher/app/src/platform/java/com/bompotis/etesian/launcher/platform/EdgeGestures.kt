@@ -144,6 +144,11 @@ class EdgeGestures(private val ctx: Context) {
     private val statusBarHeight = ctx.resources.getDimensionPixelSize(
         ctx.resources.getIdentifier("status_bar_height", "dimen", "android"))
 
+    /** The band under the status bar where a swipe down still closes the application. */
+    private val topBand = 24 * density
+    /** The touch started in that band (not on the status bar itself). */
+    private var belowBar = false
+
     /** True while a touch on the status bar might still turn out to be a tap. */
     private var statusTap = false
     private var downTime = 0L
@@ -160,6 +165,9 @@ class EdgeGestures(private val ctx: Context) {
         val candidate = when {
             // N9: the whole status bar belongs to Etesian; no notification shade.
             n9 && y < statusBarHeight -> Edge.TOP
+            // A thumb coming in from the top bezel is often first seen just under the status
+            // bar: a clearly downward swipe from there still closes the application.
+            n9 && y < statusBarHeight + topBand && x >= edgeWidth && x <= w - edgeWidth -> Edge.TOP
             x < edgeWidth -> Edge.LEFT
             x > w - edgeWidth -> Edge.RIGHT
             y > h - edgeWidth -> Edge.BOTTOM
@@ -176,12 +184,15 @@ class EdgeGestures(private val ctx: Context) {
         val top = runCatching { ActivityTaskManager.getService().focusedRootTaskInfo }.getOrNull()
         onHome = top == null || top.activityType == WindowConfiguration.ACTIVITY_TYPE_HOME
         // Nothing to minimise on the home screen itself; only the status bar still matters there.
-        if (onHome && candidate != Edge.TOP) return
+        if (onHome && (candidate != Edge.TOP || y >= statusBarHeight)) return
         taskId = top?.childTaskIds?.lastOrNull() ?: top?.taskId ?: -1
         edge = candidate
-        statusTap = candidate == Edge.TOP
+        // Under the status bar the touch stays the app's (a tap, a sideways scroll) until it
+        // turns out to be a swipe down (onMove).
+        belowBar = candidate == Edge.TOP && y >= statusBarHeight
+        statusTap = candidate == Edge.TOP && !belowBar
         // N9: nothing on the status bar reaches Android's shade, not even a long press.
-        if (candidate == Edge.TOP) monitor?.pilferPointers()
+        if (candidate == Edge.TOP && !belowBar) monitor?.pilferPointers()
         downTime = e.eventTime
         downX = x
         downY = y
@@ -250,7 +261,7 @@ class EdgeGestures(private val ctx: Context) {
                 monitor?.pilferPointers()
                 if (action == Action.BACK) backHint = BackHint(ctx, edge!!).also { it.show(downX, downY) }
                 else drag = WindowDrag(ctx, edge!!, taskId, closing = action == Action.CLOSE).also { it.begin() }
-            } else if (abs(across(e)) > slop * 2 && edge != Edge.TOP) {
+            } else if (abs(across(e)) > slop * 2 && (edge != Edge.TOP || belowBar)) {
                 reset()
             }
             return
@@ -338,6 +349,7 @@ class EdgeGestures(private val ctx: Context) {
     private fun reset() {
         Platform.edgeGestureActive = false
         statusTap = false
+        belowBar = false
         onHome = false
         main.removeCallbacks(holdCheck)
         peek?.hide()

@@ -969,7 +969,9 @@ class BelleRssWidget : AppWidgetProvider() {
             val rows = items.map { item ->
                 RemoteViews(ctx.packageName, R.layout.bc_rss_item).apply {
                     setTextViewText(R.id.bc_title, item.title)
-                    setOnClickFillInIntent(R.id.bc_item, Intent().putExtra("feed_item", item.id).putExtra("link", item.link))
+                    // The orange dot only while unread; the row itself stays.
+                    setViewVisibility(R.id.bc_new, if (item.read) android.view.View.INVISIBLE else android.view.View.VISIBLE)
+                    setOnClickFillInIntent(R.id.bc_item, Feeds.itemFillIn(item))
                 }
             }
             BelleWidgets.list(ctx, v, R.id.bc_items, R.id.bc_empty, rows, 9000 + id * 8, Feeds.openItem("", ""))
