@@ -1,7 +1,8 @@
 #!/bin/bash
 # "Bring your own N9 files": copies the N9's font and tones from a copy of an N9's
-# filesystem into vendor/harmattan-n9, which the build then picks up. Nokia's files are
-# never part of this repository; each user supplies them from their own N9.
+# filesystem into vendor/harmattan-n9, a local folder that etesian.mk includes only if it
+# exists. Nokia's files are never part of this repository or of published builds; each
+# developer supplies them from their own N9.
 #
 #   import.sh /path/to/n9-root      (a directory holding the N9's usr/share/...)
 set -e
