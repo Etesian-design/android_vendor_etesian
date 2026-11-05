@@ -33,10 +33,18 @@ index 0b10e7e..660aad6 100644
      }
  }
 diff --git a/app/src/main/java/org/lineageos/jelly/MainActivity.kt b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
-index ac52c8e..8f20e8c 100644
+index ac52c8e..ea26c22 100644
 --- a/app/src/main/java/org/lineageos/jelly/MainActivity.kt
 +++ b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
-@@ -69,6 +69,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
+@@ -30,6 +30,7 @@ import android.os.Handler
+ import android.os.IBinder
+ import android.os.Looper
+ import android.os.ResultReceiver
++import android.os.SystemClock
+ import android.print.PrintAttributes
+ import android.print.PrintManager
+ import android.text.TextUtils
+@@ -69,6 +70,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
  import com.google.android.material.snackbar.Snackbar
  import kotlinx.coroutines.flow.collectLatest
  import kotlinx.coroutines.launch
@@ -44,7 +52,7 @@ index ac52c8e..8f20e8c 100644
  import org.lineageos.jelly.ext.buildShareIntent
  import org.lineageos.jelly.favorite.FavoriteActivity
  import org.lineageos.jelly.history.HistoryActivity
-@@ -78,6 +79,7 @@ import org.lineageos.jelly.shortcut.BackgroundShortcut
+@@ -78,6 +80,7 @@ import org.lineageos.jelly.shortcut.BackgroundShortcut
  import org.lineageos.jelly.shortcut.BackgroundShortcutActivity
  import org.lineageos.jelly.shortcut.BackgroundShortcutService
  import org.lineageos.jelly.ui.MenuDialog
@@ -52,7 +60,7 @@ index ac52c8e..8f20e8c 100644
  import org.lineageos.jelly.ui.UrlBarLayout
  import org.lineageos.jelly.utils.IntentUtils
  import org.lineageos.jelly.utils.PermissionsUtils
-@@ -101,6 +103,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -101,6 +104,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
      private val favoritesViewModel: FavoriteViewModel by viewModels()
      private val suggestionProviderViewModel: SuggestionProviderViewModel by viewModels()
  
@@ -62,7 +70,7 @@ index ac52c8e..8f20e8c 100644
      // Views
      private val appBarLayout by lazy { findViewById<AppBarLayout>(R.id.appBarLayout) }
      private val constraintLayout by lazy { findViewById<ConstraintLayout>(R.id.constraintLayout) }
-@@ -351,6 +356,14 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -351,6 +357,14 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
              menuDialog.showAsDropdownMenu(urlBarLayout, sharedPreferencesExt.reachModeEnabled)
          }
  
@@ -77,7 +85,7 @@ index ac52c8e..8f20e8c 100644
          CookieManager.getInstance()
              .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
  
-@@ -432,6 +445,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -432,6 +446,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
      override fun onResume() {
          super.onResume()
          if (backgroundShortcutId == null) webView.onResume()
@@ -85,7 +93,7 @@ index ac52c8e..8f20e8c 100644
          CookieManager.getInstance()
              .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
          if (sharedPreferencesExt.lookLockEnabled) {
-@@ -477,14 +491,147 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -477,14 +492,177 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
          if (urlBarLayout.url == null) urlBarLayout.url = webView.url
          webView.parent?.let { ViewGroup::class.cast(it).removeView(webView) }
          constraintLayout.addView(webView)
@@ -209,13 +217,39 @@ index ac52c8e..8f20e8c 100644
 +            ) {
 +                return@setOnScrollChangeListener
 +            }
++            // Hiding or showing the bar resizes the page, and the page's own scroll fix-up
++            // after that is not the user scrolling (2026-11-05: it read as a scroll back up,
++            // so the bar flashed hidden/shown every frame).
++            if (SystemClock.uptimeMillis() < barsSettleUntil) {
++                return@setOnScrollChangeListener
++            }
 +
 +            val dy = scrollY - oldScrollY
++            // Distance travelled in one direction, not the speed of one step: a slow scroll
++            // hides the bar too, and a small wobble does not bring it back.
++            barsTravel = if (dy != 0 && (dy > 0) != (barsTravel > 0)) dy else barsTravel + dy
++            // The page keeps its text still when the bar goes by scrolling back the bar's height,
++            // so hiding waits until two bar heights down: just past one, that left it at the very
++            // top, which showed the bar again (landscape flashed until well down the page).
 +            when {
-+                scrollY <= 0 || dy < -BARS_SCROLL_THRESHOLD -> showBars()
-+                dy > BARS_SCROLL_THRESHOLD && scrollY > appBarLayout.height -> hideBars()
++                scrollY <= 0 && dy <= 0 -> showBars()
++                barsTravel < -appBarLayout.height / 2 -> showBars()
++                barsTravel > appBarLayout.height && scrollY > 2 * appBarLayout.height -> hideBars()
 +            }
 +        }
++    }
++
++    /** Distance scrolled in the current direction (down positive). */
++    private var barsTravel = 0
++
++    /** Until when the page is still settling after the bar was hidden or shown. */
++    private var barsSettleUntil = 0L
++
++    private fun settleBars() {
++        barsTravel = 0
++        // The page's fix-up comes in steps over a few frames (in landscape a second one
++        // ~50 ms later, against the finger), so a short while rather than the next frame.
++        barsSettleUntil = SystemClock.uptimeMillis() + BARS_SETTLE_MS
 +    }
 +
 +    private fun showBars() {
@@ -223,6 +257,8 @@ index ac52c8e..8f20e8c 100644
 +            return
 +        }
 +        appBarLayout.isVisible = true
++        settleBars()
++        Log.d(TAG, "bars shown") // counted by the device test browser_bar_scroll
 +    }
 +
 +    private fun hideBars() {
@@ -230,12 +266,14 @@ index ac52c8e..8f20e8c 100644
 +            return
 +        }
 +        appBarLayout.isVisible = false
++        settleBars()
++        Log.d(TAG, "bars hidden")
 +    }
 +
      private fun registerShortcuts() {
          shortcutManager.dynamicShortcuts = listOf(
              ShortcutInfo.Builder(this, "new_incognito_tab_shortcut")
-@@ -501,6 +648,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -501,6 +679,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
      }
  
      private fun showSearch() {
@@ -243,7 +281,7 @@ index ac52c8e..8f20e8c 100644
          urlBarLayout.currentMode = UrlBarLayout.UrlBarMode.SEARCH
      }
  
-@@ -670,6 +818,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -670,6 +849,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
              urlIcon = it.config?.let { config ->
                  it.copy(config, true)
              }
@@ -253,15 +291,17 @@ index ac52c8e..8f20e8c 100644
              updateTaskDescription()
              if (!it.isRecycled) {
                  it.recycle()
-@@ -907,6 +1058,11 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -905,8 +1087,13 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+ 
+     companion object {
          private val TAG = MainActivity::class.java.simpleName
++        private const val BARS_SETTLE_MS = 300L
          private const val MANIFEST_DISPLAY = "manifest_display"
          private const val MANIFEST_THEME_COLOR = "manifest_theme_color"
 +        private const val TOOLBAR_STOP = "stop"
 +        private const val TOOLBAR_REFRESH = "refresh"
 +        private const val TOOLBAR_FAVORITES = "favorites"
 +        private const val TOOLBAR_MENU = "menu"
-+        private const val BARS_SCROLL_THRESHOLD = 12
          private val ALLOWED_FULLSCREEN_PWA_VALUES = arrayOf("fullscreen", "standalone")
      }
  }
