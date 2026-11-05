@@ -58,6 +58,85 @@ if [ -n "$b" ] && top_activity | grep -q $M; then
   check "counter always shown as 160(1) style" 'wdump | grep -o "<node[^>]*id/etesian_strip_counter\"[^>]*>" | grep -q "text=\"[0-9]*([0-9]*)\""'
   ime_up && { sh_ input keyevent BACK; sleep 1.5; }
 fi
+# 2026-11-05, captured on the N9: received messages are cyan on the RIGHT, what you sent is white on the LEFT,
+# on a flat light grey. A received and a sent SMS for a fictional number, removed again afterwards.
+N=5550123; now=$(( $(date +%s) * 1000 ))
+adb root >/dev/null 2>&1; sleep 1
+sh_ appops set com.android.shell WRITE_SMS allow   # writes from the shell are dropped silently otherwise
+sh_ "content insert --uri content://sms --bind address:s:$N --bind body:s:'Received test message' --bind type:i:1 --bind read:i:1 --bind date:l:$((now - 60000))"
+sh_ "content insert --uri content://sms --bind address:s:$N --bind body:s:'Sent test message' --bind type:i:2 --bind read:i:1 --bind date:l:$now"
+sh_ am force-stop $M; sh_ am start -a android.intent.action.SENDTO -d "smsto:$N" -p $M >/dev/null; sleep 4
+ime_up && { sh_ input keyevent BACK; sleep 1.5; }
+adb exec-out screencap -p > ${SHOTS:-/tmp}/m-sides.png; dump > /tmp/m-sides.xml
+sides=$($PY - "${SHOTS:-/tmp}/m-sides.png" <<'PYEOF'
+import re, sys
+from PIL import Image
+x = open('/tmp/m-sides.xml').read(); im = Image.open(sys.argv[1]).convert('RGB'); W = im.size[0]
+out = []
+for who, text in (('in', 'Received test message'), ('out', 'Sent test message')):
+    m = re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % text, x)
+    if not m: out.append(who + ':missing'); continue
+    x1, y1, x2, y2 = map(int, m.groups())
+    side = 'right' if (x1 + x2) / 2 > W / 2 else 'left'
+    r, g, b = im.getpixel((x2 + 4 if who == 'in' else x1 - 4, (y1 + y2) // 2))   # just beside the text, inside the bubble
+    colour = 'cyan' if b > 150 and r < 90 else 'white' if min(r, g, b) > 225 else '#%02x%02x%02x' % (r, g, b)
+    out.append('%s:%s:%s' % (who, side, colour))
+icons = [tuple(map(int, m.groups())) for m in re.finditer(r'id/conversation_icon"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)]
+texts = {t: tuple(map(int, m.groups())) for t in ('Received test message', 'Sent test message')
+         for m in [re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % t, x)] if m}
+for who, t in (('in', 'Received test message'), ('out', 'Sent test message')):
+    if t not in texts: continue
+    ty = (texts[t][1] + texts[t][3]) / 2
+    row = [i for i in icons if i[1] - 120 <= ty <= i[3] + 120]
+    if row: out.append('%sicon:%s' % (who, 'right' if (row[0][0] + row[0][2]) / 2 > W / 2 else 'left'))
+r, g, b = im.getpixel((W // 2, 400))
+out.append('bg:#%02x%02x%02x' % (r, g, b))
+print(' '.join(out))
+PYEOF
+)
+echo "    $sides"
+check "received message: cyan on the right" 'echo "$sides" | grep -q "in:right:cyan"'
+check "sent message: white on the left" 'echo "$sides" | grep -q "out:left:white"'
+check "pictures go with their messages (received right, sent left)" 'echo "$sides" | grep -q "inicon:right" && echo "$sides" | grep -q "outicon:left"'
+check "conversation background: flat light grey" 'echo "$sides" | grep -qi "bg:#dee2e6\|bg:#dde1e5\|bg:#dfe3e7"'
+sh_ content delete --uri content://sms --where "address='$N'" >/dev/null
+# A group (two fictional senders): received messages on the LEFT next to their sender's picture, the tail
+# pointing at it; what you sent on the right.
+G1=5550124; G2=5550125
+gt=$(sh_ "content query --uri 'content://mms-sms/threadID?recipient=$G1&recipient=$G2'" | grep -o '_id=[0-9]*' | cut -d= -f2)
+sh_ "content insert --uri content://sms --bind thread_id:l:$gt --bind address:s:$G1 --bind body:s:'Group hello from one' --bind type:i:1 --bind read:i:1 --bind date:l:$((now - 30000))"
+sh_ "content insert --uri content://sms --bind thread_id:l:$gt --bind address:s:$G2 --bind body:s:'Group hello from two' --bind type:i:1 --bind read:i:1 --bind date:l:$((now - 20000))"
+sh_ "content insert --uri content://sms --bind thread_id:l:$gt --bind address:s:$G1 --bind body:s:'Group reply sent' --bind type:i:2 --bind read:i:1 --bind date:l:$((now - 10000))"
+sh_ am force-stop $M; sh_ "am start -a android.intent.action.SENDTO -d 'smsto:$G1,$G2' -p $M" >/dev/null; sleep 4
+ime_up && { sh_ input keyevent BACK; sleep 1.5; }
+adb exec-out screencap -p > ${SHOTS:-/tmp}/m-group.png; dump > /tmp/m-group.xml
+group=$($PY - "${SHOTS:-/tmp}/m-group.png" <<'PYEOF'
+import re, sys
+from PIL import Image
+x = open('/tmp/m-group.xml').read(); im = Image.open(sys.argv[1]).convert('RGB'); W = im.size[0]
+box = lambda m: tuple(map(int, m.groups()))
+icons = [box(m) for m in re.finditer(r'id/conversation_icon"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)]
+out = []
+for who, t in (('in1', 'Group hello from one'), ('in2', 'Group hello from two'), ('out', 'Group reply sent')):
+    m = re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % t, x)
+    if not m: out.append(who + ':missing'); continue
+    x1, y1, x2, y2 = box(m); side = 'right' if (x1 + x2) / 2 > W / 2 else 'left'
+    row = [i for i in icons if i[1] - 120 <= (y1 + y2) / 2 <= i[3] + 120]
+    pic = ('right' if (row[0][0] + row[0][2]) / 2 > W / 2 else 'left') if row else 'none'
+    # Received: the tail at the top left points at the picture (cyan just right of the picture, at the top).
+    tail = ''
+    if who != 'out' and row:
+        px = [im.getpixel((xx, row[0][1] + 4)) for xx in range(row[0][2], row[0][2] + 40)]   # across the gap
+        tail = ':tail' if any(b > 150 and r < 90 for r, g, b in px) else ':notail'
+    out.append('%s:%s:pic-%s%s' % (who, side, pic, tail))
+print(' '.join(out))
+PYEOF
+)
+echo "    $group"
+check "group: received messages on the left with their sender's picture" 'echo "$group" | grep -q "in1:left:pic-left" && echo "$group" | grep -q "in2:left:pic-left"'
+check "group: the tail points at the picture" 'echo "$group" | grep -q "in1:left:pic-left:tail"'
+check "group: what you sent on the right" 'echo "$group" | grep -q "out:right"'
+sh_ content delete --uri content://sms --where "thread_id=$gt" >/dev/null; sh_ appops set com.android.shell WRITE_SMS default
 check "messaging did not crash" '! crashed com.android.messaging'
 sh_ am force-stop $M
 # New message to a test number: blue chip, "155(1)"-style counter, black Send with the word.

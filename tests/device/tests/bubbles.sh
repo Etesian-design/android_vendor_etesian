@@ -1,19 +1,19 @@
-# Settings → "Notification bubbles over apps" (mock 08, 13, 16): instead of the heads-up, the
+# Settings → Events and notifications → Over apps, style Card (mock 08, 13, 16): instead of the heads-up, the
 # lock-screen card floats under the status bar; tap opens, swipe up dismisses. Also used for
-# "App pinned". Off: the stock heads-up. Silent: the test channel has no sound.
+# "App pinned". Android: the stock heads-up. Silent: the test channel has no sound. (Other styles: notif_over_styles.sh)
 SRC=/home/memphisx/android/lineage/frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt
 check "EtesianBubble.kt exists" '[ -f $SRC ]'
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }
 bubble_shown() { sh_ dumpsys window windows | grep -q "EtesianBubble"; }
 post() { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind ${1:-message} >/dev/null; }
 sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
-old=$(sh_ settings get secure etesian_extra_bubbles)
+old=$(sh_ settings get secure etesian_notif_over)
 peeks_on
 unlock; home
 sh_ am start -n $LAUNCHER/.SettingsActivity >/dev/null; sleep 2
-sh_ settings put secure etesian_extra_bubbles 1
+sh_ settings put secure etesian_notif_over card
 post; sleep 2.5
-check "on: bubble window shown" 'bubble_shown'
+check "card: bubble window shown" 'bubble_shown'
 shot bubble_message
 # The bubble is not in the accessibility tree; check it is drawn: bright text on the dark card.
 check "bubble card drawn under the status bar" '[ $(pixel 900 180) -lt 60 ]'
@@ -49,11 +49,11 @@ check "screenshot bubble offers Share and Edit, square thumb (mock 13; the bubbl
 shot bubble_screenshot
 sh_ input swipe 540 230 540 20 200; sleep 1
 [ -n "$sysvol" ] && sh_ cmd media_session volume --stream 1 --set $sysvol >/dev/null 2>&1
-sh_ settings put secure etesian_extra_bubbles 0; home
+sh_ settings put secure etesian_notif_over android; home
 post; sleep 1.2
-check "off: no bubble" '! bubble_shown'
+check "android: no bubble" '! bubble_shown'
 post cancel
-[ "$old" = null ] && sh_ settings delete secure etesian_extra_bubbles >/dev/null || sh_ settings put secure etesian_extra_bubbles "$old"
+[ "$old" = null ] && sh_ settings delete secure etesian_notif_over >/dev/null || sh_ settings put secure etesian_notif_over "$old"
 check "systemui did not crash" '! crashed com.android.systemui'
 home
 peeks_off

@@ -104,6 +104,15 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
         p.shader = null
     }
 
+    /** A bubble with squircle-half ends (n = 2.8), [h] tall, from [left] to [right]. */
+    private fun ends(c: Canvas, left: Float, top: Float, right: Float, h: Float, color: Int) {
+        p.shader = null; p.style = Paint.Style.FILL; p.color = color
+        val path = IconFactory.superellipse(h, 2.8).apply { offset(left, top) }
+        path.op(IconFactory.superellipse(h, 2.8).apply { offset(right - h, top) }, Path.Op.UNION)
+        path.op(Path().apply { addRect(RectF(left + h / 2, top, right - h / 2, top + h), Path.Direction.CW) }, Path.Op.UNION)
+        c.drawPath(path, p)
+    }
+
     private fun bar(c: Canvas, x: Float, y: Float, bw: Float, bh: Float, color: Int, r: Float = 3f) {
         p.shader = null; p.style = Paint.Style.FILL; p.color = color
         c.drawRoundRect(RectF(x, y, x + bw, y + bh), r * d, r * d, p)
@@ -243,20 +252,46 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
         }
         y = card(c, y, 0xFFE6007E.toInt(), "Mail", "Your order has shipped")
         if (on(Extras.GHOST_ROWS)) card(c, y, 0xFF8C8C8C.toInt(), "Calendar", "Dentist moved", 110, small = true)
-        // Over an app: a bubble just under the status bar, and the "Copied" bubble.
-        if (on(Extras.BUBBLES) || on(Extras.COPIED)) {
-            val bx = x0 + w * .52f; val bw = w * .45f
-            bar(c, bx, y0 + 6 * d, bw, 80 * d, 0xFFF2F2F2.toInt(), 6f)
-            text(c, "In an app", bx + 8 * d, y0 + 20 * d, 9f, 0xFF8C8C8C.toInt())
-            if (on(Extras.BUBBLES)) {
-                bar(c, bx + 6 * d, y0 + 26 * d, bw - 12 * d, 24 * d, 0xE0141414.toInt(), 5f)
-                squircle(c, bx + 10 * d, y0 + 30 * d, 16 * d, 0xFF35B34A.toInt())
-                text(c, "Anna: Lunch?", bx + 31 * d, y0 + 41.5f * d, 9f, bold = true)
+        // Over an app (Over apps): the chosen style on a light app, and the "Copied" bubble.
+        val bx = x0 + w * .52f; val bw = w * .45f
+        bar(c, bx, y0 + 6 * d, bw, 80 * d, 0xFFF2F2F2.toInt(), 6f)
+        bar(c, bx, y0 + 6 * d, bw, 9 * d, 0xFF000000.toInt(), 0f)
+        text(c, "In an app", bx + 8 * d, y0 + 30 * d, 9f, 0xFF8C8C8C.toInt())
+        val green = 0xFF35B34A.toInt()
+        when (NotifOver.style(context)) {
+            "n9" -> {   // one line over the status bar
+                bar(c, bx, y0 + 6 * d, bw, 9 * d, 0xFF000000.toInt(), 0f)
+                text(c, "Anna  Are we still on for lu", bx + 4 * d, y0 + 13.5f * d, 7f, bold = true)
             }
-            if (on(Extras.COPIED)) {
-                bar(c, bx + bw / 2 - 30 * d, y0 + 58 * d, 60 * d, 18 * d, 0xE0141414.toInt(), 9f)
-                text(c, "Copied", bx + bw / 2, y0 + 70.5f * d, 9f, align = Paint.Align.CENTER)
+            "belle" -> {   // a strip across the top, over the status bar
+                bar(c, bx, y0 + 6 * d, bw, 26 * d, NotifOver.shadeAlpha(context) shl 24, 0f)
+                squircle(c, bx + 5 * d, y0 + 10 * d, 16 * d, green)
+                text(c, "Anna", bx + 26 * d, y0 + 18 * d, 8f, bold = true)
+                text(c, "Lunch?", bx + 26 * d, y0 + 28 * d, 8f)
             }
+            "colour" -> {   // squircle-half ends in the chosen colour
+                val col = when (val v = NotifOver.colour(context)) {
+                    "app" -> green
+                    "system" -> context.getColor(android.R.color.system_accent1_500)
+                    else -> android.graphics.Color.parseColor(v)
+                }
+                ends(c, bx + 5 * d, y0 + 36 * d, bx + bw - 5 * d, 22 * d, col)
+                text(c, "Anna: Lunch?", bx + 15 * d, y0 + 50.5f * d, 9f, bold = true)
+            }
+            "android" -> {   // Android's own pop-up
+                bar(c, bx + 4 * d, y0 + 36 * d, bw - 8 * d, 30 * d, 0xFFFFFFFF.toInt(), 6f)
+                text(c, "Anna: Lunch?", bx + 10 * d, y0 + 48 * d, 9f, 0xFF1D1B20.toInt(), bold = true)
+                text(c, "Reply   Mark as read", bx + 10 * d, y0 + 61 * d, 8f, 0xFF6750A4.toInt(), bold = true)
+            }
+            else -> {   // the lock screen card under the status bar
+                bar(c, bx + 6 * d, y0 + 36 * d, bw - 12 * d, 24 * d, 0xE0141414.toInt(), 5f)
+                squircle(c, bx + 10 * d, y0 + 40 * d, 16 * d, green)
+                text(c, "Anna: Lunch?", bx + 31 * d, y0 + 51.5f * d, 9f, bold = true)
+            }
+        }
+        if (on(Extras.COPIED)) {
+            ends(c, bx + bw / 2 - 30 * d, y0 + 66 * d, bx + bw / 2 + 30 * d, 16 * d, 0xE0141414.toInt())
+            text(c, "Copied", bx + bw / 2, y0 + 77.5f * d, 9f, align = Paint.Align.CENTER)
         }
     }
 

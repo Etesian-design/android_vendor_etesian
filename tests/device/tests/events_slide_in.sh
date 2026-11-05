@@ -7,10 +7,10 @@ bubble_shown() { sh_ dumpsys window windows | grep -q "EtesianBubble"; }
 post() { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind ${1:-message} >/dev/null; }
 events_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = events ] && break; sh_ input swipe 1000 1700 100 1700 300; sleep 1.5; done; sleep 1; }
 apps_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = apps ] && break; sh_ input swipe 100 1700 1000 1700 300; sleep 1.5; done; sleep 1; }
-old=$(sh_ settings get secure etesian_extra_bubbles)
+old=$(sh_ settings get secure etesian_notif_over)
 peeks_on
 sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
-sh_ settings put secure etesian_extra_bubbles 1
+sh_ settings put secure etesian_notif_over card
 post cancel; unlock
 events_pane
 # Slow the animations 10x so the phone's own frame grabs catch the slide; put back below.
@@ -51,7 +51,7 @@ check "Applications view: flag cleared" '[ "$(sh_ settings get secure etesian_ev
 sleep 3; post; sleep 2
 check "Applications view: bubble as before" 'bubble_shown'
 sh_ input swipe 540 230 540 20 200; sleep 1; post cancel
-[ "$old" = null ] && sh_ settings delete secure etesian_extra_bubbles >/dev/null || sh_ settings put secure etesian_extra_bubbles "$old"
+[ "$old" = null ] && sh_ settings delete secure etesian_notif_over >/dev/null || sh_ settings put secure etesian_notif_over "$old"
 sh_ rm -rf /sdcard/slide
 check "launcher did not crash" '! crashed $LAUNCHER'
 check "systemui did not crash" '! crashed com.android.systemui'

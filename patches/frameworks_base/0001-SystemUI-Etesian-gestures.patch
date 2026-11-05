@@ -6014,10 +6014,10 @@ index 513611c04871..e419c0571d72 100644
          mNormalRippleColor = mContext.getColor(
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt
 new file mode 100644
-index 000000000000..489c459716b4
+index 000000000000..76b0e9d79cd2
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianBubble.kt
-@@ -0,0 +1,243 @@
+@@ -0,0 +1,283 @@
 +/*
 + * Copyright (C) 2026 The LineageOS Project
 + *
@@ -6054,13 +6054,12 @@ index 000000000000..489c459716b4
 +import kotlin.math.abs
 +
 +/**
-+ * Etesian (Android extras → "Notification bubbles over apps", etesian_extra_bubbles): instead
-+ * of the Android heads-up, the lock screen's notification card floats just below the status bar.
-+ * Tap opens it, a swipe up dismisses it; it has no buttons. Also used for "Screenshot saved" and
-+ * "App pinned". Off (the default): the stock behaviour everywhere.
++ * Etesian: notifications over apps, in the style chosen in Settings → Events and notifications →
++ * Over apps (EtesianOverStyles: Discreet N9 line, the default; Belle strip; the lock screen card;
++ * a colour bubble; or Android's own heads-up). Tap opens it, a swipe up dismisses it; no buttons.
++ * Also used for "Screenshot saved", "App pinned" and "Copied". Never on the lock screen.
 + */
 +object EtesianBubble {
-+    const val SETTING = "etesian_extra_bubbles"
 +    private const val SHOW_MS = 5000L
 +
 +    private val main = Handler(Looper.getMainLooper())
@@ -6084,16 +6083,20 @@ index 000000000000..489c459716b4
 +            "com.bompotis.etesian.launcher"
 +    }.getOrDefault(false)
 +
-+    /** An activity shows over the lock screen (camera, alarm, call). */
-+    private fun occluded(context: Context): Boolean = runCatching {
-+        val atm = android.app.ActivityTaskManager.getService()
-+        atm.getRootTaskInfoOnDisplay(android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN,
-+            android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD, Display.DEFAULT_DISPLAY)?.let { it.visible } ?: false
-+    }.getOrDefault(false)
++    /** An activity shows over the lock screen (camera, alarm, call), as the keyguard itself knows it. Asking
++     *  whether the top task is visible was wrong for a while after locking: the app behind the lock screen
++     *  still counted as visible and its bubbles showed over the lock screen. */
++    @Volatile private var keyguardOccluded = false
 +
 +    @JvmStatic
-+    fun enabled(context: Context): Boolean =
-+        Settings.Secure.getInt(context.contentResolver, SETTING, 0) == 1
++    fun setKeyguardOccluded(occluded: Boolean) { keyguardOccluded = occluded }
++
++    @Suppress("UNUSED_PARAMETER")
++    private fun occluded(context: Context): Boolean = keyguardOccluded
++
++    /** Not Android's own heads-up (Over apps → Android). */
++    @JvmStatic
++    fun enabled(context: Context): Boolean = EtesianOverStyles.style(context) != EtesianOverStyles.ANDROID
 +
 +    /** A notification's bubble; tapping sends its content intent. */
 +    @JvmStatic
@@ -6103,10 +6106,13 @@ index 000000000000..489c459716b4
 +        // In the launcher's Events view it slides into its section there instead.
 +        if (Settings.Secure.getInt(context.contentResolver, "etesian_events_showing", 0) == 1 && homeInFront()) return
 +        main.post {
-+            val card = EtesianLockCard(windowContext(context))
-+            card.bind(sbn, 1)
++            val ctx = windowContext(context)
 +            val intent = sbn.notification.contentIntent
-+            present(context, card, "Notification bubble") {
++            val view = when (val style = EtesianOverStyles.style(ctx)) {
++                EtesianOverStyles.CARD -> EtesianLockCard(ctx).apply { bind(sbn, 1); asBubble() }
++                else -> styled(ctx, style, EtesianOverStyles.content(ctx, sbn), sbn, notice = false)
++            }
++            present(context, view, "Notification bubble") {
 +                runCatching {
 +                    intent?.send(null, 0, null, null, null, null,
 +                        ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
@@ -6121,9 +6127,13 @@ index 000000000000..489c459716b4
 +    fun showCustom(context: Context, picture: Drawable?, asIs: Boolean, title: String,
 +            line: String, time: Long, onTap: Runnable?) {
 +        main.post {
-+            val card = EtesianLockCard(windowContext(context))
-+            card.bindCustom(picture, asIs, title, line, time)
-+            present(context, card, title) { onTap?.run() }
++            val ctx = windowContext(context)
++            val view = when (val style = EtesianOverStyles.style(ctx)) {
++                EtesianOverStyles.CARD, EtesianOverStyles.ANDROID ->
++                    EtesianLockCard(ctx).apply { bindCustom(picture, asIs, title, line, time); asBubble() }
++                else -> styled(ctx, style, EtesianOverStyles.Content(picture, null, title, line), null, notice = true)
++            }
++            present(context, view, title) { onTap?.run() }
 +        }
 +    }
 +
@@ -6175,11 +6185,23 @@ index 000000000000..489c459716b4
 +        return if (id > 0) context.resources.getDimensionPixelSize(id) else 0
 +    }
 +
-+    private fun present(context: Context, card: EtesianLockCard, label: String, onTap: () -> Unit) {
++    /** The view for [style]; [notice] = a system notice (screenshot, pinned, copied), which the N9 shows as a banner. */
++    private fun styled(ctx: Context, style: String, content: EtesianOverStyles.Content,
++            sbn: StatusBarNotification?, notice: Boolean): android.view.View = when (style) {
++        EtesianOverStyles.BELLE -> EtesianOverStyles.belle(ctx, content, statusBarHeight(ctx))
++        EtesianOverStyles.COLOUR_STYLE -> EtesianOverStyles.ColourBubble(ctx, content, EtesianOverStyles.colour(ctx, sbn))
++        else -> if (notice) EtesianOverStyles.n9Notice(ctx, content)
++            else EtesianOverStyles.Ticker(ctx, content, statusBarHeight(ctx))
++    }
++
++    private fun present(context: Context, card: android.view.View, label: String, onTap: () -> Unit) {
 +        dismiss(animate = false)
 +        val ctx = card.context
 +        val d = ctx.resources.displayMetrics.density
-+        card.asBubble()
++        val ticker = card as? EtesianOverStyles.Ticker
++        // Belle and the N9 line cover the status bar, edge to edge; the others float under it, inset.
++        val atTop = ticker != null || EtesianOverStyles.style(ctx) == EtesianOverStyles.BELLE &&
++            card !is EtesianLockCard
 +        card.contentDescription = "Notification bubble: ${card.contentDescription}"
 +        val frame = object : FrameLayout(ctx) {
 +            private var downY = 0f
@@ -6218,7 +6240,8 @@ index 000000000000..489c459716b4
 +            }
 +        }
 +        val pad = (12 * d).toInt()
-+        frame.setPadding(pad, (6 * d).toInt(), pad, (12 * d).toInt())
++        if (atTop) frame.setPadding(0, 0, 0, if (ticker != null) 0 else pad)
++        else frame.setPadding(pad, (6 * d).toInt(), pad, (12 * d).toInt())
 +        frame.clipToPadding = false
 +        frame.addView(card, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
 +            FrameLayout.LayoutParams.WRAP_CONTENT))
@@ -6230,7 +6253,7 @@ index 000000000000..489c459716b4
 +                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 +            PixelFormat.TRANSLUCENT).apply {
 +            gravity = Gravity.TOP
-+            y = statusBarHeight(ctx)
++            y = if (atTop) 0 else statusBarHeight(ctx)
 +            title = "EtesianBubble"
 +            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 +            setFitInsetsTypes(0)
@@ -6239,6 +6262,23 @@ index 000000000000..489c459716b4
 +        runCatching { manager.addView(frame, lp) }.onFailure { return }
 +        window = frame; wm = manager
 +        frame.accessibilityPaneTitle = label
++        if (ticker != null) {
++            // As on the N9: the line slides down over the status bar, a moment to read, then it scrolls
++            // until the end of the text is in view, holds, and slides away.
++            frame.accessibilityLiveRegion = android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE
++            card.translationY = -statusBarHeight(ctx).toFloat().coerceAtLeast(24 * d)
++            card.animate().translationY(0f).setDuration(250).start()
++            ticker.post {
++                val over = ticker.overflow()
++                val scrollMs = (over / (EtesianOverStyles.TICKER_DP_PER_S * d) * 1000).toLong()
++                android.animation.ObjectAnimator.ofInt(ticker.line, "scrollX", 0, over).apply {
++                    startDelay = 900; duration = scrollMs
++                    interpolator = android.view.animation.LinearInterpolator()
++                }.start()
++                main.postDelayed(hide, 900 + scrollMs + 1200)
++            }
++            return
++        }
 +        card.alpha = 0f
 +        card.translationY = -40 * d
 +        card.animate().alpha(1f).translationY(0f).setDuration(200).start()
@@ -6534,6 +6574,290 @@ index 000000000000..e087dd7e6d7b
 +            val bmp = android.graphics.Bitmap.createBitmap(px, px, android.graphics.Bitmap.Config.ARGB_8888)
 +            view.draw(Canvas(bmp))
 +            return bmp
++        }
++    }
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt
+new file mode 100644
+index 000000000000..3908aae8d144
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt
+@@ -0,0 +1,278 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.systemui.statusbar.notification.row
++
++import android.app.Notification
++import android.content.Context
++import android.graphics.Canvas
++import android.graphics.LinearGradient
++import android.graphics.Paint
++import android.graphics.Path
++import android.graphics.RectF
++import android.graphics.Shader
++import android.graphics.Typeface
++import android.graphics.drawable.Drawable
++import android.graphics.drawable.GradientDrawable
++import android.provider.Settings
++import android.service.notification.StatusBarNotification
++import android.text.SpannableStringBuilder
++import android.text.Spanned
++import android.text.TextUtils
++import android.text.style.StyleSpan
++import android.util.TypedValue
++import android.view.Gravity
++import android.view.View
++import android.widget.ImageView
++import android.widget.LinearLayout
++import android.widget.TextView
++
++/**
++ * Etesian: how a notification looks over apps (Settings → Events and notifications → Over apps,
++ * Settings.Secure etesian_notif_over). The lock screen is never affected: there it only joins the cards.
++ * - n9 (default): as on the N9, one line over the status bar that scrolls to the end of the text;
++ *   system notices are a small inset dark banner with a thin light edge.
++ * - belle: a dark strip across the full width over the status bar; its transparency is
++ *   etesian_notif_belle_shade (light, medium, dark, solid).
++ * - card: the lock screen card under the status bar.
++ * - colour: a bubble with squircle-half ends (n = 2.8) in etesian_notif_colour: app (the app's own
++ *   colour, default), system (Android's accent) or a fixed #RRGGBB.
++ * - android: Android's own heads-up.
++ */
++object EtesianOverStyles {
++    const val STYLE = "etesian_notif_over"
++    const val SHADE = "etesian_notif_belle_shade"
++    const val COLOUR = "etesian_notif_colour"
++    const val N9 = "n9"
++    const val BELLE = "belle"
++    const val CARD = "card"
++    const val COLOUR_STYLE = "colour"
++    const val ANDROID = "android"
++    private val STYLES = setOf(N9, BELLE, CARD, COLOUR_STYLE, ANDROID)
++
++    /** Pixels a second the N9 line scrolls at (in dp). */
++    const val TICKER_DP_PER_S = 60f
++
++    @JvmStatic
++    fun style(context: Context): String =
++        Settings.Secure.getString(context.contentResolver, STYLE)?.takeIf { it in STYLES } ?: N9
++
++    fun shade(context: Context): Float = when (Settings.Secure.getString(context.contentResolver, SHADE)) {
++        "light" -> 0.55f
++        "dark" -> 0.86f
++        "solid" -> 1f
++        else -> 0.72f
++    }
++
++    /** The bubble colour for [sbn] (null = a system notice: the accent or the fixed colour). */
++    fun colour(context: Context, sbn: StatusBarNotification?): Int {
++        val accent = context.getColor(android.R.color.system_accent1_500)
++        return when (val v = Settings.Secure.getString(context.contentResolver, COLOUR) ?: "app") {
++            "app" -> sbn?.notification?.color?.takeIf { it != Notification.COLOR_DEFAULT && it != 0 }
++                ?.let { it or 0xFF000000.toInt() } ?: accent
++            "system" -> accent
++            else -> runCatching { android.graphics.Color.parseColor(v) }.getOrDefault(accent)
++        }
++    }
++
++    /** What a style shows: a picture, who or what it is from, and the text. */
++    class Content(val picture: Drawable?, val glyph: Drawable?, val from: String, val text: String)
++
++    fun content(context: Context, sbn: StatusBarNotification): Content {
++        val extras = sbn.notification.extras
++        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim().orEmpty()
++        val body = (extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
++            ?: extras.getCharSequence(Notification.EXTRA_TEXT))?.toString()?.trim().orEmpty()
++        val app = runCatching {
++            val pm = context.packageManager
++            pm.getApplicationLabel(pm.getApplicationInfoAsUser(sbn.packageName, 0, sbn.user.identifier)).toString()
++        }.getOrDefault(sbn.packageName)
++        val px = (40 * context.resources.displayMetrics.density).toInt()
++        val pic = android.graphics.drawable.BitmapDrawable(context.resources,
++            EtesianLockCard.squircleIcon(context, sbn, px))
++        val glyph = runCatching { sbn.notification.smallIcon?.loadDrawable(sbn.getPackageContext(context)) }
++            .getOrNull()?.mutate()
++        val from = if (body.isEmpty()) app else title.ifEmpty { app }
++        return Content(pic, glyph, from, body.ifEmpty { title })
++    }
++
++    private fun dp(context: Context, v: Float) = v * context.resources.displayMetrics.density
++
++    private fun label(context: Context, sp: Float, color: Int, bold: Boolean = false) = TextView(context).apply {
++        setTextSize(TypedValue.COMPLEX_UNIT_SP, sp)
++        setTextColor(color)
++        if (bold) typeface = Typeface.DEFAULT_BOLD
++        isSingleLine = true
++        ellipsize = TextUtils.TruncateAt.END
++        includeFontPadding = false
++    }
++
++    private fun squircleView(context: Context, picture: Drawable?, sizeDp: Float): View {
++        val px = dp(context, sizeDp).toInt()
++        return ImageView(context).apply {
++            setImageDrawable(picture)
++            scaleType = ImageView.ScaleType.CENTER_CROP
++            layoutParams = LinearLayout.LayoutParams(px, px)
++            clipToOutline = true
++            outlineProvider = object : android.view.ViewOutlineProvider() {
++                override fun getOutline(view: View, outline: android.graphics.Outline) {
++                    outline.setPath(IconPath.superellipse(view.width.toFloat()))
++                }
++            }
++        }
++    }
++
++    /** The N9 line: the status bar's own height, black, one line that scrolls; [height] = status bar. */
++    class Ticker(context: Context, content: Content, height: Int) : LinearLayout(context) {
++        /** The whole text on one line; it scrolls its own contents (scrollX) to show the end. */
++        val line: TextView
++
++        init {
++            orientation = HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++            setBackgroundColor(0xFF000000.toInt())
++            val pad = dp(context, 8f).toInt()
++            setPadding(pad, 0, pad, 0)
++            minimumHeight = height
++            content.glyph?.let { g ->
++                g.setTint(0xFFFFFFFF.toInt())
++                val s = dp(context, 14f).toInt()
++                addView(ImageView(context).apply { setImageDrawable(g) }, LayoutParams(s, s).apply { marginEnd = pad })
++            }
++            line = TextView(context).apply {
++                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
++                setTextColor(0xFFFFFFFF.toInt())
++                isSingleLine = true
++                ellipsize = null
++                includeFontPadding = false
++                gravity = Gravity.CENTER_VERTICAL
++                setHorizontallyScrolling(true)
++                isHorizontalFadingEdgeEnabled = false
++                text = SpannableStringBuilder().apply {
++                    append(content.from, StyleSpan(Typeface.BOLD), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
++                    if (content.text.isNotEmpty()) append("  ").append(content.text)
++                }
++            }
++            addView(line, LayoutParams(0, height, 1f))
++            contentDescription = "${content.from}: ${content.text}"
++        }
++
++        /** How far the line has to scroll for its end to come into view. */
++        fun overflow(): Int {
++            val text = line.layout?.getLineWidth(0) ?: line.paint.measureText(line.text.toString())
++            return (text - (line.width - line.totalPaddingLeft - line.totalPaddingRight)).toInt().coerceAtLeast(0)
++        }
++    }
++
++    /** N9 system notice: a small inset banner, dark, thin light edge, gently rounded (a card). */
++    fun n9Notice(context: Context, content: Content): View = LinearLayout(context).apply {
++        orientation = LinearLayout.HORIZONTAL
++        gravity = Gravity.CENTER_VERTICAL
++        val pad = dp(context, 14f).toInt()
++        setPadding(dp(context, 16f).toInt(), pad, dp(context, 16f).toInt(), pad)
++        background = GradientDrawable().apply {
++            cornerRadius = dp(context, 8f)
++            setColor(0xDB101010.toInt())
++            setStroke(dp(context, 1f).toInt(), 0x47FFFFFF)
++        }
++        addView(squircleView(context, content.picture, 28f))
++        val texts = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
++        texts.addView(label(context, 17f, 0xFFFFFFFF.toInt()).apply { text = content.from; maxLines = 2; isSingleLine = false })
++        if (content.text.isNotEmpty()) texts.addView(label(context, 14f, 0xCCFFFFFF.toInt()).apply { text = content.text })
++        addView(texts, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
++            marginStart = dp(context, 14f).toInt()
++        })
++        contentDescription = "${content.from}, ${content.text}"
++    }
++
++    /** Belle strip: the full width, over the status bar, black at the chosen transparency. */
++    fun belle(context: Context, content: Content, statusBar: Int): View = LinearLayout(context).apply {
++        orientation = LinearLayout.HORIZONTAL
++        gravity = Gravity.CENTER_VERTICAL
++        setBackgroundColor(android.graphics.Color.argb((shade(context) * 255).toInt(), 0, 0, 0))
++        val pad = dp(context, 12f).toInt()
++        setPadding(pad, pad, pad, pad)
++        minimumHeight = maxOf(dp(context, 64f).toInt(), statusBar + dp(context, 40f).toInt())
++        addView(squircleView(context, content.picture, 36f))
++        val texts = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
++        texts.addView(label(context, 15f, 0xFFFFFFFF.toInt(), bold = true).apply { text = content.from })
++        if (content.text.isNotEmpty()) texts.addView(label(context, 13f, 0xD9FFFFFF.toInt()).apply { text = content.text })
++        addView(texts, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = pad })
++        contentDescription = "${content.from}, ${content.text}"
++    }
++
++    /** Colour bubble: squircle-half ends at any width, lit top to bottom like the N9 buttons. */
++    class ColourBubble(context: Context, content: Content, private val colour: Int) : LinearLayout(context) {
++        private val shape = Path()
++        private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
++
++        init {
++            orientation = HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++            setWillNotDraw(false)
++            minimumHeight = dp(context, 64f).toInt()
++            setPadding(dp(context, 14f).toInt(), 0, dp(context, 22f).toInt(), 0)
++            addView(squircleView(context, content.picture, 40f))
++            val texts = LinearLayout(context).apply { orientation = VERTICAL }
++            texts.addView(label(context, 15f, 0xFFFFFFFF.toInt(), bold = true).apply { text = content.from })
++            if (content.text.isNotEmpty()) texts.addView(label(context, 13f, 0xD9FFFFFF.toInt()).apply { text = content.text })
++            addView(texts, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(context, 12f).toInt() })
++            contentDescription = "${content.from}, ${content.text}"
++        }
++
++        override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
++            shape.set(IconPath.squircleEnds(w.toFloat(), h.toFloat()))
++            fill.shader = LinearGradient(0f, 0f, 0f, h.toFloat(),
++                intArrayOf(mix(colour, 0xFFFFFFFF.toInt(), 0.18f), colour, mix(colour, 0xFF000000.toInt(), 0.18f)),
++                floatArrayOf(0f, 0.5f, 1f), Shader.TileMode.CLAMP)
++        }
++
++        override fun onDraw(canvas: Canvas) = canvas.drawPath(shape, fill)
++
++        private fun mix(a: Int, b: Int, t: Float) = android.graphics.Color.rgb(
++            (android.graphics.Color.red(a) * (1 - t) + android.graphics.Color.red(b) * t).toInt(),
++            (android.graphics.Color.green(a) * (1 - t) + android.graphics.Color.green(b) * t).toInt(),
++            (android.graphics.Color.blue(a) * (1 - t) + android.graphics.Color.blue(b) * t).toInt())
++    }
++
++    /** The N9 squircle (superellipse, n = 2.8) and its half ends. */
++    object IconPath {
++        private const val N = 2.8
++
++        fun superellipse(size: Float, x: Float = 0f): Path {
++            val p = Path()
++            val r = size / 2
++            val steps = 96
++            for (i in 0..steps) {
++                val t = 2 * Math.PI * i / steps
++                val c = Math.cos(t); val s = Math.sin(t)
++                val px = x + r + r * Math.signum(c) * Math.pow(Math.abs(c), 2 / N)
++                val py = r + r * Math.signum(s) * Math.pow(Math.abs(s), 2 / N)
++                if (i == 0) p.moveTo(px.toFloat(), py.toFloat()) else p.lineTo(px.toFloat(), py.toFloat())
++            }
++            p.close()
++            return p
++        }
++
++        /** A [w] × [h] shape with squircle-half ends: two squircles [h] tall at the ends, flat between. */
++        fun squircleEnds(w: Float, h: Float): Path {
++            val p = superellipse(h)
++            p.op(superellipse(h, w - h), Path.Op.UNION)
++            p.op(Path().apply { addRect(RectF(h / 2, 0f, w - h / 2, h), Path.Direction.CW) }, Path.Op.UNION)
++            return p
 +        }
 +    }
 +}
@@ -8404,6 +8728,19 @@ index 5e03bc5f5f23..ad1946bd77d8 100644
                  mShadeTransitionController.goToLockedShade(row, /* needsQSAnimation = */ true);
              } else if (clickedEntry.isSensitive().getValue()
                          && mShadeTransitionController.isLockdownShade()) {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/KeyguardStateControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/KeyguardStateControllerImpl.java
+index 9758ec59cb95..ff080595b78c 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/KeyguardStateControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/KeyguardStateControllerImpl.java
+@@ -209,6 +209,8 @@ public class KeyguardStateControllerImpl implements KeyguardStateController {
+         if (mShowing == showing && mOccluded == occluded) return;
+         mShowing = showing;
+         mOccluded = occluded;
++        // Etesian: the bubbles over apps read this to stay off the lock screen.
++        com.android.systemui.statusbar.notification.row.EtesianBubble.setKeyguardOccluded(occluded);
+         mKeyguardUpdateMonitor.setKeyguardShowing(showing, occluded);
+         Trace.instantForTrack(Trace.TRACE_TAG_APP, "UI Events",
+                 "Keyguard showing: " + showing + " occluded: " + occluded);
 diff --git a/packages/SystemUI/src/com/android/systemui/volume/N9VolumeTones.java b/packages/SystemUI/src/com/android/systemui/volume/N9VolumeTones.java
 new file mode 100644
 index 000000000000..08a9e758a396
