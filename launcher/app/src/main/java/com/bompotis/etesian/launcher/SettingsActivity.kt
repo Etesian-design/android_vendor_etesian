@@ -694,8 +694,17 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 today.addPreference(this)
             }
+            // Over apps: how a notification shows while an app is open (SystemUI EtesianOverStyles); the
+            // lock screen keeps its cards whatever is chosen. Discreet, the N9's one line, is the default.
             val over = category("Over apps")
-            extra(over, Extras.BUBBLES, "Notification bubbles", "A card under the status bar instead of the Android pop-up")
+            val style = secureList(over, NotifOver.STYLE, "Notifications over apps", NotifOver.STYLE_NAMES, NotifOver.STYLES, "n9")
+            val shade = secureList(over, NotifOver.SHADE, "Strip transparency", NotifOver.SHADE_NAMES, NotifOver.SHADES, "medium")
+            val colour = secureList(over, NotifOver.COLOUR, "Bubble colour", NotifOver.COLOUR_NAMES, NotifOver.COLOURS, "app")
+            fun overOptions(v: String) { shade.isVisible = v == "belle"; colour.isVisible = v == "colour" }
+            overOptions(NotifOver.style(ctx))
+            style.setOnPreferenceChangeListener { _, v ->
+                Settings.Secure.putString(ctx.contentResolver, NotifOver.STYLE, v as String); overOptions(v); true
+            }
             extra(over, Extras.COPIED, "“Copied” bubble", "A short bubble when something is copied, instead of the clipboard overlay")
 
             // Events and notifications → Priority people

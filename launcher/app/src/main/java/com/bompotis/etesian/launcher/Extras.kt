@@ -28,7 +28,6 @@ object Extras {
     const val GLANCE = "glance"
     /** Folded in: the existing etesian_lock_weather switch. */
     const val LOCK_WEATHER = "lock_weather"
-    const val BUBBLES = "bubbles"
     const val SHARE = "share"
     const val GHOST_ROWS = "ghost_rows"
     const val EMERGENCY = "emergency"
@@ -52,7 +51,6 @@ object Extras {
         Extra(LIVE_UPDATES, "Live updates in Events", "Ongoing progress pinned under Notifications"),
         Extra(GLANCE, "Glance line on the lock screen", "Next alarm and event under the date"),
         Extra(LOCK_WEATHER, "Weather on the lock screen", "Current weather under the date (from the Events weather)"),
-        Extra(BUBBLES, "Notification bubbles over apps", "A card under the status bar instead of the Android pop-up"),
         Extra(SHARE, "Share filter and pinned targets", "The N9 share sheet with a filter and pinned apps"),
         Extra(CARD_ACTIONS, "Open applications carousel actions", "Split view, Pop-up, Screenshot and App info under the card in the carousel"),
         Extra(SPLIT_MERGE, "Split by two-finger merge", "Open applications edit mode: pull two cards together with two fingers for split screen; pull a pair apart to separate"),

@@ -1092,51 +1092,107 @@ index 0000000..d0c7380
 +</vector>
 diff --git a/res/drawable/n9_bubble_incoming.xml b/res/drawable/n9_bubble_incoming.xml
 new file mode 100644
-index 0000000..0ad9d53
+index 0000000..446cc35
 --- /dev/null
 +++ b/res/drawable/n9_bubble_incoming.xml
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,20 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +    SPDX-FileCopyrightText: 2026 The LineageOS Project
 +    SPDX-License-Identifier: Apache-2.0
 +-->
-+<!-- N9-style received bubble (a guess): light gradient, square top-left corner with a tail out to the left. -->
-+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:left="7dp">
-+        <shape android:shape="rectangle">
-+            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
-+            <corners android:topLeftRadius="0dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
-+        </shape>
-+    </item>
-+    <item android:gravity="top|left" android:width="8dp" android:height="8dp">
-+        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
-+            <path android:fillColor="@color/n9_bubble_light_top" android:pathData="M0,0H8V8Z" />
-+        </vector>
-+    </item>
-+</layer-list>
-diff --git a/res/drawable/n9_bubble_outgoing.xml b/res/drawable/n9_bubble_outgoing.xml
-new file mode 100644
-index 0000000..d526dc2
---- /dev/null
-+++ b/res/drawable/n9_bubble_outgoing.xml
-@@ -0,0 +1,19 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+    SPDX-FileCopyrightText: 2026 The LineageOS Project
-+    SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9-style sent bubble: cyan gradient, square top-right corner with a tail out to the right. -->
++<!-- N9 received bubble (captured on the N9, 2026-11-05): cyan, lighter at the top, on the right, square top-right corner
++     with the tail out to the right. -->
 +<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 +    <item android:right="7dp">
 +        <shape android:shape="rectangle">
-+            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:endColor="@color/n9_bubble_out_bottom" />
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:centerColor="@color/n9_bubble_out_bottom" android:centerY="0.15" android:endColor="@color/n9_bubble_out_bottom" />
 +            <corners android:topLeftRadius="10dp" android:topRightRadius="0dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
 +        </shape>
 +    </item>
 +    <item android:gravity="top|right" android:width="8dp" android:height="8dp">
 +        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
 +            <path android:fillColor="@color/n9_bubble_out_top" android:pathData="M0,0H8L0,8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_bubble_incoming_left.xml b/res/drawable/n9_bubble_incoming_left.xml
+new file mode 100644
+index 0000000..280b2dc
+--- /dev/null
++++ b/res/drawable/n9_bubble_incoming_left.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 received bubble in a group: as n9_bubble_incoming but on the left, square top-left corner
++     with the tail out to the left, towards the sender's picture. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_out_top" android:centerColor="@color/n9_bubble_out_bottom" android:centerY="0.15" android:endColor="@color/n9_bubble_out_bottom" />
++            <corners android:topLeftRadius="0dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="top|left" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_out_top" android:pathData="M0,0H8V8Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_bubble_outgoing.xml b/res/drawable/n9_bubble_outgoing.xml
+new file mode 100644
+index 0000000..901ccf5
+--- /dev/null
++++ b/res/drawable/n9_bubble_outgoing.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 sent bubble (captured on the N9, 2026-11-05): white with a grey edge, on the left, square bottom-left corner with
++     the tail out to the left. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:left="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
++            <stroke android:width="1dp" android:color="@color/n9_bubble_border" />
++            <corners android:topLeftRadius="10dp" android:topRightRadius="10dp" android:bottomRightRadius="10dp" android:bottomLeftRadius="0dp" />
++        </shape>
++    </item>
++    <item android:gravity="bottom|left" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_light_bottom" android:strokeColor="@color/n9_bubble_border" android:strokeWidth="1" android:pathData="M8,0V8H0Z" />
++        </vector>
++    </item>
++</layer-list>
+diff --git a/res/drawable/n9_bubble_outgoing_right.xml b/res/drawable/n9_bubble_outgoing_right.xml
+new file mode 100644
+index 0000000..d80a91f
+--- /dev/null
++++ b/res/drawable/n9_bubble_outgoing_right.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    SPDX-FileCopyrightText: 2026 The LineageOS Project
++    SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 sent bubble in a group: as n9_bubble_outgoing but on the right, square bottom-right corner with
++     the tail out to the right. -->
++<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:right="7dp">
++        <shape android:shape="rectangle">
++            <gradient android:angle="270" android:startColor="@color/n9_bubble_light_top" android:endColor="@color/n9_bubble_light_bottom" />
++            <stroke android:width="1dp" android:color="@color/n9_bubble_border" />
++            <corners android:topLeftRadius="10dp" android:topRightRadius="10dp" android:bottomRightRadius="0dp" android:bottomLeftRadius="10dp" />
++        </shape>
++    </item>
++    <item android:gravity="bottom|right" android:width="8dp" android:height="8dp">
++        <vector android:width="8dp" android:height="8dp" android:viewportWidth="8" android:viewportHeight="8">
++            <path android:fillColor="@color/n9_bubble_light_bottom" android:strokeColor="@color/n9_bubble_border" android:strokeWidth="1" android:pathData="M0,0V8H8Z" />
 +        </vector>
 +    </item>
 +</layer-list>
@@ -1178,7 +1234,7 @@ index 0000000..4e6f60c
 +</layer-list>
 diff --git a/res/drawable/n9_conversation_background.xml b/res/drawable/n9_conversation_background.xml
 new file mode 100644
-index 0000000..aeaf58d
+index 0000000..e108b54
 --- /dev/null
 +++ b/res/drawable/n9_conversation_background.xml
 @@ -0,0 +1,9 @@
@@ -1187,9 +1243,9 @@ index 0000000..aeaf58d
 +    SPDX-FileCopyrightText: 2026 The LineageOS Project
 +    SPDX-License-Identifier: Apache-2.0
 +-->
-+<!-- N9 conversation: blue-grey at the top fading to light grey. -->
++<!-- N9 conversation: flat light grey, as captured on the N9 (2026-11-05). -->
 +<shape xmlns:android="http://schemas.android.com/apk/res/android">
-+    <gradient android:angle="270" android:startColor="#FF93A9BE" android:centerColor="#FFE8EBEE" android:centerY="0.7" android:endColor="#FFE8EBEE" />
++    <solid android:color="#FFDEE2E6" />
 +</shape>
 diff --git a/res/drawable/n9_dark_button.xml b/res/drawable/n9_dark_button.xml
 new file mode 100644
@@ -2044,7 +2100,7 @@ index 84d84ae..2dda2e7 100644
      <declare-styleable name="VideoThumbnailView">
          <attr name="mode" format="integer">
 diff --git a/res/values/colors.xml b/res/values/colors.xml
-index 1b48f34..d6929ab 100644
+index 1b48f34..4a90959 100644
 --- a/res/values/colors.xml
 +++ b/res/values/colors.xml
 @@ -16,33 +16,33 @@
@@ -2085,8 +2141,8 @@ index 1b48f34..d6929ab 100644
      <color name="message_text">#000000</color>
 -    <color name="timestamp_text_outgoing">#99323232</color>
 -    <color name="timestamp_text_incoming">#99ffffff</color>
-+    <color name="timestamp_text_outgoing">#BFFFFFFF</color>
-+    <color name="timestamp_text_incoming">#8A8A8E</color>
++    <color name="timestamp_text_outgoing">#8A8A8E</color>
++    <color name="timestamp_text_incoming">#B3FFFFFF</color>
      <color name="timestamp_text_failed">#99ff0000</color>
      <color name="compose_send_text_color">#000000</color>
  
@@ -2100,12 +2156,12 @@ index 1b48f34..d6929ab 100644
  
      <color name="subject_editor_bubble">#ffffffff</color>
 -    <color name="message_text_color_incoming">#ffffffff</color>
-+    <color name="message_text_color_incoming">#191919</color>
++    <color name="message_text_color_incoming">#FFFFFF</color>
      <color name="message_text_color_incoming_download_failed">#6a6a6a</color>
 -    <color name="message_text_color_outgoing">#ff323232</color>
 -    <color name="conversation_background">@color/window_background</color>
-+    <color name="message_text_color_outgoing">#FFFFFF</color>
-+    <color name="conversation_background">#E8EBEE</color>
++    <color name="message_text_color_outgoing">#191919</color>
++    <color name="conversation_background">#DEE2E6</color>
      <color name="conversation_edge_effect">#9d9d9d</color>
 -    <color name="compose_message_send_color">@color/lineage_accent</color>
 -    <color name="compose_message_send_color_pressed">#999999</color>
@@ -2220,12 +2276,12 @@ index 1b48f34..d6929ab 100644
 +    <!-- N9 (Etesian blanco) palette -->
 +    <color name="action_bar_icon_color">#191919</color>
 +    <color name="n9_blue">#00A5E5</color>
-+    <color name="n9_bubble_out_top">#24AADD</color>
-+    <color name="n9_bubble_out_bottom">#1A92C2</color>
++    <color name="n9_bubble_out_top">#31B6D5</color>
++    <color name="n9_bubble_out_bottom">#08A5CD</color>
 +    <color name="n9_bubble_out_border">#A9BCCF</color>
-+    <color name="n9_bubble_light_top">#FFFFFF</color>
-+    <color name="n9_bubble_light_bottom">#EEEEF0</color>
-+    <color name="n9_bubble_border">#C8C8C8</color>
++    <color name="n9_bubble_light_top">#FFFAFF</color>
++    <color name="n9_bubble_light_bottom">#F6F6F6</color>
++    <color name="n9_bubble_border">#A9ABAD</color>
 +    <color name="n9_separator">#D0D0D0</color>
 +    <color name="n9_separator_highlight">#FFFFFF</color>
 +    <color name="n9_list_row_background">@color/window_background</color>
@@ -2526,34 +2582,55 @@ index 98d1ad5..5421168 100644
  
      @Override
 diff --git a/src/com/android/messaging/ui/ConversationDrawables.java b/src/com/android/messaging/ui/ConversationDrawables.java
-index a9f30c4..7bd0280 100644
+index a9f30c4..3291f8d 100644
 --- a/src/com/android/messaging/ui/ConversationDrawables.java
 +++ b/src/com/android/messaging/ui/ConversationDrawables.java
-@@ -48,6 +48,8 @@ public class ConversationDrawables {
+@@ -48,6 +48,11 @@ public class ConversationDrawables {
      private Drawable mFastScrollPreviewDrawableLeft;
      private Drawable mFastScrollPreviewDrawableRight;
      private final Context mContext;
 +    private Drawable mIncomingBubbleN9Drawable;
 +    private Drawable mOutgoingBubbleN9Drawable;
++    // Group conversations: received on the left (towards the sender\'s picture), sent on the right.
++    private Drawable mIncomingLeftBubbleN9Drawable;
++    private Drawable mOutgoingRightBubbleN9Drawable;
      private int mOutgoingBubbleColor;
      private int mIncomingErrorBubbleColor;
      private int mIncomingAudioButtonColor;
-@@ -98,6 +100,8 @@ public class ConversationDrawables {
+@@ -98,6 +103,10 @@ public class ConversationDrawables {
                  R.drawable.fastscroll_preview_left, theme);
          mFastScrollPreviewDrawableRight = ResourcesCompat.getDrawable(resources,
                  R.drawable.fastscroll_preview_right, theme);
 +        mIncomingBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_incoming, theme);
 +        mOutgoingBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_outgoing, theme);
++        mIncomingLeftBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_incoming_left, theme);
++        mOutgoingRightBubbleN9Drawable = resources.getDrawable(R.drawable.n9_bubble_outgoing_right, theme);
          mOutgoingBubbleColor = resources.getColor(R.color.message_bubble_color_outgoing, theme);
          mIncomingErrorBubbleColor =
                  resources.getColor(R.color.message_error_bubble_color_incoming, theme);
-@@ -117,6 +121,12 @@ public class ConversationDrawables {
+@@ -110,6 +119,13 @@ public class ConversationDrawables {
+ 
+     public Drawable getBubbleDrawable(final boolean selected, final boolean incoming,
+                                       final boolean isError, final String identifier) {
++        return getBubbleDrawable(selected, incoming, isError, identifier, !incoming);
++    }
++
++    /** [onLeft]: the bubble sits on the left, its tail pointing left (as on the N9: what you sent in a
++     *  one-to-one conversation, received messages in a group). */
++    public Drawable getBubbleDrawable(final boolean selected, final boolean incoming,
++                                      final boolean isError, final String identifier, final boolean onLeft) {
+         final Drawable protoDrawable;
+         if (incoming) {
+             protoDrawable = mIncomingBubbleNoArrowDrawable;
+@@ -117,6 +133,14 @@ public class ConversationDrawables {
              protoDrawable = mOutgoingBubbleNoArrowDrawable;
          }
  
 +        // N9 look: unselected, non-error bubbles use the gradient XML shapes untinted.
 +        if (!selected && !(incoming && isError)) {
-+            final Drawable n9 = incoming ? mIncomingBubbleN9Drawable : mOutgoingBubbleN9Drawable;
++            final Drawable n9 = incoming
++                    ? (onLeft ? mIncomingLeftBubbleN9Drawable : mIncomingBubbleN9Drawable)
++                    : (onLeft ? mOutgoingBubbleN9Drawable : mOutgoingRightBubbleN9Drawable);
 +            return n9.getConstantState().newDrawable(mContext.getResources()).mutate();
 +        }
 +
@@ -3080,10 +3157,20 @@ index 68fbb21..cd0c5d7 100644
      }
  
 diff --git a/src/com/android/messaging/ui/conversation/ConversationMessageView.java b/src/com/android/messaging/ui/conversation/ConversationMessageView.java
-index c58dd0e..9ecfe7a 100644
+index c58dd0e..35b4ed1 100644
 --- a/src/com/android/messaging/ui/conversation/ConversationMessageView.java
 +++ b/src/com/android/messaging/ui/conversation/ConversationMessageView.java
-@@ -276,6 +276,13 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+@@ -200,7 +200,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+ 
+         final int iconLeft;
+         final int contentLeft;
+-        if (mData.getIsIncoming()) {
++        // Etesian: the picture goes with its message (the sides are set in updateViewAppearance).
++        if (mOneOnOne ? !mData.getIsIncoming() : mData.getIsIncoming()) {
+             if (isRtl) {
+                 iconLeft = (right - left) - getPaddingEnd() - iconWidth;
+                 contentLeft = iconLeft - contentWidth;
+@@ -276,6 +277,13 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
       * Returns whether we should show simplified visual style for the message view (i.e. hide the
       * avatar and bubble arrow, reduce padding).
       */
@@ -3097,7 +3184,7 @@ index c58dd0e..9ecfe7a 100644
      private boolean shouldShowSimplifiedVisualStyle() {
          return mData.getCanClusterWithPreviousMessage();
      }
-@@ -370,7 +377,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+@@ -370,7 +378,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
              case MessageData.BUGLE_STATUS_INCOMING_COMPLETE:
              default:
                  if (!mData.getCanClusterWithNextMessage()) {
@@ -3107,6 +3194,70 @@ index c58dd0e..9ecfe7a 100644
                  }
                  break;
          }
+@@ -656,6 +665,9 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+         final ConversationDrawables drawableProvider = ConversationDrawables.get();
+         final boolean incoming = mData.getIsIncoming();
+         final boolean outgoing = !incoming;
++        // Etesian, as on the N9: one-to-one, received on the right and sent on the left; in a group the
++        // received messages go on the left next to their sender's picture, the tail pointing at it.
++        final boolean onLeft = mOneOnOne ? outgoing : incoming;
+ 
+         final int messageTopPaddingClustered =
+                 res.getDimensionPixelSize(R.dimen.message_padding_same_author);
+@@ -684,13 +696,13 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+         if (mData.hasAttachments()) {
+             if (shouldShowMessageTextBubble()) {
+                 // Text and attachment(s)
+-                contentLeftPadding = incoming ? arrowWidth : 0;
+-                contentRightPadding = outgoing ? arrowWidth : 0;
++                contentLeftPadding = onLeft ? arrowWidth : 0;
++                contentRightPadding = onLeft ? 0 : arrowWidth;
+                 textBackground = drawableProvider.getBubbleDrawable(
+                         isSelected(),
+                         incoming,
+                         mData.hasIncomingErrorStatus(),
+-                        mData.getSenderContactLookupKey());
++                        mData.getSenderContactLookupKey(), onLeft);
+                 textMinHeight = messageTextMinHeightDefault;
+                 textTopMargin = messageTopPaddingClustered;
+                 textTopPadding = textTopPaddingDefault;
+@@ -700,8 +712,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+                 mMessageTextView.setTextIsSelectable(isSelected());
+             } else {
+                 // Attachment(s) only
+-                contentLeftPadding = incoming ? arrowWidth : 0;
+-                contentRightPadding = outgoing ? arrowWidth : 0;
++                contentLeftPadding = onLeft ? arrowWidth : 0;
++                contentRightPadding = onLeft ? 0 : arrowWidth;
+                 textBackground = null;
+                 textMinHeight = 0;
+                 textTopMargin = 0;
+@@ -712,13 +724,13 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+             }
+         } else {
+             // Text only
+-            contentLeftPadding = incoming ? arrowWidth : 0;
+-            contentRightPadding = outgoing ? arrowWidth : 0;
++            contentLeftPadding = onLeft ? arrowWidth : 0;
++            contentRightPadding = onLeft ? 0 : arrowWidth;
+             textBackground = drawableProvider.getBubbleDrawable(
+                     isSelected(),
+                     incoming,
+                     mData.hasIncomingErrorStatus(),
+-                    mData.getSenderContactLookupKey());
++                    mData.getSenderContactLookupKey(), onLeft);
+             textMinHeight = messageTextMinHeightDefault;
+             textTopMargin = 0;
+             textTopPadding = textTopPaddingDefault;
+@@ -729,7 +741,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
+         }
+ 
+         // These values do not depend on whether the message includes attachments
+-        final int gravity = incoming ? (Gravity.START | Gravity.CENTER_VERTICAL) :
++        final int gravity = onLeft ? (Gravity.START | Gravity.CENTER_VERTICAL) :
+                 (Gravity.END | Gravity.CENTER_VERTICAL);
+         final int messageTopPadding = shouldShowSimplifiedVisualStyle() ?
+                 messageTopPaddingClustered : messageTopPaddingDefault;
 diff --git a/src/com/android/messaging/ui/conversation/SimIconView.java b/src/com/android/messaging/ui/conversation/SimIconView.java
 index de75b9e..8ec28e5 100644
 --- a/src/com/android/messaging/ui/conversation/SimIconView.java
