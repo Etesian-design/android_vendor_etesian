@@ -16,6 +16,12 @@ sh_ input keyevent BACK; sleep 1; sh_ input tap $cx $cy; sleep 2
 w=$(wdump); shot keyboard_clipboard
 check "clipboard suggestion shown in the keyboard strip" 'echo "$w" | grep -q "$K:id/clipboard_suggestion_strip" && echo "$w" | grep -o "<node[^>]*package=\"$K\"[^>]*>" | grep -q "text=\"cliptest42\""'
 check "the N9 strip keeps attach, emoticon and Send beside it" 'echo "$w" | grep -q "$K:id/etesian_strip_attach" && echo "$w" | grep -q "$K:id/etesian_strip_emoticon" && echo "$w" | grep -q "$K:id/etesian_strip_send"'
+# 2026-11-05: the clipboard row spanned the whole strip, so a long copy ran under the emoticon and the counter.
+nb() { echo "$w" | grep -o "<node[^>]*$K:id/$1\"[^>]*>" | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' '; }
+set -- $(nb clipboard_suggestion_strip); cl=$1; cr=$3
+set -- $(nb etesian_strip_emoticon); er=$3
+set -- $(nb etesian_strip_counter); kl=$1
+check "clipboard row sits between the emoticon and the counter (row $cl-$cr, emoticon ends $er, counter starts $kl)" '[ -n "$cl" ] && [ -n "$er" ] && [ -n "$kl" ] && [ "$cl" -ge "$er" ] && [ "$cr" -le "$kl" ]'
 # N9 squircle rule: the chip's ends are squircle halves. 0.27r in from the right end, 0.75r above the middle,
 # a pill is empty (0.73^2 + 0.75^2 > 1) while an n = 2.8 squircle is filled (0.73^2.8 + 0.75^2.8 < 1).
 set -- $(echo "$w" | grep -o "<node[^>]*text=\"cliptest42\"[^>]*package=\"$K\"[^>]*>" | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' ')
