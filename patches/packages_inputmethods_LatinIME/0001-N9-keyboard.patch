@@ -966,7 +966,7 @@ index 9577d0913..4f81562e1 100644
          final TypedArray a = context.obtainStyledAttributes(attrs,
                  R.styleable.SuggestionStripView, defStyle, R.style.SuggestionStripView);
 diff --git a/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java b/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
-index 1d6cd126f..83c8f5667 100644
+index 1d6cd126f..26e2bda7e 100644
 --- a/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
 +++ b/java/src/com/android/inputmethod/latin/suggestions/SuggestionStripView.java
 @@ -75,6 +75,11 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
@@ -1013,7 +1013,7 @@ index 1d6cd126f..83c8f5667 100644
          mDockedStripMargin =
                  ((MarginLayoutParams) mSuggestionsStrip.getLayoutParams()).getMarginStart();
          mImportantNoticeStrip = findViewById(R.id.important_notice_strip);
-@@ -226,6 +249,96 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -226,6 +249,99 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
          mSplitKey.setOnClickListener(this);
          mFloatKey.setImageTintList(getToolKeyTintList());
          mFloatKey.setOnClickListener(this);
@@ -1097,7 +1097,10 @@ index 1d6cd126f..83c8f5667 100644
 +        final int start = (int) (dp * (8 + (mEtesianAttachShown ? 44 : 0)
 +                + (mEtesianEmoticonShown ? 44 : 0))) + mDockedStripMargin;
 +        final int end = (int) (dp * (mEtesianSendShown ? 8 + 56 + 64 + 8 : 8));
-+        for (final View v : new View[] { mSuggestionsStrip, mImportantNoticeStrip }) {
++        // Every row the strip can show keeps clear of the app's buttons (2026-11-05: the copied-text
++        // chip ran under the emoticon and the counter).
++        for (final View v : new View[] { mSuggestionsStrip, mImportantNoticeStrip,
++                mInlineSuggestionsStrip, mClipboardSuggestionStrip }) {
 +            final MarginLayoutParams params = (MarginLayoutParams) v.getLayoutParams();
 +            if (params.getMarginStart() == start && params.getMarginEnd() == end) {
 +                continue;
@@ -1110,7 +1113,7 @@ index 1d6cd126f..83c8f5667 100644
      }
  
      /**
-@@ -245,8 +358,15 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -245,8 +361,15 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
          setVisibility(visibility);
          final SettingsValues currentSettingsValues = Settings.getInstance().getCurrent();
          mVoiceKey.setVisibility(currentSettingsValues.mShowsVoiceInputKey ? VISIBLE : INVISIBLE);
@@ -1126,7 +1129,7 @@ index 1d6cd126f..83c8f5667 100644
      }
  
      public ColorStateList getToolKeyTintList() {
-@@ -272,12 +392,15 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -272,12 +395,15 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
  
      private static void setHorizontalMargins(final View view, final int margin) {
          final MarginLayoutParams params = (MarginLayoutParams) view.getLayoutParams();
@@ -1145,7 +1148,7 @@ index 1d6cd126f..83c8f5667 100644
          view.setLayoutParams(params);
      }
  
-@@ -340,7 +463,8 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -340,7 +466,8 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
          final ColorStateList tint = getToolKeyTintList();
          chip.setTextColor(tint);
          chip.setCompoundDrawableTintList(tint);
@@ -1155,7 +1158,7 @@ index 1d6cd126f..83c8f5667 100644
                  InlineSuggestionsStrip.getChipBackgroundColor(tint.getDefaultColor())));
          chip.setCompoundDrawablesRelativeWithIntrinsicBounds(
                  match.getType() == ClipboardSuggestion.Type.CODE
-@@ -612,6 +736,22 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -612,6 +739,22 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
              mListener.showImportantNoticeContents();
              return;
          }
@@ -1178,7 +1181,7 @@ index 1d6cd126f..83c8f5667 100644
          if (view == mFloatKey) {
              mListener.toggleFloatingKeyboard();
              return;
-@@ -661,4 +801,42 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
+@@ -661,4 +804,42 @@ public final class SuggestionStripView extends RelativeLayout implements OnClick
              maybeShowImportantNoticeTitle();
          }
      }
