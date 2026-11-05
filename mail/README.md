@@ -2,7 +2,7 @@
 
 Thunderbird for Android 24.0 (Apache-2.0), rebranded as "Mail" (`com.bompotis.etesian.mail`, own icon,
 no Mozilla trademarks) and restyled like the Nokia N9 email app: light grey pages, N9 blue #00A5E5,
-orange #FF8600 links, Nokia Pure, engraved rules between rows, bold unread senders with a blue dot,
+orange #FF8600 links, the system UI font, engraved rules between rows, bold unread senders with a blue dot,
 labelled To:/Subject: compose fields. Its actions go on the Etesian system toolbar (STYLE_LIGHT) when
 available; the FAB and up arrows are hidden then.
 

@@ -2,7 +2,8 @@
 # "Bring your own N9 files": builds the "N9 icons" icon pack (ADW/Nova appfilter format) from
 # the N9 app icons that import.sh copied into vendor/harmattan-n9/app-icons, using
 # iconpack/mapping.txt. The result goes to vendor/harmattan-n9/iconpack, which the build picks
-# up as N9IconPack. Nokia's icons are never part of this repository.
+# up as N9IconPack only if it exists. Nokia's icons are never part of this repository or of
+# published builds; each developer supplies them from their own N9.
 #
 #   make-iconpack.sh [icons-dir]    (default: vendor/harmattan-n9/app-icons)
 set -e

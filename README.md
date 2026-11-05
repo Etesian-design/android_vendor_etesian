@@ -24,6 +24,9 @@
 
 ---
 
+This repository is the Etesian Android ROM: a LineageOS vendor tree that adds the Etesian launcher, look, sounds and apps
+to a LineageOS build for any phone.
+
 No home button, no back button, just swipes from the edge of the screen. Its influence is the Nokia N9's Swipe UI,
 re-envisioned for today. Everything new, from messages and calls to calendar entries and news, in one calm
 list. Apps with big, plain type and nothing on screen that isn't your content.
@@ -35,8 +38,8 @@ list. Apps with big, plain type and nothing on screen that isn't your content.
 <p align="center"><sub>Screenshots and a screen recording straight from the reference phone, a test device with
 mock contacts, messages and calendar entries.</sub></p>
 
-It shipped on a single phone and then disappeared. **Etesian brings it back** on top of LineageOS, so it can run on any
-phone LineageOS supports. It's developed and tested on the F(x)tec Pro1-X; another phone on the same LineageOS version
+The Swipe UI shipped on a single phone and then disappeared. **Etesian re-envisions it** on top of LineageOS (it is
+not a copy of the N9), so it can run on any phone LineageOS supports. It's developed and tested on the F(x)tec Pro1-X; another phone on the same LineageOS version
 needs only its own build.
 
 ## What you get
@@ -48,7 +51,9 @@ needs only its own build.
 - **The apps.** Phone, Messaging, Mail, Calendar, Music, Gallery and Settings, restyled to match.
 - **Widgets.** An optional fourth view with Belle-style clocks, mail, feeds and toggles.
 
-Anything the N9 didn't have is **off until you turn it on**. Out of the box, it's the N9.
+The first time you switch it on, it feels like picking up an N9: three views, edge swipes, nothing else in the way.
+Everything we've added since (widgets, extra gestures, newer conveniences) waits in Settings for you to turn it on, so
+you choose how much of today you want on top.
 
 ## Status
 
@@ -79,9 +84,15 @@ brunch <your device>             # e.g. pro1x, the reference device
 | `tests/` | Tests that run on the phone (`tests/device/run.sh`) |
 | `docs/` | Design notes |
 
-If you own an N9, `n9-files/import.sh` can use its own font and tones in your build. They're copied from your phone to a
-folder outside this repository and never committed.
+If you own an N9, `n9-files/import.sh` (and `n9-files/make-iconpack.sh` for its app icons) can use its own font, tones and icons in your local build. They're copied from your phone to a
+local folder, `vendor/harmattan-n9`, outside this repository and never committed. `etesian.mk` includes that folder only
+if it exists, so it is optional, and published builds never contain it.
 </details>
+
+## Related projects
+
+The [design language](https://github.com/etesian-design/design) everything here is built from, Etesian for
+[KDE Plasma](https://github.com/etesian-design/plasma) and [the website](https://github.com/etesian-design/website).
 
 ## Licence
 
