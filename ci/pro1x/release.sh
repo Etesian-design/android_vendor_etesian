@@ -27,7 +27,7 @@ if [ "$(docker inspect -f '{{.State.Running}}' etesian-vm 2>/dev/null)" = true ]
     docker stop -t 120 etesian-vm >/dev/null && trap 'docker start etesian-vm >/dev/null' EXIT
 fi
 run() {
-    docker run --rm -i --tmpfs /keys:size=64m,mode=700 \
+    docker run --rm -i --tmpfs /keys:size=64m,mode=700,uid=1000,gid=1000 \
         -e USE_CCACHE=1 -e CCACHE_EXEC=/usr/bin/ccache -e CCACHE_DIR=/ccache -e VERSION="$VERSION" \
         -v "$W/ccache:/ccache" -v "$W/src:/src" -v "$ETESIAN:/etesian:ro" -v "$KEYS:/keys.tar.gpg:ro" -v "$OUT:/release" \
         etesian-rom-builder bash -eo pipefail -c "$1"
@@ -60,17 +60,23 @@ IFS= read -r PASS
 printf %s "$PASS" | gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 0 -d /keys.tar.gpg | tar -x -C /keys
 unset PASS
 cd /src
-export PATH=/src/out/host/linux-x86/bin:$PATH
+export PATH=/src/out/host/linux-x86/bin:/src/prebuilts/jdk/jdk21/linux-x86/bin:$PATH   # the signing tools run java (the JDK in the tree)
 TF=$(ls -t out/target/product/pro1x/obj/PACKAGING/target_files_intermediates/*-target_files*.zip | head -1)
-# Every APEX is signed with its own key (named after it), or with the release key when it has none (one LineageOS added later),
-# so nothing ships with a test key and no new key is ever needed. Presigned ones are left as they are.
-openssl pkcs8 -inform DER -nocrypt -in /keys/releasekey.pk8 -out /keys/releasekey.pem
+# Every APEX is signed with our key named after it, or else after the key the build names for it (APEXes can share one, as
+# com.android.hardware). One with neither (added upstream later) keeps its own key and is listed in the log. Presigned ones are
+# left as they are.
 apex=()
-for a in $(unzip -p "$TF" META/apexkeys.txt | grep -v "container_certificate=\"PRESIGNED\"" | sed -n "s/^name=\"\([^\"]*\)\".*/\1/p"); do
+while read -r line; do
+    a=$(echo "$line" | sed -n "s/^name=\"\([^\"]*\)\".*/\1/p")
+    p=$(echo "$line" | sed -n "s/.* private_key=\"\([^\"]*\)\.pem\".*/\1/p")
     k=/keys/${a%.*}
-    [ -f "$k.pem" ] || { echo "no key of its own for $a: the release key"; k=/keys/releasekey; }
-    apex+=(--extra_apks "$a=$k" --extra_apex_payload_key "$a=$k.pem")
-done
+    [ -f "$k.pem" ] || k=/keys/$(basename "$p")
+    if [ -n "$p" ] && [ -f "$k.pem" ]; then
+        apex+=(--extra_apks "$a=$k" --extra_apex_payload_key "$a=$k.pem")
+    else
+        echo "no key of ours for $a: it keeps its own"
+    fi
+done < <(unzip -p "$TF" META/apexkeys.txt | grep -v "container_certificate=\"PRESIGNED\"")
 sign_target_files_apks -o -d /keys "${apex[@]}" "$TF" out/etesian-signed-target_files.zip
 ota_from_target_files -k /keys/releasekey --block --backup=true out/etesian-signed-target_files.zip \
     "/release/etesian-$VERSION-pro1x.zip"
