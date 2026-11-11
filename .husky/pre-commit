@@ -1,0 +1,4 @@
+# The CI scripts must parse, and the workflows must be valid YAML, before they reach the DeskMini runner.
+for f in $(git diff --cached --name-only --diff-filter=ACM -- '*.sh'); do bash -n "$f" || exit 1; done
+yml=$(git diff --cached --name-only --diff-filter=ACM -- '.github/workflows/*.yml')
+[ -z "$yml" ] || python3 -c 'import sys, yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]' $yml || exit 1
