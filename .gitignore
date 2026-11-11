@@ -14,3 +14,7 @@ local.properties
 notes/
 # Our own checks and tools, not for the public: local only.
 local/
+# Release packages built by ci/pro1x/release.sh
+release/
+# npm install: commitlint and the git hooks (.husky)
+node_modules/

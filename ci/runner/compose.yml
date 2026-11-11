@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+# The DeskMini's GitHub Actions runner for Etesian-design (ci/runner/README.md). Docker starts it again after a reboot.
+services:
+  runner:
+    build: .
+    container_name: etesian-runner
+    restart: unless-stopped
+    group_add: ["${DOCKER_GID:?the docker group id, from: getent group docker | cut -d: -f3}"]
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}   # the first start only (registration); expires within an hour, never saved
+      CI_DIR: ${HOME}/ci
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # the same path inside and out: a job's `docker run -v <path>` means the host's <path>
+      - ${HOME}/ci:${HOME}/ci
+      - ./state:/home/runner/state
+    working_dir: /home/runner
+    entrypoint: ["/bin/bash", "/home/runner/start.sh"]
+    configs:
+      - source: start
+        target: /home/runner/start.sh
+configs:
+  start:
+    content: |
+      set -e
+      cd /home/runner
+      if [ ! -f state/.runner ]; then
+        : "$${RUNNER_TOKEN:?a registration token is needed for the first start}"
+        ./config.sh --unattended --replace --url https://github.com/Etesian-design --token "$$RUNNER_TOKEN" \
+          --name deskmini --labels deskmini,android --work "$$CI_DIR/_work"
+        cp .runner .credentials .credentials_rsaparams state/
+      fi
+      cp state/.runner state/.credentials state/.credentials_rsaparams .
+      exec ./run.sh

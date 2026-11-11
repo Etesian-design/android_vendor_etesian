@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: Apache-2.0
+# Releases, as in Cloud Companion: go-semantic-release reads the Conventional Commits since the last tag (feat = minor, fix = patch,
+# breaking = major; with allow-initial-development-versions a breaking change is only a minor bump below 1.0; docs, chore, ci, ...
+# release nothing; the first release is v0.1.0). The ROM is built and signed on the DeskMini first (a dry run gives the version),
+# and only a finished build makes the tag and the release, with the package and its SHA-256.
+# Only main and manual runs reach the self-hosted runner, never a pull request (ci/runner/README.md).
+name: Release
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]   # documentation alone releases nothing
+  workflow_dispatch:
+permissions:
+  contents: read
+# one release at a time, in push order: each works out its version from the tags the previous one made
+concurrency:
+  group: pro1x-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'Etesian-design/android_vendor_etesian'
+    runs-on: [self-hosted, deskmini]
+    timeout-minutes: 720
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4
+        with:
+          fetch-depth: 0   # go-semantic-release needs the full tag history, not a shallow clone
+      - name: Install semantic-release
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/semantic-release" https://github.com/go-semantic-release/semantic-release/releases/download/v2.31.0/semantic-release_v2.31.0_linux_amd64
+          echo "b8f518b1aeb1d1742f4e6e91a179b707cea4309a64fe3854f465bf724f04f6d3  $RUNNER_TEMP/semantic-release" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/semantic-release"
+      - name: Next version
+        id: next
+        uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f   # v1
+        with:
+          dry: 'true'
+          allow-initial-development-versions: 'true'
+          bin: ${{ runner.temp }}/semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and sign
+        if: steps.next.outputs.version != ''
+        env:
+          ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
+        run: printf %s "$ETESIAN_KEYS_PASS" | ci/pro1x/release.sh "${{ steps.next.outputs.version }}"
+      - name: Release
+        id: semrel
+        if: steps.next.outputs.version != ''
+        uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f   # v1
+        with:
+          allow-initial-development-versions: 'true'
+          bin: ${{ runner.temp }}/semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload
+        if: steps.semrel.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.semrel.outputs.version }}
+        run: |
+          [ "$VERSION" = "${{ steps.next.outputs.version }}" ] || { echo "released $VERSION, built ${{ steps.next.outputs.version }}" >&2; exit 1; }
+          gh release upload "v$VERSION" release/*
