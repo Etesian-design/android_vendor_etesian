@@ -56,9 +56,11 @@ object EventsStore {
     fun removeListener(l: () -> Unit) { listeners -= l }
 
     fun update(sbns: Array<StatusBarNotification>?, ranking: NotificationListenerService.RankingMap? = null) {
-        items = sbns.orEmpty().filter { !it.isOngoing }.mapNotNull { toItem(it, ranking) }.sortedByDescending { it.time }
-        live = sbns.orEmpty().filter { it.isOngoing && isLive(it) }.mapNotNull { toItem(it, ranking, live = true) }
+        val all = sbns.orEmpty()
+        live = all.filter { it.isOngoing && isLive(it) }.mapNotNull { toItem(it, ranking, live = true) }
             .sortedByDescending { it.time }
+        items = all.filter { !it.isOngoing || (isSystem(it) && !isLive(it)) }.mapNotNull { toItem(it, ranking) }
+            .distinctBy { it.key }.sortedByDescending { it.time }
         listeners.toList().forEach { it() }
     }
 
@@ -69,9 +71,15 @@ object EventsStore {
             (android.os.Build.VERSION.SDK_INT >= 36 && sbn.notification.flags and Notification.FLAG_PROMOTED_ONGOING != 0)
     }
 
+    /**
+     * Posted by Android itself (system, phone, System UI: uids below the first app uid). Its notices, such as No service
+     * or USB debugging, are ongoing but are events to the user, so Events lists them; apps' ongoing ones stay out.
+     */
+    private fun isSystem(sbn: StatusBarNotification) = sbn.uid < android.os.Process.FIRST_APPLICATION_UID
+
     private fun toItem(sbn: StatusBarNotification, ranking: NotificationListenerService.RankingMap?, live: Boolean = false): EventItem? {
         val n = sbn.notification
-        if ((sbn.isOngoing && !live) || n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
+        if ((sbn.isOngoing && !live && !isSystem(sbn)) || n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
         val extras = n.extras
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
         val text = (extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: extras.getCharSequence(Notification.EXTRA_TEXT))
