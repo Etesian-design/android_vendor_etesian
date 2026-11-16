@@ -122,6 +122,22 @@ class StatusMenuActivity : Activity() {
     private fun n9Icon(name: String) = File("/product/media/etesian/icons/$name.png")
         .takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) }
 
+    /** Etesian's own glyph for an N9 icon name, used when the N9 files are absent. */
+    private fun ownGlyph(icon: String): Int? = when (icon) {
+        "icon-m-common-wlan" -> R.drawable.bc_glyph_wifi
+        "icon-m-common-cellular" -> R.drawable.bc_glyph_data
+        "icon-m-bluetooth" -> R.drawable.bc_glyph_bluetooth
+        "icon-m-status-menu-flight-mode" -> R.drawable.bc_glyph_flight
+        "icon-m-camera-torch-on" -> R.drawable.tb_torch
+        "icon-m-image-edit-rotate-right" -> R.drawable.tb_rotate
+        "icon-m-etesian-record" -> R.drawable.bc_glyph_record
+        "icon-m-common-location" -> R.drawable.bc_glyph_location
+        "icon-m-status-menu-settings" -> R.drawable.ic_set_system
+        "icon-m-status-menu-profile-silent" -> R.drawable.bc_glyph_silent
+        "icon-m-status-menu-profile-beep", "icon-m-status-menu-profile-loud" -> R.drawable.tb_volume
+        else -> null
+    }
+
     private fun build() {
         panel.removeAllViews(); rows.clear()
         // Edit mode: a solid page down to the edit bar, so nothing behind shows between the blocks and Done / Add item.
@@ -228,8 +244,10 @@ class StatusMenuActivity : Activity() {
             // The N9 icon PNGs carry their own rounded tile; only fallback icons get ours.
             if (bmp != null) setImageBitmap(bmp)
             else {
+                // Without the N9 files: our own glyph on our own tile, never an empty one.
                 background = IconFactory.tile(0xFF3A3A3A.toInt())
-                setPadding(dp(8f), dp(8f), dp(8f), dp(8f))
+                setPadding(dp(10f), dp(10f), dp(10f), dp(10f))
+                ownGlyph(icon)?.let { setImageResource(it); setColorFilter(N9.TEXT) }
             }
         }
         val name = TextView(this).apply { text = title; setTextColor(N9.TEXT); textSize = ms(18f); typeface = N9.FONT_BOLD; includeFontPadding = false }
