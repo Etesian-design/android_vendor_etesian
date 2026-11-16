@@ -5,6 +5,8 @@ ok()   { PASS=$((PASS+1)); echo "  ok   $1"; }
 bad()  { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 sh_() { adb shell "$@" | tr -d '\r'; }
+# The phone's own pixels, never mapped: for measuring sizes (with the phone's own density, raw_sh wm density).
+raw_sh() { command adb shell "$@" | tr -d '\r'; }
 # The tests are written for the Pro1-X's 1080x2160 screen. On another screen every tap, swipe and drag is mapped onto it,
 # every UI dump's bounds and every screenshot back to 1080x2160. Widths scale by W/1080; heights keep that scale at the top
 # (frame 0-900) and the bottom (frame 1260-2160, anchored to the bottom edge, where the bottom bar is), and the middle
