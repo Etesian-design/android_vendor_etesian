@@ -25,10 +25,31 @@ if W != 1080 or H != 2160:
     out = Image.new(im.mode, (1080, 2160)); out.paste(im.crop((0, 0, 1080, 1080)), (0, 0))
     out.paste(im.crop((0, im.height - 1080, 1080, im.height)), (0, 1080)); im = out
 b = io.BytesIO(); im.save(b, 'PNG'); sys.stdout.buffer.write(b.getvalue())"; }
+# UI dumps carry the phone's own pixels: their bounds are put into the same 1080x2160 frame (the inverse mapping).
+_map_bounds() { python3 -c "
+import sys, re
+W, H = $_W, $_H; s = W / 1080
+def y(v):
+    v = int(v)
+    if v <= 1080 * s: return min(int(v / s), 1079)
+    if v >= H - 1080 * s: return max(int(2160 - (H - v) / s), 1080)
+    return 1080
+def f(m): return '[%d,%d][%d,%d]' % (int(int(m[1]) / s), y(m[2]), int(int(m[3]) / s), y(m[4]))
+sys.stdout.write(re.sub(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', f, sys.stdin.read()))"; }
+# Mapped on the phone, so coordinates computed there (loops in the command) are mapped too.
+_DEV_INPUT='_x() { echo $(( $1 * '$_W' / 1080 )); }; _y() { if [ $1 -lt 1080 ]; then echo $(( $1 * '$_W' / 1080 )); else echo $(( '$_H' - (2160 - $1) * '$_W' / 1080 )); fi; }
+input() { case "$1" in
+  tap) /system/bin/input tap $(_x $2) $(_y $3) ;;
+  swipe) /system/bin/input swipe $(_x $2) $(_y $3) $(_x $4) $(_y $5) $6 ;;
+  motionevent) /system/bin/input motionevent $2 $(_x $3) $(_y $4) ;;
+  *) /system/bin/input "$@" ;; esac; }'
 if [ "$_SIZE" != 1080x2160 ]; then
 adb() {
   if [ "$1" = exec-out ] && [ "$2" = screencap ]; then command adb "$@" | _map_png
-  elif [ "$1" = shell ] && [[ "$*" =~ input\ (tap|swipe) ]]; then shift; command adb shell "$(echo "$*" | _map_input)"
+  elif [ "$1" = shell ] && [ "$*" = "shell wm size" ]; then echo "Physical size: 1080x2160"
+  elif [ "$1" = shell ] && [ "$*" = "shell wm density" ]; then command adb shell wm density | tr -d '\r' | awk -v W="$_W" '{ n=$NF; $NF=int(n*1080/W); print }'
+  elif [ "$1" = shell ] && [[ "$*" =~ input\ (tap|swipe|motionevent) ]]; then shift; command adb shell "$_DEV_INPUT; $*"
+  elif [ "$1" = shell ] && [[ "$*" =~ \.xml ]] && [[ ! "$*" =~ uiautomator\ dump ]]; then command adb "$@" | _map_bounds
   else command adb "$@"; fi; }
 fi
 home() { sh_ input keyevent HOME >/dev/null; sleep 1.5; }

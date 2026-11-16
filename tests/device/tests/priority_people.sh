@@ -29,18 +29,19 @@ sh_ input keyevent BACK; sleep 0.8
 set -- $(center "text=\"$(LC_ALL=C date +%A)\""); sh_ input tap ${1:-200} ${2:-300}; sleep 0.8
 sh_ settings put secure etesian_extra_priority 1; sleep 1; events_pane
 check "on, nobody marked: no group" '! dump | grep -q "content-desc=\"Priority: "'
-# Regression: Priority alone must not turn the long-press into a menu (N9 dismiss mode stays).
+# Long-press is always the N9 edit mode, never a menu.
 set -- $(center 'text="Are we still on for lunch?"'); sh_ input swipe ${1:-540} ${2:-900} ${1:-540} ${2:-900} 900; sleep 1.2
 check "priority only: long-press opens no sheet" '! dump | grep -q "text=\"Priority person\""'
 set -- $(center "text=\"$(LC_ALL=C date +%A)\""); sh_ input tap ${1:-200} ${2:-300}; sleep 0.8
-# Marking lives in the approved actions sheet.
+# Marking lives in the item's menu: long-press for edit mode, then tap the item (with or without the actions extra).
 sh_ settings put secure etesian_extra_actions 1; sleep 1; events_pane
 for _ in 1 2 3; do
   set -- $(center 'text="Are we still on for lunch?"'); sh_ input swipe ${1:-540} ${2:-900} ${1:-540} ${2:-900} 900; sleep 1.2
+  set -- $(center 'text="Are we still on for lunch?"'); sh_ input tap ${1:-540} ${2:-900}; sleep 1.2
   shot priority_longpress
   dump | grep -q 'text="Priority person"' && break; sh_ input keyevent BACK; sleep 0.8
 done
-check "long-press: Priority person" 'dump | grep -q "text=\"Priority person\""'
+check "edit mode, tap: Priority person" 'dump | grep -q "text=\"Priority person\""'
 set -- $(center 'text="Priority person"'); sh_ input tap ${1:-0} ${2:-0}; sleep 1.5
 cid=$(sh_ content query --uri content://com.android.contacts/raw_contacts --projection contact_id --where _id=$rc | grep -o 'contact_id=[0-9]*' | cut -d= -f2)
 # Then a missed call from the same number and someone else's message (same test app: they would stack).

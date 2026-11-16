@@ -7,8 +7,9 @@ post() { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind message --e
 bounds() { dump | grep -o "$1[^>]*bounds=\"[^\"]*\"" | grep -o 'bounds="[^"]*"' | head -1 | grep -o '[0-9]\+' | tr '\n' ' '; }
 gh() { set -- $(bounds 'content-desc="Earlier notifications'); [ -n "$4" ] && echo $(( $4 - $2 )) || echo 0; }
 events_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = events ] && break; sh_ input swipe 1000 1700 100 1700 300; sleep 1.5; done; for _ in 1 2 3 4 5; do sh_ input swipe 540 900 540 1900 150; sh_ cmd statusbar collapse; done; sleep 1; }
-# Dismiss the test message from Events (long-press → Dismiss).
-dismiss() { set -- $(bounds "text=\"$1\""); [ -n "$4" ] || return 1; local y=$(( ($2+$4)/2 )); sh_ input swipe 540 $y 540 $y 900; sleep 1.2; tap_text Dismiss; sleep 2; }
+# Dismiss the test message from Events (long-press for edit mode, tap it for its menu → Dismiss; then leave edit mode).
+dismiss() { set -- $(bounds "text=\"$1\""); [ -n "$4" ] || return 1; local y=$(( ($2+$4)/2 )); sh_ input swipe 540 $y 540 $y 900; sleep 1.2
+  sh_ input tap 540 $y; sleep 1.2; tap_text Dismiss; sleep 2; sh_ input keyevent BACK; sleep 0.8; }
 SRC=/home/memphisx/android/lineage/vendor/etesian/launcher/app/src/main/java/com/bompotis/etesian/launcher
 check "Ghosts.kt and EarlierActivity.kt exist" '[ -f $SRC/Ghosts.kt ] && [ -f $SRC/EarlierActivity.kt ]'
 D=$(sh_ wm density | tail -1 | grep -o '[0-9]*$'); dp() { echo $(( $1 * D / 160 )); }

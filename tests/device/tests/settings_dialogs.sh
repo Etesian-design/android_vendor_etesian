@@ -3,7 +3,7 @@
 unlock; home
 # Settings are in sub pages (#23): each title with the page it lives on.
 for entry in "lock:More notifications" "lock:Notifications shown in full" "toolbar:Toolbar" \
-             "toolbar:Back button (and side strip)" "toolbar:Toolbar theme"; do
+             "toolbar:Back button" "toolbar:Toolbar theme"; do
     page=${entry%%:*}; title=${entry#*:}
     sh_ logcat -c -b crash
     sh_ am start -S -n $LAUNCHER/.SettingsActivity --es section $page >/dev/null; sleep 2
