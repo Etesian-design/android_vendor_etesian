@@ -544,13 +544,9 @@ class SettingsActivity : AppCompatActivity() {
                 switch(bar, Prefs.SIDE_SENSE, "Side Sense",
                     "A slim bar on the screen edge. Long-press it and drag to move it, to either side", Prefs.sideSense(ctx))
                 list(bar, Prefs.SIDEBAR_DOUBLE_TAP, "Double tap", barActions, barValues, Prefs.ACTION_BACK)
-                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
-                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
-                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
-                    .dependency = Prefs.SIDE_SENSE
 
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,

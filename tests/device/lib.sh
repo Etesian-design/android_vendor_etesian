@@ -5,6 +5,32 @@ ok()   { PASS=$((PASS+1)); echo "  ok   $1"; }
 bad()  { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 sh_() { adb shell "$@" | tr -d '\r'; }
+# The tests are written for the Pro1-X's 1080x2160 screen. On another screen every tap and swipe is mapped onto it,
+# and every screenshot back to 1080x2160: scaled to 1080 wide, the top half anchored to the top and the bottom half to
+# the bottom (status bar and bottom bar stay where the tests expect them).
+_SIZE=$(command adb shell wm size | tr -d '\r' | grep -o '[0-9]*x[0-9]*' | tail -1)
+_W=${_SIZE%x*}; _H=${_SIZE#*x}
+_map_input() { awk -v W="$_W" -v H="$_H" '{ s=W/1080; out=""; n=split($0, a, " "); k=0
+  for (i=1; i<=n; i++) { t=a[i]
+    if (inp && t ~ /^[0-9]+$/ && k < cnt) { if (k % 2 == 0) t=int(t*s); else t=(t < 1080 ? int(t*s) : int(H-(2160-t)*s)); k++ }
+    if (t == "tap") { inp=1; cnt=2; k=0 } else if (t == "swipe") { inp=1; cnt=4; k=0 } else if (t !~ /^[0-9]+$/) inp=0
+    out = out (i > 1 ? " " : "") t }
+  print out }'; }
+_map_png() { python3 -c "
+import sys, io
+from PIL import Image
+im = Image.open(io.BytesIO(sys.stdin.buffer.read())); W, H = im.size
+if W != 1080 or H != 2160:
+    im = im.resize((1080, round(H * 1080 / W)))
+    out = Image.new(im.mode, (1080, 2160)); out.paste(im.crop((0, 0, 1080, 1080)), (0, 0))
+    out.paste(im.crop((0, im.height - 1080, 1080, im.height)), (0, 1080)); im = out
+b = io.BytesIO(); im.save(b, 'PNG'); sys.stdout.buffer.write(b.getvalue())"; }
+if [ "$_SIZE" != 1080x2160 ]; then
+adb() {
+  if [ "$1" = exec-out ] && [ "$2" = screencap ]; then command adb "$@" | _map_png
+  elif [ "$1" = shell ] && [[ "$*" =~ input\ (tap|swipe) ]]; then shift; command adb shell "$(echo "$*" | _map_input)"
+  else command adb "$@"; fi; }
+fi
 home() { sh_ input keyevent HOME >/dev/null; sleep 1.5; }
 unlock() { sh_ input keyevent WAKEUP; sleep 1; sh_ wm dismiss-keyguard >/dev/null 2>&1; sleep 1; }
 # The resumed activity, e.g. com.bompotis.etesian.launcher/.HomeActivity
