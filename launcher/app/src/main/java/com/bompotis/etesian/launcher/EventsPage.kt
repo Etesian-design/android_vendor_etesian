@@ -109,26 +109,25 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     private fun onLongPress() = setDismissMode(true)
 
     /**
-     * Long-press on one notification: with Android extras "Notification actions and snooze" or
-     * "Inline reply" on, the N9 menu sheet (Reply / Mark as read / Snooze / Dismiss); otherwise
-     * the N9 dismiss mode as before.
+     * Long-press on one notification: always the N9 edit mode, whatever the extras (swipe away, tap for the entry's
+     * menu). The extras only add rows to that menu; they never take dismissing or filing away.
      */
-    private fun onLongPress(e: EventItem) {
+    private fun onLongPress(e: EventItem) = onLongPress()
+
+    /**
+     * Tap on a notification in edit mode: one N9 sheet with all that can be done to it. Show under… (file it in
+     * another section) and Dismiss always; Reply, Mark as read and Snooze with their Android extras; Priority person.
+     */
+    private fun entryMenu(e: EventItem) {
         val actions = Extras.on(context, Extras.ACTIONS)
         val reply = Extras.on(context, Extras.INLINE_REPLY) && e.replyAction != null
-        // Without the approved actions sheet, long-press is always the N9 dismiss mode (never a new menu).
-        if (dismissMode || (!actions && !reply)) { onLongPress(); return }
-        // Android extras → Priority people: a row in the existing sheet only.
         val contact = if (Priority.on(context)) Priority.contactOf(context, e) else -1L
-        performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
         val items = mutableListOf<N9Sheet.Item>()
+        items += N9Sheet.Item("Show under\u2026", EventsClassifier.classify(context, e).title) { reclassify(e) }
         if (reply) items += N9Sheet.Item("Reply") { EventsReply.show(context, e, iconFor(e)) }
         if (actions) {
-            e.markReadAction?.let { a -> items += N9Sheet.Item("Mark as read") {
-                runCatching { a.actionIntent.send() }
-            } }
+            e.markReadAction?.let { a -> items += N9Sheet.Item("Mark as read") { runCatching { a.actionIntent.send() } } }
             items += N9Sheet.Item("Snooze", "15 minutes, 1 hour or tomorrow") { snooze(e) }
-            items += N9Sheet.Item("Dismiss") { EventsStore.service?.cancelNotification(e.key) }
         }
         if (contact >= 0) {
             val name = Priority.person(context, contact)?.name.orEmpty()
@@ -136,9 +135,8 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 N9Sheet.Item("Not a priority person", name) { Priority.set(context, contact, false); refresh() }
             else N9Sheet.Item("Priority person", name) { Priority.set(context, contact, true); refresh() }
         }
-        // Mock 2: only the notification's own actions, Snooze and Dismiss (Edit Events stays on the feed long-press).
-        if (items.isEmpty()) { onLongPress(); return }
-        N9Sheet.show(context, items, label = "Events actions")
+        items += N9Sheet.Item("Dismiss") { EventsStore.service?.cancelNotification(e.key) }
+        N9Sheet.show(context, items, title = appLabel(e.pkg), label = "Events actions")
     }
 
     /** Snooze choices as an N9 selection sheet; tomorrow = 08:00 next morning. */
@@ -155,8 +153,8 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         ), title = "Snooze", label = "Snooze")
     }
 
-    /** In dismiss mode a tap files the entry elsewhere instead of opening it. */
-    private fun onTap(e: EventItem, open: () -> Unit) = if (dismissMode) reclassify(e) else open()
+    /** In edit mode a tap opens the entry's menu (file it elsewhere, actions, dismiss) instead of opening it. */
+    private fun onTap(e: EventItem, open: () -> Unit) = if (dismissMode) entryMenu(e) else open()
 
     /** The notifications a row stands for, for dismissing it. */
     private fun itemsOf(row: Row): List<EventItem> = when (row) {
@@ -401,7 +399,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 14 -> TodayView(ctx)
                 15 -> PriorityView(ctx)
                 10 -> TextView(ctx).apply {
-                    text = "Swipe entries away to dismiss them \u00b7 tap the date to finish"
+                    text = "Swipe entries away to dismiss them \u00b7 tap one for more \u00b7 tap the date to finish"
                     setTextColor(N9.TEXT); textSize = 14f; typeface = N9.FONT
                     gravity = Gravity.CENTER
                     setPadding(dp(16f), dp(10f), dp(16f), dp(10f))
