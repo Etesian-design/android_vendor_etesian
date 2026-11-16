@@ -43,6 +43,8 @@ class WeatherPlaceActivity : Activity() {
             setPadding(dp(16f), dp(10f), dp(16f), dp(10f))
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setText(Prefs.weatherCity(this@WeatherPlaceActivity))
+            // The current place is selected: typing replaces it instead of going in front of it.
+            setSelectAllOnFocus(true); selectAll()
             setOnEditorActionListener { _, _, _ -> main.removeCallbacks(search); find(); true }
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}

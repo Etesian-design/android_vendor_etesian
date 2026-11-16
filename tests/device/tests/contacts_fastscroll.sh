@@ -29,7 +29,8 @@ code() { printf %d "'$1"; }
 sh_ input swipe 400 1500 400 1300 300
 sh_ input swipe 1040 500 1040 500 200; sleep 0.8; a=$(first)
 sh_ input swipe 400 1300 400 1500 300
-sh_ input swipe 1040 500 1040 560 400; sleep 0.8; b=$(first)
+# Just over one section step on both phones (Pro1-X and 7 Pro 5G densities).
+sh_ input swipe 1040 500 1040 545 400; sleep 0.8; b=$(first)
 check "a small drag steps one section ($a -> $b)" '[ -n "$a" ] && [ -n "$b" ] && [ $(code $b) -eq $(( $(code $a) + 1 )) ]'
 f=/home/memphisx/android/lineage/vendor/etesian/fastscroll/src/com/bompotis/etesian/fastscroll/EtesianListFastScroller.java
 check "scroller sizes from the N9 (source)" '[ -f $f ] && grep -q "70f / 480f" ${f%/*}/FastScrollCore.java && grep -q "150f / 854f" ${f%/*}/FastScrollCore.java'

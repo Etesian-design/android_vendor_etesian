@@ -9,7 +9,10 @@ adb root >/dev/null 2>&1; sleep 2
 _zen0=$(adb shell settings get global zen_mode | tr -d '\r'); _ring0=$(adb shell settings get global mode_ringer | tr -d '\r')
 quiet_on() { set_zen 2; adb shell cmd audio set-ringer-mode SILENT; }
 quiet_off() { set_zen "${_zen0:-0}"; adb shell cmd audio set-ringer-mode $(echo "${_ring0:-2}" | sed 's/0/SILENT/;s/1/VIBRATE/;s/2/NORMAL/'); }
-quiet_on; trap quiet_off EXIT
+# The screen stays on for the whole run (a test can take longer than the screen timeout); put back at the end.
+_awake0=$(adb shell settings get global stay_on_while_plugged_in | tr -d '\r')
+quiet_on; adb shell svc power stayon true
+trap 'quiet_off; adb shell settings put global stay_on_while_plugged_in "${_awake0:-0}"' EXIT
 # The user's own settings (extras, Widgets view): every test must leave them as it found them.
 user_state() { unlock >/dev/null; sh_ settings list secure | grep '^etesian_extra_' | sort; echo "widgets=$(pref_switch home Widgets)"; }
 # An interrupted run (Ctrl-C, killed) must not leave a test's changes behind: put back the
@@ -18,7 +21,7 @@ LP=/data/data/com.bompotis.etesian.launcher/shared_prefs/com.bompotis.etesian.la
 interrupted() { echo "interrupted: restoring the user's settings"
   sh_ "am force-stop com.bompotis.etesian.launcher; cat /data/local/tmp/run_user_prefs.bak > $LP"
   echo "$_us0" | grep '^etesian_extra_' | while IFS== read -r k v; do sh_ settings put secure "$k" "$v"; done
-  quiet_off; exit 130; }
+  quiet_off; adb shell settings put global stay_on_while_plugged_in "${_awake0:-0}"; exit 130; }
 trap interrupted INT TERM HUP
 for t in ${@:-tests/*.sh}; do [ -f "$t" ] || t=tests/$t.sh; echo "== $(basename "$t" .sh)"
   _us0=$(user_state); sh_ "cp $LP /data/local/tmp/run_user_prefs.bak"; . "$t"; _us1=$(user_state)

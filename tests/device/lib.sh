@@ -5,39 +5,38 @@ ok()   { PASS=$((PASS+1)); echo "  ok   $1"; }
 bad()  { FAIL=$((FAIL+1)); echo "  FAIL $1"; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 sh_() { adb shell "$@" | tr -d '\r'; }
-# The tests are written for the Pro1-X's 1080x2160 screen. On another screen every tap and swipe is mapped onto it,
-# and every screenshot back to 1080x2160: scaled to 1080 wide, the top half anchored to the top and the bottom half to
-# the bottom (status bar and bottom bar stay where the tests expect them).
+# The tests are written for the Pro1-X's 1080x2160 screen. On another screen every tap, swipe and drag is mapped onto it,
+# every UI dump's bounds and every screenshot back to 1080x2160. Widths scale by W/1080; heights keep that scale at the top
+# (frame 0-900) and the bottom (frame 1260-2160, anchored to the bottom edge, where the bottom bar is), and the middle
+# band stretches to fill the rest. One to one both ways, so a point read from the screen can be tapped again.
 _SIZE=$(command adb shell wm size | tr -d '\r' | grep -o '[0-9]*x[0-9]*' | tail -1)
 _W=${_SIZE%x*}; _H=${_SIZE#*x}
-_map_input() { awk -v W="$_W" -v H="$_H" '{ s=W/1080; out=""; n=split($0, a, " "); k=0
-  for (i=1; i<=n; i++) { t=a[i]
-    if (inp && t ~ /^[0-9]+$/ && k < cnt) { if (k % 2 == 0) t=int(t*s); else t=(t < 1080 ? int(t*s) : int(H-(2160-t)*s)); k++ }
-    if (t == "tap") { inp=1; cnt=2; k=0 } else if (t == "swipe") { inp=1; cnt=4; k=0 } else if (t !~ /^[0-9]+$/) inp=0
-    out = out (i > 1 ? " " : "") t }
-  print out }'; }
+_PT=$(( 900 * _W / 1080 )); _PB=$(( _H - 900 * _W / 1080 ))
 _map_png() { python3 -c "
 import sys, io
 from PIL import Image
 im = Image.open(io.BytesIO(sys.stdin.buffer.read())); W, H = im.size
 if W != 1080 or H != 2160:
-    im = im.resize((1080, round(H * 1080 / W)))
-    out = Image.new(im.mode, (1080, 2160)); out.paste(im.crop((0, 0, 1080, 1080)), (0, 0))
-    out.paste(im.crop((0, im.height - 1080, 1080, im.height)), (0, 1080)); im = out
+    pt, pb = round(900 * W / 1080), H - round(900 * W / 1080)
+    out = Image.new(im.mode, (1080, 2160))
+    out.paste(im.crop((0, 0, W, pt)).resize((1080, 900)), (0, 0))
+    out.paste(im.crop((0, pt, W, pb)).resize((1080, 360)), (0, 900))
+    out.paste(im.crop((0, pb, W, H)).resize((1080, 900)), (0, 1260)); im = out
 b = io.BytesIO(); im.save(b, 'PNG'); sys.stdout.buffer.write(b.getvalue())"; }
-# UI dumps carry the phone's own pixels: their bounds are put into the same 1080x2160 frame (the inverse mapping).
 _map_bounds() { python3 -c "
 import sys, re
-W, H = $_W, $_H; s = W / 1080
+W, H, PT, PB = $_W, $_H, $_PT, $_PB; s = W / 1080
 def y(v):
     v = int(v)
-    if v <= 1080 * s: return min(int(v / s), 1079)
-    if v >= H - 1080 * s: return max(int(2160 - (H - v) / s), 1080)
-    return 1080
-def f(m): return '[%d,%d][%d,%d]' % (int(int(m[1]) / s), y(m[2]), int(int(m[3]) / s), y(m[4]))
+    if v <= PT: return round(v / s)
+    if v >= PB: return round(2160 - (H - v) / s)
+    return round(900 + (v - PT) * 360 / (PB - PT))
+def f(m): return '[%d,%d][%d,%d]' % (round(int(m[1]) / s), y(m[2]), round(int(m[3]) / s), y(m[4]))
 sys.stdout.write(re.sub(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', f, sys.stdin.read()))"; }
 # Mapped on the phone, so coordinates computed there (loops in the command) are mapped too.
-_DEV_INPUT='_x() { echo $(( $1 * '$_W' / 1080 )); }; _y() { if [ $1 -lt 1080 ]; then echo $(( $1 * '$_W' / 1080 )); else echo $(( '$_H' - (2160 - $1) * '$_W' / 1080 )); fi; }
+_DEV_INPUT='_x() { echo $(( $1 * '$_W' / 1080 )); }
+_y() { if [ $1 -le 900 ]; then echo $(( $1 * '$_W' / 1080 )); elif [ $1 -ge 1260 ]; then echo $(( '$_H' - (2160 - $1) * '$_W' / 1080 ));
+  else echo $(( '$_PT' + ($1 - 900) * ('$_PB' - '$_PT') / 360 )); fi; }
 input() { case "$1" in
   tap) /system/bin/input tap $(_x $2) $(_y $3) ;;
   swipe) /system/bin/input swipe $(_x $2) $(_y $3) $(_x $4) $(_y $5) $6 ;;
