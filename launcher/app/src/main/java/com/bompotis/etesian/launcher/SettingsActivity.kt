@@ -43,7 +43,8 @@ class SettingsActivity : AppCompatActivity() {
             Section("status", "Status menu", "Toggles, sliders, music, modes", R.drawable.ic_set_status),
             Section("open", "Open applications", "Arranging, carousel, split screen", R.drawable.ic_set_open),
             Section("wallpapers", "Wallpapers & backgrounds", "Home wallpapers, app and menu backgrounds", R.drawable.ic_set_wallpaper),
-            Section("gestures", "Gestures", "Swipes, back, edge bar", R.drawable.ic_set_gestures),
+            Section("gestures", "Gestures", "Swipes, back", R.drawable.ic_set_gestures),
+            Section("sidesense", "Side Sense", "The edge bar: taps, flicks, where it sits", R.drawable.ic_set_gestures),
             Section("lock", "Lock screen", "Notifications, glance line, weather", R.drawable.ic_set_lock),
             Section("emergency", "Emergency information", "Medical details for first responders", R.drawable.ic_set_emergency),
             Section("sharing", "Sharing", "Share sheet, sharing a network", R.drawable.ic_set_share),
@@ -348,7 +349,7 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Edge bar" to "gestures", "Notifications on the lock screen" to "lock",
+                "Gestures" to "gestures", "Side Sense" to "sidesense", "Notifications on the lock screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
                 "Status menu" to "status", "Arranging" to "open", "Carousel" to "open", "Split screen" to "open",
@@ -532,22 +533,24 @@ class SettingsActivity : AppCompatActivity() {
                 list(gestures, Prefs.CLOSE_DISTANCE, "Swipe distance to leave an app",
                     arrayOf("50% of the screen (N9)", "40%", "30%", "20%"),
                     arrayOf("50", "40", "30", "20"), "50")
-                list(gestures, Prefs.BACK_GESTURE, "Back",
-                    arrayOf("Swipe from the left side", "Swipe from the right side",
-                        "Swipe in, then down", "Edge bar (Side Sense style)"),
-                    arrayOf(Prefs.BACK_LEFT, Prefs.BACK_RIGHT, Prefs.BACK_CURVED, Prefs.BACK_SIDEBAR),
-                    Prefs.BACK_CURVED)
+                list(gestures, Prefs.BACK_GESTURE, "Back by swiping in",
+                    arrayOf("Disabled", "Swipe from the left side", "Swipe from the right side"),
+                    arrayOf(Prefs.BACK_DISABLED, Prefs.BACK_LEFT, Prefs.BACK_RIGHT),
+                    Prefs.backGesture(ctx))   // also migrates a removed choice
                 val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Nothing")
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,
                     Prefs.ACTION_SWITCHER, Prefs.ACTION_NONE)
-                val bar = category("Edge bar")
-                list(bar, Prefs.SIDEBAR_SIDE, "Side", arrayOf("Left", "Right"), arrayOf("left", "right"), "right")
-                list(bar, Prefs.SIDEBAR_POSITION, "Height", arrayOf("Upper", "Middle", "Lower"),
-                    arrayOf("30", "45", "65"), "45")
+                val bar = category("Side Sense")
+                switch(bar, Prefs.SIDE_SENSE, "Side Sense",
+                    "A slim bar on the screen edge. Long-press it and drag to move it, to either side", Prefs.sideSense(ctx))
                 list(bar, Prefs.SIDEBAR_DOUBLE_TAP, "Double tap", barActions, barValues, Prefs.ACTION_BACK)
+                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
+                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
+                    .dependency = Prefs.SIDE_SENSE
                 list(bar, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
+                    .dependency = Prefs.SIDE_SENSE
 
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,
@@ -589,23 +592,8 @@ class SettingsActivity : AppCompatActivity() {
                     toolbar.addPreference(this)
                 }
                 ListPreference(ctx).apply {
-                    key = "secure_etesian_toolbar_mode"
-                    title = "Toolbar"
-                    isPersistent = false
-                    isIconSpaceReserved = false
-                    entries = arrayOf("Bar at the bottom", "Side strip (tap the edge handle)")
-                    entryValues = arrayOf("0", "1")
-                    value = android.provider.Settings.Secure.getInt(ctx.contentResolver, "etesian_toolbar_mode", 0).toString()
-                    summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
-                    setOnPreferenceChangeListener { _, v ->
-                        android.provider.Settings.Secure.putInt(ctx.contentResolver, "etesian_toolbar_mode", (v as String).toInt())
-                        true
-                    }
-                    toolbar.addPreference(this)
-                }
-                ListPreference(ctx).apply {
                     key = "toolbar_back_side"
-                    title = "Back button (and side strip)"
+                    title = "Back button"
                     isPersistent = false
                     isIconSpaceReserved = false
                     entries = arrayOf("Left", "Right")

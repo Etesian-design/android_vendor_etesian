@@ -76,7 +76,7 @@ class EdgeGestures(private val ctx: Context) {
     }
 
     private fun updateSideBar() {
-        if (n9Mode() && Prefs.backGesture(ctx) == Prefs.BACK_SIDEBAR) sideBar.show() else sideBar.hide()
+        if (n9Mode() && Prefs.sideSense(ctx)) sideBar.show() else sideBar.hide()
     }
 
     /** An action picked in settings, run from the edge bar. */

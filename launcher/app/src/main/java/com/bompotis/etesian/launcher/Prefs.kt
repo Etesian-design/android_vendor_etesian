@@ -34,19 +34,22 @@ object Prefs {
     // Gesture choices (ROM only).
     const val GESTURES_N9 = "n9"
     const val GESTURES_ANDROID = "android"
-    /** Removed option (a short swipe was mistaken for a change of mind); migrated to curved. */
-    private const val BACK_SHORT_REMOVED = "short"
+    /** Back by gesture is off by default: the N9 gestures and the toolbar's Back cover it. */
+    const val BACK_DISABLED = "disabled"
     const val BACK_LEFT = "left"
     const val BACK_RIGHT = "right"
+    /** Removed options: "short" and "curved" (swipe in, then down) now Disabled; "sidebar" now Side Sense. */
     const val BACK_CURVED = "curved"
-    const val BACK_SIDEBAR = "sidebar"
+    private const val BACK_SIDEBAR_REMOVED = "sidebar"
+    private const val BACK_SHORT_REMOVED = "short"
     const val ACTION_MINIMISE = "minimise"
     const val ACTION_BACK = "back"
     const val ACTION_CLOSE = "close"
     const val ACTION_NONE = "none"
     const val ACTION_SWITCHER = "switcher"
 
-    // Edge bar (Back = sidebar).
+    // Side Sense: the edge bar. Side and position are set by long-pressing the bar and dragging it.
+    const val SIDE_SENSE = "side_sense"
     const val SIDEBAR_SIDE = "sidebar_side"
     const val SIDEBAR_POSITION = "sidebar_position"
     const val SIDEBAR_DOUBLE_TAP = "sidebar_double_tap"
@@ -107,11 +110,28 @@ object Prefs {
     fun closeDistance(ctx: Context) =
         (of(ctx).getString(CLOSE_DISTANCE, "50") ?: "50").toFloatOrNull()?.div(100f) ?: 0.5f
     fun backGesture(ctx: Context): String {
-        val v = of(ctx).getString(BACK_GESTURE, BACK_CURVED)!!
-        if (v != BACK_SHORT_REMOVED) return v
-        of(ctx).edit().putString(BACK_GESTURE, BACK_CURVED).apply()
-        return BACK_CURVED
+        val v = of(ctx).getString(BACK_GESTURE, BACK_DISABLED)!!
+        if (v == BACK_LEFT || v == BACK_RIGHT || v == BACK_DISABLED) return v
+        // A removed option: Back by the edge bar becomes Side Sense, the others Disabled.
+        of(ctx).edit().putString(BACK_GESTURE, BACK_DISABLED).apply {
+            if (v == BACK_SIDEBAR_REMOVED) putBoolean(SIDE_SENSE, true)
+        }.apply()
+        return BACK_DISABLED
     }
+    /** Side Sense: the one edge bar, its own setting (on with "sidebar" as Back before). */
+    fun sideSense(ctx: Context): Boolean {
+        backGesture(ctx)   // migrates an old "sidebar" Back first
+        // The toolbar's side strip is gone (Side Sense is the one edge bar): an old choice of it turns Side Sense on.
+        runCatching {
+            if (android.provider.Settings.Secure.getInt(ctx.contentResolver, "etesian_toolbar_mode", 0) == 1) {
+                android.provider.Settings.Secure.putInt(ctx.contentResolver, "etesian_toolbar_mode", 0)
+                of(ctx).edit().putBoolean(SIDE_SENSE, true).apply()
+            }
+        }
+        return of(ctx).getBoolean(SIDE_SENSE, false)
+    }
+    fun setSideBarPlace(ctx: Context, side: String, percent: Int) =
+        of(ctx).edit().putString(SIDEBAR_SIDE, side).putString(SIDEBAR_POSITION, percent.coerceIn(8, 92).toString()).apply()
     fun sideBarSide(ctx: Context) = of(ctx).getString(SIDEBAR_SIDE, "right")!!
     /** Bar centre as a percentage of the screen height. */
     fun sideBarPosition(ctx: Context) = of(ctx).getString(SIDEBAR_POSITION, "45")!!.toInt()

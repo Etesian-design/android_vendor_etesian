@@ -16,14 +16,17 @@ import com.bompotis.etesian.launcher.Prefs
 import kotlin.math.abs
 
 /**
- * Back for N9 mode, in the style of Xperia's Side Sense: a slim bar on the screen edge that
- * answers double taps and short flicks with configurable actions.
+ * Side Sense, as on Xperia phones: a slim bar on the screen edge that answers double taps and short flicks with
+ * configurable actions. Long-press it, then drag: up and down moves it, across the screen puts it on the other edge.
  */
 class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     private val wm = ctx.getSystemService(WindowManager::class.java)
     private val density = ctx.resources.displayMetrics.density
     private var view: Bar? = null
+    private var lp: WindowManager.LayoutParams? = null
     private var onLeft = false
+    /** Long-pressed: the stream moves the bar instead of making gestures. */
+    private var moving = false
 
     /** Screen area the bar takes, so edge swipes starting on it are left to the bar. */
     val bounds = Rect()
@@ -45,7 +48,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
             this.y = y
             title = "EtesianSideBar"
         }
-        runCatching { wm.addView(v, lp); view = v }
+        runCatching { wm.addView(v, lp); view = v; this.lp = lp }
         bounds.set(if (onLeft) 0 else screenW - w, y, if (onLeft) w else screenW, y + h)
     }
 
@@ -58,6 +61,11 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     private val flick = 36 * density
     private val detector = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
+
+        override fun onLongPress(e: MotionEvent) {
+            moving = true
+            view?.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
             perform(Prefs.sideBarAction(ctx, Prefs.SIDEBAR_DOUBLE_TAP))
@@ -86,7 +94,32 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     fun onTouch(e: MotionEvent) {
         view?.active = e.actionMasked == MotionEvent.ACTION_DOWN || e.actionMasked == MotionEvent.ACTION_MOVE
         view?.invalidate()
+        if (moving) { move(e); return }
         detector.onTouchEvent(e)
+    }
+
+    /** Follows the finger; on release the place is saved (and the bar shown there again by its owner). */
+    private fun move(e: MotionEvent) {
+        val v = view ?: return
+        val p = lp ?: return
+        val screenW = ctx.resources.displayMetrics.widthPixels
+        val screenH = ctx.resources.displayMetrics.heightPixels
+        val left = e.rawX < screenW / 2f
+        when (e.actionMasked) {
+            MotionEvent.ACTION_MOVE -> {
+                onLeft = left
+                p.gravity = Gravity.TOP or (if (left) Gravity.LEFT else Gravity.RIGHT)
+                p.y = (e.rawY - p.height / 2f).toInt().coerceIn(0, screenH - p.height)
+                runCatching { wm.updateViewLayout(v, p) }
+                v.invalidate()
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                moving = false
+                // The detector saw the press start: end it, so the release is not a flick.
+                MotionEvent.obtain(e).also { it.action = MotionEvent.ACTION_CANCEL; detector.onTouchEvent(it); it.recycle() }
+                Prefs.setSideBarPlace(ctx, if (left) "left" else "right", (e.rawY * 100 / screenH).toInt())
+            }
+        }
     }
 
     @SuppressLint("ViewConstructor")
