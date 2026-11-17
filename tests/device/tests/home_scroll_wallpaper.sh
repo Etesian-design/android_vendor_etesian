@@ -28,7 +28,10 @@ tap_text "hdtest-pano.png"; sleep 5
 check "back in settings after picking" 'top_activity | grep -q "$P/.SettingsActivity"'
 check "the scrolling wallpaper is switched on" '[ "$(sh_ settings get secure etesian_home_scroll_bg)" = 1 ]'
 hue() { adb exec-out screencap -p > /tmp/hd-pa.png; $PY -c "
-from PIL import ImageStat, Image; r,g,b=ImageStat.Stat(Image.open('/tmp/hd-pa.png').convert('RGB')).mean; print(int(r-b))"; }  # whole screen: one pixel can sit under content
+from PIL import ImageStat, Image; im=Image.open('/tmp/hd-pa.png').convert('RGB')
+r,g,b=ImageStat.Stat(im.crop((0,int(im.height*.1),6,int(im.height*.9)))).mean; print(int(r-b))"; }
+# The screen's left edge, a strip no view's content covers: the user's own widgets and notes would colour a
+# whole-screen average.
 # Start on the leftmost view: Widgets when the user has it on, else Events (the views wrap around).
 first=$([ "$(pref_switch home Widgets)" = 1 ] && echo widgets || echo events)
 home; for _ in 1 2 3 4; do [ "$(home_pane)" = $first ] && break; sh_ input swipe 200 1200 900 1200 250; sleep 1.2; done

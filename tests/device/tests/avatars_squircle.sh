@@ -21,10 +21,16 @@ unlock; sh_ am force-stop $M
 sh_ am start -a android.intent.action.SENDTO -d smsto: >/dev/null; sleep 3
 if top_activity | grep -q $M; then
   sh_ input text 5550100; sleep 1; sh_ input keyevent ENTER; sleep 2.5
-  adb exec-out screencap -p > /tmp/sq-chip.png
+  # The phone's own pixels: a shape measured on a scaled-down copy has its edge blurred out.
+  command adb exec-out screencap -p > /tmp/sq-chip.png
   r=$($PY - <<'PYEOF'
 from PIL import Image
-im = Image.open('/tmp/sq-chip.png').convert('RGB')
+raw = Image.open('/tmp/sq-chip.png').convert('RGB')
+# The test's coordinates are the 1080-wide frame's; the top of the screen is scaled evenly.
+s = raw.width / 1080
+class Frame:
+    def getpixel(self, xy): return raw.getpixel((int(xy[0] * s), int(xy[1] * s)))
+im = Frame()
 # The avatar: the leftmost non-blue, non-background run in the To: band (rows 190..290).
 def isav(p): return not (p[2] > 170 and p[0] < 60) and max(p) - min(p) > 60
 xs = [x for x in range(90, 500) if isav(im.getpixel((x, 236)))]
@@ -32,7 +38,11 @@ if not xs: print('none'); raise SystemExit
 x0 = xs[0]; x1 = x0
 while x1 + 1 < 500 and isav(im.getpixel((x1 + 1, 236))): x1 += 1
 ys = [y for y in range(180, 300) if isav(im.getpixel(((x0 + x1) // 2, y)))]
-y0, y1 = ys[0], ys[-1]; r = (x1 - x0) / 2; cx = (x0 + x1) / 2; cy = (y0 + y1) / 2
+y0, y1 = ys[0], ys[-1]; cy = (y0 + y1) / 2
+# The width again through the avatar's middle (the scan row can be off centre on another phone).
+xs = [x for x in range(90, 500) if isav(im.getpixel((x, int(cy))))]; x0 = xs[0]; x1 = x0
+while x1 + 1 < 500 and isav(im.getpixel((x1 + 1, int(cy)))): x1 += 1
+r = (x1 - x0) / 2; cx = (x0 + x1) / 2
 # Walk from the centre to the top-left corner; the last avatar pixel's distance, as a fraction.
 d = 0
 for i in range(0, int(r * 1.42)):

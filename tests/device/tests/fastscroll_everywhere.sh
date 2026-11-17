@@ -58,7 +58,9 @@ for l in A B C D E F G H I J K L M N O P Q R S T U V W X Y Z; do add "${l}ara Hd
 D=com.android.dialer
 sh_ am start -n $D/.main.impl.MainActivity >/dev/null 2>&1; sleep 3
 if top_activity | grep -q $D; then
-  sh_ input tap 660 2090; sleep 2.5  # toolbar: Contacts
+  # Toolbar: Contacts, by its label (with a SIM there is a Voicemail tab too, so the place varies).
+  set -- $(sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | grep -o 'content-desc="Contacts"[^>]*bounds="[^"]*"' | grep -o '[0-9]\+' | tr '\n' ' ')
+  sh_ input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); sleep 2.5
   n=$(under_band); check "dialer contacts: no row text under the band ($n)" "[ $n = 0 ]"
   sh_ input swipe 540 1600 540 1000 200; sleep 0.3; sh_ input swipe 1040 900 1040 1100 1500; sleep 1.5
   sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1

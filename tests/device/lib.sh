@@ -137,9 +137,14 @@ seek_widget() { for _ in 1 2 3 4 5 6 7 8; do sh_ input swipe 540 600 540 1800 15
 # Which way the screen content moved in a recording: slide_dir <mp4> prints the summed horizontal
 # shift in px of 360-wide frames (negative: content moved left, i.e. a page came in from the right).
 slide_dir() { /home/memphisx/android/.venv-tools/bin/python -c "
-import imageio.v3 as iio, numpy as np, sys
+import imageio_ffmpeg, numpy as np, sys
+# The recorded frames as they are: imageio's own reader resamples to the stream's rate, and a
+# recording with a 90k time base then turns into endless copies of its first frame.
+def frames(f):
+  g=imageio_ffmpeg.read_frames(f, output_params=['-fps_mode','passthrough']); m=next(g); w,h=m['size']
+  for b in g: yield np.frombuffer(b,np.uint8).reshape(h,w,3)
 prev=None; tot=0
-for x in iio.imiter(sys.argv[1]):
+for x in frames(sys.argv[1]):
   p=x[150:600].astype(float).mean(axis=(0,2))
   if prev is not None and np.abs(p-prev).mean()>0.05:
     best=min(range(-60,61),key=lambda k:np.abs(p[60+k:300+k]-prev[60:300]).mean())
@@ -170,10 +175,17 @@ widgets_put() { local P=/data/data/$LAUNCHER/shared_prefs/widgets.xml; sh_ am fo
 # Which way the page title moved in a recording (for pages with little else on them): prints the
 # change in px of the bright pixels' mean x in the title band after the pages swap (negative: moved left).
 title_dir() { /home/memphisx/android/.venv-tools/bin/python -c "
-import imageio.v3 as iio, numpy as np, sys
+import imageio_ffmpeg, numpy as np, sys
+# The recorded frames as they are: imageio's own reader resamples to the stream's rate, and a
+# recording with a 90k time base then turns into endless copies of its first frame.
+def frames(f):
+  g=imageio_ffmpeg.read_frames(f, output_params=['-fps_mode','passthrough']); m=next(g); w,h=m['size']
+  for b in g: yield np.frombuffer(b,np.uint8).reshape(h,w,3)
 xs=[]
-for x in iio.imiter(sys.argv[1]):
-  m=x[15:40].mean(axis=2)>150; c=np.flatnonzero(m.any(axis=0))
+for x in frames(sys.argv[1]):
+  # The page title's band, under the status bar (rows 25..65 of 720; the Pro1-X's title sat at 15..40, a taller
+  # phone's lower down): the status bar's own icons never move and would hide the slide.
+  h=x.shape[0]; m=x[int(h*0.035):int(h*0.09)].mean(axis=2)>150; c=np.flatnonzero(m.any(axis=0))
   if len(c): xs.append(float(c.mean()))
 d=[b-a for a,b in zip(xs,xs[1:])]
 # From the swap of pages (the largest jump) on, only the new page's title moves.
