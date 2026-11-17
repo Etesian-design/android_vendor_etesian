@@ -68,14 +68,16 @@ def wind(t, start, dur, f0, f1, width=0.35, gain=1.0, seed=1, attack=None):
     win = np.hanning(blk)
     norm = np.zeros(n + blk)
     freqs = np.fft.rfftfreq(blk, 1 / SR)
-    pink = 1 / np.sqrt(np.maximum(freqs, 20) / 1000)
+    pink = 1.0   # white: the noise reaches the top of the band
     for a in range(0, n, hop):
         seg = noise[a:a + blk]
         if len(seg) < blk:
             seg = np.pad(seg, (0, blk - len(seg)))
         x = np.clip((a / SR - start) / dur, 0, 1)
         fc = f0 * (f1 / f0) ** x          # glides evenly in pitch
-        band = np.exp(-0.5 * (np.log2(np.maximum(freqs, 1) / fc) / width) ** 2) * pink
+        lf = np.log2(np.maximum(freqs, 1) / fc)
+        # The gust's band, and a faint airy hiss above it (what makes wind sound open, not muffled).
+        band = (np.exp(-0.5 * (lf / width) ** 2) + 0.3 * np.exp(-0.5 * ((lf - 2.6) / 1.2) ** 2)) * pink
         y = np.fft.irfft(np.fft.rfft(seg * win) * band, blk) * win
         m = min(blk, n - a)
         out[a:a + m] += y[:m]
@@ -97,12 +99,15 @@ def air(t, start, midi, dur, gain=1.0, breath=0.25, seed=3, vibrato=0.002):
     a = min(0.08, dur * 0.3)
     shape = np.where((t < start) | (x > dur), 0.0,
                      np.sin(np.pi / 2 * np.clip(x / a, 0, 1)) ** 2 * np.exp(-np.maximum(x - a, 0) / (dur * 0.45)))
-    tone = (np.sin(ph) + 0.06 * np.sin(2 * ph)) * shape
-    return gain * (tone + breath * 0.6 * wind(t, start, dur, f * 0.98, f * 1.02, 0.12, seed=seed, attack=a))
+    sparkle = np.exp(-x / 0.05)
+    tone = (np.sin(ph) + 0.06 * np.sin(2 * ph) + sparkle * (0.05 * np.sin(3 * ph) + 0.03 * np.sin(5 * ph))) * shape
+    # The breath: a narrow band at the pitch, and the lip's airy hiss high above it.
+    return gain * (tone + breath * 0.6 * wind(t, start, dur, f * 0.98, f * 1.02, 0.12, seed=seed, attack=a)
+                   + breath * 0.7 * wind(t, start, dur * 0.6, 9000, 14000, 0.8, seed=seed + 50, attack=a))
 
 
-def soften(s, cutoff=5500, room=0.18):
-    """Delicate: the top rolled off gently, and a short soft room (decaying filtered noise) so nothing ends dry."""
+def soften(s, room=0.16):
+    """Delicate: a short soft room (decaying noise) so nothing ends dry. Full range: nothing is filtered away."""
     n = len(s)
     rng = np.random.default_rng(99)
     ir_len = int(SR * 0.35)
@@ -110,7 +115,7 @@ def soften(s, cutoff=5500, room=0.18):
     ir[0] = 0
     size = 1 << int(np.ceil(np.log2(n + ir_len)))
     f = np.fft.rfftfreq(size, 1 / SR)
-    lp = 1 / np.sqrt(1 + (f / cutoff) ** 4)
+    lp = 1.0   # no filtering: the full 48 kHz band (to 24 kHz) is kept
     S = np.fft.rfft(s, size)
     wet = np.fft.irfft(S * np.fft.rfft(ir, size) * lp * lp, size)[:n]
     dry = np.fft.irfft(S * lp, size)[:n]
