@@ -38,7 +38,9 @@ class WifiShareActivity : Activity() {
         })
         if (net == null) {
             col.addView(TextView(this).apply {
-                text = "Not connected to a Wi-Fi network"; setTextColor(0xFFC8C8C8.toInt()); textSize = 18f; typeface = N9.FONT_LIGHT
+                text = if (wifiOn()) "Android hides the network's name while location is off.\nTurn on location to share it."
+                    else "Not connected to a Wi-Fi network"
+                gravity = Gravity.CENTER; setTextColor(0xFFC8C8C8.toInt()); textSize = 18f; typeface = N9.FONT_LIGHT
                 setPadding(0, dp(24f), 0, dp(24f))
             })
         } else {
@@ -52,12 +54,21 @@ class WifiShareActivity : Activity() {
                 contentDescription = "Network and password"
             })
         }
+        if (net == null && wifiOn()) col.addView(N9.editButton(this, "Location settings") {
+            runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }; finish()
+        }.apply { contentDescription = "Location settings" }, LinearLayout.LayoutParams(dp(232f), dp(44f)))
         col.addView(N9.editButton(this, "Close") { finish() }.apply { contentDescription = "Close" },
             LinearLayout.LayoutParams(dp(232f), dp(44f)).apply { topMargin = dp(28f) })
         root.addView(col, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
         setContentView(root)
     }
 }
+
+/** Connected to Wi-Fi (the transport is known without location). */
+private fun Activity.wifiOn(): Boolean = runCatching {
+    val cm = getSystemService(android.net.ConnectivityManager::class.java)
+    cm.getNetworkCapabilities(cm.activeNetwork)?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true
+}.getOrDefault(false)
 
 object WifiQr {
     class Net(val ssid: String, val password: String, val payload: String)
@@ -66,11 +77,17 @@ object WifiQr {
     fun current(ctx: Context): Net? {
         val wm = ctx.getSystemService(WifiManager::class.java) ?: return null
         @Suppress("DEPRECATION") val info = wm.connectionInfo ?: return null
-        val ssid = info.ssid?.trim('"')?.takeIf { it.isNotEmpty() && it != "<unknown ssid>" } ?: return null
-        val conf = runCatching {
+        val configs = runCatching {
             wm.javaClass.getMethod("getPrivilegedConfiguredNetworks").invoke(wm) as List<*>
         }.onFailure { android.util.Log.w("EtesianWifiQr", "configs", it) }.getOrNull()?.filterIsInstance<android.net.wifi.WifiConfiguration>()
-            ?.firstOrNull { it.networkId == info.networkId || it.SSID?.trim('"') == ssid }
+            .orEmpty()
+        // With location off Android hides the name ("<unknown ssid>") even from us: the saved network marked current
+        // still says which one it is.
+        @Suppress("DEPRECATION") val shown = info.ssid?.trim('"')?.takeIf { it.isNotEmpty() && it != "<unknown ssid>" }
+        @Suppress("DEPRECATION") val conf = configs.firstOrNull { it.networkId == info.networkId && info.networkId != -1 }
+            ?: shown?.let { s -> configs.firstOrNull { it.SSID?.trim('"') == s } }
+            ?: configs.firstOrNull { it.status == android.net.wifi.WifiConfiguration.Status.CURRENT }
+        val ssid = shown ?: conf?.SSID?.trim('"')?.takeIf { it.isNotEmpty() } ?: return null
         @Suppress("DEPRECATION") val psk = conf?.preSharedKey?.takeIf { it.startsWith("\"") }?.trim('"').orEmpty()
         @Suppress("DEPRECATION") val type = when {
             conf == null -> if (psk.isEmpty()) "nopass" else "WPA"
