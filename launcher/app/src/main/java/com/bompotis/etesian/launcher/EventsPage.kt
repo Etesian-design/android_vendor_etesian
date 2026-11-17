@@ -193,18 +193,24 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         else -> emptyList()
     }
 
+    /** Feed posts swiped away: hidden at once, before the Feeds app has saved them as read. */
+    private val swipedFeeds = mutableSetOf<String>()
+
     private val swipe = object : androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(0,
         androidx.recyclerview.widget.ItemTouchHelper.LEFT or androidx.recyclerview.widget.ItemTouchHelper.RIGHT) {
         override fun getSwipeDirs(rv: RecyclerView, h: RecyclerView.ViewHolder): Int {
             val row = adapter.rowAt(h.bindingAdapterPosition) ?: return 0
             // The ghost rows are one item: swiping it in dismiss mode expires them all, like any notification.
             if (row is Row.Ghosts) return if (dismissMode) super.getSwipeDirs(rv, h) else 0
+            // A feed post swipes away too, in edit mode: it's marked read (Mark all as read is for its whole site).
+            if (row is Row.FeedEntry) return if (dismissMode) super.getSwipeDirs(rv, h) else 0
             return if (dismissMode && itemsOf(row).isNotEmpty()) super.getSwipeDirs(rv, h) else 0
         }
         override fun onMove(rv: RecyclerView, a: RecyclerView.ViewHolder, b: RecyclerView.ViewHolder) = false
         override fun onSwiped(h: RecyclerView.ViewHolder, direction: Int) {
             adapter.rowAt(h.bindingAdapterPosition)?.let { row ->
                 if (row is Row.Ghosts) Ghosts.expireAll(context)
+                if (row is Row.FeedEntry) { swipedFeeds += row.item.id; Feeds.setRead(context, row.item.id) }
                 itemsOf(row).forEach { EventsStore.service?.cancelNotification(it.key) }
             }
             refresh()
@@ -357,7 +363,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         section(EventsClassifier.Section.CALENDAR, agendaRows)
         // Feed: the user's RSS feeds alongside apps filed under Feed.
         val feedRows = if (Feeds.feeds(context).isEmpty()) emptyList()
-            else Feeds.forEvents(Feeds.items(context)).take(FEED_ROWS).map { Row.FeedEntry(it) }
+            else Feeds.forEvents(Feeds.items(context)).filter { it.id !in swipedFeeds }.take(FEED_ROWS).map { Row.FeedEntry(it) }
                 .ifEmpty { listOf(Row.Message(if (Feeds.refreshing) "Refreshing\u2026"
                     else if (Feeds.items(context).isNotEmpty()) "No unread feed items" else "No feed items yet")) }
         section(EventsClassifier.Section.FEED, feedRows)

@@ -29,6 +29,16 @@ if dump | grep -q 'resource-id="com.bompotis.etesian.launcher:id/feed_post"'; th
   hold 'resource-id="com.bompotis.etesian.launcher:id/feed_post"'; sleep 1
   check "long press on a feed post: edit mode" 'editing'
   check "the feed post did not open" '[ "$(home_pane)" = events ]'
+  # The first post's headline: Events refills from below, so a swiped post shows as the first headline changing.
+  first() { dump | python3 -c "
+import sys,re; x=sys.stdin.read()
+m=re.search(r'resource-id=\"com.bompotis.etesian.launcher:id/feed_post\"[^>]*>(.*?)</node>\s*</node>', x, re.S)
+t=re.findall(r'text=\"([^\"]+)\"', m.group(1)) if m else []
+print(t[1] if len(t) > 1 else '')"; }
+  f0=$(first)
+  set -- $(bounds 'resource-id="com.bompotis.etesian.launcher:id/feed_post"')
+  sh_ input swipe $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) $(( $3 - 10 )) $(( ($2+$4)/2 )) 200; sh_ input swipe $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) $(( $3 )) $(( ($2+$4)/2 )) 150; sleep 2
+  check "a swiped feed post leaves Events" '[ -n "$f0" ] && [ "$(first)" != "$f0" ] && ! dump | grep -qF "$f0"'
   press 'resource-id="com.bompotis.etesian.launcher:id/feed_post"'; sleep 1.2
   check "feed post in edit mode: its menu" 'dump | grep -q "content-desc=\"Feed actions\""'
   check "menu: Mark all as read" 'dump | grep -q "text=\"Mark all as read\""'

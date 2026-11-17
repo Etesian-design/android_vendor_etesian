@@ -118,6 +118,13 @@ object Feeds {
         io.execute { call(a, "markAllRead", feedUrl); load() }
     }
 
+    /** Marks one item read: it leaves Events (the app keeps it, read). */
+    fun setRead(ctx: Context, id: String) {
+        init(ctx)
+        val a = ctx.applicationContext
+        io.execute { call(a, "setRead", id); load() }
+    }
+
     /** Minutes between the app's background refreshes (0: only when opened); -1 if the app can't say. */
     fun interval(ctx: Context): Int = call(ctx, "state", null)?.getInt("interval", -1) ?: -1
 

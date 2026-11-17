@@ -61,6 +61,7 @@ class FeedsProvider : ContentProvider() {
                 }
             }
             "markAllRead" -> Feeds.markAllRead(ctx, arg)
+            "setRead" -> arg?.let { Feeds.setRead(ctx, it, true) }
             "interval" -> {
                 arg?.toIntOrNull()?.let { m ->
                     Feeds.setInterval(ctx, m)
