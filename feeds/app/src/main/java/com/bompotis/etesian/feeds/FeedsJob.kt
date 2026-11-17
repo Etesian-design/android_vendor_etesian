@@ -22,16 +22,17 @@ class FeedsJob : JobService() {
     companion object {
         private const val JOB_ID = 4711
 
-        /** Schedules (or, with no feeds, cancels) the periodic refresh. */
+        /** Schedules (or, with no feeds or no interval, cancels) the periodic refresh, every [Feeds.interval] minutes. */
         fun schedule(ctx: Context) {
             val js = ctx.getSystemService(JobScheduler::class.java) ?: return
-            if (Feeds.feeds(ctx).isEmpty()) { js.cancel(JOB_ID); return }
-            if (js.getPendingJob(JOB_ID) != null) return
+            val every = Feeds.interval(ctx) * 60_000L
+            if (Feeds.feeds(ctx).isEmpty() || every <= 0) { js.cancel(JOB_ID); return }
+            if (js.getPendingJob(JOB_ID)?.intervalMillis == every) return
             // Never let scheduling take the launcher down; Events still refreshes when shown.
             runCatching {
                 js.schedule(JobInfo.Builder(JOB_ID, ComponentName(ctx, FeedsJob::class.java))
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                    .setPeriodic(60 * 60 * 1000L)
+                    .setPeriodic(every)
                     .setPersisted(true)
                     .build())
             }

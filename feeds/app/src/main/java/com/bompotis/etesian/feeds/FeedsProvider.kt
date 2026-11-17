@@ -60,11 +60,19 @@ class FeedsProvider : ContentProvider() {
                     FeedsJob.schedule(ctx)
                 }
             }
+            "markAllRead" -> Feeds.markAllRead(ctx, arg)
+            "interval" -> {
+                arg?.toIntOrNull()?.let { m ->
+                    Feeds.setInterval(ctx, m)
+                    android.os.Handler(android.os.Looper.getMainLooper()).post { FeedsJob.schedule(ctx) }
+                }
+            }
             "state" -> {}
             else -> return null
         }
         out.putBoolean("refreshing", Feeds.refreshing)
         out.putLong("lastRefresh", Feeds.lastRefresh(ctx))
+        out.putInt("interval", Feeds.interval(ctx))
         return out
     }
 

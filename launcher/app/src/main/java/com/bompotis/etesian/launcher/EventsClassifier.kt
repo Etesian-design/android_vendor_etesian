@@ -15,6 +15,13 @@ object EventsClassifier {
         CALENDAR("calendar", "Calendar"),
         FEED("feed", "Feed"),
         LOW("low", "Low priority"),
+        /** Not shown in Events at all (Feeds settings: hide an app's feed notifications). */
+        HIDDEN("hidden", "Hidden"),
+        ;
+        companion object {
+            /** The sections a notification can be shown under. */
+            val shown get() = entries.filter { it != HIDDEN }
+        }
     }
 
     private const val PREFS = "events_sections"
@@ -54,6 +61,26 @@ object EventsClassifier {
             }
         }.apply()
     }
+
+    /** A filing choice: an app ("pkg") or one of its channels ("pkg|channel"), and the section it goes under. */
+    class Filed(val key: String, val section: Section) {
+        val pkg get() = key.substringBefore('|')
+        val channel get() = key.substringAfter('|', "")
+    }
+
+    /** Every app and channel the user filed under [sections]. */
+    fun filed(ctx: Context, sections: Set<Section>): List<Filed> = prefs(ctx).all.mapNotNull { (k, v) ->
+        Section.entries.firstOrNull { it.key == v && it in sections }?.let { Filed(k, it) }
+    }
+
+    /** Files the app or channel [key] under [section]; null: back to where Etesian would put it. */
+    fun set(ctx: Context, key: String, section: Section?) = prefs(ctx).edit().apply {
+        if (section == null) remove(key) else putString(key, section.key)
+    }.apply()
+
+    /** The filing key of [e]: its channel's choice if it has one, else its app's. */
+    fun keyOf(ctx: Context, e: EventItem): String =
+        if (prefs(ctx).contains(channelKey(e))) channelKey(e) else e.pkg
 
     /** How a section lays out its notifications (see Prefs.eventsStyle). */
     enum class Style(val key: String, val title: String) {

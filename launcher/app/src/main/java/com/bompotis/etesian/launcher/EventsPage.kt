@@ -11,6 +11,7 @@ import android.text.TextUtils
 import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -60,6 +61,30 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
+    /**
+     * Long-press anywhere (an entry, a header, a feed post, the empty space) enters edit mode. The press is then
+     * taken from the row under it, so letting go doesn't also tap it.
+     */
+    private var heldDown = false
+    private val longPress = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        override fun onLongPress(e: MotionEvent) {
+            if (dismissMode) return
+            heldDown = true
+            onLongPress()
+        }
+    }).apply { setIsLongpressEnabled(true) }
+
+    override fun dispatchTouchEvent(e: MotionEvent): Boolean {
+        if (e.actionMasked == MotionEvent.ACTION_DOWN) heldDown = false
+        longPress.onTouchEvent(e)
+        if (heldDown) {
+            if (e.actionMasked == MotionEvent.ACTION_UP || e.actionMasked == MotionEvent.ACTION_CANCEL) heldDown = false
+            MotionEvent.obtain(e).also { it.action = MotionEvent.ACTION_CANCEL; super.dispatchTouchEvent(it); it.recycle() }
+            return true
+        }
+        return super.dispatchTouchEvent(e)
+    }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         EventsStore.addListener(listener)
@@ -101,7 +126,9 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     private fun setDismissMode(on: Boolean) {
         if (dismissMode == on) return
         dismissMode = on
-        if (on) performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        if (on) {
+            N9Sounds.longPress(this)
+        }
         refresh()
     }
 
@@ -204,25 +231,43 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         if (item.autoCancel) EventsStore.service?.cancelNotification(item.key)
     }
 
-    /** Long-press: file this app, or only this kind of its notifications, under another section. */
+    /** File this app, or only this kind of its notifications, under another section (N9 menus, as Snooze). */
     private fun reclassify(e: EventItem) {
-        val sections = EventsClassifier.Section.entries
         val current = EventsClassifier.classify(context, e)
         fun pick(wholeApp: Boolean) {
-            android.app.AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(if (wholeApp) "Show ${appLabel(e.pkg)} under" else "Show \u201c${e.channelName}\u201d under")
-                .setSingleChoiceItems(sections.map { it.title }.toTypedArray(), sections.indexOf(current)) { d, i ->
-                    EventsClassifier.assign(context, e, sections[i], wholeApp)
-                    d.dismiss()
+            N9Sheet.show(context, EventsClassifier.Section.shown.map { sec ->
+                N9Sheet.Item(sec.title, if (sec == current) "Now" else null) {
+                    EventsClassifier.assign(context, e, sec, wholeApp)
                     refresh()
                 }
-                .show()
+            }, title = if (wholeApp) "Show ${appLabel(e.pkg)} under" else "Show \u201c${e.channelName}\u201d under",
+                label = "Show under")
         }
         if (e.channelName.isEmpty()) { pick(true); return }
-        android.app.AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle(appLabel(e.pkg))
-            .setItems(arrayOf("All notifications from this app", "Only \u201c${e.channelName}\u201d")) { _, i -> pick(i == 0) }
-            .show()
+        N9Sheet.show(context, listOf(
+            N9Sheet.Item("All notifications from this app") { pick(true) },
+            N9Sheet.Item("Only \u201c${e.channelName}\u201d") { pick(false) },
+        ), title = appLabel(e.pkg), label = "Show under")
+    }
+
+    /** Tap on an app's group in edit mode: the same menu as one notification, for all of them. */
+    private fun groupMenu(items: List<EventItem>) {
+        val e = items.firstOrNull() ?: return
+        N9Sheet.show(context, listOf(
+            N9Sheet.Item("Show under\u2026", EventsClassifier.classify(context, e).title) { reclassify(e) },
+            N9Sheet.Item("Dismiss all", "${items.size}") { items.forEach { EventsStore.service?.cancelNotification(it.key) } },
+        ), title = appLabel(e.pkg), label = "Events actions")
+    }
+
+    /** Tap on a feed post in edit mode: everything from its site read, or the feeds' settings. */
+    private fun feedMenu(item: Feeds.Item) {
+        N9Sheet.show(context, listOf(
+            N9Sheet.Item("Mark all as read", item.feedTitle) { Feeds.markAllRead(context, item.feedUrl) },
+            N9Sheet.Item("Feed settings", "How often feeds update, apps shown as feeds") {
+                context.startActivity(Intent(context, SettingsActivity::class.java)
+                    .putExtra(SettingsActivity.EXTRA_SECTION, "feeds").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            },
+        ), title = item.feedTitle, label = "Feed actions")
     }
 
     private sealed class Row {
@@ -656,10 +701,10 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         private val meta = TextView(ctx).apply {
             setTextColor(N9.TEXT_SECONDARY); textSize = 12f; typeface = N9.FONT
         }
-        private var id = ""
-        private var link = ""
+        private var item: Feeds.Item? = null
 
         init {
+            id = R.id.feed_post
             orientation = HORIZONTAL
             setPadding(dp(16f), dp(10f), dp(16f), dp(12f))
             addView(icon, LayoutParams(dp(56f), dp(56f)).apply { marginEnd = dp(14f) })
@@ -670,13 +715,13 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 addView(meta, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4f) })
             }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
             setOnClickListener {
-                runCatching { context.startActivity(Feeds.openItem(id, link, feedUrl = null)) }
+                val i = item ?: return@setOnClickListener
+                if (dismissMode) feedMenu(i) else runCatching { context.startActivity(Feeds.openItem(i.id, i.link, feedUrl = null)) }
             }
         }
 
         fun bind(item: Feeds.Item) {
-            id = item.id
-            link = item.link
+            this.item = item
             // As on the N9: the feed's name, then "title: summary", then the time.
             title.text = item.feedTitle
             text.text = if (item.summary.isEmpty()) item.title else "${item.title}: ${item.summary}"
@@ -723,16 +768,16 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 addView(body)
                 addView(latest)
             }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
-            setOnClickListener { val f = first; if (dismissMode && f != null) reclassify(f) else toggle(key) }
+            setOnClickListener { if (dismissMode) groupMenu(items) else toggle(key) }
             setOnLongClickListener { onLongPress(); true }
         }
 
         private var key = ""
-        private var first: EventItem? = null
+        private var items: List<EventItem> = emptyList()
 
         fun bind(g: Row.Group) {
             key = g.key
-            first = g.items.first()
+            items = g.items
             pkg = g.items.first().pkg
             icon.setImageBitmap(iconFor(g.items.first()))
             // N9: "3 new messages", then who they're from, then when the latest arrived.

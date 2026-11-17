@@ -152,6 +152,11 @@ object Feeds {
         }
     }
 
+    /** Minutes between background refreshes; 0: only when Events or the app is opened. */
+    fun interval(ctx: Context) = prefs(ctx).getInt("interval", 60)
+
+    fun setInterval(ctx: Context, minutes: Int) = prefs(ctx).edit().putInt("interval", minutes).apply()
+
     /** Blocking refresh, for the background job. */
     fun refreshNow(ctx: Context) {
         fetchAll(ctx)

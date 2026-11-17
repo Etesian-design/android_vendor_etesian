@@ -111,6 +111,21 @@ object Feeds {
         }
     }
 
+    /** Marks every item of [feedUrl] (null: of all feeds) read: they leave Events. */
+    fun markAllRead(ctx: Context, feedUrl: String?) {
+        init(ctx)
+        val a = ctx.applicationContext
+        io.execute { call(a, "markAllRead", feedUrl); load() }
+    }
+
+    /** Minutes between the app's background refreshes (0: only when opened); -1 if the app can't say. */
+    fun interval(ctx: Context): Int = call(ctx, "state", null)?.getInt("interval", -1) ?: -1
+
+    fun setInterval(ctx: Context, minutes: Int) {
+        val a = ctx.applicationContext
+        io.execute { call(a, "interval", minutes.toString()) }
+    }
+
     /** The N9's feed icon: from the user's own N9 files, or drawn. */
     fun feedIcon(ctx: Context): android.graphics.drawable.Drawable =
         android.graphics.BitmapFactory.decodeFile("/product/media/etesian/icons/icon-l-rss.png")
