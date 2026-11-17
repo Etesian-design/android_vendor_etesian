@@ -14,7 +14,8 @@ longpress() { set -- $(center "$1"); [ -n "$4" ] && sh_ input swipe $(( ($1+$3)/
 menu() { longpress "$1"; sleep 1; tap_text "$1"; }
 events_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = events ] && break; sh_ input swipe 1000 1700 100 1700 300; sleep 1.5; done; for _ in 1 2 3 4 5; do sh_ input swipe 540 900 540 1900 150; sh_ cmd statusbar collapse; done; sleep 1; }
 sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
-keys="actions inline_reply live_updates bubbles ghost_rows"  # ghost rows on would keep a dismissed row; declare -A old
+# Ghost rows on would keep a dismissed row.
+keys="actions inline_reply live_updates bubbles ghost_rows"; declare -A old
 for k in $keys; do old[$k]=$(sh_ settings get secure etesian_extra_$k); sh_ settings put secure etesian_extra_$k 0; done
 sh_ settings delete global etesian_test_reply >/dev/null
 unlock; post cancel; post; post progress; sleep 1.5

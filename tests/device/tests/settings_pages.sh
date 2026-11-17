@@ -26,7 +26,7 @@ check "main page: no Android extras" '! has "Android extras"'
 sh_ input keyevent BACK; sleep 1
 
 # Each page: its preview at the top and its settings.
-for spec in "status|Your own layout|Privacy indicators" "events|Actions and snooze|Notification bubbles" \
+for spec in "status|Your own layout|Privacy indicators" "events|Actions and snooze|Notifications over apps" \
             "open|Auto-arrange|Two-finger merge" "apps|Private space" "lock|Glance line" \
             "emergency|Show on the lock screen|Blood type|Contacts" "sharing|N9 share sheet|Share network" \
             "dismissed|Keep dismissed notifications|Rows shown" "priority|Priority people|Add a person"; do
