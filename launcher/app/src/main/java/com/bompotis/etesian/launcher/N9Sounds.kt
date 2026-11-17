@@ -9,11 +9,12 @@ import java.io.File
 
 /**
  * The N9's own interface sounds that Android has no slot for (closing applications, entering edit mode), from the
- * user's imported N9 files. Silent when they weren't imported, when touch sounds are off, or
- * when the phone is on vibrate or silent.
+ * user's imported N9 files, else Etesian's own under the same names (vendor/etesian/sounds). Silent when touch
+ * sounds are off, or when the phone is on vibrate or silent.
  */
 object N9Sounds {
     private const val DIR = "/product/media/audio/ui/n9/"
+    private const val OWN = "/product/media/audio/ui/etesian/"
     const val CLOSE = "close.wav"
     const val CLOSE_MULTIPLE = "close_multiple.wav"
     /** Entering edit mode (the N9 home's edit-mode-enter-feedback, priority2_popup). */
@@ -26,8 +27,7 @@ object N9Sounds {
         if (Settings.System.getInt(ctx.contentResolver, Settings.System.SOUND_EFFECTS_ENABLED, 1) == 0) return
         val audio = ctx.getSystemService(AudioManager::class.java)
         if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
-        val file = File(DIR + name)
-        if (!file.exists()) return
+        val file = File(DIR + name).takeIf { it.exists() } ?: File(OWN + name).takeIf { it.exists() } ?: return
         val p = pool ?: SoundPool.Builder().setMaxStreams(2).setAudioAttributes(AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build().also { pool = it }

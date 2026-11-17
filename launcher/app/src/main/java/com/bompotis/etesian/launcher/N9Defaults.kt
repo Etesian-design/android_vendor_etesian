@@ -9,8 +9,9 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * When the user's own N9 files are built in (vendor/etesian/n9-files), switches the phone to
- * the N9's defaults once: Nokia tune, Message 1 and Clock 1, and the Nokia Pure font.
+ * Switches the phone to Etesian's defaults once: with the user's own N9 files built in (vendor/etesian/n9-files),
+ * Nokia tune, Message 1 and Clock 1, the N9's charger tones and the Nokia Pure font; without them, Etesian's own
+ * tones and sounds (vendor/etesian/sounds), never Android's.
  */
 object N9Defaults {
     private const val PREFS = "n9_defaults"
@@ -26,11 +27,15 @@ object N9Defaults {
     }
 
     private fun applyTones(ctx: Context): Boolean {
-        if (!File("/product/media/audio/ringtones/Nokia_tune.mp3").exists()) return false
-        val picks = mapOf(
+        val n9 = File("/product/media/audio/ringtones/Nokia_tune.mp3").exists()
+        val picks = if (n9) mapOf(
             RingtoneManager.TYPE_RINGTONE to "Nokia_tune.mp3",
             RingtoneManager.TYPE_NOTIFICATION to "Message_1.mp3",
             RingtoneManager.TYPE_ALARM to "Clock_1.mp3",
+        ) else mapOf(
+            RingtoneManager.TYPE_RINGTONE to "Etesian.ogg",
+            RingtoneManager.TYPE_NOTIFICATION to "Etesian_message.ogg",
+            RingtoneManager.TYPE_ALARM to "Etesian_dawn.ogg",
         )
         var all = true
         picks.forEach { (type, file) ->
@@ -43,8 +48,8 @@ object N9Defaults {
 
     /** The N9's charger and low-battery tones (touch, keyboard and camera sounds need no setting). */
     private fun applySounds(ctx: Context): Boolean {
-        val dir = "/product/media/audio/ui/n9/"
-        if (!File(dir + "accessory_connected.wav").exists()) return false
+        val dir = listOf("/product/media/audio/ui/n9/", "/product/media/audio/ui/etesian/")
+            .firstOrNull { File(it + "accessory_connected.wav").exists() } ?: return false
         val cr = ctx.contentResolver
         return runCatching {
             Settings.Global.putString(cr, "charging_started_sound", dir + "accessory_connected.wav")

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Etesian's own touch and keyboard sounds (sounds/tones.py) for Android's sound effects, when the
+     user's N9 sounds are not built in. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bompotis.etesian.overlay.etesiansounds">
+    <overlay
+        android:targetPackage="android"
+        android:isStatic="true"
+        android:priority="10" />
+    <application android:hasCode="false" />
+</manifest>

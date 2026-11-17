@@ -1,0 +1,7 @@
+// Etesian's own touch and keyboard sounds for Android's sound effects (installed by etesian.mk
+// when the user's N9 sounds are not built in).
+runtime_resource_overlay {
+    name: "EtesianSoundsOverlay",
+    resource_dirs: ["res"],
+    product_specific: true,
+}

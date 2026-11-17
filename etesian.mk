@@ -16,6 +16,20 @@ PRODUCT_PACKAGES += \
 # Optional: the user's own N9 font and tones, if imported (n9-files/import.sh).
 -include vendor/harmattan-n9/n9.mk
 
+# Etesian's own interface sounds and tones (sounds/tones.py): always there, under their own names;
+# the defaults (launcher N9Defaults.kt) and touch sounds use them when the N9's were not imported.
+PRODUCT_COPY_FILES += \
+    $(foreach f,$(notdir $(wildcard vendor/etesian/sounds/ui/*.wav)),vendor/etesian/sounds/ui/$(f):$(TARGET_COPY_OUT_PRODUCT)/media/audio/ui/etesian/$(f)) \
+    vendor/etesian/sounds/tones/Etesian.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/ringtones/Etesian.ogg \
+    vendor/etesian/sounds/tones/Etesian_message.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/notifications/Etesian_message.ogg \
+    vendor/etesian/sounds/tones/Etesian_mail.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/notifications/Etesian_mail.ogg \
+    vendor/etesian/sounds/tones/Etesian_calendar.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/notifications/Etesian_calendar.ogg \
+    vendor/etesian/sounds/tones/Etesian_dawn.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/alarms/Etesian_dawn.ogg
+ifeq ($(wildcard vendor/harmattan-n9/ui/static_press.wav),)
+PRODUCT_PACKAGES += \
+    EtesianSoundsOverlay
+endif
+
 # Etesian boot animation (bootanimation/README.md): the N9 motion with our own wordmark and
 # redrawn background. Set after n9.mk so it replaces the Nokia one.
 TARGET_BOOTANIMATION := vendor/etesian/bootanimation/bootanimation.zip
