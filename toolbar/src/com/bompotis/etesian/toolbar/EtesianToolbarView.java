@@ -207,6 +207,36 @@ final class EtesianToolbarView extends LinearLayout {
         return cell;
     }
 
+    /** The bar's own look, for other surfaces drawn like it (Etesian's Breeze menu). */
+    static Drawable buttonDrawable(Context ctx, Theme t, int size) {
+        final int line = Math.max(1, (int) ctx.getResources().getDisplayMetrics().density);
+        final StateListDrawable d = new StateListDrawable();
+        d.addState(new int[] {android.R.attr.state_pressed}, new android.graphics.drawable.LayerDrawable(new Drawable[] {
+                new SquircleDrawable(new int[] {t.buttonTop, t.buttonBottom}, line, t.stroke, size),
+                new SquircleDrawable(new int[] {t.selected, t.selected}, 0, 0, size)}));
+        d.addState(new int[0], new SquircleDrawable(new int[] {t.buttonTop, t.buttonBottom}, line, t.stroke, size));
+        return d;
+    }
+
+    /** The bar's background: its gradient, a dark edge over a light line at the top. */
+    static Drawable barDrawable(Context ctx, Theme t) {
+        final int line = Math.max(1, (int) ctx.getResources().getDisplayMetrics().density);
+        return new Drawable() {
+            private final Paint p = new Paint();
+            @Override public void draw(Canvas c) {
+                final Rect b = getBounds();
+                p.setShader(new LinearGradient(0, b.top, 0, b.bottom, t.top, t.bottom, Shader.TileMode.CLAMP));
+                c.drawRect(b, p);
+                p.setShader(null);
+                p.setColor(t.edge); c.drawRect(b.left, b.top, b.right, b.top + line, p);
+                p.setColor(t.highlight); c.drawRect(b.left, b.top + line, b.right, b.top + 2 * line, p);
+            }
+            @Override public void setAlpha(int a) { p.setAlpha(a); }
+            @Override public void setColorFilter(ColorFilter cf) { p.setColorFilter(cf); }
+            @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+        };
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         // A vertical gradient, a dark edge over a light line at the top.

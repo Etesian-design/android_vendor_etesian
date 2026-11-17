@@ -213,7 +213,16 @@ class ToolbarSettingsActivity : Activity() {
     /** Add: pick what it does, then its icon (automatic by default). */
     private fun addButton() {
         dialog().setTitle("Add button")
-            .setItems(arrayOf("App", "App shortcut", "Settings page", "Macro")) { _, which ->
+            .setItems(arrayOf("System button", "App", "App shortcut", "Settings page", "Macro")) { _, which0 ->
+                if (which0 == 0) {
+                    val sys = ToolbarConfig.SYSTEM_BUTTONS
+                    dialog().setTitle("System button").setItems(sys.map { it.first }.toTypedArray()) { _, i ->
+                        val (label, glyph, key) = sys[i]
+                        add(label, ToolbarConfig.glyph(this, glyph), true, JSONObject().put("t", "key").put("k", key))
+                    }.show()
+                    return@setItems
+                }
+                val which = which0 - 1
                 when (which) {
                     0 -> pickApp("Open which app?") { cn ->
                         val label = runCatching { packageManager.getActivityInfo(cn, 0).loadLabel(packageManager).toString() }.getOrDefault(cn.packageName)

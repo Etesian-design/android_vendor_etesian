@@ -8,7 +8,6 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -46,35 +45,44 @@ class BreezeMenu(private val ctx: Context) {
         dismiss()
         val screenW = ctx.resources.displayMetrics.widthPixels
         val screenH = ctx.resources.displayMetrics.heightPixels
-        val w = minOf(dp(272f), screenW - dp(16f))
+        val w = minOf(dp(288f), screenW - dp(16f))
+        val icon = com.bompotis.etesian.toolbar.EtesianToolbar.iconColor(ctx)
+        // Drawn as the bottom bar is: its gradient and top edge, and its squircle buttons (a little smaller).
         val panel = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(10f), dp(10f), dp(10f), dp(10f))
-            background = GradientDrawable().apply { cornerRadius = dp(18f).toFloat(); setColor(0xEE1C1C1C.toInt()) }
+            setPadding(dp(10f), dp(10f), dp(10f), dp(8f))
+            background = com.bompotis.etesian.toolbar.EtesianToolbar.barBackground(ctx)
+            outlineProvider = android.view.ViewOutlineProvider.BACKGROUND
+            clipToOutline = true
             contentDescription = "Breeze menu"
         }
-        // The smaller toolbar: Breeze's buttons in a row.
-        val bar = LinearLayout(ctx).apply { gravity = Gravity.CENTER_VERTICAL }
-        ToolbarConfig.buttons(ctx, ToolbarConfig.BREEZE).take(5).forEach { b ->
-            bar.addView(ImageView(ctx).apply {
-                setImageDrawable(ToolbarConfig.decode(b.icon)?.let { BitmapDrawable(ctx.resources, it) })
-                if (b.tint) setColorFilter(N9.TEXT)
-                contentDescription = b.label
-                setPadding(dp(8f), dp(8f), dp(8f), dp(8f))
-                setOnClickListener { dismiss(); ToolbarActions.run(ctx, b.action) }
-            }, LinearLayout.LayoutParams(0, dp(44f), 1f))
+        val size = dp(BUTTON_DP)
+        fun button(label: String, onClick: () -> Unit, image: (ImageView) -> Unit) = FrameLayout(ctx).apply {
+            background = com.bompotis.etesian.toolbar.EtesianToolbar.buttonBackground(ctx, size)
+            contentDescription = label
+            isClickable = true
+            setOnClickListener { performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY); onClick() }
+            addView(ImageView(ctx).apply { image(this); setColorFilter(icon) },
+                FrameLayout.LayoutParams(dp(26f), dp(26f), Gravity.CENTER))
         }
-        bar.addView(ImageView(ctx).apply {
-            setImageResource(android.R.drawable.ic_input_add)
-            setColorFilter(N9.TEXT_SECONDARY)
-            contentDescription = "Edit Breeze shortcuts"
-            setPadding(dp(10f), dp(10f), dp(10f), dp(10f))
-            setOnClickListener {
-                dismiss()
-                ctx.startActivity(Intent(ctx, ToolbarSettingsActivity::class.java)
-                    .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
-        }, LinearLayout.LayoutParams(dp(44f), dp(44f)))
+        // The smaller toolbar: Breeze's buttons in a row, then + to change them.
+        val bar = LinearLayout(ctx).apply { gravity = Gravity.CENTER_VERTICAL }
+        val buttons = ToolbarConfig.buttons(ctx, ToolbarConfig.BREEZE).take(4)
+        buttons.forEach { b ->
+            val cell = FrameLayout(ctx)
+            cell.addView(button(b.label, { dismiss(); ToolbarActions.run(ctx, b.action) }) { iv ->
+                iv.setImageDrawable(ToolbarConfig.decode(b.icon)?.let { BitmapDrawable(ctx.resources, it) })
+                if (!b.tint) iv.clearColorFilter()
+            }, FrameLayout.LayoutParams(size, size, Gravity.CENTER))
+            bar.addView(cell, LinearLayout.LayoutParams(0, size + dp(8f), 1f))
+        }
+        val add = FrameLayout(ctx)
+        add.addView(button("Edit Breeze shortcuts", {
+            dismiss()
+            ctx.startActivity(Intent(ctx, ToolbarSettingsActivity::class.java)
+                .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }) { it.setImageResource(com.bompotis.etesian.launcher.R.drawable.tb_add) }, FrameLayout.LayoutParams(size, size, Gravity.CENTER))
+        bar.addView(add, LinearLayout.LayoutParams(0, size + dp(8f), 1f))
         panel.addView(bar)
         // Widgets, at three quarters of their size.
         val ids = Prefs.breezeWidgets(ctx)
@@ -99,7 +107,7 @@ class BreezeMenu(private val ctx: Context) {
         }
         panel.addView(TextView(ctx).apply {
             text = "Add widget"
-            setTextColor(N9.TEXT_SECONDARY); textSize = 14f; typeface = N9.FONT
+            setTextColor(icon); alpha = 0.75f; textSize = 14f; typeface = N9.FONT
             gravity = Gravity.CENTER
             setPadding(0, dp(10f), 0, dp(4f))
             setOnClickListener {
@@ -121,7 +129,8 @@ class BreezeMenu(private val ctx: Context) {
             x = if (onLeft) anchor.right + gap else anchor.left - gap - w
             y = (anchor.centerY() - ph / 2).coerceIn(dp(8f), screenH - ph - dp(8f))
         }
-        val lp = WindowManager.LayoutParams(w, ph, WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY,
+        // A system dialog window: Android never lets a secure overlay take touches (they fell through to the app).
+        val lp = WindowManager.LayoutParams(w, ph, WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
@@ -186,5 +195,7 @@ class BreezeMenu(private val ctx: Context) {
 
     companion object {
         const val SCALE = 0.75f
+        /** Breeze's buttons: the toolbar's (48 dp), a little smaller for the menu. */
+        const val BUTTON_DP = 42f
     }
 }

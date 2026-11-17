@@ -7,6 +7,9 @@ frame() { raw_sh dumpsys window windows | grep -A40 "Window{[^ ]* u0 $1}" | grep
 has() { sh_ dumpsys window windows | grep -q "u0 $1}"; }
 drag() { raw_sh "input motionevent DOWN $1 $2; sleep 1.2; input motionevent MOVE $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); input motionevent MOVE $3 $4; sleep 0.3; input motionevent UP $3 $4"; }
 backup=/data/local/tmp/breeze_prefs.xml; sh_ cp $P $backup
+# Breeze's own buttons as they come (Back, Home, Open applications): the user's set is put back at the end.
+cfg=$(raw_sh settings get secure etesian_toolbar_config)
+raw_sh settings put secure etesian_toolbar_config "'$(echo "$cfg" | python3 -c "import json,sys; d=json.load(sys.stdin) if sys.stdin else {}; d.pop('breeze',None); print(json.dumps(d))" 2>/dev/null || echo '{}')'"
 setp() { sh_ am force-stop $LAUNCHER; sh_ "sed -e '/name=\"side_sense\"/d' -e '/name=\"sidebar_side\"/d' -e 's#</map>#    <boolean name=\"side_sense\" value=\"true\" />\n    <string name=\"sidebar_side\">right</string>\n</map>#' $P > /data/local/tmp/bp.xml; cat /data/local/tmp/bp.xml > $P; rm /data/local/tmp/bp.xml"; home; sleep 2; }
 unlock; setp
 check "Breeze on: the bar is shown" 'has EtesianBreeze'
@@ -24,11 +27,25 @@ check "tap: Breeze menu" 'has EtesianBreezeMenu'
 shot breeze_menu
 read L T R B <<< "$(frame EtesianBreezeMenu)"
 check "menu under the button" '[ -n "$T" ] && [ "$T" -gt $cy ]'
+check "menu takes touches (not a pass-through overlay)" '! raw_sh dumpsys input | grep "EtesianBreezeMenu, " | grep -q NOT_TOUCHABLE'
+# Its buttons: Back, Home, Open applications by default; Home (the second) from an app goes home.
+D=$(raw_sh wm density | grep -o '[0-9]*' | tail -1); px() { echo $(( $1 * D / 160 )); }
+raw_sh input tap $cx $cy; sleep 1; sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 2
+raw_sh input tap $cx $cy; sleep 1.5
+read L T R B <<< "$(frame EtesianBreezeMenu)"
+raw_sh input tap $(( L + $(px 10) + (R - L - $(px 20)) * 3 / 8 )) $(( T + $(px 10) + $(px 25) )); sleep 1.5
+check "a menu button runs (Home)" 'sh_ dumpsys activity activities | grep -m1 "ResumedActivity" | grep -q HomeActivity'
+home; raw_sh input tap $cx $cy; sleep 1.5
 raw_sh input tap $((RW/2)) $((RH/8)); sleep 1
 check "tap elsewhere closes the menu" '! has EtesianBreezeMenu'
 drag $cx $cy 5 $((RH/3)); sleep 1.5
 check "dragged to the left edge: the bar there" '[ "$(pref sidebar_side)" = left ]'
 read L T R B <<< "$(frame EtesianBreeze)"
 check "bar on the left edge, slim" '[ "$L" = 0 ] && [ $((R-L)) -lt $((B-T)) ]'
+# The curved edge rejects touches right at it: a tap a little further in still reaches the bar.
+raw_sh input tap $(px 30) $(( (T+B)/2 )); sleep 1.5
+check "a tap 30 dp in from the edge reaches the bar (menu)" 'has EtesianBreezeMenu'
+raw_sh input tap $((RW/2)) $((RH/8)); sleep 1
+[ "$cfg" = null ] && raw_sh settings delete secure etesian_toolbar_config >/dev/null || raw_sh settings put secure etesian_toolbar_config "'$cfg'"
 sh_ am force-stop $LAUNCHER; sh_ "cat $backup > $P"; sh_ rm $backup; home
 check "launcher did not crash" '! crashed $LAUNCHER'

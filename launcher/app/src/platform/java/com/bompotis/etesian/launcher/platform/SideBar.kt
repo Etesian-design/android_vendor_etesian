@@ -67,10 +67,13 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
             title = "EtesianBreeze"
         }
         runCatching { wm.addView(v, lp); view = v; this.lp = lp }
+        // The bar is slim, but its touch area reaches further in: this phone's curved sides reject touches right
+        // at the edge (as a palm), so a finger on the bar itself often never arrived.
+        val reach = (40 * density).toInt()
         when {
             free -> bounds.set(x, y, x + w, y + h)
-            onLeft -> bounds.set(0, y, w, y + h)
-            else -> bounds.set(screenW - w, y, screenW, y + h)
+            onLeft -> bounds.set(0, y, reach, y + h)
+            else -> bounds.set(screenW - reach, y, screenW, y + h)
         }
     }
 

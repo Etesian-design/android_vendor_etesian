@@ -416,6 +416,27 @@ public final class EtesianToolbar {
         mView.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
+    /** The user's bar theme: the dark (Belle) one when chosen in settings, else the N9's light one. */
+    private static EtesianToolbarView.Theme userTheme(Context ctx) {
+        return Settings.Secure.getInt(ctx.getContentResolver(), "etesian_toolbar_style", 0) == 1
+                ? EtesianToolbarView.BELLE_DARK : EtesianToolbarView.N9_LIGHT;
+    }
+
+    /** A toolbar button's squircle (with its pressed state), [sizePx] square, in the user's bar theme. */
+    public static android.graphics.drawable.Drawable buttonBackground(Context ctx, int sizePx) {
+        return EtesianToolbarView.buttonDrawable(ctx, userTheme(ctx), sizePx);
+    }
+
+    /** The bar's own background (gradient and top edge), in the user's bar theme. */
+    public static android.graphics.drawable.Drawable barBackground(Context ctx) {
+        return EtesianToolbarView.barDrawable(ctx, userTheme(ctx));
+    }
+
+    /** The colour of the bar's icons, in the user's bar theme. */
+    public static int iconColor(Context ctx) {
+        return userTheme(ctx).icon;
+    }
+
     /** The app's say, else the user's choice, else the page's theme (a dark page, a dark bar). */
     private EtesianToolbarView.Theme theme() {
         if ("dark".equals(mStyle)) return EtesianToolbarView.BELLE_DARK;

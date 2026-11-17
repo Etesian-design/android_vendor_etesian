@@ -24,7 +24,7 @@ import java.io.ByteArrayOutputStream
 object ToolbarConfig {
     const val SETTING = "etesian_toolbar_config"
     const val DEFAULT = ""
-    /** Breeze's menu: its own set (stored apart from the apps', under "breeze"); the default set until it has one. */
+    /** Breeze's menu: its own set (stored apart from the apps', under "breeze"); Back, Home and Open applications until set. */
     const val BREEZE = "\u0001breeze"
     private const val ICON_PX = 96
 
@@ -51,7 +51,7 @@ object ToolbarConfig {
         val root = read(ctx)
         val arr = when (pkg) {
             DEFAULT -> root.optJSONArray("default")
-            BREEZE -> root.optJSONArray("breeze") ?: root.optJSONArray("default")
+            BREEZE -> root.optJSONArray("breeze") ?: return breezeDefaults(ctx)
             else -> root.optJSONObject("apps")?.optJSONArray(pkg)
         }
         return arr?.let { a -> (0 until a.length()).map { Button.from(a.getJSONObject(it)) } }.orEmpty()
@@ -115,7 +115,21 @@ object ToolbarConfig {
         "navigate" to R.drawable.tb_navigate, "note" to R.drawable.tb_note,
         "add" to R.drawable.tb_add, "refresh" to R.drawable.tb_refresh,
         "browser" to R.drawable.tb_browser, "share" to R.drawable.tb_share,
+        "back" to R.drawable.tb_back, "tasks" to R.drawable.tb_tasks, "menu" to R.drawable.tb_menu,
     )
+
+    /** Android's own buttons, for the toolbar and Breeze: (label, glyph, key). */
+    val SYSTEM_BUTTONS = listOf(
+        Triple("Back", "back", android.view.KeyEvent.KEYCODE_BACK),
+        Triple("Home", "home", android.view.KeyEvent.KEYCODE_HOME),
+        Triple("Open applications", "tasks", android.view.KeyEvent.KEYCODE_APP_SWITCH),
+        Triple("Menu", "menu", android.view.KeyEvent.KEYCODE_MENU),
+    )
+
+    /** Breeze's buttons before the user sets any: Back, Home and Open applications. */
+    fun breezeDefaults(ctx: Context) = SYSTEM_BUTTONS.take(3).map { (label, glyph, key) ->
+        Button(label, glyph(ctx, glyph), true, JSONObject().put("t", "key").put("k", key))
+    }
 
     /** Settings pages offered as buttons: label to intent action. */
     val SETTINGS_PAGES = listOf(

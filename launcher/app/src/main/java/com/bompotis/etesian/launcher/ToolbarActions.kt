@@ -35,7 +35,7 @@ object ToolbarActions {
     /** Media and volume keys go to the audio system; others are injected as key presses. */
     val KEYS = listOf(
         "Back" to KeyEvent.KEYCODE_BACK, "Home" to KeyEvent.KEYCODE_HOME,
-        "Recent apps" to KeyEvent.KEYCODE_APP_SWITCH,
+        "Recent apps" to KeyEvent.KEYCODE_APP_SWITCH, "Menu" to KeyEvent.KEYCODE_MENU,
         "Play / pause" to KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
         "Next track" to KeyEvent.KEYCODE_MEDIA_NEXT, "Previous track" to KeyEvent.KEYCODE_MEDIA_PREVIOUS,
         "Volume up" to KeyEvent.KEYCODE_VOLUME_UP, "Volume down" to KeyEvent.KEYCODE_VOLUME_DOWN,
