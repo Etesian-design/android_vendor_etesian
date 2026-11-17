@@ -64,19 +64,23 @@ def wind(t, start, dur, f0, f1, width=0.35, gain=1.0, seed=1, attack=None):
     rng = np.random.default_rng(seed)
     noise = rng.standard_normal(n)
     out = np.zeros(n)
-    blk, hop = 1024, 256
+    blk, hop = 2048, 128
     win = np.hanning(blk)
+    norm = np.zeros(n + blk)
     freqs = np.fft.rfftfreq(blk, 1 / SR)
+    pink = 1 / np.sqrt(np.maximum(freqs, 20) / 1000)
     for a in range(0, n, hop):
         seg = noise[a:a + blk]
         if len(seg) < blk:
             seg = np.pad(seg, (0, blk - len(seg)))
         x = np.clip((a / SR - start) / dur, 0, 1)
         fc = f0 * (f1 / f0) ** x          # glides evenly in pitch
-        band = np.exp(-0.5 * (np.log2(np.maximum(freqs, 1) / fc) / width) ** 2)
+        band = np.exp(-0.5 * (np.log2(np.maximum(freqs, 1) / fc) / width) ** 2) * pink
         y = np.fft.irfft(np.fft.rfft(seg * win) * band, blk) * win
         m = min(blk, n - a)
         out[a:a + m] += y[:m]
+        norm[a:a + blk] += win ** 2
+    out /= np.maximum(norm[:n], 1e-3)
     out /= np.max(np.abs(out)) or 1
     a = attack if attack is not None else dur * 0.35
     x = t - start
@@ -85,7 +89,7 @@ def wind(t, start, dur, f0, f1, width=0.35, gain=1.0, seed=1, attack=None):
     return gain * out * shape
 
 
-def air(t, start, midi, dur, gain=1.0, breath=0.5, seed=3, vibrato=0.004):
+def air(t, start, midi, dur, gain=1.0, breath=0.25, seed=3, vibrato=0.002):
     """A tone blown across a bottle: a soft sine with a slow sway and a band of breath around its pitch."""
     f = hz(midi)
     x = np.clip(t - start, 0, None)
@@ -93,14 +97,36 @@ def air(t, start, midi, dur, gain=1.0, breath=0.5, seed=3, vibrato=0.004):
     a = min(0.08, dur * 0.3)
     shape = np.where((t < start) | (x > dur), 0.0,
                      np.sin(np.pi / 2 * np.clip(x / a, 0, 1)) ** 2 * np.exp(-np.maximum(x - a, 0) / (dur * 0.45)))
-    tone = (np.sin(ph) + 0.12 * np.sin(2 * ph)) * shape
+    tone = (np.sin(ph) + 0.06 * np.sin(2 * ph)) * shape
     return gain * (tone + breath * 0.6 * wind(t, start, dur, f * 0.98, f * 1.02, 0.12, seed=seed, attack=a))
 
 
+def soften(s, cutoff=5500, room=0.18):
+    """Delicate: the top rolled off gently, and a short soft room (decaying filtered noise) so nothing ends dry."""
+    n = len(s)
+    rng = np.random.default_rng(99)
+    ir_len = int(SR * 0.35)
+    ir = rng.standard_normal(ir_len) * np.exp(-np.arange(ir_len) / (SR * 0.07))
+    ir[0] = 0
+    size = 1 << int(np.ceil(np.log2(n + ir_len)))
+    f = np.fft.rfftfreq(size, 1 / SR)
+    lp = 1 / np.sqrt(1 + (f / cutoff) ** 4)
+    S = np.fft.rfft(s, size)
+    wet = np.fft.irfft(S * np.fft.rfft(ir, size) * lp * lp, size)[:n]
+    dry = np.fft.irfft(S * lp, size)[:n]
+    return dry + room * wet / (np.max(np.abs(wet)) or 1) * (np.max(np.abs(dry)) or 1)
+
+
+# Every sound sits this far under full scale: present, never loud (the user asked for subtle and delicate).
+QUIET = 0.6
+
+
 def finish(s, peak=0.7, fade=0.01):
-    s = s / (np.max(np.abs(s)) or 1) * peak
+    # Room for the soft tail to die away, instead of being cut at the sound's end.
+    s = soften(np.concatenate([s, np.zeros(int(SR * 0.12))]))
+    s = s / (np.max(np.abs(s)) or 1) * peak * QUIET
     n = int(SR * fade)
-    if n and len(s) > n:
+    if n and len(s) > n and np.any(s):
         s[-n:] *= np.linspace(1, 0, n)
     return s
 
@@ -110,7 +136,9 @@ def write(path, s):
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SR)
-        w.writeframes((np.clip(s, -1, 1) * 32767).astype("<i2").tobytes())
+        rng = np.random.default_rng(0)
+        dither = (rng.random(len(s)) - rng.random(len(s))) / 32767   # TPDF: smooth quiet tails, no grit
+        w.writeframes(np.round(np.clip(s + dither, -1, 1) * 32767).astype("<i2").tobytes())
 
 
 # Interface sounds, under the N9 files' names. Wind and breath, as the name Etesian (the summer winds of the
