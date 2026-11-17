@@ -23,6 +23,8 @@
     <uses-permission android:name="lineageos.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <!-- Status menu toggles. -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Share network reads the connected network (with READ_WIFI_CREDENTIAL); never used for location -->
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />

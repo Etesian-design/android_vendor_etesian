@@ -84,7 +84,11 @@ object WifiQr {
         // With location off Android hides the name ("<unknown ssid>") even from us: the saved network marked current
         // still says which one it is.
         @Suppress("DEPRECATION") val shown = info.ssid?.trim('"')?.takeIf { it.isNotEmpty() && it != "<unknown ssid>" }
-        @Suppress("DEPRECATION") val conf = configs.firstOrNull { it.networkId == info.networkId && info.networkId != -1 }
+        // The connected network with its password, whatever location says (READ_WIFI_CREDENTIAL, NEARBY_WIFI_DEVICES).
+        val connected = runCatching { wm.javaClass.getMethod("getPrivilegedConnectedNetwork").invoke(wm) }
+            .onFailure { android.util.Log.w("EtesianWifiQr", "connected", it) }.getOrNull() as? android.net.wifi.WifiConfiguration
+        @Suppress("DEPRECATION") val conf = connected
+            ?: configs.firstOrNull { it.networkId == info.networkId && info.networkId != -1 }
             ?: shown?.let { s -> configs.firstOrNull { it.SSID?.trim('"') == s } }
             ?: configs.firstOrNull { it.status == android.net.wifi.WifiConfiguration.Status.CURRENT }
         val ssid = shown ?: conf?.SSID?.trim('"')?.takeIf { it.isNotEmpty() } ?: return null

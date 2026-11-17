@@ -6,6 +6,8 @@
         <permission name="android.permission.READ_CALENDAR" fixed="false" />
         <permission name="android.permission.READ_CONTACTS" fixed="false" />
         <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="false" />
+        <!-- Share network: the connected network and its password, with location off -->
+        <permission name="android.permission.NEARBY_WIFI_DEVICES" fixed="false" />
         <permission name="android.permission.READ_PHONE_STATE" fixed="false" />
         <permission name="android.permission.BLUETOOTH_CONNECT" fixed="false" />
     </exception>
