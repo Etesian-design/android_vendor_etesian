@@ -82,8 +82,10 @@ home_pane() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcar
 pixel() { adb exec-out screencap -p > /tmp/hd-px.png; python3 -c "from PIL import Image; p=Image.open('/tmp/hd-px.png').convert('L').getpixel(($1,$2)); print(p)"; }
 # Brightness (0-255) of pixel (x, y) in N quick raw frames taken on the device; one per line.
 burst() { # x y n
-  sh_ "w=\$(wm size | grep -o '[0-9]*x' | tr -d x); for i in \$(seq $3); do screencap > /data/local/tmp/b\$i; done
-       for i in \$(seq $3); do dd if=/data/local/tmp/b\$i bs=1 skip=\$((16 + ($2 * w + $1) * 4)) count=3 2>/dev/null | od -An -tu1; done; rm -f /data/local/tmp/b*" |
+  # The phone's own pixel for the frame's point (_x, _y: the mapping lib.sh puts in front of each command).
+  command adb shell "$_DEV_INPUT; X=\$(_x $1); Y=\$(_y $2); for i in \$(seq $3); do screencap > /data/local/tmp/b\$i; done
+       w=\$(dd if=/data/local/tmp/b1 bs=4 count=1 2>/dev/null | od -An -tu4 | tr -d ' ')
+       for i in \$(seq $3); do dd if=/data/local/tmp/b\$i bs=1 skip=\$((16 + (Y * w + X) * 4)) count=3 2>/dev/null | od -An -tu1; done; rm -f /data/local/tmp/b*" |
     awk '{print int(($1+$2+$3)/3)}'
 }
 # Adds the launcher widget named [label] to the Widgets pane through its own picker.

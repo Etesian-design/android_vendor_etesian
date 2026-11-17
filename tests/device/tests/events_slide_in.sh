@@ -28,6 +28,8 @@ check "the notification is in its section" 'dump | grep -q "Are we still on for 
 # The Notifications header and the row under it.
 hb=$(dump | grep -o 'text="Notifications"[^>]*bounds="[^"]*"' | grep -o 'bounds="[^"]*"' | grep -o '[0-9]\+' | tr '\n' ' ')
 rm -rf "$SHOTS/slide"; adb pull /sdcard/slide "$SHOTS/slide" >/dev/null 2>&1
+# Frames grabbed on the phone are in its own pixels: map them onto the frame the test measures in.
+[ "$_SIZE" != 1080x2160 ] && for f in "$SHOTS"/slide/*.png; do _map_png < "$f" > "$f.m" && mv "$f.m" "$f"; done
 res=$($PY -c "
 import glob
 from PIL import Image, ImageChops

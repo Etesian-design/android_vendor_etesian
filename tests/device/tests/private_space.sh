@@ -21,6 +21,8 @@ check "a private space exists (user $pid)" '[ -n "$pid" ]'
 sh_ settings put secure etesian_extra_private_space 0; sh_ am force-stop $LAUNCHER; sleep 1; unlock
 apps_end
 check "off: no Private folder" '! dump | grep -q "content-desc=\"Private\""'
+# The main profile can have its own Calculator: the private one is what must not show (one more than this).
+calc() { dump | grep -o 'text="Calculator"' | wc -l; }; n0=$(calc)
 sh_ settings put secure etesian_extra_private_space 1; sh_ am force-stop $LAUNCHER; sleep 1
 # Locked to start with.
 quiet || { sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind lock_private >/dev/null; sleep 3; }
@@ -29,7 +31,7 @@ apps_end
 shot private_folder
 check "on: Private folder in the grid" 'dump | grep -q "content-desc=\"Private\""'
 check "it is the last cell" '[ "$(dump | grep -o "content-desc=\"[^\"]*\"" | grep -v "content-desc=\"\"" | tail -1)" = "content-desc=\"Private\"" ]'
-check "locked: its apps are not in the grid" '! dump | grep -q "text=\"Calculator\""'
+check "locked: its apps are not in the grid ($(calc) vs $n0 of the main profile)" '[ "$(calc)" -le "$n0" ]'
 set -- $(center 'content-desc="Private"'); px=$1; py=$2; sh_ input tap $px $py; sleep 2
 check "tap asks for the security code" 'dump | grep -q "text=\"Enter the security code\"" && dump | grep -q "text=\"Private\""'
 sh_ input text 12; sleep 0.8
@@ -41,7 +43,7 @@ shot private_open
 check "its apps show in the folder" 'dump | grep -q "text=\"Calculator\""'
 set -- $(center 'content-desc="Private"'); sh_ input tap ${1:-$px} ${2:-$py}; sleep 3
 check "closing the folder locks it again" 'quiet'
-check "locked again: apps hidden" '! dump | grep -q "text=\"Calculator\""'
+check "locked again: apps hidden ($(calc) vs $n0)" '[ "$(calc)" -le "$n0" ]'
 # Edit mode: the private folder has no ✕.
 set -- $(center 'content-desc="Private"'); sh_ input swipe ${1:-540} ${2:-1900} ${1:-540} ${2:-1900} 900; sleep 1.2
 check "edit mode: no remove badge on Private" '! dump | grep -q "content-desc=\"Remove Private\""'
