@@ -3156,6 +3156,29 @@ index 68fbb21..cd0c5d7 100644
          UiUtils.setStatusBarColor(getActivity(), themeColor);
      }
  
+diff --git a/src/com/android/messaging/ui/conversation/ConversationInputManager.java b/src/com/android/messaging/ui/conversation/ConversationInputManager.java
+index 0a5f328..05dedb7 100644
+--- a/src/com/android/messaging/ui/conversation/ConversationInputManager.java
++++ b/src/com/android/messaging/ui/conversation/ConversationInputManager.java
+@@ -520,5 +520,18 @@ public class ConversationInputManager implements ConversationInput.ConversationI
+             ImeUtil.get().hideImeKeyboard(mContext, mSink.getComposeEditText());
+             return true;
+         }
++
++        // Etesian: a conversation opens believing the keyboard is up (its state is a guess), so the
++        // first Back only "hid" a keyboard nobody could see. Back closes the keyboard only when it is shown.
++        @Override
++        public boolean onBackPressed() {
++            final android.view.View v = mSink.getComposeEditText();
++            final android.view.WindowInsets insets = v != null ? v.getRootWindowInsets() : null;
++            if (insets != null && !insets.isVisible(android.view.WindowInsets.Type.ime())) {
++                mShowing = false;
++                return false;
++            }
++            return super.onBackPressed();
++        }
+     }
+ }
 diff --git a/src/com/android/messaging/ui/conversation/ConversationMessageView.java b/src/com/android/messaging/ui/conversation/ConversationMessageView.java
 index c58dd0e..35b4ed1 100644
 --- a/src/com/android/messaging/ui/conversation/ConversationMessageView.java
