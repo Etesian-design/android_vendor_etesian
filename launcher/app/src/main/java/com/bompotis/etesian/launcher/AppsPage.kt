@@ -227,7 +227,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
             // grid in edit mode; icons also start dragging from their own long-click.
             override fun onLongPress(e: MotionEvent) {
                 if (!editMode && !searching) {
-                    list.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    N9Sounds.longPress(list)
                     setEditMode(true)
                 }
             }
@@ -645,7 +645,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
             h.root.setOnLongClickListener {
                 if (searching) return@setOnLongClickListener false
                 if (!editMode) {
-                    h.root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    N9Sounds.longPress(h.root)
                     setEditMode(true)
                 }
                 // Dragging with a folder open would move the panel too: close it first.
@@ -788,7 +788,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
             c.root.setOnClickListener { if (!editMode) launch(app, c.root) }
             c.root.setOnLongClickListener {
                 if (f.private) return@setOnLongClickListener true
-                c.root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                N9Sounds.longPress(c.root)
                 takeOut(f, app)
                 true
             }

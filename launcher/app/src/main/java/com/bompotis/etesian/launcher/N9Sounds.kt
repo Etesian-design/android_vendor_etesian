@@ -19,11 +19,26 @@ object N9Sounds {
     const val CLOSE_MULTIPLE = "close_multiple.wav"
     /** Entering edit mode (the N9 home's edit-mode-enter-feedback, priority2_popup). */
     const val EDIT = "popup.wav"
+    /** A tap on the status bar (the N9's press feedback, priority2_static_press). */
+    const val PRESS = "static_press.wav"
+
+    /** A long press anywhere in Etesian: the long-press buzz with the N9's popup sound, as entering edit mode. */
+    fun longPress(v: android.view.View) {
+        v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        play(v.context, EDIT)
+    }
+
+    private var last = ""
+    private var lastAt = 0L
 
     private var pool: SoundPool? = null
     private val ids = HashMap<String, Int>()
 
     fun play(ctx: Context, name: String) {
+        // One action can reach here twice (a long press that also enters edit mode): play it once.
+        val now = android.os.SystemClock.uptimeMillis()
+        if (name == last && now - lastAt < 400) return
+        last = name; lastAt = now
         if (Settings.System.getInt(ctx.contentResolver, Settings.System.SOUND_EFFECTS_ENABLED, 1) == 0) return
         val audio = ctx.getSystemService(AudioManager::class.java)
         if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) return

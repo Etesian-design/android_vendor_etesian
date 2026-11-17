@@ -204,7 +204,7 @@ class ShareActivity : Activity() {
             setOnLongClickListener {
                 val f = t.cn.flattenToString()
                 setPins(if (f in pins()) pins() - f else pins() + f)
-                performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                N9Sounds.longPress(this)
                 android.widget.Toast.makeText(context, if (f in pins()) "Pinned" else "Unpinned", android.widget.Toast.LENGTH_SHORT).show()
                 fill(); true
             }

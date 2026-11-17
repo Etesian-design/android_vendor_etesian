@@ -747,7 +747,7 @@ class StatusMenuActivity : Activity() {
 
     private fun startEdit() {
         if (editing) return
-        panel.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        N9Sounds.longPress(panel)
         editing = true; expanded = false
         build()
     }

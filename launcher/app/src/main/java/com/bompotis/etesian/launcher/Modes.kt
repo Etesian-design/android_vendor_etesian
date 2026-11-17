@@ -96,7 +96,7 @@ class ModeStrip(ctx: Context, private val onLong: (Modes.Mode) -> Unit) : Linear
 
         fun at(x: Float) = bounds().indexOfFirst { x < it.second + gap }.let { if (it < 0) modes.lastIndex else it }
 
-        private val longPress = Runnable { lastX?.let { x -> modes.getOrNull(at(x))?.let { performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS); onLong(it) } }; lastX = null }
+        private val longPress = Runnable { lastX?.let { x -> modes.getOrNull(at(x))?.let { N9Sounds.longPress(this); onLong(it) } }; lastX = null }
         private var lastX: Float? = null
 
         override fun onTouchEvent(e: MotionEvent): Boolean {

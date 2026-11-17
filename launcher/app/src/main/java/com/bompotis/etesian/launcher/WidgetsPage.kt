@@ -539,7 +539,7 @@ class WidgetsPage(private val activity: Activity, private val screen: Int = 0, p
         private val hold = Runnable {
             held = true
             parent?.requestDisallowInterceptTouchEvent(true)
-            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            N9Sounds.longPress(this)
             bringToFront()
             animate().scaleX(1.04f).scaleY(1.04f).setDuration(100).start()
         }

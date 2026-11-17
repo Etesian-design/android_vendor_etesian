@@ -176,7 +176,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             // N9: holding anywhere on the view (not only on a card) enters edit mode, when apps are open.
             override fun onLongPress(e: MotionEvent) {
                 if (closeMode || merge.busy || dragging || RunningApps.entries.isEmpty()) return
-                list.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                N9Sounds.longPress(list)
                 closeMode = true; adapter.notifyItemRangeChanged(0, adapter.itemCount, "mode"); updateClearAll()
             }
         })
