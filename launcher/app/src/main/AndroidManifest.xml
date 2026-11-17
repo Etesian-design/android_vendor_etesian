@@ -150,6 +150,13 @@
 
 
         <activity
+            android:name=".BreezeWidgetActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:label="Breeze widgets"
+            android:theme="@style/Theme.EtesianSettings" />
+
+        <activity
             android:name=".ToolbarSettingsActivity"
             android:exported="false"
             android:label="Toolbar buttons"

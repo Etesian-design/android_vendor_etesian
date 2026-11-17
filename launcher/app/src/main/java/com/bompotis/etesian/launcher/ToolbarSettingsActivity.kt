@@ -27,6 +27,12 @@ import org.json.JSONObject
  * macro), each with an automatic, symbol or picture icon.
  */
 class ToolbarSettingsActivity : Activity() {
+    companion object {
+        /** Opens one set directly (only [ToolbarConfig.BREEZE]). */
+        const val EXTRA_SET = "set"
+        private const val REQUEST_IMAGE = 2
+    }
+
 
     private lateinit var content: LinearLayout
     private lateinit var title: TextView
@@ -61,10 +67,11 @@ class ToolbarSettingsActivity : Activity() {
             insets
         }
         setContentView(root)
-        showSets()
+        // Opened from Breeze's menu: straight to its set, and Back closes.
+        if (intent.getStringExtra(EXTRA_SET) == ToolbarConfig.BREEZE) edit(ToolbarConfig.BREEZE) else showSets()
         // Back from a set being edited returns to the list (targetSdk 37 never calls onBackPressed).
         onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-            if (editing != null) { showSets(); slide(fromRight = false) } else finish()
+            if (editing != null && intent.getStringExtra(EXTRA_SET) == null) { showSets(); slide(fromRight = false) } else finish()
         }
     }
 
@@ -166,14 +173,14 @@ class ToolbarSettingsActivity : Activity() {
 
     private fun showButtons() {
         val pkg = editing ?: return
-        title.text = if (pkg == ToolbarConfig.DEFAULT) "All apps" else appLabel(pkg)
+        title.text = when (pkg) { ToolbarConfig.DEFAULT -> "All apps"; ToolbarConfig.BREEZE -> "Breeze menu"; else -> appLabel(pkg) }
         content.removeAllViews()
         if (buttons.isEmpty()) content.addView(note("No buttons yet: only Back is shown."))
         buttons.forEachIndexed { i, b ->
             val icon = ToolbarConfig.decode(b.icon)?.let { android.graphics.drawable.BitmapDrawable(resources, it) }
             content.addView(row(icon, b.tint, b.label, ToolbarActions.describe(this, b.action)) { buttonMenu(i) })
         }
-        if (pkg == ToolbarConfig.DEFAULT) setActions("Add button" to { addButton() })
+        if (pkg == ToolbarConfig.DEFAULT || pkg == ToolbarConfig.BREEZE) setActions("Add button" to { addButton() })
         else setActions("Add button" to { addButton() }, "Remove app" to {
             ToolbarConfig.deleteSet(this, pkg); showSets(); slide(fromRight = false)
         })
@@ -405,5 +412,4 @@ class ToolbarSettingsActivity : Activity() {
         }.show()
     }
 
-    companion object { private const val REQUEST_IMAGE = 2 }
 }

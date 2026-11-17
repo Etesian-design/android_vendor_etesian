@@ -24,6 +24,8 @@ import java.io.ByteArrayOutputStream
 object ToolbarConfig {
     const val SETTING = "etesian_toolbar_config"
     const val DEFAULT = ""
+    /** Breeze's menu: its own set (stored apart from the apps', under "breeze"); the default set until it has one. */
+    const val BREEZE = "\u0001breeze"
     private const val ICON_PX = 96
 
     class Button(val label: String, val icon: String, val tint: Boolean, val action: JSONObject) {
@@ -47,18 +49,22 @@ object ToolbarConfig {
     /** The buttons for [pkg], or the default set for [DEFAULT]. */
     fun buttons(ctx: Context, pkg: String): List<Button> {
         val root = read(ctx)
-        val arr = if (pkg == DEFAULT) root.optJSONArray("default")
-            else root.optJSONObject("apps")?.optJSONArray(pkg)
+        val arr = when (pkg) {
+            DEFAULT -> root.optJSONArray("default")
+            BREEZE -> root.optJSONArray("breeze") ?: root.optJSONArray("default")
+            else -> root.optJSONObject("apps")?.optJSONArray(pkg)
+        }
         return arr?.let { a -> (0 until a.length()).map { Button.from(a.getJSONObject(it)) } }.orEmpty()
     }
 
     fun hasSet(ctx: Context, pkg: String) =
-        pkg == DEFAULT || read(ctx).optJSONObject("apps")?.has(pkg) == true
+        pkg == DEFAULT || (pkg == BREEZE && read(ctx).has("breeze")) || read(ctx).optJSONObject("apps")?.has(pkg) == true
 
     fun save(ctx: Context, pkg: String, buttons: List<Button>) {
         val root = read(ctx)
         val arr = JSONArray().apply { buttons.forEach { put(it.toJson()) } }
         if (pkg == DEFAULT) root.put("default", arr)
+        else if (pkg == BREEZE) root.put("breeze", arr)
         else root.put("apps", (root.optJSONObject("apps") ?: JSONObject()).put(pkg, arr))
         Settings.Secure.putString(ctx.contentResolver, SETTING, root.toString())
     }

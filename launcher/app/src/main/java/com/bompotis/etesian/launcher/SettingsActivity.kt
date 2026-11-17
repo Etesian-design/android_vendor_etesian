@@ -44,7 +44,7 @@ class SettingsActivity : AppCompatActivity() {
             Section("open", "Open applications", "Arranging, carousel, split screen", R.drawable.ic_set_open),
             Section("wallpapers", "Wallpapers & backgrounds", "Home wallpapers, app and menu backgrounds", R.drawable.ic_set_wallpaper),
             Section("gestures", "Gestures", "Swipes, back", R.drawable.ic_set_gestures),
-            Section("sidesense", "Side Sense", "The edge bar: taps, flicks, where it sits", R.drawable.ic_set_gestures),
+            Section("sidesense", "Breeze", "The edge bar or floating button: taps, flicks, its menu", R.drawable.ic_set_gestures),
             Section("lock", "Lock screen", "Notifications, glance line, weather", R.drawable.ic_set_lock),
             Section("emergency", "Emergency information", "Medical details for first responders", R.drawable.ic_set_emergency),
             Section("sharing", "Sharing", "Share sheet, sharing a network", R.drawable.ic_set_share),
@@ -53,6 +53,7 @@ class SettingsActivity : AppCompatActivity() {
             // Sub pages of a page: not listed on the main page.
             Section("priority", "Priority people", "", 0, main = false),
             Section("dismissed", "Dismissed notifications", "", 0, main = false),
+            Section("feeds", "Feeds", "", 0, main = false),
         )
         /** Pages that start with a live preview of what their settings change. */
         val PREVIEWS = setOf("apps", "events", "status", "open", "lock", "emergency", "sharing", "priority", "dismissed")
@@ -349,13 +350,14 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Side Sense" to "sidesense", "Notifications on the lock screen" to "lock",
+                "Gestures" to "gestures", "Breeze" to "sidesense", "Notifications on the lock screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
                 "Status menu" to "status", "Arranging" to "open", "Carousel" to "open", "Split screen" to "open",
                 "Private space" to "apps", "Under the clock" to "lock", "Emergency information" to "emergency",
                 "Medical details" to "emergency", "Emergency contacts" to "emergency", "Share sheet" to "sharing",
-                "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed")
+                "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed",
+                "Feeds" to "feeds", "Notifications shown as feeds" to "feeds")
             if (section in PREVIEWS) screen.addPreference(SettingsPreview.Row(ctx, section!!))
             val hidden = preferenceManager.createPreferenceScreen(ctx)
             fun category(title: String) = PreferenceCategory(ctx).apply {
@@ -490,7 +492,7 @@ class SettingsActivity : AppCompatActivity() {
             list(events, Prefs.WEATHER_UNITS, "Temperature", arrayOf("Celsius", "Fahrenheit"), arrayOf("c", "f"), "c")
                 .also { if (section == "events") it.dependency = Prefs.WEATHER }
             val styles = EventsClassifier.Style.entries
-            EventsClassifier.Section.entries.filter { it != EventsClassifier.Section.CALENDAR }.forEach { section ->
+            EventsClassifier.Section.shown.filter { it != EventsClassifier.Section.CALENDAR }.forEach { section ->
                 list(events, Prefs.eventsStyleKey(section), "${section.title} layout", styles.map { it.title }.toTypedArray(),
                     styles.map { it.key }.toTypedArray(), EventsClassifier.Style.GROUPED.key)
             }
@@ -537,16 +539,29 @@ class SettingsActivity : AppCompatActivity() {
                     arrayOf("Disabled", "Swipe from the left side", "Swipe from the right side"),
                     arrayOf(Prefs.BACK_DISABLED, Prefs.BACK_LEFT, Prefs.BACK_RIGHT),
                     Prefs.backGesture(ctx))   // also migrates a removed choice
-                val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Nothing")
+                val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Breeze menu", "Nothing")
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,
-                    Prefs.ACTION_SWITCHER, Prefs.ACTION_NONE)
-                val bar = category("Side Sense")
-                switch(bar, Prefs.SIDE_SENSE, "Side Sense",
-                    "A slim bar on the screen edge. Long-press it and drag to move it, to either side", Prefs.sideSense(ctx))
+                    Prefs.ACTION_SWITCHER, Prefs.ACTION_MENU, Prefs.ACTION_NONE)
+                val bar = category("Breeze")
+                switch(bar, Prefs.SIDE_SENSE, "Breeze",
+                    "A slim bar on the screen edge. Long-press it and drag it: to either edge, or anywhere else as a floating button",
+                    Prefs.breeze(ctx))
+                list(bar, Prefs.SIDEBAR_TAP, "Tap", barActions, barValues, Prefs.ACTION_MENU)
                 list(bar, Prefs.SIDEBAR_DOUBLE_TAP, "Double tap", barActions, barValues, Prefs.ACTION_BACK)
                 list(bar, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
                 list(bar, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
                 list(bar, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
+                bar.addPreference(Preference(ctx).apply {
+                    title = "Menu shortcuts"; summary = "The buttons in Breeze's menu (a smaller toolbar)"
+                    isIconSpaceReserved = false; isPersistent = false
+                    intent = Intent(ctx, ToolbarSettingsActivity::class.java)
+                        .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE)
+                })
+                bar.addPreference(Preference(ctx).apply {
+                    title = "Menu widgets"; summary = "Add a widget to Breeze's menu; long-press one there to remove it"
+                    isIconSpaceReserved = false; isPersistent = false
+                    intent = Intent(ctx, BreezeWidgetActivity::class.java)
+                })
 
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,
@@ -662,6 +677,7 @@ class SettingsActivity : AppCompatActivity() {
             extra(notes, Extras.LIVE_UPDATES, "Live updates", "Ongoing progress pinned under Notifications")
             page(notes, "priority", "A person's messages, mail and calls first, grouped under them")
             page(notes, "dismissed", "Keep dismissed notifications as faded rows")
+            page(notes, "feeds", "How often feeds update; notifications shown as feeds")
             val today = category("Today")
             extra(today, Extras.TODAY, "Today in Events", "One-line items above Notifications")
             androidx.preference.MultiSelectListPreference(ctx).apply {
@@ -720,6 +736,62 @@ class SettingsActivity : AppCompatActivity() {
                 arrayOf("0.5 (Big only)", "1", "1.5", "2", "2.5", "3"), arrayOf("0.5", "1", "1.5", "2", "2.5", "3"), "2.5")
             secureList(ghosts, Ghosts.KEY_KEEP, "Keep for",
                 arrayOf("1 hour", "4 hours", "12 hours", "24 hours", "Forever"), arrayOf("1", "4", "12", "24", "0"), "24")
+
+            // Events and notifications → Feeds: the Feeds app's update interval, and the apps filed under Feed.
+            val feeds = category("Feeds")
+            if (section == "feeds") feeds.title = null
+            val every = if (section == "feeds") Feeds.interval(ctx) else -1
+            if (every >= 0) ListPreference(ctx).apply {
+                key = "feeds_interval"; title = "Update feeds"; isIconSpaceReserved = false; isPersistent = false
+                entries = arrayOf("Every 15 minutes", "Every 30 minutes", "Every hour", "Every 3 hours", "Every 6 hours",
+                    "Every 12 hours", "Once a day", "Only when opened")
+                entryValues = arrayOf("15", "30", "60", "180", "360", "720", "1440", "0")
+                value = every.toString().takeIf { it in entryValues } ?: "60"
+                summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+                setOnPreferenceChangeListener { _, v -> Feeds.setInterval(ctx, (v as String).toInt()); true }
+                feeds.addPreference(this)
+            }
+            val asFeeds = category("Notifications shown as feeds")
+            if (section == "feeds") {
+                val sections = setOf(EventsClassifier.Section.FEED, EventsClassifier.Section.HIDDEN)
+                // The user's choices, and apps Etesian files under Feed by itself (from the notifications there now).
+                val keys = LinkedHashMap<String, EventsClassifier.Section>()
+                EventsClassifier.filed(ctx, sections).forEach { keys[it.key] = it.section }
+                EventsStore.items.forEach { e ->
+                    val sec = EventsClassifier.classify(ctx, e)
+                    if (sec in sections) keys.putIfAbsent(EventsClassifier.keyOf(ctx, e), sec)
+                }
+                fun label(key: String): String {
+                    val pkg = key.substringBefore('|')
+                    val app = runCatching { ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(pkg, 0)).toString() }
+                        .getOrDefault(pkg)
+                    val channel = key.substringAfter('|', "")
+                    val name = EventsStore.items.firstOrNull { it.pkg == pkg && it.channelId == channel }?.channelName ?: channel
+                    return if (channel.isEmpty()) app else "$app: $name"
+                }
+                fun summaryOf(sec: EventsClassifier.Section?) = when (sec) {
+                    EventsClassifier.Section.FEED -> "Shown as feeds"
+                    EventsClassifier.Section.HIDDEN -> "Hidden from Events"
+                    else -> "Shown as notifications"
+                }
+                if (keys.isEmpty()) asFeeds.addPreference(Preference(ctx).apply {
+                    title = "None"; summary = "Apps you show under Feed are listed here"; isSelectable = false; isIconSpaceReserved = false
+                })
+                keys.forEach { (k, sec) ->
+                    asFeeds.addPreference(Preference(ctx).apply {
+                        title = label(k); summary = summaryOf(sec); isIconSpaceReserved = false; isPersistent = false
+                        setOnPreferenceClickListener { p ->
+                            fun to(s: EventsClassifier.Section) = N9Sheet.Item(summaryOf(s)) {
+                                EventsClassifier.set(ctx, k, s); p.summary = summaryOf(s)
+                            }
+                            N9Sheet.show(ctx, listOf(to(EventsClassifier.Section.NOTIFICATIONS),
+                                to(EventsClassifier.Section.FEED), to(EventsClassifier.Section.HIDDEN)), title = p.title.toString(),
+                                label = "Feed notifications")
+                            true
+                        }
+                    })
+                }
+            }
 
             // Status menu (the options apply while your own layout is on; pure N9: all rows).
             val status = category("Status menu")

@@ -8381,7 +8381,7 @@ index 000000000000..c8f1d6ee8331
 +import com.android.systemui.navigationbar.views.EtesianBottomBar;
 +
 +/**
-+ * Etesian toolbar as a side strip (like Sony's Side Sense), instead of the bar at the bottom:
++ * Etesian toolbar as a side strip (an edge bar), instead of the bar at the bottom:
 + * a slim handle on the Back side of the screen; tapping it slides in a vertical strip with the
 + * same buttons as the bar (Back and the user's buttons, or the app's own). The strip hides again
 + * after a button is used, a tap outside it, or a few seconds.

@@ -76,7 +76,7 @@ class EdgeGestures(private val ctx: Context) {
     }
 
     private fun updateSideBar() {
-        if (n9Mode() && Prefs.sideSense(ctx)) sideBar.show() else sideBar.hide()
+        if (n9Mode() && Prefs.breeze(ctx)) sideBar.show() else sideBar.hide()
     }
 
     /** An action picked in settings, run from the edge bar. */
@@ -123,6 +123,7 @@ class EdgeGestures(private val ctx: Context) {
         // Streams that start on the edge bar belong to the bar.
         if (e.actionMasked == MotionEvent.ACTION_DOWN) {
             onBar = sideBar.bounds.contains(e.rawX.toInt(), e.rawY.toInt())
+            if (!onBar) sideBar.onOutsideDown(e.rawX, e.rawY)
             if (onBar) monitor?.pilferPointers()
         }
         if (onBar) { sideBar.onTouch(e); return }
@@ -217,6 +218,7 @@ class EdgeGestures(private val ctx: Context) {
 
     /** N9 status menu: a tap on the status bar opens Etesian's status menu, never notifications. */
     private fun openStatusMenu() {
+        com.bompotis.etesian.launcher.N9Sounds.play(ctx, com.bompotis.etesian.launcher.N9Sounds.PRESS)
         // While recording, the red dot sits on the right of the status bar (with the system
         // icons): a tap there asks "Stop recording?" instead (approved "Recording dot").
         if (com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > screenW / 2f) {

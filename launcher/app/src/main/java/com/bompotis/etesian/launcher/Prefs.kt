@@ -38,7 +38,7 @@ object Prefs {
     const val BACK_DISABLED = "disabled"
     const val BACK_LEFT = "left"
     const val BACK_RIGHT = "right"
-    /** Removed options: "short" and "curved" (swipe in, then down) now Disabled; "sidebar" now Side Sense. */
+    /** Removed options: "short" and "curved" (swipe in, then down) now Disabled; "sidebar" now Breeze. */
     const val BACK_CURVED = "curved"
     private const val BACK_SIDEBAR_REMOVED = "sidebar"
     private const val BACK_SHORT_REMOVED = "short"
@@ -47,12 +47,21 @@ object Prefs {
     const val ACTION_CLOSE = "close"
     const val ACTION_NONE = "none"
     const val ACTION_SWITCHER = "switcher"
+    /** Breeze only: its small menu of shortcuts and widgets, under the button. */
+    const val ACTION_MENU = "menu"
 
-    // Side Sense: the edge bar. Side and position are set by long-pressing the bar and dragging it.
+    // Breeze: the edge bar, or a floating button when dragged away from the edges. Its place is set by
+    // long-pressing it and dragging it.
     const val SIDE_SENSE = "side_sense"
     const val SIDEBAR_SIDE = "sidebar_side"
     const val SIDEBAR_POSITION = "sidebar_position"
+    /** Horizontal centre of the floating button, as a percentage of the screen width (side "free"). */
+    const val SIDEBAR_X = "sidebar_x"
+    const val SIDEBAR_TAP = "sidebar_tap"
     const val SIDEBAR_DOUBLE_TAP = "sidebar_double_tap"
+    /** Widgets in Breeze's menu: app widget ids, comma separated. */
+    const val BREEZE_WIDGETS = "breeze_widgets"
+    const val SIDE_FREE = "free"
     const val SIDEBAR_FLICK_IN = "sidebar_flick_in"
     const val SIDEBAR_FLICK_UP = "sidebar_flick_up"
     const val SIDEBAR_FLICK_DOWN = "sidebar_flick_down"
@@ -112,16 +121,16 @@ object Prefs {
     fun backGesture(ctx: Context): String {
         val v = of(ctx).getString(BACK_GESTURE, BACK_DISABLED)!!
         if (v == BACK_LEFT || v == BACK_RIGHT || v == BACK_DISABLED) return v
-        // A removed option: Back by the edge bar becomes Side Sense, the others Disabled.
+        // A removed option: Back by the edge bar becomes Breeze, the others Disabled.
         of(ctx).edit().putString(BACK_GESTURE, BACK_DISABLED).apply {
             if (v == BACK_SIDEBAR_REMOVED) putBoolean(SIDE_SENSE, true)
         }.apply()
         return BACK_DISABLED
     }
-    /** Side Sense: the one edge bar, its own setting (on with "sidebar" as Back before). */
-    fun sideSense(ctx: Context): Boolean {
+    /** Breeze: the one edge bar, its own setting (on with "sidebar" as Back before). */
+    fun breeze(ctx: Context): Boolean {
         backGesture(ctx)   // migrates an old "sidebar" Back first
-        // The toolbar's side strip is gone (Side Sense is the one edge bar): an old choice of it turns Side Sense on.
+        // The toolbar's side strip is gone (Breeze is the one edge bar): an old choice of it turns Breeze on.
         runCatching {
             if (android.provider.Settings.Secure.getInt(ctx.contentResolver, "etesian_toolbar_mode", 0) == 1) {
                 android.provider.Settings.Secure.putInt(ctx.contentResolver, "etesian_toolbar_mode", 0)
@@ -130,14 +139,20 @@ object Prefs {
         }
         return of(ctx).getBoolean(SIDE_SENSE, false)
     }
-    fun setSideBarPlace(ctx: Context, side: String, percent: Int) =
-        of(ctx).edit().putString(SIDEBAR_SIDE, side).putString(SIDEBAR_POSITION, percent.coerceIn(8, 92).toString()).apply()
+    fun setSideBarPlace(ctx: Context, side: String, percent: Int, xPercent: Int = 50) =
+        of(ctx).edit().putString(SIDEBAR_SIDE, side).putString(SIDEBAR_POSITION, percent.coerceIn(5, 95).toString())
+            .putString(SIDEBAR_X, xPercent.coerceIn(5, 95).toString()).apply()
+    fun sideBarX(ctx: Context) = of(ctx).getString(SIDEBAR_X, "50")!!.toInt()
+    fun breezeWidgets(ctx: Context): List<Int> =
+        of(ctx).getString(BREEZE_WIDGETS, "")!!.split(',').mapNotNull { it.toIntOrNull() }
+    fun setBreezeWidgets(ctx: Context, ids: List<Int>) = of(ctx).edit().putString(BREEZE_WIDGETS, ids.joinToString(",")).apply()
     fun sideBarSide(ctx: Context) = of(ctx).getString(SIDEBAR_SIDE, "right")!!
     /** Bar centre as a percentage of the screen height. */
     fun sideBarPosition(ctx: Context) = of(ctx).getString(SIDEBAR_POSITION, "45")!!.toInt()
     fun sideBarAction(ctx: Context, gesture: String) = of(ctx).getString(gesture, when (gesture) {
         SIDEBAR_FLICK_IN, SIDEBAR_DOUBLE_TAP -> ACTION_BACK
         SIDEBAR_FLICK_UP -> ACTION_SWITCHER
+        SIDEBAR_TAP -> ACTION_MENU
         else -> ACTION_NONE
     })!!
     const val WEATHER = "weather"
