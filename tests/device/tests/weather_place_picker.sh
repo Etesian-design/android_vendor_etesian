@@ -12,7 +12,8 @@ widgets_only BelleWeatherClassicWidget; sleep 2
 tap_id 'resource-id="com.bompotis.etesian.launcher:id/bc_place"'
 check "tapping the place opens the place picker" 'top_activity | grep -q "WeatherPlaceActivity"'
 check "it offers the current location" 'dump | grep -q "text=\"Current location\""'
-sh_ input keyevent KEYCODE_MOVE_END; for _ in $(seq 30); do sh_ input keyevent KEYCODE_DEL; done
+# As a user does: tap the field (the current place is then selected) and type over it.
+tap_id 'class="android.widget.EditText"'; sleep 0.8
 sh_ input text Oulu; sleep 5
 check "typing finds the town, with its country" 'dump | grep -q "text=\"Oulu\"" && dump | grep -q "Finland"'
 shot weather_place_picker

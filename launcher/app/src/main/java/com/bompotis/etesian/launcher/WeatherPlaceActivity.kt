@@ -43,8 +43,9 @@ class WeatherPlaceActivity : Activity() {
             setPadding(dp(16f), dp(10f), dp(16f), dp(10f))
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setText(Prefs.weatherCity(this@WeatherPlaceActivity))
-            // The current place is selected: typing replaces it instead of going in front of it.
-            setSelectAllOnFocus(true); selectAll()
+            // The current place is selected when the field is tapped, so typing replaces it. After the tap's own
+            // cursor placement (selectAllOnFocus alone loses to it).
+            setOnFocusChangeListener { v, has -> if (has) v.post { (v as EditText).selectAll() } }
             setOnEditorActionListener { _, _, _ -> main.removeCallbacks(search); find(); true }
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
