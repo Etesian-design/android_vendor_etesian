@@ -16,7 +16,8 @@ drag() { raw_sh "input motionevent DOWN $1 $2; sleep 1.0; input motionevent MOVE
 backup=/data/local/tmp/breeze_prefs.xml; sh_ cp $P $backup
 cfg=$(raw_sh settings get secure etesian_toolbar_config)
 raw_sh settings put secure etesian_toolbar_config "'$(echo "$cfg" | python3 -c "import json,sys; d=json.load(sys.stdin) if sys.stdin else {}; d.pop('breeze',None); print(json.dumps(d))" 2>/dev/null || echo '{}')'"
-setp() { sh_ am force-stop $LAUNCHER; sh_ "sed -e '/name=\"side_sense\"/d' -e '/name=\"sidebar_side\"/d' -e '/name=\"breeze_theme\"/d' -e 's#</map>#    <boolean name=\"side_sense\" value=\"true\" />\n    <string name=\"sidebar_side\">right</string>\n    <string name=\"breeze_theme\">$1</string>\n</map>#' $P > /data/local/tmp/bp.xml; cat /data/local/tmp/bp.xml > $P; rm /data/local/tmp/bp.xml"; home; sleep 2; }
+# Default sizes: the samples below are placed for the default handle (the user may have resized it).
+setp() { sh_ am force-stop $LAUNCHER; sh_ "sed -e '/name=\"side_sense\"/d' -e '/name=\"sidebar_side\"/d' -e '/name=\"breeze_theme\"/d' -e '/name=\"breeze_thickness\"/d' -e '/name=\"breeze_height\"/d' -e '/name=\"breeze_button_size\"/d' -e 's#</map>#    <boolean name=\"side_sense\" value=\"true\" />\n    <string name=\"sidebar_side\">right</string>\n    <string name=\"breeze_theme\">$1</string>\n</map>#' $P > /data/local/tmp/bp.xml; cat /data/local/tmp/bp.xml > $P; rm /data/local/tmp/bp.xml"; home; sleep 2; }
 unlock; setp light
 check "Breeze on: the handle is shown" 'has EtesianBreeze'
 read L T R B <<< "$(frame EtesianBreeze)"
@@ -83,6 +84,13 @@ r=$(px 24); box=($RW//2-r,$RH//2-r,$RW//2+r,$RH//2+r)
 A=list(a.crop(box).getdata()); B=list(b.crop(box).getdata())
 sys.exit(0 if sum(abs(x-y) for x,y in zip(A,B))/len(A)>3 else 1)"'
 check "let go in the middle: the floating button" '[ "$(pref sidebar_side)" = free ] && ! has EtesianBreezeDrag'
+# The icon's green leaf (in both versions) is on screen once Breeze floats; Android's robot has none.
+sleep 0.5; command adb exec-out screencap -p > "$SHOTS/breeze_icon.png"
+check "the floating button shows Etesian's icon (its leaf)" 'python3 -c "
+import sys; from PIL import Image
+im=Image.open(\"$SHOTS/breeze_icon.png\").convert(\"RGB\")
+n=sum(1 for r,g,b in im.getdata() if 80<=r<=175 and g>=140 and b<=90 and g-r>=35)
+print(n, file=sys.stderr); sys.exit(0 if n>=30 else 1)"'
 read L T R B <<< "$(frame EtesianBreeze)"
 check "button square, where it was let go" '[ -n "$B" ] && [ $((R-L)) -eq $((B-T)) ] && [ $(( (L+R)/2 - RW/2 )) -le 40 ] && [ $(( RW/2 - (L+R)/2 )) -le 40 ]'
 cx=$(( (L+R)/2 )); cy=$(( (T+B)/2 ))
@@ -110,3 +118,6 @@ check "unlocked: Breeze back" 'has EtesianBreeze'
 [ "$cfg" = null ] && raw_sh settings delete secure etesian_toolbar_config >/dev/null || raw_sh settings put secure etesian_toolbar_config "'$cfg'"
 sh_ am force-stop $LAUNCHER; sh_ "cat $backup > $P"; sh_ rm $backup; home
 check "launcher did not crash" '! crashed $LAUNCHER'
+# 2026-11-18 (user): the floating button is Etesian's icon (brand/, deep on dark, pearl on light), not Android's robot.
+S=~/android/lineage/vendor/etesian/launcher/app/src
+check "the button draws Etesian's icon, both versions" 'grep -q "R.drawable.etesian_icon_deep" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && grep -q "R.drawable.etesian_icon_pearl" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && ! grep -q "ic_launcher_foreground" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && test -s $S/main/res/drawable-nodpi/etesian_icon_deep.png'

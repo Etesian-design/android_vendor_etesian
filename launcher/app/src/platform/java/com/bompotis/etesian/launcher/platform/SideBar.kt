@@ -325,22 +325,20 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     }
     private fun handleRim() = if (dark) 0x80FFFFFF.toInt() else 0x66000000
 
-    private fun buttonFill(active: Boolean) = when {
-        active -> (N9.ACCENT and 0x00FFFFFF) or 0xCC000000.toInt()
-        dark -> 0x8C000000.toInt()
-        else -> 0xA6FFFFFF.toInt()
-    }
+    /** Etesian's icon (brand/): deep on the dark theme, pearl on the light one. */
+    private val iconDeep by lazy { ctx.getDrawable(R.drawable.etesian_icon_deep) }
+    private val iconPearl by lazy { ctx.getDrawable(R.drawable.etesian_icon_pearl) }
+    private fun icon() = if (dark) iconDeep else iconPearl
 
-    /** The handle at an edge, or the squircle button with the logo. */
+    /** The handle at an edge, or the button: Etesian's icon. */
     @SuppressLint("ViewConstructor")
     private inner class Handle(ctx: Context) : View(ctx) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val logo = ctx.getDrawable(R.drawable.ic_launcher_foreground)
         var active = false
 
         override fun onDraw(canvas: Canvas) {
             if (free) {
-                drawButton(canvas, paint, logo, RectF(0f, 0f, width.toFloat(), height.toFloat()), active, 1f)
+                drawButton(canvas, RectF(0f, 0f, width.toFloat(), height.toFloat()), active, 1f)
                 return
             }
             val x = if (onLeft) handleInset.toFloat() else (width - handleInset - handleW).toFloat()
@@ -356,16 +354,15 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
         c.drawRoundRect(r, rad, rad, p)
     }
 
-    private fun drawButton(c: Canvas, p: Paint, logo: android.graphics.drawable.Drawable?, r: RectF, active: Boolean, alpha: Float) {
+    /** The button: Etesian's icon, whole (it is its own squircle); a touch brightens it and swells it a little. */
+    private fun drawButton(c: Canvas, r: RectF, active: Boolean, alpha: Float) {
         val s = minOf(r.width(), r.height())
-        val path = Path(IconFactory.shape(s)).apply { offset(r.left, r.top) }
-        p.style = Paint.Style.FILL; p.color = buttonFill(active); p.alpha = (p.alpha * alpha).toInt()
-        c.drawPath(path, p)
-        p.style = Paint.Style.STROKE; p.strokeWidth = density; p.color = handleRim(); p.alpha = (p.alpha * alpha).toInt()
-        c.drawPath(path, p)
-        logo?.apply {
-            this.alpha = ((if (active) 255 else 210) * alpha).toInt()
-            setBounds(r.left.toInt(), r.top.toInt(), (r.left + s).toInt(), (r.top + s).toInt()); draw(c)
+        val g = if (active) s * 0.04f else 0f
+        val l = r.centerX() - s / 2 - g
+        val t = r.centerY() - s / 2 - g
+        icon()?.apply {
+            this.alpha = ((if (active) 255 else 225) * alpha).toInt()
+            setBounds(l.toInt(), t.toInt(), (l + s + 2 * g).toInt(), (t + s + 2 * g).toInt()); draw(c)
         }
     }
 
@@ -376,7 +373,6 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     @SuppressLint("ViewConstructor")
     private inner class DragLayer(ctx: Context, startFree: Boolean) : View(ctx) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val logo = ctx.getDrawable(R.drawable.ic_launcher_foreground)
         var fingerX = 0f
         var fingerY = 0f
         /** 0: the handle, 1: the button. */
@@ -421,7 +417,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
             }
             if (m > 0f) {
                 val s = b * (0.4f + 0.6f * m)
-                drawButton(canvas, paint, logo, RectF(fingerX - s, fingerY - s, fingerX + s, fingerY + s), true, m)
+                drawButton(canvas, RectF(fingerX - s, fingerY - s, fingerX + s, fingerY + s), true, m)
             }
         }
     }
