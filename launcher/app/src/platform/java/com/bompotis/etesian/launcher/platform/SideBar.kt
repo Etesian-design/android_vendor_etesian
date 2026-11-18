@@ -54,7 +54,11 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     private var free = false
     /** Long-pressed: the stream moves Breeze instead of making gestures. */
     private var moving = false
-    private val menu = BreezeMenu(ctx)
+    private val menu = BreezeMenu(ctx).apply {
+        // Breeze steps back while its menu is open (it sits above the dimmed screen), and comes back after.
+        onDismiss = { view?.animate()?.alpha(1f)?.setDuration(180)?.start() }
+    }
+    val menuShowing get() = menu.showing
 
     /** Settings want it shown; the lock screen still hides it. */
     private var wanted = false
@@ -172,6 +176,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
                 // Out of the side the handle is on; the button's from the nearer side.
                 val left = if (free) drawn.centerX() < screenW / 2 else onLeft
                 menu.show(drawn.top, left)
+                view?.animate()?.alpha(0f)?.setDuration(160)?.start()
             }
             return
         }

@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 
 /**
- * Adds a widget to Breeze's menu: the widget picker, then Android's permission and the widget's own setup
+ * Adds a widget to Breeze's menu: the widget picker page, then Android's permission and the widget's own setup
  * when it has one. Its own widget host, apart from the Widgets view's, so the two never share ids.
  */
 class BreezeWidgetActivity : Activity() {
@@ -28,10 +28,14 @@ class BreezeWidgetActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pending = savedInstanceState?.getInt("pending", -1) ?: -1
-        if (savedInstanceState == null) WidgetPicker(this) { bind(it) }.apply {
-            setOnCancelListener { if (pending == -1) finish() }
-            show()
-        }
+        // A page of Etesian settings: the picker in this window, so the bottom bar (dark, Back) is this page's.
+        window.setDecorFitsSystemWindows(false)
+        setContentView(WidgetPickerView(this) { bind(it) })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (SystemToolbar.available(this)) SystemToolbar(this).set(back = true, items = emptyList(), style = "dark") {}
     }
 
     override fun onSaveInstanceState(out: Bundle) {

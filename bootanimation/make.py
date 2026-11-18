@@ -11,7 +11,12 @@ SRC, OUT, FONT = sys.argv[1], sys.argv[2], sys.argv[3]
 # Optional: variation axes as 'wght,wdth' (or 'none' for a static font), and only some frames.
 AXES = os.environ.get('AXES', '800,125')
 ONLY = os.environ.get('ONLY', '').split(',') if os.environ.get('ONLY') else None
-W, H = 1080, 2160
+W, H = 1080, 2160            # the N9 frames, where everything is measured and fitted
+# The size drawn (OUT_SIZE=WxH, default the N9's): the same picture scaled to the width, the background
+# continued above and below for a taller screen (1440x3120 on the OnePlus 7 Pro).
+OW, OH = (int(v) for v in os.environ.get('OUT_SIZE', f'{W}x{H}').split('x'))
+S = OW / W
+OFFY = (OH / S - H) / 2      # extra N9 rows above (and below) the N9 frame
 Y0, Y1 = 1010, 1175          # rows replaced (wordmark + glow)
 X0, X1 = 200, 880            # columns replaced
 CAP_TOP, CAP_BOT = 1051, 1105  # NOKIA cap height on the N9 frames
@@ -23,7 +28,12 @@ def axes(f):
         f.set_variation_by_axes([float(v) for v in AXES.split(',')])
 
 
-def wordmark(text, scale=1.0, cy=(CAP_TOP + CAP_BOT) / 2, wdth=125, wght=800, track=0.03):
+def wordmark(text, scale=1.0, cy=(CAP_TOP + CAP_BOT) / 2, wdth=125, wght=800, track=0.03, out=False):
+    """The wordmark, on the N9 frame (or, [out], on the drawn size: same place, scaled)."""
+    cw, ch, k = (OW, OH, S) if out else (W, H, 1.0)
+    if out:
+        cy = (cy + OFFY) * S
+    scale *= k
     f = ImageFont.truetype(FONT, 200)
     axes(f)
     # Scale so the caps are exactly as tall as NOKIA's.
@@ -36,9 +46,9 @@ def wordmark(text, scale=1.0, cy=(CAP_TOP + CAP_BOT) / 2, wdth=125, wght=800, tr
     adv = [f.getlength(c) for c in text]
     gap = track * size
     total = sum(adv) + gap * (len(text) - 1)
-    img = Image.new('L', (W, H), 0)
+    img = Image.new('L', (cw, ch), 0)
     d = ImageDraw.Draw(img)
-    x = (W - total) / 2
+    x = (cw - total) / 2
     for c, a in zip(text, adv):
         d.text((x, cy - (b - t) / 2 - t), c, font=f, fill=255)
         x += a + gap
@@ -92,7 +102,11 @@ def hat(v, n):
 NE, NC = 90, 330
 _e, _c, _up = [t[QOUT] for t in basis(qx, qy)]
 QA = np.hstack([hat(_e, NE), hat(_c, NC), hat(_c, NC) * _up[:, None]])
-_E, _C, _UP = basis(xx, yy)
+# Evaluated on the drawn size, each pixel mapped back into N9 coordinates.
+_oy, _ox = np.mgrid[0:OH, 0:OW].astype(float)
+_E, _C, _UP = basis((_ox + 0.5) / S - 0.5, (_oy + 0.5) / S - 0.5 - OFFY)
+# Radii past the N9 frame's corners had no samples: hold the curves at their last fitted value.
+E_MAX, C_MAX = int(_e.max()), int(_c.max())
 QTQ = QA.T @ QA + 1e-3 * np.eye(QA.shape[1])  # tiny ridge: empty bins stay 0
 
 
@@ -103,19 +117,20 @@ def synth(a):
     ce, cc, cu = coef[:NE].copy(), coef[NE:NE + NC].copy(), coef[NE + NC:].copy()
     # Radii hidden behind the wordmark have no samples: hold the curves flat there.
     ce[:9] = ce[9]; cc[:45] = cc[45]; cu[:45] = cu[45] * np.linspace(0, 1, 45)
+    ce[E_MAX:] = ce[E_MAX - 1]; cc[C_MAX:] = cc[C_MAX - 1]; cu[C_MAX:] = cu[C_MAX - 1]
     f = lambda v, c: np.interp(v, np.arange(len(c)), c)
-    img = f(_E, ce) + f(_C, cc) + f(_C, cu) * _UP + rng.uniform(-0.5, 0.5, (H, W))
+    img = f(_E, ce) + f(_C, cc) + f(_C, cu) * _UP + rng.uniform(-0.5, 0.5, (OH, OW))
     return np.repeat(img[:, :, None], 3, 2)
 
 
 def glow(m, r=GLOW, dy=0):
     g = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(r))
-    return np.roll(np.asarray(g).astype(float) / 255, dy, 0)
+    return np.roll(np.asarray(g).astype(float) / 255, int(round(dy)), 0)
 
 
-def terms(m):
-    # letters, soft glow around them, and the dark drop shadow under them
-    return [m, glow(m), glow(m, 8, 14)]
+def terms(m, k=1.0):
+    # letters, soft glow around them, and the dark drop shadow under them (at [k] times the N9's size)
+    return [m, glow(m, GLOW * k), glow(m, 8 * k, 14 * k)]
 
 
 REF_W = None
@@ -143,7 +158,7 @@ for part in sorted(os.listdir(SRC)):
         cy = round((ys.min() + ys.max()) / 2)
         key = (scale, cy)
         if key not in cache:
-            cache[key] = terms(wordmark('ETESIAN', scale, cy))
+            cache[key] = terms(wordmark('ETESIAN', scale, cy, out=True), S)
         new_t = cache[key]
         A = np.stack([t[Y0:Y1, X0:X1].ravel() for t in terms(old_m)], 1)
         k, *_ = np.linalg.lstsq(A, r[Y0:Y1, X0:X1].ravel(), rcond=None)

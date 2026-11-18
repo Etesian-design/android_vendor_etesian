@@ -7,4 +7,8 @@ Same timing and motion as the N9 boot animation, with ETESIAN in place of the NO
   curves (oval glow, round ripples, their top-lit edge), and the wordmark is set in Archivo
   (SIL OFL 1.1, `OFL.txt`; first draft) or Fira Sans at the N9 wordmark's per-frame size, brightness, glow and shadow.
 - Font: Fira Sans Medium (the ROM's own UI font, `vendor/etesian/fonts`), chosen 2026-10-28 (`AXES=none make.py n9 out ../fonts/FiraSans-Medium.ttf`).
-- `bootanimation.zip`: the built result, used by etesian.mk. Silent for now; the startup sound comes with the sounds group.
+- `pack.sh N9_ZIP`: builds both results, each with the startup sound (`sounds/startup.py`) as `part1/audio.wav`, which
+  Android plays as the phone finishes booting.
+- `bootanimation.zip` (1080x2160, the Pro1-X) and `bootanimation-1440x3120.zip` (the OnePlus 7 Pro): picked by
+  etesian.mk from `TARGET_SCREEN_WIDTH`. `OUT_SIZE=WxH make.py …` draws any size: scaled to the width, the background
+  continued above and below.

@@ -169,7 +169,7 @@ class WindowDrag(
         if (!running) {
             ended = true
             if (closing) closeTask()
-            HomeActivity.showSwitcherStill(ctx)
+            showAfter()
             return
         }
         if (controller == null) { finishWhenReady = true; return }
@@ -177,10 +177,15 @@ class WindowDrag(
         animateTo(from = progress, to = 1f) {
             finish(toHome = true)
             if (closing) closeTask()
-            // The transient launch doesn't deliver our intent; make sure home shows Open applications.
-            HomeActivity.showSwitcherStill(ctx)
+            // The transient launch doesn't deliver our intent; make sure home shows Open applications
+            // (or the view picked for this edge in Settings → Gestures).
+            showAfter()
         }
     }
+
+    private fun showAfter() =
+        if (closing || edge == Edge.TOP) HomeActivity.showSwitcherStill(ctx)
+        else HomeActivity.showStill(ctx, HomeActivity.pageAfterLeaving(ctx, edge.name.lowercase()))
 
     private fun closeTask() {
         N9Sounds.play(ctx, N9Sounds.CLOSE)

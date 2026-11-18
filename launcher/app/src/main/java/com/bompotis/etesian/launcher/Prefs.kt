@@ -104,6 +104,23 @@ object Prefs {
 
     fun of(ctx: Context): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx)
 
+    /** Where an application swiped away from an edge ("left", "right", "bottom") goes: one of the LEAVE_ values. */
+    const val LEAVE_TO = "leave_to_"
+    const val LEAVE_SWITCHER = "switcher"
+    const val LEAVE_LAST = "last"
+    const val LEAVE_EVENTS = "events"
+    const val LEAVE_APPS = "apps"
+    const val LEAVE_WIDGETS = "widgets"
+    /** Open applications unless the user picked another view for that edge (one that is turned on). */
+    fun leaveTo(ctx: Context, edge: String): String {
+        val v = of(ctx).getString(LEAVE_TO + edge, LEAVE_SWITCHER) ?: LEAVE_SWITCHER
+        return when {
+            v == LEAVE_EVENTS && !eventsPage(ctx) -> LEAVE_SWITCHER
+            v == LEAVE_WIDGETS && !widgetsPage(ctx) -> LEAVE_SWITCHER
+            else -> v
+        }
+    }
+
     fun eventsPage(ctx: Context) = of(ctx).getBoolean(PAGE_EVENTS, true)
     fun pageDots(ctx: Context) = of(ctx).getString(PAGE_DOTS, DOTS_HIDDEN) ?: DOTS_HIDDEN
     fun widgetsPage(ctx: Context) = of(ctx).getBoolean(PAGE_WIDGETS, false)

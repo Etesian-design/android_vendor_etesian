@@ -32,7 +32,12 @@ endif
 
 # Etesian boot animation (bootanimation/README.md): the N9 motion with our own wordmark and
 # redrawn background. Set after n9.mk so it replaces the Nokia one.
+# Drawn at the screen's own size: 1080x2160 for the Pro1-X, 1440x3120 (the OnePlus 7 Pro) otherwise.
+ifeq ($(TARGET_SCREEN_WIDTH),1080)
 TARGET_BOOTANIMATION := vendor/etesian/bootanimation/bootanimation.zip
+else
+TARGET_BOOTANIMATION := vendor/etesian/bootanimation/bootanimation-1440x3120.zip
+endif
 
 # Etesian Store: F-Droid client in the Nokia Store style.
 PRODUCT_PACKAGES += \

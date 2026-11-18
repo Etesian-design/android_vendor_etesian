@@ -40,6 +40,31 @@ check "no editing in the menu (no Add widget, no Edit)" '! sh_ cat /sdcard/u.xml
 shot breeze_menu
 raw_sh input tap $((RW/2)) $((RH/8)); sleep 1
 check "tap elsewhere closes the menu" '! has EtesianBreezeMenu'
+# 2026-11-18 (user): with the menu open the screen behind is dimmed and inactive, Breeze too: a tap outside only
+# closes the menu, it never reaches the app.
+sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 2.5
+act0=$(sh_ dumpsys activity activities | grep -m1 ResumedActivity | grep -o '/[A-Za-z.$]*')
+PX=$((RW/4)); PY=$((RH*3/5))
+# Mean brightness of the left half (text on the app's page), where the menu never is.
+mean() { command adb exec-out screencap -p | python3 -c "import sys,io;from PIL import Image,ImageStat;im=Image.open(io.BytesIO(sys.stdin.buffer.read())).convert('L');w,h=im.size;print(int(ImageStat.Stat(im.crop((0,h//10,w//3,h*9//10))).mean[0]*100))"; }
+g0=$(mean)
+raw_sh input tap $HX $HY; sleep 1.5
+g1=$(mean); gh=$(grey $HX $HY)
+check "menu open: the screen behind dimmed ($g0 -> $g1)" 'has EtesianBreezeScrim && [ $g1 -lt $((g0 * 3 / 4)) ]'
+check "menu open: Breeze steps back (handle $gh, was $light)" '[ "$gh" -lt 150 ]'
+shot breeze_menu_dim
+raw_sh input tap $PX $PY; sleep 1.5
+act1=$(sh_ dumpsys activity activities | grep -m1 ResumedActivity | grep -o '/[A-Za-z.$]*')
+check "a tap on the app behind: the menu closes, the app is not touched ($act0 / $act1)" '! has EtesianBreezeMenu && ! has EtesianBreezeScrim && [ "$act0" = "$act1" ]'
+check "Breeze back after" '[ $(grey $HX $HY) -gt 180 ]'
+raw_sh input tap $HX $HY; sleep 1.5
+check "Breeze's tap opens it again" 'has EtesianBreezeMenu'
+# Open, the menu covers Breeze (flush with its side, level with it): Breeze can't be reached until it closes.
+read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
+check "the open menu covers Breeze" '[ $HX -ge $ML ] && [ $HY -ge $MT ] && [ $HY -le $MB ]'
+raw_sh input tap $PX $PY; sleep 1.5
+check "closed again" '! has EtesianBreezeMenu'
+home
 b0=$(buzzes); raw_sh input swipe $HX $HY $HX $((HY - $(px 80))) 120; sleep 1.5
 check "flick felt (vibration)" '[ $(buzzes) -gt $b0 ]'
 home

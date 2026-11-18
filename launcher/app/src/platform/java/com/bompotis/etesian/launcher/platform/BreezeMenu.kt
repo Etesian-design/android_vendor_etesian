@@ -26,13 +26,17 @@ import com.bompotis.etesian.toolbar.EtesianToolbar
  * Breeze's menu, for one hand. It slides out of the side Breeze is on and stays against it, its top level with
  * Breeze: a strip of Breeze's buttons drawn as the bottom toolbar is (in Breeze's theme), and under it the user's
  * widgets on nothing at all, scrolling when there are more than fit. Nothing is set up here: buttons and widgets
- * are chosen in Etesian settings → Breeze. A tap on a button runs it and closes the menu; a touch anywhere
- * outside closes it too.
+ * are chosen in Etesian settings → Breeze. A tap on a button runs it and closes the menu. Behind it the screen is
+ * dimmed and takes no touches: a touch anywhere outside only closes the menu.
  */
 class BreezeMenu(private val ctx: Context) {
     private val wm = ctx.getSystemService(WindowManager::class.java)
     private val density = ctx.resources.displayMetrics.density
     private var root: View? = null
+    /** The dimmed screen behind the menu: it takes every touch outside the menu, and closes it. */
+    private var scrim: View? = null
+    /** Called once the menu is closed (Breeze shows its handle again). */
+    var onDismiss: (() -> Unit)? = null
     private val shown = Rect()
     private var host: AppWidgetHost? = null
 
@@ -120,6 +124,25 @@ class BreezeMenu(private val ctx: Context) {
             title = "EtesianBreezeMenu"
             windowAnimations = 0
         }
+        val dim = View(ctx).apply {
+            setBackgroundColor(SCRIM)
+            alpha = 0f
+            contentDescription = "Breeze menu backdrop"
+            setOnTouchListener { _, e -> if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN) dismiss(); true }
+        }
+        val dlp = WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT).apply {
+            gravity = Gravity.TOP or Gravity.LEFT
+            title = "EtesianBreezeScrim"
+            windowAnimations = 0
+            fitInsetsTypes = 0
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        }
+        runCatching { wm.addView(dim, dlp); scrim = dim }
+        dim.animate().alpha(1f).setDuration(260).start()
         content.translationX = if (fromLeft) -w.toFloat() else w.toFloat()
         runCatching { wm.addView(content, lp); root = content; shown.set(x, y, x + w, y + ph); side = fromLeft }
         content.animate().translationX(0f).setDuration(260).setInterpolator(DecelerateInterpolator(1.6f)).start()
@@ -133,12 +156,17 @@ class BreezeMenu(private val ctx: Context) {
         shown.setEmpty()
         val h = host
         host = null
+        val d = scrim
+        scrim = null
         val gone = {
             runCatching { wm.removeView(v) }
+            d?.let { runCatching { wm.removeView(it) } }
             h?.let { runCatching { it.stopListening() } }
             Unit
         }
+        onDismiss?.invoke()
         if (!animate || !v.isAttachedToWindow) { gone(); return }
+        d?.animate()?.alpha(0f)?.setDuration(180)?.start()
         // Back into the side it came from.
         v.animate().translationX(if (side) -v.width.toFloat() else v.width.toFloat())
             .setDuration(180).setInterpolator(AccelerateInterpolator()).withEndAction { gone() }.start()
@@ -170,5 +198,7 @@ class BreezeMenu(private val ctx: Context) {
         /** Breeze's buttons: the toolbar's (48 dp), a little smaller for the menu. */
         const val BUTTON_DP = 42f
         const val MAX_BUTTONS = 5
+        /** The dim behind the menu: the app is still seen, but plainly not in use. */
+        const val SCRIM = 0x8C000000.toInt()
     }
 }

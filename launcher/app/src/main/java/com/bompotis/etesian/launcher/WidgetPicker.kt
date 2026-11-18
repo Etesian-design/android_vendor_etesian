@@ -21,10 +21,44 @@ import kotlin.math.max
 
 /**
  * Full-screen widget picker: widgets grouped per app (all expanded; tap an app to fold it),
- * each shown with its preview, name, grid size and description.
+ * each shown with its preview, name, grid size and description. A window of its own over home;
+ * Etesian settings shows the same page ([WidgetPickerView]) in its own activity, with the bottom bar.
  */
-class WidgetPicker(context: Context, private val onPicked: (AppWidgetProviderInfo) -> Unit) :
+class WidgetPicker(context: Context, onPicked: (AppWidgetProviderInfo) -> Unit) :
     Dialog(context, android.R.style.Theme_DeviceDefault_NoActionBar) {
+
+    init {
+        setContentView(WidgetPickerView(context) { dismiss(); onPicked(it) })
+        window?.let { w ->
+            w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            w.setDecorFitsSystemWindows(false)
+            w.statusBarColor = android.graphics.Color.TRANSPARENT
+            w.navigationBarColor = android.graphics.Color.TRANSPARENT
+        }
+    }
+
+    /**
+     * The picker is a window of its own over home: left open through a lock it would cover home
+     * (black) during the N9 unlock, which zooms home's content only. Close it when the screen goes off.
+     */
+    private val screenOff = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: Context, i: android.content.Intent) { dismiss() }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        context.registerReceiver(screenOff, android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF),
+            Context.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onStop() {
+        runCatching { context.unregisterReceiver(screenOff) }
+        super.onStop()
+    }
+}
+
+/** The widget picker page: the N9 page header ("Add widget" over a hairline), then the widgets per app. */
+class WidgetPickerView(context: Context, private val onPicked: (AppWidgetProviderInfo) -> Unit) : LinearLayout(context) {
 
     private class Group(val pkg: String, val label: String, val widgets: List<AppWidgetProviderInfo>)
 
@@ -50,55 +84,32 @@ class WidgetPicker(context: Context, private val onPicked: (AppWidgetProviderInf
 
         val list = RecyclerView(context).apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = this@WidgetPicker.adapter
+            adapter = this@WidgetPickerView.adapter
             clipToPadding = false
             setPadding(0, 0, 0, context.dp(24f))
         }
-        val title = TextView(context).apply {
+        // No close button: Back (the key or the bottom bar's) closes it.
+        orientation = VERTICAL
+        setBackgroundColor(N9.BACKGROUND)
+        contentDescription = "Add widget"
+        addView(TextView(context).apply {
             text = "Add widget"
             setTextColor(N9.TEXT)
-            textSize = 26f
+            textSize = 35f
             typeface = N9.FONT_LIGHT
-        }
-        val close = TextView(context).apply {
-            text = "✕"
-            setTextColor(N9.TEXT)
-            textSize = 20f
-            gravity = Gravity.CENTER
-            setOnClickListener { dismiss() }
-        }
-        val header = LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(context.dp(16f), context.dp(16f), context.dp(8f), context.dp(12f))
-            addView(title, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(close, LinearLayout.LayoutParams(context.dp(48f), context.dp(48f)))
+            setPadding(context.dp(16f), context.dp(16f), context.dp(16f), context.dp(10f))
+        })
+        addView(View(context).apply { setBackgroundColor(0xFF5A5A5A.toInt()) },
+            LayoutParams(LayoutParams.MATCH_PARENT, context.dp(1f)).apply {
+                marginStart = context.dp(16f); marginEnd = context.dp(16f)
+            })
+        addView(list, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
+        // Clear of the status bar above and the bottom bar below.
+        setOnApplyWindowInsetsListener { v, ins ->
+            val b = ins.getInsets(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
+            v.setPadding(b.left, b.top, b.right, b.bottom); ins
         }
-        val root = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(N9.BACKGROUND)
-            addView(header)
-            addView(list, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-        }
-        setContentView(root)
-    }
-
-    /**
-     * The picker is a window of its own over home: left open through a lock it would cover home
-     * (black) during the N9 unlock, which zooms home's content only. Close it when the screen goes off.
-     */
-    private val screenOff = object : android.content.BroadcastReceiver() {
-        override fun onReceive(c: Context, i: android.content.Intent) { dismiss() }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        context.registerReceiver(screenOff, android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF),
-            Context.RECEIVER_NOT_EXPORTED)
-    }
-
-    override fun onStop() {
-        runCatching { context.unregisterReceiver(screenOff) }
-        super.onStop()
     }
 
     private fun appLabel(pkg: String) =
@@ -203,7 +214,7 @@ class WidgetPicker(context: Context, private val onPicked: (AppWidgetProviderInf
                 addView(size)
             })
             addView(description.apply { setPadding(dp(2f), dp(2f), dp(2f), 0) })
-            setOnClickListener { info?.let { dismiss(); onPicked(it) } }
+            setOnClickListener { info?.let { onPicked(it) } }
         }
 
         fun bind(i: AppWidgetProviderInfo) {

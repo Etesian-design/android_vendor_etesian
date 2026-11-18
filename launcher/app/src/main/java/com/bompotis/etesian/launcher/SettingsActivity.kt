@@ -157,10 +157,10 @@ class SettingsActivity : AppCompatActivity() {
                         if (p == null || p is PreferenceCategory || title.isNullOrEmpty()) return@setOnLongClickListener false
                         val ctx = v.context
                         val pinned = (section to title) in pins(ctx)
-                        android.app.AlertDialog.Builder(ctx).setItems(arrayOf(if (pinned) "Unpin" else "Pin to Settings")) { _, _ ->
+                        N9Sheet.show(ctx, listOf(N9Sheet.Item(if (pinned) "Unpin" else "Pin to Settings") {
                             setPins(ctx, if (pinned) pins(ctx) - (section to title) else pins(ctx) + (section to title))
                             android.widget.Toast.makeText(ctx, if (pinned) "Unpinned" else "Pinned to Settings", android.widget.Toast.LENGTH_SHORT).show()
-                        }.show()
+                        }), title = title)
                         true
                     }
                 }
@@ -169,6 +169,29 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private var shownPins: List<Pair<String, String>>? = null
+
+        /** Every choice in Etesian settings opens the N9 selection sheet, not Android's radio-button dialog. */
+        override fun onDisplayPreferenceDialog(preference: Preference) {
+            val ctx = requireContext()
+            when (preference) {
+                is ListPreference -> {
+                    val values = preference.entryValues?.map { it.toString() } ?: return
+                    N9Sheet.choose(ctx, preference.title?.toString(), preference.entries.toList(),
+                        values.indexOf(preference.value)) { i ->
+                        if (preference.callChangeListener(values[i])) preference.value = values[i]
+                    }
+                }
+                is androidx.preference.MultiSelectListPreference -> {
+                    val values = preference.entryValues.map { it.toString() }
+                    N9Sheet.chooseMany(ctx, preference.title?.toString(), preference.entries.toList(),
+                        values.indices.filter { values[it] in preference.values }.toSet()) { picked ->
+                        val set = picked.map { values[it] }.toSet()
+                        if (preference.callChangeListener(set)) preference.values = set
+                    }
+                }
+                else -> super.onDisplayPreferenceDialog(preference)
+            }
+        }
 
         /** Pins made on a sub page show up when coming back to the main page. */
         override fun onResume() {
@@ -208,14 +231,11 @@ class SettingsActivity : AppCompatActivity() {
                     })
                 }
                 cat.addPreference(Preference(ctx).apply {
-                    key = "breeze_add_button"; title = "Add button"; isPersistent = false
-                    summary = if (buttons.isEmpty()) "No buttons yet" else "Back, Home, Open applications, an app, a shortcut…"
+                    key = "breeze_add_button"; title = "Add and arrange buttons"; isPersistent = false
+                    summary = if (buttons.isEmpty()) "No buttons yet: drag some onto Breeze"
+                        else "Drag buttons onto Breeze, along it, or off it"
                     isIconSpaceReserved = buttons.isNotEmpty()
-                    isEnabled = buttons.size < platformMenuMax
-                    if (!isEnabled) summary = "The menu holds $platformMenuMax: remove one first"
-                    intent = Intent(ctx, ToolbarSettingsActivity::class.java)
-                        .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE)
-                        .putExtra(ToolbarSettingsActivity.EXTRA_ADD, true)
+                    intent = Intent(ctx, BreezeButtonsActivity::class.java)
                 })
             }
             breezeWidgets?.let { cat ->
@@ -365,9 +385,9 @@ class SettingsActivity : AppCompatActivity() {
                         this.title = title
                         intent = Intent(ctx, SettingsActivity::class.java).putExtra(EXTRA_SECTION, sec).putExtra(EXTRA_FOCUS, title)
                         onLong = {
-                            android.app.AlertDialog.Builder(ctx).setItems(arrayOf("Unpin")) { _, _ ->
+                            N9Sheet.show(ctx, listOf(N9Sheet.Item("Unpin") {
                                 setPins(ctx, pins(ctx) - (sec to title)); screen.removePreference(this)
-                            }.show()
+                            }), title = title)
                         }
                     })
                 }
@@ -435,7 +455,7 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
+                "Gestures" to "gestures", "Leaving an app" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
                 "Breeze shortcuts" to "sidesense", "Breeze widgets" to "sidesense", "Notifications on the lock screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
@@ -625,6 +645,16 @@ class SettingsActivity : AppCompatActivity() {
                     arrayOf("Disabled", "Swipe from the left side", "Swipe from the right side"),
                     arrayOf(Prefs.BACK_DISABLED, Prefs.BACK_LEFT, Prefs.BACK_RIGHT),
                     Prefs.backGesture(ctx))   // also migrates a removed choice
+                // Where an application swiped away goes, per edge (Back by swiping in takes over its side).
+                val leave = category("Leaving an app")
+                leave.title = "After swiping an app away"
+                val leaveNames = mutableListOf("Open applications (N9)", "Where you were", "Applications")
+                val leaveValues = mutableListOf(Prefs.LEAVE_SWITCHER, Prefs.LEAVE_LAST, Prefs.LEAVE_APPS)
+                if (Prefs.eventsPage(ctx)) { leaveNames += "Events"; leaveValues += Prefs.LEAVE_EVENTS }
+                if (Prefs.widgetsPage(ctx)) { leaveNames += "Widgets"; leaveValues += Prefs.LEAVE_WIDGETS }
+                for ((edge, t) in listOf("left" to "From the left side", "right" to "From the right side", "bottom" to "From the bottom")) {
+                    list(leave, Prefs.LEAVE_TO + edge, t, leaveNames.toTypedArray(), leaveValues.toTypedArray(), Prefs.LEAVE_SWITCHER)
+                }
                 val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Breeze menu", "Nothing")
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,
                     Prefs.ACTION_SWITCHER, Prefs.ACTION_MENU, Prefs.ACTION_NONE)

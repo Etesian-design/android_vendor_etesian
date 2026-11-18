@@ -3,10 +3,23 @@
 # the bottom and the application drops onto it and stays, until a tap on an icon opens it or a tap
 # on the application goes back to it.
 unlock
-peek_up() { sh_ "input motionevent DOWN 540 2155; for y in \$(seq 2155 -50 1500); do input motionevent MOVE 540 \$y; done; input motionevent UP 540 1500"; sleep 1.5; }
+# 2026-11-18 (user): the row comes up only when the finger holds still for half a second on the way up; a plain
+# swipe up sends the application away, as from the sides.
+peek_up() { sh_ "input motionevent DOWN 540 2155; for y in \$(seq 2155 -50 1500); do input motionevent MOVE 540 \$y; done; sleep 0.8; input motionevent UP 540 1500"; sleep 1.5; }
+swipe_up() { sh_ "input motionevent DOWN 540 2155; for y in \$(seq 2155 -80 700); do input motionevent MOVE 540 \$y; done; input motionevent UP 540 700"; sleep 2; }
+peek_early() { sh_ "input motionevent DOWN 540 2155; for y in \$(seq 2155 -50 1500); do input motionevent MOVE 540 \$y; done; sleep 0.25"; }
 peek_shown() { sh_ dumpsys window windows | grep -q 'Window{.* EtesianPeek}'; }
 check "no setting for the bottom swipe" '! grep -rq "BOTTOM_ACTION\|Swipe up from the bottom" ~/android/lineage/vendor/etesian/launcher/app/src/main/java'
 sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 3
+swipe_up
+check "a plain swipe up: no row, the app goes to Open applications" '! peek_shown && [ "$(home_pane)" = switcher ]'
+sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 3
+peek_early
+check "a quarter second held: no row yet" '! peek_shown'
+sleep 0.6
+check "half a second held: the row comes up" 'peek_shown'
+sh_ "input motionevent UP 540 1500"; sleep 1.5
+sh_ input tap 540 700; sleep 2
 peek_up
 check "the row of applications comes up" 'peek_shown'
 sleep 3

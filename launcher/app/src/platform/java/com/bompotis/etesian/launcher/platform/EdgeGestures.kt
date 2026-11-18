@@ -61,9 +61,22 @@ class EdgeGestures(private val ctx: Context) {
     private var backHint: BackHint? = null
     private var taskId = -1
 
-    // Bottom swipe (N9, the only behaviour): the first row of applications comes up under the window.
+    // Bottom swipe: like the sides, the application goes to the background. Swipe up and hold still for half a
+    // second, anywhere on the way, and the first row of applications comes up under the window instead (N9).
     private val main = android.os.Handler(Looper.getMainLooper())
     private var peek: AppPeek? = null
+    private var stillX = 0f
+    private var stillY = 0f
+    private val peekHold = Runnable {
+        if (!started || edge != Edge.BOTTOM || peek != null || drag == null) return@Runnable
+        peek = AppPeek(ctx).takeUnless { it.isEmpty }?.also {
+            it.show()
+            runCatching {
+                ctx.getSystemService(android.os.Vibrator::class.java)
+                    .vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK))
+            }
+        }
+    }
     /** The application rests on the row, waiting for a tap (true: an icon was tapped). */
     private var parked: ((Float, Float) -> Unit)? = null
 
@@ -118,9 +131,16 @@ class EdgeGestures(private val ctx: Context) {
     private fun n9Mode() = Settings.Secure.getInt(ctx.contentResolver, "etesian_gestures", 1) == 1
 
     private var onBar = false
+    /** The stream started while Breeze's menu was open: it is the menu's (or closes it), nothing else. */
+    private var onMenu = false
 
     private fun onMotion(e: MotionEvent) {
         // Streams that start on the edge bar belong to the bar.
+        if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+            onMenu = sideBar.menuShowing
+            if (onMenu) { onBar = false; sideBar.onOutsideDown(e.rawX, e.rawY) }
+        }
+        if (onMenu) return
         if (e.actionMasked == MotionEvent.ACTION_DOWN) {
             onBar = sideBar.bounds.contains(e.rawX.toInt(), e.rawY.toInt())
             if (!onBar) sideBar.onOutsideDown(e.rawX, e.rawY)
@@ -274,7 +294,7 @@ class EdgeGestures(private val ctx: Context) {
                 monitor?.pilferPointers()
                 if (action == Action.BACK) backHint = BackHint(ctx, edge!!).also { it.show(downX, downY) }
                 else drag = WindowDrag(ctx, edge!!, taskId, closing = action == Action.CLOSE).also { it.begin() }
-                if (action == Action.PEEK) peek = AppPeek(ctx).takeUnless { it.isEmpty }?.also { it.show() }
+                if (action == Action.PEEK) { stillX = e.rawX; stillY = e.rawY; main.postDelayed(peekHold, PEEK_HOLD_MS) }
             } else if (abs(across(e)) > slop * 2 && (edge != Edge.TOP || belowBar)) {
                 reset()
             }
@@ -294,7 +314,15 @@ class EdgeGestures(private val ctx: Context) {
         } else {
             backHint?.update(d)
         }
-        if (edge == Edge.BOTTOM) peek?.hover(e.rawX, e.rawY)
+        if (edge == Edge.BOTTOM) {
+            peek?.hover(e.rawX, e.rawY)
+            // Still moving: the half-second hold starts again from here.
+            if (peek == null && kotlin.math.hypot(e.rawX - stillX, e.rawY - stillY) > slop) {
+                stillX = e.rawX; stillY = e.rawY
+                main.removeCallbacks(peekHold)
+                main.postDelayed(peekHold, PEEK_HOLD_MS)
+            }
+        }
     }
 
     /** While a minimise swipe could still end as Back, the chevron says so. */
@@ -317,6 +345,7 @@ class EdgeGestures(private val ctx: Context) {
     }
 
     private fun onUp(e: MotionEvent, cancelled: Boolean) {
+        main.removeCallbacks(peekHold)
         if (!started) {
             if (!cancelled && statusTap && e.eventTime - downTime < ViewConfiguration.getLongPressTimeout()) openStatusMenu()
             reset(); return
@@ -358,6 +387,7 @@ class EdgeGestures(private val ctx: Context) {
     }
 
     private fun reset() {
+        main.removeCallbacks(peekHold)
         Platform.edgeGestureActive = false
         statusTap = false
         belowBar = false
@@ -375,6 +405,11 @@ class EdgeGestures(private val ctx: Context) {
         backHint = null
         sideHint?.hide()
         sideHint = null
+    }
+
+    companion object {
+        /** Held this long on a swipe up from the bottom, the row of applications comes up. */
+        const val PEEK_HOLD_MS = 500L
     }
 
     private fun sendBack() {

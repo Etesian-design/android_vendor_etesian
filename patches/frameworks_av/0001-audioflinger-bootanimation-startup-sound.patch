@@ -1,3 +1,17 @@
+diff --git a/media/libaudiopermission/include/media/AudioPermissionPolicy.h b/media/libaudiopermission/include/media/AudioPermissionPolicy.h
+index fa8ae2ffbf..325f8471fc 100644
+--- a/media/libaudiopermission/include/media/AudioPermissionPolicy.h
++++ b/media/libaudiopermission/include/media/AudioPermissionPolicy.h
+@@ -38,6 +38,9 @@ inline bool skipOpsForUid(uid_t uid) {
+         case AID_MEDIA:
+         case AID_AUDIOSERVER:
+         case AID_CAMERASERVER:
++        // Etesian: bootanimation (the startup sound). It has no package, so its app ops always
++        // fail, and audio hardening muted the sound as background playback.
++        case AID_GRAPHICS:
+             return true;
+         default:
+             return false;
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
 index b37dc6fbba..26148e3fd2 100644
 --- a/services/audioflinger/AudioFlinger.cpp

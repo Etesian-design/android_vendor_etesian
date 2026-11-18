@@ -11,6 +11,10 @@ check "part playback uses that decision" 'grep -q "part.audioData && soundsAllow
 check "player made early, bounded wait for audioserver" 'grep -q "i < 200 && defaultServiceManager()->checkService(" $A'
 check "half-made player cleared before retrying, silent if still none" 'grep -A6 "if (!engineCreated) {" $A | grep -q "audioplay::destroy();" && grep -A6 "if (!engineCreated) {" $A | grep -q "return;"'
 check "audioserver accepts the graphics uid (bootanimation)" 'grep -q "} else if (callingUid == AID_GRAPHICS) {" $F'
+# 4. 2026-11-18: audio hardening (Android 16) muted it as background playback: its app ops always fail (no package).
+H=/home/memphisx/android/lineage/frameworks/av/media/libaudiopermission/include/media/AudioPermissionPolicy.h
+check "bootanimation skips app ops (no hardening mute)" 'grep -B3 "return true;" $H | grep -q "case AID_GRAPHICS:" && grep -q "case AID_GRAPHICS:" $P/frameworks_av/0001-audioflinger-bootanimation-startup-sound.patch'
+check "phone: the last boot's sound was not muted as background playback" '! sh_ dumpsys audio | grep -q "AudioHardening background playback muted for \[1003\]"'
 check "patches kept for repo syncs" 'grep -q "cmds/bootanimation/audioplay.cpp" $P/frameworks_base/*.patch && [ -s $P/frameworks_av/0001-audioflinger-bootanimation-startup-sound.patch ]'
 # On the phone, when the log still reaches back to the boot animation: the clip played with a player.
 L=$(sh_ logcat -d -b all | grep -E "audioplay|BootAnimationStartTiming|AudioFlinger.*createTrack")

@@ -36,10 +36,25 @@ class HomeActivity : ComponentActivity() {
          * home is in front, so switch the pane in place: starting HomeActivity again would play
          * the system's default window animation, a second slide (regression 2026-10-28).
          */
-        fun showSwitcherStill(ctx: android.content.Context) {
+        fun showSwitcherStill(ctx: android.content.Context) = showStill(ctx, PAGE_SWITCHER)
+
+        /** The home view an application swiped away from [edge] goes to (Settings → Gestures, Open applications by default). */
+        fun pageAfterLeaving(ctx: android.content.Context, edge: String): Int = when (Prefs.leaveTo(ctx, edge)) {
+            Prefs.LEAVE_EVENTS -> PAGE_EVENTS
+            Prefs.LEAVE_APPS -> PAGE_APPS
+            Prefs.LEAVE_WIDGETS -> PAGE_WIDGETS
+            Prefs.LEAVE_LAST -> lastPage
+            else -> PAGE_SWITCHER
+        }
+
+        /** The view home showed when it was last left (for "Where you were"). */
+        @Volatile var lastPage = PAGE_APPS
+
+        /** [showSwitcherStill] for any view: home already in front, switch its pane in place. */
+        fun showStill(ctx: android.content.Context, page: Int) {
             val home = live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }
-            if (home != null) home.showMinimised()
-            else ctx.startActivity(switcherIntent(ctx))
+            if (home != null) home.showMinimised(page)
+            else ctx.startActivity(switcherIntent(ctx).putExtra(EXTRA_PAGE, page))
         }
     }
 
@@ -159,10 +174,10 @@ class HomeActivity : ComponentActivity() {
         pager.contentDescription = "pane:$name"
     }
 
-    private fun showMinimised() {
+    private fun showMinimised(page: Int = PAGE_SWITCHER) {
         pages.forEach { it.second.exitModes() }
         RunningApps.sync(this)
-        showPage(PAGE_SWITCHER, animate = false)
+        showPage(page, animate = false)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -262,6 +277,7 @@ class HomeActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        pages.getOrNull(pager.currentPage)?.first?.let { lastPage = it }
         resumed = false
         eventsShowing(false)
     }

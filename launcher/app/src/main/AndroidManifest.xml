@@ -152,6 +152,13 @@
 
 
         <activity
+            android:name=".BreezeButtonsActivity"
+            android:exported="false"
+            android:taskAffinity="com.bompotis.etesian.launcher.settings"
+            android:label="Breeze buttons"
+            android:theme="@style/Theme.EtesianSettings" />
+
+        <activity
             android:name=".BreezeWidgetActivity"
             android:exported="false"
             android:taskAffinity="com.bompotis.etesian.launcher.settings"

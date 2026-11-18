@@ -32,6 +32,8 @@ class ToolbarSettingsActivity : Activity() {
         const val EXTRA_SET = "set"
         /** With [EXTRA_SET]: straight to Add button, and back to Settings once one is added. */
         const val EXTRA_ADD = "add"
+        /** With [EXTRA_SET]: straight to a new macro, added to the set when saved; either way back after. */
+        const val EXTRA_MACRO = "macro"
         private const val REQUEST_IMAGE = 2
     }
 
@@ -72,6 +74,11 @@ class ToolbarSettingsActivity : Activity() {
         // Opened from Breeze's menu: straight to its set, and Back closes.
         if (intent.getStringExtra(EXTRA_SET) == ToolbarConfig.BREEZE) edit(ToolbarConfig.BREEZE) else showSets()
         if (intent.getBooleanExtra(EXTRA_ADD, false) && savedInstanceState == null) addButton()
+        if (intent.getBooleanExtra(EXTRA_MACRO, false) && savedInstanceState == null) {
+            editMacro(JSONObject().put("t", "macro").put("steps", JSONArray()), onCancel = { finish() }) { name, action ->
+                add(name, ToolbarConfig.glyph(this, "macro"), true, action)
+            }
+        }
         // Back from a set being edited returns to the list (targetSdk 37 never calls onBackPressed).
         onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
             if (editing != null && intent.getStringExtra(EXTRA_SET) == null) { showSets(); slide(fromRight = false) } else finish()
@@ -253,7 +260,7 @@ class ToolbarSettingsActivity : Activity() {
         buttons += ToolbarConfig.Button(label, icon, tint, action)
         save()
         showButtons()
-        if (intent.getBooleanExtra(EXTRA_ADD, false)) finish()
+        if (intent.getBooleanExtra(EXTRA_ADD, false) || intent.getBooleanExtra(EXTRA_MACRO, false)) finish()
     }
 
     /** Automatic (the app's icon), one of the symbols, or a picture. */
@@ -368,7 +375,7 @@ class ToolbarSettingsActivity : Activity() {
     // --- Macros ----------------------------------------------------------------------------
 
     /** A macro's steps, added one by one; [done] gets its name and action. */
-    private fun editMacro(macro: JSONObject, done: (String, JSONObject) -> Unit) {
+    private fun editMacro(macro: JSONObject, onCancel: (() -> Unit)? = null, done: (String, JSONObject) -> Unit) {
         val steps = macro.optJSONArray("steps") ?: JSONArray().also { macro.put("steps", it) }
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val name = EditText(this).apply { hint = "Name"; setSingleLine(true); setText("Macro") }
@@ -399,7 +406,8 @@ class ToolbarSettingsActivity : Activity() {
         val d = dialog().setTitle("Macro").setView(ScrollView(this).apply { addView(body) })
             .setNeutralButton("Add step", null)
             .setPositiveButton("Save", null)
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> onCancel?.invoke() }
+            .setOnCancelListener { onCancel?.invoke() }
             .show()
         d.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { addStep { steps.put(it); refresh() } }
         d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
