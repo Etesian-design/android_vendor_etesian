@@ -437,6 +437,24 @@ public final class EtesianToolbar {
         return userTheme(ctx).icon;
     }
 
+    /** As [buttonBackground], [barBackground] and [iconColor], in a theme picked by the caller (true: dark). */
+    public static android.graphics.drawable.Drawable buttonBackground(Context ctx, int sizePx, boolean dark) {
+        return EtesianToolbarView.buttonDrawable(ctx, dark ? EtesianToolbarView.BELLE_DARK : EtesianToolbarView.N9_LIGHT, sizePx);
+    }
+
+    public static android.graphics.drawable.Drawable barBackground(Context ctx, boolean dark) {
+        return EtesianToolbarView.barDrawable(ctx, dark ? EtesianToolbarView.BELLE_DARK : EtesianToolbarView.N9_LIGHT);
+    }
+
+    public static int iconColor(boolean dark) {
+        return (dark ? EtesianToolbarView.BELLE_DARK : EtesianToolbarView.N9_LIGHT).icon;
+    }
+
+    /** Whether the user's toolbar is the dark (Belle) one. */
+    public static boolean userDark(Context ctx) {
+        return userTheme(ctx) == EtesianToolbarView.BELLE_DARK;
+    }
+
     /** The app's say, else the user's choice, else the page's theme (a dark page, a dark bar). */
     private EtesianToolbarView.Theme theme() {
         if ("dark".equals(mStyle)) return EtesianToolbarView.BELLE_DARK;

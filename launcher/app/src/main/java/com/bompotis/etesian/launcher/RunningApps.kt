@@ -17,7 +17,9 @@ import java.util.concurrent.Executors
  */
 object RunningApps {
     /** [second]: the bottom (or right) half of a split-screen pair, shown as one card with this one on top. */
-    class Entry(val pkg: String, val label: String, var thumb: Bitmap?, val taskId: Int = -1) {
+    class Entry(val pkg: String, val label: String, var thumb: Bitmap?, val taskId: Int = -1,
+                /** The task's first activity: the launcher's own applications are told apart by it. */
+                val component: android.content.ComponentName? = null) {
         var second: Entry? = null
         val title get() = second?.let { "$label + ${it.label}" } ?: label
     }
@@ -46,9 +48,7 @@ object RunningApps {
         val pm = ctx.packageManager
         val old = entries.associateBy { it.taskId }
         val fresh = SystemTasks.recent(ctx, MAX).map { t ->
-            old[t.id] ?: Entry(t.pkg,
-                runCatching { pm.getApplicationLabel(pm.getApplicationInfo(t.pkg, 0)).toString() }.getOrDefault(t.pkg),
-                null, t.id)
+            old[t.id] ?: Entry(t.pkg, label(ctx, t.pkg, t.component), null, t.id, t.component)
         }
         fresh.forEach { it.second = null }
         // A split pair is one card: the top task's, holding the bottom one.
@@ -67,6 +67,14 @@ object RunningApps {
                 main.post { e.thumb = bmp; notifyChanged() }
             }
         }
+    }
+
+    /** The app's name; for the launcher's own applications (Etesian settings), the activity's. */
+    private fun label(ctx: Context, pkg: String, cn: android.content.ComponentName?): String {
+        val pm = ctx.packageManager
+        if (pkg == ctx.packageName && cn != null)
+            runCatching { pm.getActivityInfo(cn, 0).loadLabel(pm).toString() }.getOrNull()?.let { return it }
+        return runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
     }
 
     // ----- order: your own (dragged in edit mode), with auto-arrange moving the last opened to the top -----

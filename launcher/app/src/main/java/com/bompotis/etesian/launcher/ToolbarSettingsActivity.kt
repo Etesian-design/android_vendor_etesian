@@ -30,6 +30,8 @@ class ToolbarSettingsActivity : Activity() {
     companion object {
         /** Opens one set directly (only [ToolbarConfig.BREEZE]). */
         const val EXTRA_SET = "set"
+        /** With [EXTRA_SET]: straight to Add button, and back to Settings once one is added. */
+        const val EXTRA_ADD = "add"
         private const val REQUEST_IMAGE = 2
     }
 
@@ -69,6 +71,7 @@ class ToolbarSettingsActivity : Activity() {
         setContentView(root)
         // Opened from Breeze's menu: straight to its set, and Back closes.
         if (intent.getStringExtra(EXTRA_SET) == ToolbarConfig.BREEZE) edit(ToolbarConfig.BREEZE) else showSets()
+        if (intent.getBooleanExtra(EXTRA_ADD, false) && savedInstanceState == null) addButton()
         // Back from a set being edited returns to the list (targetSdk 37 never calls onBackPressed).
         onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
             if (editing != null && intent.getStringExtra(EXTRA_SET) == null) { showSets(); slide(fromRight = false) } else finish()
@@ -76,6 +79,12 @@ class ToolbarSettingsActivity : Activity() {
     }
 
 
+
+    /** The N9 toolbar's Back, as on every settings page under the main one. */
+    override fun onResume() {
+        super.onResume()
+        if (SystemToolbar.available(this)) SystemToolbar(this).set(back = true, items = emptyList(), style = "dark") {}
+    }
 
     // --- Views -----------------------------------------------------------------------------
 
@@ -244,6 +253,7 @@ class ToolbarSettingsActivity : Activity() {
         buttons += ToolbarConfig.Button(label, icon, tint, action)
         save()
         showButtons()
+        if (intent.getBooleanExtra(EXTRA_ADD, false)) finish()
     }
 
     /** Automatic (the app's icon), one of the symbols, or a picture. */

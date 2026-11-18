@@ -173,11 +173,96 @@ class SettingsActivity : AppCompatActivity() {
         /** Pins made on a sub page show up when coming back to the main page. */
         override fun onResume() {
             super.onResume()
+            if (arguments?.getString(EXTRA_SECTION) == "sidesense") fillBreeze()
             if (arguments?.getString(EXTRA_SECTION) != null) return
             val now = pins(requireContext())
             if (shownPins != null && shownPins != now) requireActivity().recreate()
             shownPins = now
         }
+
+        private var breezeShortcuts: PreferenceCategory? = null
+        private var breezeWidgets: PreferenceCategory? = null
+
+        /** Breeze's menu buttons and widgets, each a row: tap one to move it or remove it; the last row adds one. */
+        private fun fillBreeze() {
+            val ctx = context ?: return
+            breezeShortcuts?.let { cat ->
+                cat.removeAll()
+                val buttons = ToolbarConfig.buttons(ctx, ToolbarConfig.BREEZE).toMutableList()
+                buttons.forEachIndexed { i, b ->
+                    cat.addPreference(Preference(ctx).apply {
+                        key = "breeze_button_$i"; title = b.label; summary = ToolbarActions.describe(ctx, b.action)
+                        isPersistent = false
+                        icon = ToolbarConfig.decode(b.icon)?.let { android.graphics.drawable.BitmapDrawable(ctx.resources, it) }
+                            ?.apply { if (b.tint) setTint(N9.TEXT) }
+                        if (i >= platformMenuMax) summary = "Not shown: the menu holds $platformMenuMax"
+                        setOnPreferenceClickListener {
+                            reorderSheet(ctx, b.label, i, buttons.size) { to ->
+                                val list = ToolbarConfig.buttons(ctx, ToolbarConfig.BREEZE).toMutableList()
+                                if (to == null) list.removeAt(i) else list.add(to, list.removeAt(i))
+                                ToolbarConfig.save(ctx, ToolbarConfig.BREEZE, list)
+                                fillBreeze()
+                            }
+                            true
+                        }
+                    })
+                }
+                cat.addPreference(Preference(ctx).apply {
+                    key = "breeze_add_button"; title = "Add button"; isPersistent = false
+                    summary = if (buttons.isEmpty()) "No buttons yet" else "Back, Home, Open applications, an app, a shortcut…"
+                    isIconSpaceReserved = buttons.isNotEmpty()
+                    isEnabled = buttons.size < platformMenuMax
+                    if (!isEnabled) summary = "The menu holds $platformMenuMax: remove one first"
+                    intent = Intent(ctx, ToolbarSettingsActivity::class.java)
+                        .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE)
+                        .putExtra(ToolbarSettingsActivity.EXTRA_ADD, true)
+                })
+            }
+            breezeWidgets?.let { cat ->
+                cat.removeAll()
+                val awm = android.appwidget.AppWidgetManager.getInstance(ctx)
+                val ids = Prefs.breezeWidgets(ctx)
+                ids.forEachIndexed { i, id ->
+                    val info = awm.getAppWidgetInfo(id)
+                    val name = info?.loadLabel(ctx.packageManager) ?: "Widget no longer available"
+                    cat.addPreference(Preference(ctx).apply {
+                        key = "breeze_widget_$i"; title = name; isPersistent = false; isIconSpaceReserved = false
+                        summary = info?.provider?.packageName?.let { pkg ->
+                            runCatching { ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrNull()
+                        }
+                        setOnPreferenceClickListener {
+                            reorderSheet(ctx, name, i, ids.size) { to ->
+                                val list = Prefs.breezeWidgets(ctx).toMutableList()
+                                if (to == null) {
+                                    list.removeAt(i)
+                                    runCatching { BreezeWidgetActivity.host(ctx).deleteAppWidgetId(id) }
+                                } else list.add(to, list.removeAt(i))
+                                Prefs.setBreezeWidgets(ctx, list)
+                                fillBreeze()
+                            }
+                            true
+                        }
+                    })
+                }
+                cat.addPreference(Preference(ctx).apply {
+                    key = "breeze_add_widget"; title = "Add widget"; isPersistent = false; isIconSpaceReserved = false
+                    summary = if (ids.isEmpty()) "Widgets show under the buttons, and scroll when there are many" else null
+                    intent = Intent(ctx, BreezeWidgetActivity::class.java)
+                })
+            }
+        }
+
+        /** The N9 sheet for a row in a list: move it up or down, or remove it ([done] gets null). */
+        private fun reorderSheet(ctx: android.content.Context, title: String, i: Int, n: Int, done: (Int?) -> Unit) {
+            val items = mutableListOf<N9Sheet.Item>()
+            if (i > 0) items += N9Sheet.Item("Move up") { done(i - 1) }
+            if (i < n - 1) items += N9Sheet.Item("Move down") { done(i + 1) }
+            items += N9Sheet.Item("Remove") { done(null) }
+            N9Sheet.show(ctx, items, title = title, label = "Breeze item")
+        }
+
+        /** Breeze's menu shows this many buttons (BreezeMenu.MAX_BUTTONS, in the platform sources). */
+        private val platformMenuMax = 5
 
         private fun find(g: androidx.preference.PreferenceGroup, title: String): Preference? {
             for (i in 0 until g.preferenceCount) {
@@ -350,7 +435,8 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Breeze" to "sidesense", "Notifications on the lock screen" to "lock",
+                "Gestures" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
+                "Breeze shortcuts" to "sidesense", "Breeze widgets" to "sidesense", "Notifications on the lock screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
                 "Status menu" to "status", "Arranging" to "open", "Carousel" to "open", "Split screen" to "open",
@@ -543,25 +629,24 @@ class SettingsActivity : AppCompatActivity() {
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,
                     Prefs.ACTION_SWITCHER, Prefs.ACTION_MENU, Prefs.ACTION_NONE)
                 val bar = category("Breeze")
+                if (section == "sidesense") bar.title = null
                 switch(bar, Prefs.SIDE_SENSE, "Breeze",
-                    "A slim bar on the screen edge. Long-press it and drag it: to either edge, or anywhere else as a floating button",
+                    "A handle on the screen edge, or a floating button. Long-press it and drag it to move it",
                     Prefs.breeze(ctx))
-                list(bar, Prefs.SIDEBAR_TAP, "Tap", barActions, barValues, Prefs.ACTION_MENU)
-                list(bar, Prefs.SIDEBAR_DOUBLE_TAP, "Double tap", barActions, barValues, Prefs.ACTION_BACK)
-                list(bar, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
-                list(bar, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
-                list(bar, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
-                bar.addPreference(Preference(ctx).apply {
-                    title = "Menu shortcuts"; summary = "The buttons in Breeze's menu (a smaller toolbar)"
-                    isIconSpaceReserved = false; isPersistent = false
-                    intent = Intent(ctx, ToolbarSettingsActivity::class.java)
-                        .putExtra(ToolbarSettingsActivity.EXTRA_SET, ToolbarConfig.BREEZE)
-                })
-                bar.addPreference(Preference(ctx).apply {
-                    title = "Menu widgets"; summary = "Add a widget to Breeze's menu; long-press one there to remove it"
-                    isIconSpaceReserved = false; isPersistent = false
-                    intent = Intent(ctx, BreezeWidgetActivity::class.java)
-                })
+                list(bar, Prefs.SIDEBAR_SIDE, "Place", arrayOf("Right edge", "Left edge", "Floating button"),
+                    arrayOf("right", "left", Prefs.SIDE_FREE), "right")
+                list(bar, Prefs.BREEZE_THEME, "Theme", arrayOf("Same as the toolbar", "Light", "Dark"),
+                    arrayOf("toolbar", "light", "dark"), "toolbar")
+                val barGestures = category("Breeze gestures")
+                barGestures.title = "Gestures"
+                list(barGestures, Prefs.SIDEBAR_TAP, "Tap", barActions, barValues, Prefs.ACTION_MENU)
+                list(barGestures, Prefs.SIDEBAR_DOUBLE_TAP, "Double tap", barActions, barValues, Prefs.ACTION_BACK)
+                list(barGestures, Prefs.SIDEBAR_FLICK_IN, "Flick inwards", barActions, barValues, Prefs.ACTION_BACK)
+                list(barGestures, Prefs.SIDEBAR_FLICK_UP, "Flick up", barActions, barValues, Prefs.ACTION_SWITCHER)
+                list(barGestures, Prefs.SIDEBAR_FLICK_DOWN, "Flick down", barActions, barValues, Prefs.ACTION_NONE)
+                breezeShortcuts = category("Breeze shortcuts").apply { title = "Menu buttons" }
+                breezeWidgets = category("Breeze widgets").apply { title = "Menu widgets" }
+                if (section == "sidesense") fillBreeze()
 
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,

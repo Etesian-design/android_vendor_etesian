@@ -374,7 +374,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             c.translate(r.left, r.top); c.scale(s, s); c.drawBitmap(t, 0f, 0f, p)
         } else {
             c.drawColor(N9.TILE)
-            AppRepository.iconFor(context, e.pkg)?.let { ic ->
+            AppRepository.iconFor(context, e.pkg, e.component)?.let { ic ->
                 val sz = r.height() * 0.45f
                 c.drawBitmap(ic, null, android.graphics.RectF(r.centerX() - sz / 2, r.centerY() - sz / 2, r.centerX() + sz / 2, r.centerY() + sz / 2), p)
             }
@@ -391,7 +391,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         if (e.thumb != null) half(c, e, android.graphics.RectF(0f, 0f, w.toFloat(), h.toFloat()))
         else {
             c.drawColor(N9.TILE)
-            AppRepository.iconFor(context, e.pkg)?.let { ic ->
+            AppRepository.iconFor(context, e.pkg, e.component)?.let { ic ->
                 val sz = w * 0.36f
                 c.drawBitmap(ic, null, android.graphics.RectF(w / 2f - sz / 2, h / 2f - sz / 2, w / 2f + sz / 2, h / 2f + sz / 2),
                     android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
@@ -565,7 +565,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
                     setBackgroundColor(N9.TILE)
                     clipToOutline = true
                     if (part.thumb != null) addView(TopCropImageView(context).apply { setImageBitmap(part.thumb) }, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-                    else addView(ImageView(context).apply { setImageBitmap(AppRepository.iconFor(context, part.pkg)) },
+                    else addView(ImageView(context).apply { setImageBitmap(AppRepository.iconFor(context, part.pkg, part.component)) },
                         FrameLayout.LayoutParams(iconPx, iconPx, Gravity.CENTER))
                     foreground = GradientDrawable().apply { setStroke(dp(2f), 0xFF2A86D8.toInt()); setColor(0) }
                     elevation = dp(12f).toFloat()
@@ -1011,7 +1011,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             } else {
                 h.thumb.setImageDrawable(null)
                 h.bar.visibility = View.GONE
-                h.icon.setImageBitmap(AppRepository.iconFor(context, e.pkg))
+                h.icon.setImageBitmap(AppRepository.iconFor(context, e.pkg, e.component))
                 h.icon.visibility = View.VISIBLE
             }
             bindMode(h)

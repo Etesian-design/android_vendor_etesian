@@ -62,6 +62,8 @@ object Prefs {
     /** Widgets in Breeze's menu: app widget ids, comma separated. */
     const val BREEZE_WIDGETS = "breeze_widgets"
     const val SIDE_FREE = "free"
+    /** Breeze's look: "toolbar" (the bottom bar's theme), "light" or "dark". */
+    const val BREEZE_THEME = "breeze_theme"
     const val SIDEBAR_FLICK_IN = "sidebar_flick_in"
     const val SIDEBAR_FLICK_UP = "sidebar_flick_up"
     const val SIDEBAR_FLICK_DOWN = "sidebar_flick_down"
@@ -146,6 +148,11 @@ object Prefs {
     fun breezeWidgets(ctx: Context): List<Int> =
         of(ctx).getString(BREEZE_WIDGETS, "")!!.split(',').mapNotNull { it.toIntOrNull() }
     fun setBreezeWidgets(ctx: Context, ids: List<Int>) = of(ctx).edit().putString(BREEZE_WIDGETS, ids.joinToString(",")).apply()
+    fun breezeDark(ctx: Context) = when (of(ctx).getString(BREEZE_THEME, "toolbar")) {
+        "dark" -> true
+        "light" -> false
+        else -> com.bompotis.etesian.toolbar.EtesianToolbar.userDark(ctx)
+    }
     fun sideBarSide(ctx: Context) = of(ctx).getString(SIDEBAR_SIDE, "right")!!
     /** Bar centre as a percentage of the screen height. */
     fun sideBarPosition(ctx: Context) = of(ctx).getString(SIDEBAR_POSITION, "45")!!.toInt()

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <permissions>
     <privapp-permissions package="com.bompotis.etesian.launcher">
+        <permission name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE" />
         <permission name="android.permission.MANAGE_ACTIVITY_TASKS" />
         <permission name="android.permission.REAL_GET_TASKS" />
         <permission name="android.permission.REMOVE_TASKS" />

@@ -1,51 +1,87 @@
-# Breeze: long-press the edge bar and drag it into the screen: it becomes a floating button that stays there;
-# a tap opens Breeze's menu; dragged back to an edge it is the bar again. (Raw phone pixels: windows are
-# measured by dumpsys, so no mapping.)
+# Breeze: a thick handle clear of the curved edge's grip strip. Held still it picks up (also when the touch only
+# arrives after creeping in from the edge) and drags: away from the edge it turns into the floating button, back
+# at an edge into the handle. Every gesture vibrates. Its menu slides out of Breeze's side, flush with it, its top
+# level with Breeze; buttons on a strip, nothing to edit. Hidden on the lock screen; light or dark.
+# (Raw phone pixels: windows are measured by dumpsys, so no mapping.)
 P=/data/data/$LAUNCHER/shared_prefs/com.bompotis.etesian.launcher_preferences.xml
 pref() { sh_ cat $P | grep -o "name=\"$1\">[^<]*" | cut -d'>' -f2; }
 frame() { raw_sh dumpsys window windows | grep -A40 "Window{[^ ]* u0 $1}" | grep -o "frame=\[[0-9-]*,[0-9-]*\]\[[0-9-]*,[0-9-]*\]" | head -1 | grep -o '[0-9-]\+' | tr '\n' ' '; }
 has() { sh_ dumpsys window windows | grep -q "u0 $1}"; }
-drag() { raw_sh "input motionevent DOWN $1 $2; sleep 1.2; input motionevent MOVE $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); input motionevent MOVE $3 $4; sleep 0.3; input motionevent UP $3 $4"; }
+buzzes() { raw_sh dumpsys vibrator_manager | grep -c "$LAUNCHER"; }
+grey() { command adb exec-out screencap -p | python3 -c "import sys,io;from PIL import Image;im=Image.open(io.BytesIO(sys.stdin.buffer.read())).convert('L');print(im.getpixel(($1,$2)))"; }
+D=$(raw_sh wm density | grep -o '[0-9]*' | tail -1); px() { echo $(( $1 * D / 160 )); }
+RW=$(raw_sh wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | cut -dx -f1); RH=$(raw_sh wm size | grep -o 'x[0-9]*' | tail -1 | tr -d x)
+# Held still at ($1,$2), then dragged to ($3,$4).
+drag() { raw_sh "input motionevent DOWN $1 $2; sleep 1.0; input motionevent MOVE $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 0.2; input motionevent MOVE $3 $4; sleep 0.6; input motionevent UP $3 $4"; }
 backup=/data/local/tmp/breeze_prefs.xml; sh_ cp $P $backup
-# Breeze's own buttons as they come (Back, Home, Open applications): the user's set is put back at the end.
 cfg=$(raw_sh settings get secure etesian_toolbar_config)
 raw_sh settings put secure etesian_toolbar_config "'$(echo "$cfg" | python3 -c "import json,sys; d=json.load(sys.stdin) if sys.stdin else {}; d.pop('breeze',None); print(json.dumps(d))" 2>/dev/null || echo '{}')'"
-setp() { sh_ am force-stop $LAUNCHER; sh_ "sed -e '/name=\"side_sense\"/d' -e '/name=\"sidebar_side\"/d' -e 's#</map>#    <boolean name=\"side_sense\" value=\"true\" />\n    <string name=\"sidebar_side\">right</string>\n</map>#' $P > /data/local/tmp/bp.xml; cat /data/local/tmp/bp.xml > $P; rm /data/local/tmp/bp.xml"; home; sleep 2; }
-unlock; setp
-check "Breeze on: the bar is shown" 'has EtesianBreeze'
-read L T R B <<< "$(frame EtesianBreeze)"; RW=$(raw_sh wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | cut -dx -f1); RH=$(raw_sh wm size | grep -o 'x[0-9]*' | tail -1 | tr -d x)
-check "bar on the right edge" '[ -n "$R" ] && [ "$R" -ge $((RW - 2)) ]'
-drag $(( (L+R)/2 )) $(( (T+B)/2 )) $((RW/2)) $((RH/2)); sleep 1.5
-check "dragged into the screen: saved as the floating button" '[ "$(pref sidebar_side)" = free ]'
+setp() { sh_ am force-stop $LAUNCHER; sh_ "sed -e '/name=\"side_sense\"/d' -e '/name=\"sidebar_side\"/d' -e '/name=\"breeze_theme\"/d' -e 's#</map>#    <boolean name=\"side_sense\" value=\"true\" />\n    <string name=\"sidebar_side\">right</string>\n    <string name=\"breeze_theme\">$1</string>\n</map>#' $P > /data/local/tmp/bp.xml; cat /data/local/tmp/bp.xml > $P; rm /data/local/tmp/bp.xml"; home; sleep 2; }
+unlock; setp light
+check "Breeze on: the handle is shown" 'has EtesianBreeze'
 read L T R B <<< "$(frame EtesianBreeze)"
-check "button is square" '[ -n "$B" ] && [ $((R-L)) -eq $((B-T)) ]'
-check "button where it was let go" '[ -n "$B" ] && [ $(( (L+R)/2 - RW/2 )) -le 40 ] && [ $(( RW/2 - (L+R)/2 )) -le 40 ]'
-shot breeze_button
-cx=$(( (L+R)/2 )); cy=$(( (T+B)/2 ))
-raw_sh input tap $cx $cy; sleep 1.5
-check "tap: Breeze menu" 'has EtesianBreezeMenu'
+check "handle on the right edge" '[ -n "$R" ] && [ "$R" -ge $((RW - 2)) ]'
+check "handle window thick (over 30 dp)" '[ -n "$L" ] && [ $((R-L)) -ge $(px 30) ]'
+HY=$(( (T+B)/2 )); HX=$((RW - $(px 26)))
+# Drawn 20-32 dp in from the edge: its middle is outside the controller's 60 px grip strip.
+check "handle's middle ($((RW-HX)) px in) outside the 60 px grip strip" '[ $((RW - HX)) -gt 60 ]'
+light=$(grey $HX $HY); setp dark; dark=$(grey $HX $HY)
+check "theme: light handle light ($light), dark handle dark ($dark)" '[ "$light" -gt 180 ] && [ "$dark" -lt 90 ]'
+setp light
+b0=$(buzzes); raw_sh input tap $HX $HY; sleep 1.5
+check "tap on the handle: Breeze menu" 'has EtesianBreezeMenu'
+check "tap felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
+check "menu against the right side (no gap)" '[ -n "$MR" ] && [ "$MR" -ge $((RW - 1)) ]'
+check "menu's top level with the handle ($MT vs $T)" '[ -n "$MT" ] && [ $((MT - T)) -le 2 ] && [ $((T - MT)) -le 2 ]'
+check "menu takes touches" '! raw_sh dumpsys input | grep "EtesianBreezeMenu, " | grep -q NOT_TOUCHABLE'
+sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1
+check "no editing in the menu (no Add widget, no Edit)" '! sh_ cat /sdcard/u.xml | grep -q "Add widget\|Edit Breeze"'
 shot breeze_menu
-read L T R B <<< "$(frame EtesianBreezeMenu)"
-check "menu under the button" '[ -n "$T" ] && [ "$T" -gt $cy ]'
-check "menu takes touches (not a pass-through overlay)" '! raw_sh dumpsys input | grep "EtesianBreezeMenu, " | grep -q NOT_TOUCHABLE'
-# Its buttons: Back, Home, Open applications by default; Home (the second) from an app goes home.
-D=$(raw_sh wm density | grep -o '[0-9]*' | tail -1); px() { echo $(( $1 * D / 160 )); }
-raw_sh input tap $cx $cy; sleep 1; sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 2
-raw_sh input tap $cx $cy; sleep 1.5
-read L T R B <<< "$(frame EtesianBreezeMenu)"
-raw_sh input tap $(( L + $(px 10) + (R - L - $(px 20)) * 3 / 8 )) $(( T + $(px 10) + $(px 25) )); sleep 1.5
-check "a menu button runs (Home)" 'sh_ dumpsys activity activities | grep -m1 "ResumedActivity" | grep -q HomeActivity'
-home; raw_sh input tap $cx $cy; sleep 1.5
 raw_sh input tap $((RW/2)) $((RH/8)); sleep 1
 check "tap elsewhere closes the menu" '! has EtesianBreezeMenu'
-drag $cx $cy 5 $((RH/3)); sleep 1.5
-check "dragged to the left edge: the bar there" '[ "$(pref sidebar_side)" = left ]'
+b0=$(buzzes); raw_sh input swipe $HX $HY $HX $((HY - $(px 80))) 120; sleep 1.5
+check "flick felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+home
+b0=$(buzzes)
+raw_sh "input motionevent DOWN $HX $HY; sleep 1.0; input motionevent MOVE $((RW/2)) $((RH/2)); sleep 0.1"
+command adb exec-out screencap -p > "$SHOTS/breeze_morph_early.png"
+check "long press: picked up (drag layer)" 'has EtesianBreezeDrag'
+check "long press felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+sleep 0.6; command adb exec-out screencap -p > "$SHOTS/breeze_morph_done.png"
+raw_sh "input motionevent UP $((RW/2)) $((RH/2))"; sleep 1.5
+check "the button turns up slowly (still changing after the first moment)" '/home/memphisx/android/.venv-tools/bin/python -c "
+import sys
+from PIL import Image
+a=Image.open(\"$SHOTS/breeze_morph_early.png\").convert(\"L\"); b=Image.open(\"$SHOTS/breeze_morph_done.png\").convert(\"L\")
+r=$(px 24); box=($RW//2-r,$RH//2-r,$RW//2+r,$RH//2+r)
+A=list(a.crop(box).getdata()); B=list(b.crop(box).getdata())
+sys.exit(0 if sum(abs(x-y) for x,y in zip(A,B))/len(A)>3 else 1)"'
+check "let go in the middle: the floating button" '[ "$(pref sidebar_side)" = free ] && ! has EtesianBreezeDrag'
 read L T R B <<< "$(frame EtesianBreeze)"
-check "bar on the left edge, slim" '[ "$L" = 0 ] && [ $((R-L)) -lt $((B-T)) ]'
-# The curved edge rejects touches right at it: a tap a little further in still reaches the bar.
-raw_sh input tap $(px 30) $(( (T+B)/2 )); sleep 1.5
-check "a tap 30 dp in from the edge reaches the bar (menu)" 'has EtesianBreezeMenu'
-raw_sh input tap $((RW/2)) $((RH/8)); sleep 1
+check "button square, where it was let go" '[ -n "$B" ] && [ $((R-L)) -eq $((B-T)) ] && [ $(( (L+R)/2 - RW/2 )) -le 40 ] && [ $(( RW/2 - (L+R)/2 )) -le 40 ]'
+cx=$(( (L+R)/2 )); cy=$(( (T+B)/2 ))
+raw_sh input tap $cx $cy; sleep 1.5
+read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
+check "button's menu: against a side, top level with the button" '[ -n "$MT" ] && { [ "$ML" = 0 ] || [ "$MR" -ge $((RW-1)) ]; } && [ $((MT - T)) -le 2 ] && [ $((T - MT)) -le 2 ]'
+raw_sh input tap $((RW/2)) $((RH/8)); sleep 1; sh_ am start -a android.settings.SETTINGS >/dev/null; sleep 2
+raw_sh input tap $cx $cy; sleep 1.5
+read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
+raw_sh input tap $(( ML + (MR - ML) / 2 )) $(( MT + $(px 28) )); sleep 1.5
+check "a menu button runs (Home, the middle default)" 'sh_ dumpsys activity activities | grep -m1 "ResumedActivity" | grep -q HomeActivity'
+drag $cx $cy 5 $((RH/3)); sleep 1.5
+check "dragged to the left edge: the handle there" '[ "$(pref sidebar_side)" = left ]'
+read L T R B <<< "$(frame EtesianBreeze)"
+HY=$(( (T+B)/2 ))
+# The controller hands a touch over only once it has crept in: it lands moving, then rests.
+raw_sh "input motionevent DOWN $(px 4) $HY; input motionevent MOVE $(px 10) $HY; input motionevent MOVE $(px 18) $HY; sleep 1.0"
+check "crept in, then held: picked up" 'has EtesianBreezeDrag'
+raw_sh "input motionevent UP $(px 18) $HY"; sleep 1.5
+check "let go at the edge: the handle again" '[ "$(pref sidebar_side)" = left ] && has EtesianBreeze'
+lock
+check "locked: Breeze hidden" '! has EtesianBreeze'
+unlock; sleep 1.5
+check "unlocked: Breeze back" 'has EtesianBreeze'
 [ "$cfg" = null ] && raw_sh settings delete secure etesian_toolbar_config >/dev/null || raw_sh settings put secure etesian_toolbar_config "'$cfg'"
 sh_ am force-stop $LAUNCHER; sh_ "cat $backup > $P"; sh_ rm $backup; home
 check "launcher did not crash" '! crashed $LAUNCHER'

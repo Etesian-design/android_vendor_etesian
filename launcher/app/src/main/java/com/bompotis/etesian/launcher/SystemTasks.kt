@@ -13,7 +13,7 @@ import android.os.Bundle
  * reflection to keep the app buildable against the public SDK.
  */
 object SystemTasks {
-    class Task(val id: Int, val pkg: String)
+    class Task(val id: Int, val pkg: String, val component: android.content.ComponentName? = null)
 
     fun available(ctx: Context) =
         ctx.checkSelfPermission("android.permission.MANAGE_ACTIVITY_TASKS") == PackageManager.PERMISSION_GRANTED
@@ -27,9 +27,12 @@ object SystemTasks {
         return am.getRecentTasks(max * 2, ActivityManager.RECENT_IGNORE_UNAVAILABLE)
             .mapNotNull { t ->
                 val pkg = t.baseActivity?.packageName ?: t.baseIntent.component?.packageName ?: return@mapNotNull null
-                val home = t.baseIntent.hasCategory(Intent.CATEGORY_HOME) || pkg == ctx.packageName
+                val base = t.baseActivity ?: t.baseIntent.component
+                // Home itself, not the launcher's own applications (Etesian settings has a task of its own).
+                val home = t.baseIntent.hasCategory(Intent.CATEGORY_HOME) ||
+                    (pkg == ctx.packageName && base?.className == HomeActivity::class.java.name)
                 // Like the N9, only applications that are still open; emptied tasks linger in recents.
-                if (home || !t.isRunning || pkg !in alive) null else Task(t.taskId, pkg)
+                if (home || !t.isRunning || pkg !in alive) null else Task(t.taskId, pkg, base)
             }
             .take(max)
     }

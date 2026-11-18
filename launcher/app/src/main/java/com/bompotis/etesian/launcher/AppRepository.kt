@@ -87,6 +87,10 @@ object AppRepository {
             .apply()
     }
 
+    /** The icon of [cn] when it has one of its own (Etesian settings, in the launcher's package), else the app's. */
+    fun iconFor(ctx: Context, pkg: String, cn: android.content.ComponentName?): Bitmap? =
+        cn?.let { c -> apps.firstOrNull { it.component == c }?.icon } ?: iconFor(ctx, pkg)
+
     fun iconFor(ctx: Context, pkg: String): Bitmap? =
         apps.firstOrNull { it.component.packageName == pkg }?.icon
             ?: runCatching { IconFactory.render(ctx.packageManager.getApplicationIcon(pkg), ctx.dp(58f)) }.getOrNull()

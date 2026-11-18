@@ -51,6 +51,8 @@
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
     <!-- Open applications: the short buzz when two cards snap together or tear apart. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Breeze hides on the lock screen. -->
+    <uses-permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE" tools:ignore="ProtectedPermissions" />
     <!-- Granted only when built into the ROM with the platform key (see SystemTasks). -->
     <uses-permission android:name="android.permission.MANAGE_ACTIVITY_TASKS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.REAL_GET_TASKS" tools:ignore="ProtectedPermissions" />
@@ -152,6 +154,7 @@
         <activity
             android:name=".BreezeWidgetActivity"
             android:exported="false"
+            android:taskAffinity="com.bompotis.etesian.launcher.settings"
             android:excludeFromRecents="true"
             android:label="Breeze widgets"
             android:theme="@style/Theme.EtesianSettings" />
@@ -159,6 +162,7 @@
         <activity
             android:name=".ToolbarSettingsActivity"
             android:exported="false"
+            android:taskAffinity="com.bompotis.etesian.launcher.settings"
             android:label="Toolbar buttons"
             android:theme="@style/Theme.EtesianSettings" />
 

@@ -39,6 +39,8 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     private var dismissMode = false
     // Declared before the adapter, which reads them while being created.
     private var agenda: List<Agenda.Entry> = emptyList()
+    /** Feed posts swiped away in edit mode (marked read; kept out until the feed reloads). */
+    private val swipedFeeds = mutableSetOf<String>()
     private val list = RecyclerView(context)
     private val adapter = Adapter()
     private val listener: () -> Unit = { refresh() }
@@ -194,7 +196,6 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     }
 
     /** Feed posts swiped away: hidden at once, before the Feeds app has saved them as read. */
-    private val swipedFeeds = mutableSetOf<String>()
 
     private val swipe = object : androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(0,
         androidx.recyclerview.widget.ItemTouchHelper.LEFT or androidx.recyclerview.widget.ItemTouchHelper.RIGHT) {
