@@ -41,6 +41,7 @@ object AppRepository {
 
     private fun load(ctx: Context): List<AppInfo> {
         IconFactory.style = Prefs.iconShape(ctx)
+        IconFactory.lit = Prefs.iconLighting(ctx)
         IconFactory.packName = Prefs.iconPack(ctx)
         IconFactory.pack = IconPacks.load(ctx, IconFactory.packName)
         val la = ctx.getSystemService(LauncherApps::class.java)

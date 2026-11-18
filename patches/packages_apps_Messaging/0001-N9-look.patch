@@ -1443,10 +1443,24 @@ index 7d911ac..c553d8a 100644
 +    app:n9Squircle="true"
      app:placeholderDrawable="@drawable/attachment_image_placeholder_background" />
 diff --git a/res/layout/compose_message_view.xml b/res/layout/compose_message_view.xml
-index 4ebb7fe..525f95c 100644
+index 4ebb7fe..f736af1 100644
 --- a/res/layout/compose_message_view.xml
 +++ b/res/layout/compose_message_view.xml
-@@ -84,105 +84,131 @@
+@@ -37,10 +37,12 @@
+         android:clipToPadding="false"
+         android:orientation="vertical">
+ 
++        <!-- N9 look: no gap above the composer (it showed the window as a white bar); the compose strip
++             draws its own top line. -->
+         <View
+             android:id="@+id/top_margin"
+             android:layout_width="match_parent"
+-            android:layout_height="16dp" />
++            android:layout_height="0dp" />
+ 
+         <include layout="@layout/attachment_preview"
+             android:id="@+id/attachment_draft_view"
+@@ -84,105 +86,131 @@
  
          </RelativeLayout>
  

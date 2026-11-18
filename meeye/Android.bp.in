@@ -1,0 +1,13 @@
+// Meeye icon pack by YeyeBBC (https://github.com/yeyebbc/meeye-releases), CC BY-NC 4.0, fetched by fetch.sh.
+// Kept exactly as published, with its author's signature.
+android_app_import {
+    name: "Meeye",
+    apk: "Meeye.apk",
+    presigned: true,
+    // Signed by its author with signature v2+ (targetSdk >= 30): installed as is, already zip-aligned.
+    preprocessed: true,
+    product_specific: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

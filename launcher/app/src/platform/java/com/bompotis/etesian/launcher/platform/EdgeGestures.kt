@@ -69,8 +69,12 @@ class EdgeGestures(private val ctx: Context) {
     private var stillY = 0f
     private val peekHold = Runnable {
         if (!started || edge != Edge.BOTTOM || peek != null || drag == null) return@Runnable
+        // Not while the on-screen keyboard is up: then a bottom swipe only minimises (user, 2026-11-18).
+        if (android.provider.Settings.Secure.getInt(ctx.contentResolver, "etesian_ime_shown", 0) == 1) return@Runnable
         peek = AppPeek(ctx).takeUnless { it.isEmpty }?.also {
             it.show()
+            // N9: the application drops by itself to just above the row and falls into shadow behind it.
+            drag?.behindRow(it.rowHeight / screenH.toFloat())
             runCatching {
                 ctx.getSystemService(android.os.Vibrator::class.java)
                     .vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK))

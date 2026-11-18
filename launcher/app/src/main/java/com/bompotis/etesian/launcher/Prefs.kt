@@ -19,6 +19,8 @@ object Prefs {
     const val ICON_SHAPE = "icon_shape"
     /** Package name of the chosen ADW/Nova-format icon pack; "" for none. */
     const val ICON_PACK = "icon_pack"
+    /** The N9 top light on every icon (IconLighting), off unless chosen. */
+    const val ICON_LIGHTING = "icon_lighting"
     const val PAGE_DOTS = "page_dots"
     const val DOTS_HIDDEN = "hidden"
     const val DOTS_TOP = "top"
@@ -208,6 +210,10 @@ object Prefs {
         val key = of(ctx).getString(eventsStyleKey(s), null)
         return EventsClassifier.Style.entries.firstOrNull { it.key == key } ?: EventsClassifier.Style.GROUPED
     }
-    fun iconPack(ctx: Context) = of(ctx).getString(ICON_PACK, "")!!
+    fun iconPack(ctx: Context) = of(ctx).getString(ICON_PACK, defaultIconPack(ctx))!!
+    /** Meeye when the ROM has it (it is preinstalled), else none. */
+    fun defaultIconPack(ctx: Context) =
+        if (runCatching { ctx.packageManager.getPackageInfo(IconPacks.MEEYE, 0) }.isSuccess) IconPacks.MEEYE else ""
+    fun iconLighting(ctx: Context) = of(ctx).getBoolean(ICON_LIGHTING, false)
     fun iconShape(ctx: Context) = of(ctx).getString(ICON_SHAPE, IconFactory.SHAPE_N9)!!
 }

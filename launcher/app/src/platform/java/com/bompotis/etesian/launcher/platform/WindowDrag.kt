@@ -43,6 +43,9 @@ class WindowDrag(
         /** How home looks behind the application before the swipe starts. */
         const val HOME_SCALE = 0.9f
         const val HOME_LIGHT = 0.25f
+        /** The darkest a window gets: closing at the bottom of the screen, and behind the app row. */
+        private const val CLOSE_DARKEST = 0.7f
+        private const val PEEK_DARKEST = 0.55f
         private const val FLING_DP_PER_S = 900f
         private val main = Handler(Looper.getMainLooper())
     }
@@ -56,6 +59,11 @@ class WindowDrag(
     private var ended = false
     private var finishWhenReady: Boolean? = null
     private var animator: ValueAnimator? = null
+    /** A black layer over each application window: the N9's shadow on a window that is going away. */
+    private val dims = HashMap<SurfaceControl, SurfaceControl>()
+    /** The shadow over the window while the app row is up in front of it (0..1, animated). */
+    private var peekShadow = 0f
+    private var shadowAnimator: ValueAnimator? = null
     /** False when SystemUI isn't connected: then letting go just switches views, unanimated. */
     private var running = false
     /** The display's corner radius in px (0 on square screens). */
@@ -110,7 +118,7 @@ class WindowDrag(
     }
 
     fun update(progress: Float, across: Float) {
-        if (ended) return
+        if (ended || held) return
         this.progress = progress
         this.across = across
         apply()
@@ -139,6 +147,10 @@ class WindowDrag(
             // only applies within a crop (Android 17 no longer falls back to the window's bounds).
             t.setWindowCrop(target.leash, b.width(), b.height())
             t.setCornerRadius(target.leash, cornerRadius)
+            // N9: closing from the top, the window darkens the further it goes down (it is being closed);
+            // with the app row up (a bottom swipe held), it falls into shadow behind the row.
+            val shade = maxOf(if (closing && edge == Edge.TOP) CLOSE_DARKEST * p else 0f, PEEK_DARKEST * peekShadow)
+            dim(t, target, shade)
             val distance = p * (if (edge == Edge.LEFT || edge == Edge.RIGHT) b.width() else b.height())
             when (edge) {
                 Edge.LEFT -> t.setPosition(target.leash, b.left + distance, b.top.toFloat())
@@ -210,6 +222,28 @@ class WindowDrag(
         animateTo(from = progress, to = to) { progress = to }
     }
 
+    /**
+     * The app row came up in front (a bottom swipe held, N9): the window slides by itself down to rest just above
+     * the row, [to], and falls into shadow, so the row is in the foreground. The finger no longer moves it.
+     */
+    fun behindRow(to: Float) {
+        if (ended) return
+        held = true
+        shadowAnimator?.cancel()
+        shadowAnimator = ValueAnimator.ofFloat(peekShadow, 1f).apply {
+            duration = 260
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { peekShadow = it.animatedValue as Float; if (animator?.isRunning != true) apply() }
+            start()
+        }
+        if (controller == null) { progress = to; return }
+        animateTo(from = progress, to = to) { progress = to }
+    }
+
+    /** True once the window rests behind the app row: finger moves no longer drag it. */
+    var held = false
+        private set
+
     /** Lets go early: the window springs back and the app carries on. */
     fun cancel() {
         if (ended || !running) { ended = true; return }
@@ -234,7 +268,36 @@ class WindowDrag(
         }
     }
 
+    /** The shadow layer of [target]'s window at [amount] (0: none). */
+    private fun dim(t: SurfaceControl.Transaction, target: RemoteAnimationTarget, amount: Float) {
+        val existing = dims[target.leash]
+        if (amount <= 0f && existing == null) return
+        val layer = existing ?: runCatching {
+            SurfaceControl.Builder().setName("EtesianShadow").setColorLayer().setParent(target.leash)
+                .setCallsite("WindowDrag.dim").build()
+        }.onFailure { Log.w(TAG, "shadow layer", it) }.getOrNull()?.also {
+            dims[target.leash] = it
+            val b = target.screenSpaceBounds
+            t.setColor(it, floatArrayOf(0f, 0f, 0f))
+            t.setLayer(it, Int.MAX_VALUE)
+            t.setWindowCrop(it, b.width(), b.height())
+            t.setCornerRadius(it, cornerRadius)
+            t.show(it)
+        } ?: return
+        t.setAlpha(layer, amount.coerceIn(0f, 1f))
+    }
+
+    private fun removeShadows() {
+        if (dims.isEmpty()) return
+        shadowAnimator?.cancel()
+        val t = SurfaceControl.Transaction()
+        dims.values.forEach { t.remove(it) }
+        t.apply()
+        dims.clear()
+    }
+
     private fun finish(toHome: Boolean) {
+        removeShadows()
         val c = controller ?: return
         controller = null
         runCatching { c.finish(toHome, toHome, null) }.onFailure { Log.w(TAG, "finish", it) }

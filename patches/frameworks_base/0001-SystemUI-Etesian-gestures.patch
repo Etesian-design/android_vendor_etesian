@@ -4575,7 +4575,7 @@ index 000000000000..a44b0d134f66
 +    }
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/views/NavigationBar.java b/packages/SystemUI/src/com/android/systemui/navigationbar/views/NavigationBar.java
-index 75a441c0de2d..5af7f3043045 100644
+index 75a441c0de2d..f7530af04b01 100644
 --- a/packages/SystemUI/src/com/android/systemui/navigationbar/views/NavigationBar.java
 +++ b/packages/SystemUI/src/com/android/systemui/navigationbar/views/NavigationBar.java
 @@ -76,6 +76,9 @@ import android.os.Handler;
@@ -4775,12 +4775,18 @@ index 75a441c0de2d..5af7f3043045 100644
                  }
              };
  
-@@ -1920,9 +2013,15 @@ public class NavigationBar extends ViewController<NavigationBarView> implements
+@@ -1920,9 +2013,21 @@ public class NavigationBar extends ViewController<NavigationBarView> implements
              if (backDismissIme != oldBackDismissIme) {
                  mView.onBackDismissImeChanged(backDismissIme);
              }
 +            final boolean wasImeVisible = mImeVisible;
              mImeVisible = (flags & NAVBAR_IME_VISIBLE) != 0;
++            // Etesian: the launcher's edge gestures ask whether the on-screen keyboard is up (no app row
++            // on a held bottom swipe while it is).
++            if (wasImeVisible != mImeVisible) {
++                android.provider.Settings.Secure.putIntForUser(mContext.getContentResolver(),
++                        "etesian_ime_shown", mImeVisible ? 1 : 0, mUserTracker.getUserId());
++            }
  
              mView.setNavbarFlags(flags);
 +            // Etesian: no toolbar under the keyboard; the keyboard has its own hide key.

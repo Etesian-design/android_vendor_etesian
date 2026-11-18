@@ -47,6 +47,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     EtesianFeeds
 
+# Meeye icons by YeyeBBC (CC BY-NC 4.0), the launcher's default icon pack (meeye/fetch.sh)
+ifneq ($(wildcard vendor/etesian/meeye/Meeye.apk),)
+PRODUCT_PACKAGES += \
+    Meeye
+endif
+
 # N9 Mail (prebuilt from vendor/etesian/mail/build-mail.sh)
 ifneq ($(wildcard vendor/etesian/mail/EtesianMail.apk),)
 PRODUCT_PACKAGES += \

@@ -153,7 +153,24 @@ def ui():
     out["silence"] = np.zeros(int(SR * 0.02))  # Android's tap click: the N9 has no sound on a plain tap
     t = t_of(0.09); out["static_press"] = finish(wind(t, 0, 0.08, 1500, 2200, 0.4, attack=0.012), 0.45)
     t = t_of(0.07); out["static_release"] = finish(wind(t, 0, 0.06, 2200, 1500, 0.4, seed=2, attack=0.01), 0.3)
-    t = t_of(0.05); out["vkb_popup_press"] = finish(wind(t, 0, 0.045, 3200, 3600, 0.3, seed=4, attack=0.006), 0.35)
+    # The key click, like a button clicking in and out (user, 2026-11-18): the click in (press) lower, the click
+    # out (release) higher, as on the N9. Each is a bright tick of a few ms on a tiny body that rings
+    # out within ~10 ms.
+    t = t_of(0.07)
+    rng = np.random.default_rng(7)
+
+    def key_click(start, body_hz, smooth, tick_ms, body_ms, gain):
+        x = np.maximum(t - start, 0)
+        on = t >= start
+        n = rng.normal(0, 1, len(t))
+        n = n - np.convolve(n, np.ones(smooth) / smooth, "same")         # the bright part; wider = brighter
+        tick = n * np.exp(-x / (tick_ms / 1000)) * on
+        body = np.sin(2 * np.pi * body_hz * x) * np.exp(-x / (body_ms / 1000)) * np.clip(x / 0.0006, 0, 1) * on
+        return gain * (0.8 * tick + 0.6 * body)
+
+    # Two sounds: the keyboard plays the low one when a key goes down, the high one when it comes back up.
+    out["vkb_press"] = finish(key_click(0.0, 1250, 3, 1.6, 9, 1.0), 0.5, 0.004)
+    out["vkb_release"] = finish(key_click(0.0, 2600, 6, 1.2, 6, 1.0), 0.4, 0.004)
     # Long press, edit mode: a gust that rises, with a faint blown note at its top.
     t = t_of(0.35)
     out["popup"] = finish(wind(t, 0, 0.26, 900, 2800, 0.45, seed=5, attack=0.12) + 0.35 * air(t, 0.12, 86, 0.2, breath=0.3), 0.55)

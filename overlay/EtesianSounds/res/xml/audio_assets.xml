@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Paths are under /product/media/audio/ui/ (etesian.mk). -->
+<!-- Paths are under /product/media/audio/ui/ (etesian.mk). The keyboard clicks in on a press (FX_KEYPRESS_*)
+     and out on the release (FX_KEYPRESS_INVALID, played by the keyboard when a key is let go). -->
 <audio_assets version="1.0">
     <asset id="FX_KEY_CLICK" file="etesian/silence.wav"/>
     <asset id="FX_FOCUS_NAVIGATION_UP" file="etesian/silence.wav"/>
     <asset id="FX_FOCUS_NAVIGATION_DOWN" file="etesian/silence.wav"/>
     <asset id="FX_FOCUS_NAVIGATION_LEFT" file="etesian/silence.wav"/>
     <asset id="FX_FOCUS_NAVIGATION_RIGHT" file="etesian/silence.wav"/>
-    <asset id="FX_KEYPRESS_STANDARD" file="etesian/vkb_popup_press.wav"/>
-    <asset id="FX_KEYPRESS_SPACEBAR" file="etesian/vkb_popup_press.wav"/>
-    <asset id="FX_KEYPRESS_DELETE" file="etesian/vkb_popup_press.wav"/>
-    <asset id="FX_KEYPRESS_RETURN" file="etesian/vkb_popup_press.wav"/>
-    <asset id="FX_KEYPRESS_INVALID" file="etesian/static_release.wav"/>
+    <asset id="FX_KEYPRESS_STANDARD" file="etesian/vkb_press.wav"/>
+    <asset id="FX_KEYPRESS_SPACEBAR" file="etesian/vkb_press.wav"/>
+    <asset id="FX_KEYPRESS_DELETE" file="etesian/vkb_press.wav"/>
+    <asset id="FX_KEYPRESS_RETURN" file="etesian/vkb_press.wav"/>
+    <asset id="FX_KEYPRESS_INVALID" file="etesian/vkb_release.wav"/>
     <asset id="FX_BACK" file="etesian/silence.wav"/>
 </audio_assets>

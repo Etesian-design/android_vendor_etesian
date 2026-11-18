@@ -121,3 +121,5 @@ check "launcher did not crash" '! crashed $LAUNCHER'
 # 2026-11-18 (user): the floating button is Etesian's icon (brand/, deep on dark, pearl on light), not Android's robot.
 S=~/android/lineage/vendor/etesian/launcher/app/src
 check "the button draws Etesian's icon, both versions" 'grep -q "R.drawable.etesian_icon_deep" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && grep -q "R.drawable.etesian_icon_pearl" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && ! grep -q "ic_launcher_foreground" $S/platform/java/com/bompotis/etesian/launcher/platform/SideBar.kt && test -s $S/main/res/drawable-nodpi/etesian_icon_deep.png'
+# 2026-11-18 (user): the launcher's own app icon is Etesian's (deep), not Android Studio's robot.
+check "the launcher's app icon is Etesian's" 'command adb shell pm dump com.bompotis.etesian.launcher >/dev/null && grep -q "ic_launcher_etesian_fg" $S/main/res/mipmap-anydpi-v26/ic_launcher.xml && ! ls $S/main/res/drawable/ic_launcher_foreground.xml 2>/dev/null'

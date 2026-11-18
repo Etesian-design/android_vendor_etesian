@@ -508,9 +508,29 @@ class SettingsActivity : AppCompatActivity() {
                 title = "Icon pack"
                 entries = arrayOf("None (default)") + packs.map { it.second }
                 entryValues = arrayOf("") + packs.map { it.first }
-                setDefaultValue("")
+                setDefaultValue(Prefs.defaultIconPack(ctx))
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
                 isIconSpaceReserved = false
+                look.addPreference(this)
+            }
+
+            SwitchPreferenceCompat(ctx).apply {
+                key = Prefs.ICON_LIGHTING
+                title = "N9 lighting"
+                summary = "Light every icon from above, as on the N9: a bright top rim, raised glyphs and their shadow"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+                look.addPreference(this)
+            }
+            Preference(ctx).apply {
+                title = "Meeye icons by YeyeBBC"
+                summary = "The preinstalled Harmattan-style icon pack, CC BY-NC 4.0. Tap to see their work"
+                isIconSpaceReserved = false
+                setOnPreferenceClickListener {
+                    runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(IconPacks.MEEYE_URL))) }
+                    true
+                }
                 look.addPreference(this)
             }
 

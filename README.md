@@ -97,5 +97,7 @@ The [design language](https://github.com/etesian-design/design) everything here 
 ## Licence
 
 Etesian, founded by Kyriakos Bompotis. Licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only, [LICENSE](LICENSE)), with additional terms under its section 7 ([ADDITIONAL-TERMS.md](ADDITIONAL-TERMS.md)): the attribution "Etesian, founded by Kyriakos Bompotis" must be kept, also where a work based on it shows legal notices; no rights are granted to the Etesian names and logos ([TRADEMARKS.md](TRADEMARKS.md)); the Phorepoc project has an exception. Commercial licences are available from the founder. Third-party parts keep their own licences ([NOTICE](NOTICE)). Fonts: Fira Sans, Ubuntu Sans and Archivo, under their own licences.
+Icons: [Meeye](https://github.com/yeyebbc/meeye-releases) by YeyeBBC (CC BY-NC 4.0), preinstalled unmodified as
+the default icon pack (`meeye/`).
 
 Etesian is an independent project. It isn't affiliated with Nokia and contains no Nokia files.

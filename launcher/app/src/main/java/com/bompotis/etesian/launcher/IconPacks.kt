@@ -16,6 +16,9 @@ import org.xmlpull.v1.XmlPullParserFactory
 
 /** Third-party icon packs in the common ADW / Nova / Apex format (appfilter.xml). */
 object IconPacks {
+    /** Meeye (YeyeBBC, CC BY-NC 4.0), preinstalled and the default pack: credit and a link to their work. */
+    const val MEEYE = "com.yeyebbc.play.meeye.iconpack"
+    const val MEEYE_URL = "https://github.com/yeyebbc/meeye-releases"
     private val ACTIONS = listOf(
         "org.adw.launcher.THEMES", "com.novalauncher.THEME", "com.gau.go.launcherex.theme",
         "com.teslacoilsw.launcher.THEME",
