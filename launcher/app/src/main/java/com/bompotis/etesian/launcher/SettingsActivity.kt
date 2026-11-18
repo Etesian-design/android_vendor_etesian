@@ -489,6 +489,9 @@ class SettingsActivity : AppCompatActivity() {
             val home = category("Home screen views")
             switch(home, Prefs.PAGE_EVENTS, "Events", "Notifications feed, left of Applications", true)
             switch(home, Prefs.PAGE_WIDGETS, "Widgets", "Widgets, left of Events", false)
+            // Glance (its own app): its news as a view, furthest left.
+            if (Glance.installed(ctx)) switch(home, Prefs.NEWS_PAGE, "News",
+                "Glance's news, furthest left: top stories, then picked for you", false)
             // N9: Open applications can keep your order (drag cards in edit mode) or arrange themselves.
 
             val look = category("Appearance")
@@ -646,6 +649,9 @@ class SettingsActivity : AppCompatActivity() {
             }
             switch(search, Prefs.SEARCH_KEYBOARD, "Open keyboard automatically",
                 "Otherwise tap the search bar to start typing", true).also { if (section == "apps") it.dependency = Prefs.SEARCH_ENABLED }
+            if (Glance.installed(ctx)) switch(search, Prefs.SEARCH_EVERYTHING, "Search everything",
+                "Below the applications: contacts, messages, notifications, shortcuts, files, settings, news and the web, from Glance",
+                true).also { if (section == "apps") it.dependency = Prefs.SEARCH_ENABLED }
 
             // Built into the ROM, Etesian owns the system gestures.
             if (SystemTasks.available(ctx)) {

@@ -53,6 +53,12 @@ PRODUCT_PACKAGES += \
     Meeye
 endif
 
+# Glance: news and search across the phone (prebuilt from vendor/etesian/glance/build-glance.sh)
+ifneq ($(wildcard vendor/etesian/glance/EtesianGlance.apk),)
+PRODUCT_PACKAGES += \
+    EtesianGlance
+endif
+
 # N9 Mail (prebuilt from vendor/etesian/mail/build-mail.sh)
 ifneq ($(wildcard vendor/etesian/mail/EtesianMail.apk),)
 PRODUCT_PACKAGES += \

@@ -1,0 +1,16 @@
+// Etesian Glance: news and search across the phone, built out of tree from its own repo with build-glance.sh.
+// Signed with the platform key, like the launcher and Feeds: the launcher reads its news and search (Glance's
+// signature permission), it reads the Feeds app's subscriptions, and the platform's own signature permissions
+// (app shortcuts, switching its notification access on when the user asks) apply.
+android_app_import {
+    name: "EtesianGlance",
+    apk: "EtesianGlance.apk",
+    certificate: "platform",
+    system_ext_specific: true,
+    required: [
+        "default-permissions_com.bompotis.etesian.glance.xml",
+    ],
+    dex_preopt: {
+        enabled: false,
+    },
+}

@@ -22,3 +22,6 @@ node_modules/
 meeye/Meeye.apk
 meeye/Meeye.apk.part
 meeye/Android.bp
+# Built from its own repo by glance/build-glance.sh; etesian.mk only adds EtesianGlance when it exists.
+glance/EtesianGlance.apk
+glance/Android.bp

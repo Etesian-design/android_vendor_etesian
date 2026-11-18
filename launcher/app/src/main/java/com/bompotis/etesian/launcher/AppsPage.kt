@@ -75,9 +75,16 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
     /** What the grid shows: everything, or the search results (folders' apps included). */
     private val shown: List<GridEntry> get() = if (searching && query.isNotEmpty()) filtered else items
 
+    /** Glance's results for the query below the applications (headings and rows), when it is installed. */
+    private var everything: List<Any> = emptyList()
+    private var everythingSeq = 0
+    private val glanceIo = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private class GlanceHeading(val title: String)
+
     /** The adapter's rows: [shown], with the open folder's panel after the folder's row. */
     private val rows: List<Any> get() {
         val s = shown
+        if (searching && query.isNotEmpty()) return s + everything
         val f = openFolder ?: return s
         val i = s.indexOf(f)
         if (i < 0) return s
@@ -201,7 +208,9 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
 
     init {
         grid.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-            override fun getSpanSize(position: Int) = if (rows.getOrNull(position) === PANEL) grid.spanCount else 1
+            override fun getSpanSize(position: Int) = rows.getOrNull(position).let {
+                if (it === PANEL || it is GlanceHeading || it is Glance.Result) grid.spanCount else 1
+            }
         }
         list.layoutManager = grid
         // Rows-per-screen depends on the visible height (insets, search bar).
@@ -405,6 +414,8 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         if (!searching) return
         searching = false
         query = ""
+        everything = emptyList()
+        everythingSeq++
         context.getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(searchBar.windowToken, 0)
         searchBar.clearFocus()
         searchBar.visibility = GONE
@@ -422,8 +433,102 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         filtered = items.flatMap { e -> if (e is GridEntry.Folder) e.apps.map { GridEntry.App(it) } else listOf(e) }
             .filter { normalize(it.label).contains(n) }
             .sortedBy { if (normalize(it.label).startsWith(n)) 0 else 1 }
+        everything = emptyList()
         @SuppressLint("NotifyDataSetChanged")
         adapter.notifyDataSetChanged()
+        searchEverything(query)
+    }
+
+    /**
+     * Like Sesame: contacts, messages, notifications, shortcuts, files, Settings pages, the news and the web, from
+     * Glance, under the applications. They arrive when Glance answers; the applications never wait for them.
+     */
+    private fun searchEverything(q: String) {
+        val seq = ++everythingSeq
+        if (q.isEmpty() || !Prefs.searchEverything(context)) return
+        val ctx = context.applicationContext
+        postDelayed({
+            if (seq != everythingSeq) return@postDelayed
+            glanceIo.execute {
+                if (seq != everythingSeq) return@execute
+                val results = Glance.search(ctx, q)
+                post {
+                    if (seq != everythingSeq || !searching) return@post
+                    everything = buildList {
+                        var section = ""
+                        results.forEach { r ->
+                            if (r.section != section) { section = r.section; add(GlanceHeading(section)) }
+                            add(r)
+                        }
+                    }
+                    @SuppressLint("NotifyDataSetChanged")
+                    adapter.notifyDataSetChanged()
+                }
+            }
+        }, 150)
+    }
+
+    private inner class GlanceHolder(val root: LinearLayout, val icon: ImageView, val title: TextView, val subtitle: TextView) :
+        RecyclerView.ViewHolder(root)
+
+    private fun glanceRow(ctx: Context): GlanceHolder {
+        val icon = ImageView(ctx)
+        val title = TextView(ctx).apply {
+            setTextColor(N9.TEXT); textSize = 16f; typeface = N9.FONT; maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        val subtitle = TextView(ctx).apply {
+            setTextColor(N9.TEXT_SECONDARY); textSize = 13.5f; typeface = N9.FONT; maxLines = 2
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        val texts = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(title); addView(subtitle)
+        }
+        val root = LinearLayout(ctx).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(18f), dp(8f), dp(18f), dp(8f))
+            addView(icon, LinearLayout.LayoutParams(dp(40f), dp(40f)).apply { marginEnd = dp(14f) })
+            addView(texts, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        val h = GlanceHolder(root, icon, title, subtitle)
+        root.setOnClickListener {
+            (rows.getOrNull(h.bindingAdapterPosition) as? Glance.Result)?.let { r ->
+                if (Glance.open(context, r.open)) closeSearch()
+            }
+        }
+        return h
+    }
+
+    private fun bindGlance(h: GlanceHolder, row: Any) {
+        when (row) {
+            is GlanceHeading -> {
+                h.icon.visibility = GONE
+                h.subtitle.visibility = GONE
+                h.title.text = row.title.uppercase()
+                h.title.setTextColor(N9.ACCENT)
+                h.title.textSize = 13f
+                h.root.setPadding(dp(18f), dp(18f), dp(18f), dp(4f))
+                h.root.isClickable = false
+                h.root.background = null
+                h.root.contentDescription = "glance:section:${row.title}"
+            }
+            is Glance.Result -> {
+                h.icon.visibility = VISIBLE
+                h.icon.setImageDrawable(row.pkg.takeIf { it.isNotEmpty() }
+                    ?.let { runCatching { context.packageManager.getApplicationIcon(it) }.getOrNull() }
+                    ?: context.getDrawable(android.R.drawable.ic_menu_search))
+                h.title.text = row.title
+                h.title.setTextColor(N9.TEXT)
+                h.title.textSize = 16f
+                h.subtitle.text = row.subtitle
+                h.subtitle.visibility = if (row.subtitle.isEmpty()) GONE else VISIBLE
+                h.root.setPadding(dp(18f), dp(8f), dp(18f), dp(8f))
+                h.root.isClickable = true
+                h.root.contentDescription = "glance:${row.kind.lowercase()}:${row.title}"
+            }
+        }
     }
 
     fun scrollToTop() = list.smoothScrollToPosition(0)
@@ -631,10 +736,15 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
     private inner class Adapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         override fun getItemCount() = rows.size
 
-        override fun getItemViewType(position: Int) = if (rows.getOrNull(position) === PANEL) 1 else 0
+        override fun getItemViewType(position: Int) = when (rows.getOrNull(position)) {
+            PANEL -> 1
+            is GlanceHeading, is Glance.Result -> 2
+            else -> 0
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             if (viewType == 1) return panel(parent.context)
+            if (viewType == 2) return glanceRow(parent.context)
             val h = cell(parent.context)
             h.root.setOnClickListener {
                 when (val e = rows.getOrNull(h.bindingAdapterPosition)) {
@@ -668,6 +778,7 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         }
 
         override fun onBindViewHolder(h: RecyclerView.ViewHolder, position: Int) {
+            if (h is GlanceHolder) { bindGlance(h, rows[position]); return }
             if (h is PanelHolder) {
                 bindPanel(h)
                 if (revealNext) { revealNext = false; h.root.reveal = 0f; reveal(h.root, 1f) }

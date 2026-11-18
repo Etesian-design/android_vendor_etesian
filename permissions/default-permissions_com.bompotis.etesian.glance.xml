@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Granted with the ROM, as the launcher's: Glance's search finds contacts. Messages, notifications and files are
+     asked for in Glance. -->
+<exceptions>
+    <exception package="com.bompotis.etesian.glance">
+        <permission name="android.permission.READ_CONTACTS" fixed="false" />
+    </exception>
+</exceptions>

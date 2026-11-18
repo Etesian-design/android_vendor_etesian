@@ -17,6 +17,8 @@ class HomeActivity : ComponentActivity() {
         const val PAGE_APPS = 1
         const val PAGE_SWITCHER = 2
         const val PAGE_WIDGETS = 3
+        /** Glance's news (Settings → Views → News), furthest left. */
+        const val PAGE_NEWS = 4
         const val EXTRA_PAGE = "etesian.page"
         /** Read by SystemUI (EtesianBubble): 1 while the Events view is on screen. */
         const val EVENTS_SHOWING = "etesian_events_showing"
@@ -62,6 +64,7 @@ class HomeActivity : ComponentActivity() {
     private lateinit var apps: AppsPage
     private lateinit var switcher: SwitcherPage
     private var events: EventsPage? = null
+    private var news: NewsPage? = null
     /** The widget views, nearest Events first: one list, or the fixed screens. */
     private var widgets: List<WidgetsPage> = emptyList()
     private var widgetsKey = ""
@@ -126,7 +129,8 @@ class HomeActivity : ComponentActivity() {
         val fixed = Prefs.widgetsFixed(this)
         val screens = if (fixed) Prefs.widgetScreens(this) else 1
         val wKey = if (wantWidgets) "$fixed/$screens" else ""
-        val key = "$wKey/$wantEvents"
+        val wantNews = Prefs.newsPage(this)
+        val key = "$wKey/$wantEvents/$wantNews"
         if (key == layoutKey) return
         layoutKey = key
         val current = pages.getOrNull(pager.currentPage)?.first ?: PAGE_APPS
@@ -144,8 +148,11 @@ class HomeActivity : ComponentActivity() {
         }
         if (wantEvents && events == null) events = EventsPage(this)
         if (!wantEvents) events = null
+        if (wantNews && news == null) news = NewsPage(this)
+        if (!wantNews) news = null
 
         pages = buildList {
+            news?.let { add(PAGE_NEWS to it) }
             // Screen 1 sits next to Events; further screens are further left.
             widgets.asReversed().forEach { add(PAGE_WIDGETS to it) }
             events?.let { add(PAGE_EVENTS to it) }
@@ -169,6 +176,7 @@ class HomeActivity : ComponentActivity() {
     private fun describePane(index: Int) {
         val name = when (pages.getOrNull(index)?.first) {
             PAGE_EVENTS -> "events"; PAGE_APPS -> "apps"; PAGE_SWITCHER -> "switcher"; PAGE_WIDGETS -> "widgets"
+            PAGE_NEWS -> "news"
             else -> return
         }
         pager.contentDescription = "pane:$name"
@@ -238,7 +246,7 @@ class HomeActivity : ComponentActivity() {
         pager.panorama = if (mode == Backgrounds.HOME_SCROLL) load(Backgrounds.HOME_SCROLL_KIND) else null
         pager.perPage = if (mode == Backgrounds.HOME_PER_PAGE) pages.map { (id, _) ->
             when (id) {
-                PAGE_WIDGETS -> "page_widgets"; PAGE_EVENTS -> "page_events"
+                PAGE_WIDGETS -> "page_widgets"; PAGE_EVENTS, PAGE_NEWS -> "page_events"
                 PAGE_APPS -> "page_apps"; else -> "page_switcher"
             }.let(::load)
         } else emptyList()

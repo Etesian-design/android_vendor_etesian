@@ -18,6 +18,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The Feeds app's items, for the Feed section and the Belle widget. -->
     <uses-permission android:name="com.bompotis.etesian.feeds.permission.READ" />
+    <!-- Glance (its own repo, glance/ in the ROM): its News screen and search results in the applications view. -->
+    <uses-permission android:name="com.bompotis.etesian.glance.permission.READ" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="lineageos.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />

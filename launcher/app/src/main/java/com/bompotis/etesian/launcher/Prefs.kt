@@ -16,6 +16,10 @@ object Prefs {
     const val SEARCH_ENABLED = "search_enabled"
     const val SEARCH_POSITION = "search_position"
     const val SEARCH_KEYBOARD = "search_keyboard"
+    /** The applications search also shows Glance's results (contacts, messages...), when Glance is installed. */
+    const val SEARCH_EVERYTHING = "search_everything"
+    /** Glance's news as a screen, left of the others. */
+    const val NEWS_PAGE = "news_page"
     const val ICON_SHAPE = "icon_shape"
     /** Package name of the chosen ADW/Nova-format icon pack; "" for none. */
     const val ICON_PACK = "icon_pack"
@@ -135,6 +139,8 @@ object Prefs {
     fun searchEnabled(ctx: Context) = of(ctx).getBoolean(SEARCH_ENABLED, false)
     fun searchAtTop(ctx: Context) = of(ctx).getString(SEARCH_POSITION, "top") == "top"
     fun searchKeyboard(ctx: Context) = of(ctx).getBoolean(SEARCH_KEYBOARD, true)
+    fun searchEverything(ctx: Context) = of(ctx).getBoolean(SEARCH_EVERYTHING, true) && Glance.available(ctx)
+    fun newsPage(ctx: Context) = of(ctx).getBoolean(NEWS_PAGE, false) && Glance.available(ctx)
     fun gridColumns(ctx: Context) = of(ctx).getString(GRID_COLUMNS, "4")!!.toInt()
     /** 0 = automatic spacing. */
     fun gridRows(ctx: Context) = of(ctx).getString(GRID_ROWS, "0")!!.toInt()
