@@ -70,14 +70,15 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     private val drawn = Rect()
 
     private fun dp(v: Float) = (v * density).toInt()
-    private val handleW get() = dp(12f)
+    // Sizes from Etesian settings → Breeze (dp).
+    private val handleW get() = dp(Prefs.breezeThicknessDp(ctx).toFloat())
     /** Handle's distance from the screen edge: outside the controller's 60 px grip strip. */
     private val handleInset get() = dp(20f)
     private val barWindow get() = handleInset + handleW + dp(6f)
-    private val barH get() = dp(140f)
-    private val button get() = dp(56f)
+    private val barH get() = dp(Prefs.breezeHeightDp(ctx).toFloat())
+    private val button get() = dp(Prefs.breezeButtonDp(ctx).toFloat())
     /** Touch area of the handle, from the screen edge in. */
-    private val reach get() = dp(64f)
+    private val reach get() = maxOf(dp(64f), handleInset + handleW + dp(24f))
     /** This close to the left or right edge it is the handle there; further in, the button. */
     private val edgeSnap get() = dp(48f).toFloat()
 

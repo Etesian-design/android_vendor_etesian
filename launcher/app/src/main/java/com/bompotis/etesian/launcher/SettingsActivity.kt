@@ -667,6 +667,20 @@ class SettingsActivity : AppCompatActivity() {
                     arrayOf("right", "left", Prefs.SIDE_FREE), "right")
                 list(bar, Prefs.BREEZE_THEME, "Theme", arrayOf("Same as the toolbar", "Light", "Dark"),
                     arrayOf("toolbar", "light", "dark"), "toolbar")
+                // Sizes: from a bottom-bar button up to three app icons, never past a quarter of the screen.
+                fun size(key: String, title: String, min: Int, max: Int, def: Int, unit: String = "dp") =
+                    androidx.preference.SeekBarPreference(ctx).apply {
+                        this.key = key; this.title = title; isIconSpaceReserved = false
+                        this.min = min; this.max = max; setDefaultValue(def.coerceIn(min, max))
+                        showSeekBarValue = false; updatesContinuously = true
+                        fun sum(v: Int) { summary = "$v $unit" }
+                        sum(androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx).getInt(key, def).coerceIn(min, max))
+                        setOnPreferenceChangeListener { _, v -> sum(v as Int); true }
+                        bar.addPreference(this)
+                    }
+                size(Prefs.BREEZE_THICKNESS, "Handle thickness", 6, 28, 12)
+                size(Prefs.BREEZE_HEIGHT, "Handle height", Prefs.BREEZE_MIN_DP, Prefs.breezeMaxDp(ctx, true), 140)
+                size(Prefs.BREEZE_BUTTON, "Floating button size", Prefs.BREEZE_MIN_DP, Prefs.breezeMaxDp(ctx, false), 56)
                 val barGestures = category("Breeze gestures")
                 barGestures.title = "Gestures"
                 list(barGestures, Prefs.SIDEBAR_TAP, "Tap", barActions, barValues, Prefs.ACTION_MENU)

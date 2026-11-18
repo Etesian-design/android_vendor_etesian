@@ -2444,6 +2444,94 @@ index 000000000000..daadefbf2826
 +        mOnHidden.run();
 +    }
 +}
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/EtesianSquircleSpinner.java b/packages/SystemUI/src/com/android/systemui/globalactions/EtesianSquircleSpinner.java
+new file mode 100644
+index 000000000000..b92737e64698
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/EtesianSquircleSpinner.java
+@@ -0,0 +1,82 @@
++package com.android.systemui.globalactions;
++
++import android.animation.ValueAnimator;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PathMeasure;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.drawable.Animatable;
++import android.graphics.drawable.Drawable;
++import android.view.animation.LinearInterpolator;
++
++/**
++ * Etesian: the shutdown and reboot screens' busy indicator. An arc running round the N9 squircle (the shape of
++ * every icon, and of the launcher's "application is starting" ring) instead of Android's circle.
++ */
++public class EtesianSquircleSpinner extends Drawable implements Animatable {
++    /** The icons' squircle: a superellipse, |x|^n + |y|^n = 1. */
++    private static final double N = 2.8;
++    private static final float ARC = 0.3f;
++
++    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++    private final Path mOutline = new Path();
++    private final Path mArc = new Path();
++    private final PathMeasure mMeasure = new PathMeasure();
++    private final ValueAnimator mAnimator = ValueAnimator.ofFloat(0f, 1f);
++    private float mPhase;
++
++    public EtesianSquircleSpinner(int color, float density) {
++        mPaint.setStyle(Paint.Style.STROKE);
++        mPaint.setStrokeWidth(3.5f * density);
++        mPaint.setStrokeCap(Paint.Cap.ROUND);
++        mPaint.setColor(color);
++        mAnimator.setDuration(1100);
++        mAnimator.setRepeatCount(ValueAnimator.INFINITE);
++        mAnimator.setInterpolator(new LinearInterpolator());
++        mAnimator.addUpdateListener(a -> {
++            mPhase = (float) a.getAnimatedValue();
++            invalidateSelf();
++        });
++    }
++
++    @Override
++    protected void onBoundsChange(Rect b) {
++        float inset = mPaint.getStrokeWidth() / 2;
++        float r = Math.min(b.width(), b.height()) / 2f - inset;
++        float cx = b.exactCenterX(), cy = b.exactCenterY();
++        mOutline.reset();
++        // Clockwise from the top, as the circle ran.
++        for (int i = 0; i <= 256; i++) {
++            double t = -Math.PI / 2 + 2 * Math.PI * i / 256;
++            double c = Math.cos(t), s = Math.sin(t);
++            float x = (float) (cx + r * Math.signum(c) * Math.pow(Math.abs(c), 2 / N));
++            float y = (float) (cy + r * Math.signum(s) * Math.pow(Math.abs(s), 2 / N));
++            if (i == 0) mOutline.moveTo(x, y); else mOutline.lineTo(x, y);
++        }
++        mOutline.close();
++        mMeasure.setPath(mOutline, true);
++    }
++
++    @Override
++    public void draw(Canvas canvas) {
++        float length = mMeasure.getLength();
++        if (length <= 0f) return;
++        float start = mPhase * length;
++        float end = start + length * ARC;
++        mArc.reset();
++        mMeasure.getSegment(start, Math.min(end, length), mArc, true);
++        if (end > length) mMeasure.getSegment(0f, end - length, mArc, true);
++        canvas.drawPath(mArc, mPaint);
++    }
++
++    @Override public void start() { if (!mAnimator.isStarted()) mAnimator.start(); }
++    @Override public void stop() { mAnimator.cancel(); }
++    @Override public boolean isRunning() { return mAnimator.isRunning(); }
++    @Override public void setAlpha(int alpha) { mPaint.setAlpha(alpha); invalidateSelf(); }
++    @Override public void setColorFilter(ColorFilter cf) { mPaint.setColorFilter(cf); invalidateSelf(); }
++    @Override public void setTint(int tint) { mPaint.setColor(tint); invalidateSelf(); }
++    @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
++}
 diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 index 26c5a40aad4a..34302df4d8e3 100644
 --- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
@@ -2532,6 +2620,28 @@ index 26c5a40aad4a..34302df4d8e3 100644
          SystemUIDialog dialog = createDialog(displayId);
          prepareDialog();
  
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java b/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
+index 0194c43d0e53..3742f4e260f9 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
+@@ -105,7 +105,16 @@ public class ShutdownUi {
+                 mContext.getTheme());
+ 
+         ProgressBar bar = d.findViewById(R.id.progress);
+-        bar.getIndeterminateDrawable().setTint(color);
++        // Etesian: the busy indicator runs round the N9 squircle, not a circle.
++        bar.setIndeterminateDrawable(new EtesianSquircleSpinner(color,
++                mContext.getResources().getDisplayMetrics().density));
++        bar.setContentDescription("Etesian squircle spinner");
++        // Big enough for the squircle to read as one (Android's circle was 32 dp).
++        int side = Math.round(56 * mContext.getResources().getDisplayMetrics().density);
++        bar.getLayoutParams().width = side;
++        bar.getLayoutParams().height = side;
++        bar.setMinimumWidth(side);
++        bar.setMinimumHeight(side);
+ 
+         TextView reasonView = d.findViewById(R.id.text1);
+         TextView messageView = d.findViewById(R.id.text2);
 diff --git a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardUnlockAnimationController.kt b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardUnlockAnimationController.kt
 index 2e1ae2ffbe3e..696fba4decf3 100644
 --- a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardUnlockAnimationController.kt
@@ -8381,7 +8491,7 @@ index 000000000000..c8f1d6ee8331
 +import com.android.systemui.navigationbar.views.EtesianBottomBar;
 +
 +/**
-+ * Etesian toolbar as a side strip (an edge bar), instead of the bar at the bottom:
++ * Etesian toolbar as a side strip (like Sony's Side Sense), instead of the bar at the bottom:
 + * a slim handle on the Back side of the screen; tapping it slides in a vertical strip with the
 + * same buttons as the bar (Back and the user's buttons, or the app's own). The strip hides again
 + * after a button is used, a tap outside it, or a few seconds.

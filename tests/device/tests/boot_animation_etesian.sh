@@ -11,3 +11,6 @@ check "phone has the Etesian boot animation" '[ "$dev" = "$(md5sum < $Z | cut -c
 check "part0 loops while booting, part1 plays once when booted" 'unzip -p $Z desc.txt | grep -qx "p 0 0 part0" && unzip -p $Z desc.txt | grep -qx "c 1 0 part1"'
 check "startup sound is in part1" 'unzip -l $Z | grep -q " part1/audio.wav$"'
 check "and not in part0 (it plays after boot, not during)" '! unzip -l $Z | grep -q " part0/audio.wav$"'
+# 2026-11-18 (user): softer edges (most at the top), no flicker as the pulse fades, the N9's water drops, the shadow.
+check "top edge fades to black (top 5% mean < 1.5)" 'unzip -p $Z part1/00045.jpg | python3 -c "import sys,io;from PIL import Image,ImageStat;im=Image.open(io.BytesIO(sys.stdin.buffer.read())).convert(\"L\");w,h=im.size;sys.exit(0 if ImageStat.Stat(im.crop((0,0,w,h//20))).mean[0]<1.5 else 1)"'
+check "made with drops, smoothing and the shadow" 'M=~/android/lineage/vendor/etesian/bootanimation/make.py; grep -q "def drops(" $M && grep -q "T_SIGMA" $M && grep -q "^SHADOW, SHADOW_BLUR, SHADOW_DY" $M'

@@ -64,6 +64,10 @@ object Prefs {
     const val SIDE_FREE = "free"
     /** Breeze's look: "toolbar" (the bottom bar's theme), "light" or "dark". */
     const val BREEZE_THEME = "breeze_theme"
+    /** Breeze's sizes, in dp: the handle's thickness and height, the floating button's side. */
+    const val BREEZE_THICKNESS = "breeze_thickness"
+    const val BREEZE_HEIGHT = "breeze_height"
+    const val BREEZE_BUTTON = "breeze_button_size"
     const val SIDEBAR_FLICK_IN = "sidebar_flick_in"
     const val SIDEBAR_FLICK_UP = "sidebar_flick_up"
     const val SIDEBAR_FLICK_DOWN = "sidebar_flick_down"
@@ -165,6 +169,18 @@ object Prefs {
     fun breezeWidgets(ctx: Context): List<Int> =
         of(ctx).getString(BREEZE_WIDGETS, "")!!.split(',').mapNotNull { it.toIntOrNull() }
     fun setBreezeWidgets(ctx: Context, ids: List<Int>) = of(ctx).edit().putString(BREEZE_WIDGETS, ids.joinToString(",")).apply()
+    /** The bottom bar's button: the smallest Breeze (or its button) gets. */
+    const val BREEZE_MIN_DP = 48
+    /** The largest: three app icons, and never more than a quarter of the screen. */
+    fun breezeMaxDp(ctx: Context, alongHeight: Boolean): Int {
+        val m = ctx.resources.displayMetrics
+        val quarter = ((if (alongHeight) m.heightPixels else minOf(m.widthPixels, m.heightPixels)) / m.density / 4).toInt()
+        return minOf(iconSizeDp(ctx) * 3, quarter).coerceAtLeast(BREEZE_MIN_DP)
+    }
+    fun breezeThicknessDp(ctx: Context) = of(ctx).getInt(BREEZE_THICKNESS, 12).coerceIn(6, 28)
+    fun breezeHeightDp(ctx: Context) = of(ctx).getInt(BREEZE_HEIGHT, 140).coerceIn(BREEZE_MIN_DP, breezeMaxDp(ctx, true))
+    fun breezeButtonDp(ctx: Context) = of(ctx).getInt(BREEZE_BUTTON, 56).coerceIn(BREEZE_MIN_DP, breezeMaxDp(ctx, false))
+
     fun breezeDark(ctx: Context) = when (of(ctx).getString(BREEZE_THEME, "toolbar")) {
         "dark" -> true
         "light" -> false
