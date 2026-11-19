@@ -32,6 +32,35 @@ check "every story has a picture ($pics of $all)" '[ "$all" -ge 20 ] && [ "$pics
 u=$(echo "$Q" | grep -o "image=http[^,]*" | head -1 | cut -d= -f2-)
 check "and it loads ($(curl -s -o /dev/null -w "%{http_code} %{content_type}" "$u"))" 'curl -s -o /dev/null -w "%{content_type}" "$u" | grep -q "^image/"'
 
+# User 2026-11-19: stories open in Glance's own reader (Readability, like Firefox's Reader View), the browser a tap away.
+reader_state() { dumpx | grep -o 'content-desc="reader:[^"]*"' | head -1; }
+read_story() {  # $1: which story on screen (1-based)
+  sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 3
+  [ "$1" -gt 1 ] && { sh_ input swipe 540 1700 540 700 400; sleep 1.5; }
+  local b; b=$(dumpx | grep -o 'content-desc="story:[^"]*"[^>]*bounds="[^"]*"' | sed -n "${1}p" | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | tr '[],' '   ')
+  set -- $b; adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+  for _ in $(seq 35); do r=$(reader_state); case "$r" in *article*|*page*|*consent*) break;; esac; sleep 1; done
+  echo "$r"; }
+arts=0; tried=""
+for n in 1 2 3; do r=$(read_story $n); tried="$tried ${r#*reader:}"; shot reader_$n
+  echo "$r" | grep -q "reader:article:" && n_=${r##*:}; n_=${n_%\"}; [ "$n_" -ge 1000 ] 2>/dev/null && arts=$((arts + 1)); done
+check "stories open as articles in Glance's reader ($arts of 3:$tried)" '[ "$arts" -ge 2 ]'
+tap_desc "Open in browser"; sleep 3
+check "and Open in browser leaves for the browser ($(top_activity))" '! top_activity | grep -q "$G"'
+sh_ input keyevent BACK; sleep 1
+
+# User 2026-11-19: buttons on the bottom bar, never on top (N9; closer to the thumb). On another phone (no Etesian
+# bar) Glance draws the same bar itself, at the bottom.
+bottom_of() { dumpx | grep -o "content-desc=\"$1\"[^>]*bounds=\"[^\"]*\"" | head -1 | grep -o '\]\[[0-9]*,[0-9]*\]' | tr -dc '0-9,' | cut -d, -f2; }
+H=$(adb shell wm size | grep -o '[0-9]*$' | tail -1)
+sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 2.5
+check "no Settings button on top any more" '! dumpx | grep -q "content-desc=\"Settings\"[^>]*bounds=\"\[[0-9]*,[0-9]\{1,3\}\]"'
+bb=$(sh_ settings get secure etesian_bottom_bar)
+sh_ settings put secure etesian_bottom_bar 0; sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 2.5
+y=$(bottom_of Settings); shot glance_own_bar
+check "without the Etesian bar Glance draws its own, at the bottom (Settings ends at $y of $H)" '[ -n "$y" ] && [ "$y" -gt $((H * 85 / 100)) ]'
+sh_ settings put secure etesian_bottom_bar "${bb/null/1}"; sh_ am force-stop $G
+
 # Notifications: the setup card's button switches Glance's access on itself (platform key), when the user asks.
 L=$(sh_ settings get secure enabled_notification_listeners)
 if ! echo "$L" | grep -q $G; then
@@ -47,6 +76,11 @@ glance_search lakeside
 check "and by its text" 'dumpx | grep -q "content-desc=\"result:[a-z]*:QuokkaSighting"'
 tap_desc "result:message:QuokkaSighting" || tap_desc "result:notification:QuokkaSighting"; sleep 2.5
 check "tapping it opens the notification's own action (Etesian Settings: $(top_activity))" 'top_activity | grep -q "com.bompotis.etesian.launcher/.SettingsActivity"'
+
+# A news result from search opens in the reader too, not the browser.
+glance_search energy; tap_desc "result:news:" || tap_desc "result:feed:"; sleep 6
+check "a news result opens in Glance's reader ($(top_activity))" 'top_activity | grep -q "$G/.ReaderActivity"'
+sh_ input keyevent BACK; sleep 1
 
 glance_search wifi; shot glance_search_wifi
 check "Settings pages are found (Wi-Fi)" 'dumpx | grep -q "content-desc=\"result:setting:Wi-Fi"'
