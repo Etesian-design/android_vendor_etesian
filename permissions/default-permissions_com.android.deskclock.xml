@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Granted with the ROM (2026-11-19): the N9's Clock never asked; alarms just worked. Without these Clock asked on
+     every launch until both were granted, in a Material dialog. -->
+<exceptions>
+    <exception package="com.android.deskclock">
+        <permission name="org.codeaurora.permission.POWER_OFF_ALARM" fixed="false" />
+        <permission name="android.permission.POST_NOTIFICATIONS" fixed="false" />
+    </exception>
+</exceptions>

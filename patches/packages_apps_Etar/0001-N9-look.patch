@@ -1362,6 +1362,19 @@ index 8394eb5a..fc55b88c 100644
              if (isBold) {
                  mMonthNumPaint.setFakeBoldText(isBold = false);
              }
+diff --git a/app/src/main/java/com/android/calendar/settings/GeneralPreferences.kt b/app/src/main/java/com/android/calendar/settings/GeneralPreferences.kt
+index 76d75643..4715cb0c 100644
+--- a/app/src/main/java/com/android/calendar/settings/GeneralPreferences.kt
++++ b/app/src/main/java/com/android/calendar/settings/GeneralPreferences.kt
+@@ -559,7 +559,7 @@ class GeneralPreferences : PreferenceFragmentCompat(),
+         const val WEEK_START_FRIDAY = "6"
+         const val WEEK_START_SATURDAY = "7"
+         // Default preference values
+-        const val DEFAULT_DEFAULT_START = "-2"
++        const val DEFAULT_DEFAULT_START = "4" // Etesian: the month, as on the N9
+         const val DEFAULT_START_VIEW = CalendarController.ViewType.WEEK
+         const val DEFAULT_DETAILED_VIEW = CalendarController.ViewType.DAY
+         const val DEFAULT_SHOW_WEEK_NUM = false
 diff --git a/app/src/main/java/com/android/calendar/settings/SettingsActivity.kt b/app/src/main/java/com/android/calendar/settings/SettingsActivity.kt
 index 5e6f3a64..e9a5c2bf 100644
 --- a/app/src/main/java/com/android/calendar/settings/SettingsActivity.kt
@@ -4059,6 +4072,19 @@ index 14c041b9..49e94170 100644
          <item name="autoCompleteTextViewStyle">@style/actionbar_cursor</item>
          <item name="calendarSpinnerDisabledTextColor">@color/calendar_item_disabled</item>
      </style>
+diff --git a/app/src/main/res/xml/general_preferences.xml b/app/src/main/res/xml/general_preferences.xml
+index b9daf297..c8f777df 100644
+--- a/app/src/main/res/xml/general_preferences.xml
++++ b/app/src/main/res/xml/general_preferences.xml
+@@ -33,7 +33,7 @@
+             app:title="@string/preferences_real_event_colors" />
+         <ListPreference
+             app:key="preferences_default_start"
+-            app:defaultValue="-2"
++            app:defaultValue="4"
+             app:title="@string/default_start_title"
+             app:entries="@array/default_start_entries"
+             app:entryValues="@array/default_start_values" />
 diff --git a/app/src_aosp/main/java/ws/xsoh/etar/databinding/DayActivityBinding.java b/app/src_aosp/main/java/ws/xsoh/etar/databinding/DayActivityBinding.java
 index c2ca135b..3e166a57 100644
 --- a/app/src_aosp/main/java/ws/xsoh/etar/databinding/DayActivityBinding.java

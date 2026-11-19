@@ -2624,7 +2624,7 @@ index bb271b756..8e27a428e 100644
      }
  
 diff --git a/src/com/android/deskclock/DeskClock.java b/src/com/android/deskclock/DeskClock.java
-index d1e95ad6a..ac9df1cdc 100644
+index d1e95ad6a..1e0a1eb02 100644
 --- a/src/com/android/deskclock/DeskClock.java
 +++ b/src/com/android/deskclock/DeskClock.java
 @@ -115,6 +115,41 @@ public class DeskClock extends BaseActivity
@@ -2682,7 +2682,7 @@ index d1e95ad6a..ac9df1cdc 100644
  
          setContentView(R.layout.desk_clock);
          mSnackbarAnchor = findViewById(R.id.content);
-@@ -233,6 +274,25 @@ public class DeskClock extends BaseActivity
+@@ -233,6 +274,32 @@ public class DeskClock extends BaseActivity
          mBottomNavigation = findViewById(R.id.bottom_view);
          mBottomNavigation.setOnItemSelectedListener(mNavigationListener);
  
@@ -2705,10 +2705,17 @@ index d1e95ad6a..ac9df1cdc 100644
 +        mUseSystemToolbar = com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this);
 +        mN9TabBar.setVisibility(mUseSystemToolbar ? View.GONE : View.VISIBLE);
 +
++        // As on the N9, opened from the home screen Clock is its one page: the clock over the alarms.
++        // (Other tabs stay reachable from the toolbar; a timer or stopwatch intent still opens its own.)
++        if (savedInstanceState == null && getIntent() != null
++                && android.content.Intent.ACTION_MAIN.equals(getIntent().getAction())
++                && getIntent().hasCategory(android.content.Intent.CATEGORY_LAUNCHER)) {
++            UiDataModel.getUiDataModel().setSelectedTab(UiDataModel.Tab.ALARMS);
++        }
          // Honor changes to the selected tab from outside entities.
          UiDataModel.getUiDataModel().addTabListener(mTabChangeWatcher);
  
-@@ -541,6 +601,10 @@ public class DeskClock extends BaseActivity
+@@ -541,6 +608,10 @@ public class DeskClock extends BaseActivity
          final UiDataModel.Tab selectedTab = UiDataModel.getUiDataModel().getSelectedTab();
          // Update the selected tab in the mBottomNavigation if it does not agree with UiDataModel.
          mBottomNavigation.setSelectedItemId(selectedTab.getPageResId());

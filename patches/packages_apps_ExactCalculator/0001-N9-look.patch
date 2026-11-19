@@ -1,108 +1,107 @@
+diff --git a/Android.bp b/Android.bp
+index 8b81f42..b05f5fe 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -32,5 +32,6 @@ android_app {
+         "com.google.android.material_material",
+         "ExactCalculator_com.hp_crcalc",
+         "kotlin-stdlib",
++        "etesian-toolbar",
+     ],
+ }
 diff --git a/res/drawable/n9_key_advanced.xml b/res/drawable/n9_key_advanced.xml
 new file mode 100644
-index 0000000..054eda6
+index 0000000..970b78a
 --- /dev/null
 +++ b/res/drawable/n9_key_advanced.xml
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<!-- N9 calculator key: a bare glyph, no box; a dark squircle only while pressed. -->
 +<selector xmlns:android="http://schemas.android.com/apk/res/android">
 +    <item android:state_pressed="true">
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
++        <inset android:insetTop="3dp" android:insetBottom="3dp" android:insetLeft="6dp" android:insetRight="6dp">
 +            <shape android:shape="rectangle">
 +                <solid android:color="@color/n9_key_pressed" />
 +                <corners android:radius="@dimen/n9_key_corner_radius" />
 +            </shape>
 +        </inset>
 +    </item>
-+    <item>
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
-+            <shape android:shape="rectangle">
-+                <solid android:color="@color/n9_card" />
-+                <corners android:radius="@dimen/n9_key_corner_radius" />
-+            </shape>
-+        </inset>
-+    </item>
++    <item><color android:color="@android:color/transparent" /></item>
 +</selector>
 diff --git a/res/drawable/n9_key_digit.xml b/res/drawable/n9_key_digit.xml
 new file mode 100644
-index 0000000..5e82ca1
+index 0000000..970b78a
 --- /dev/null
 +++ b/res/drawable/n9_key_digit.xml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<!-- N9 calculator key: a bare glyph, no box; a dark squircle only while pressed. -->
 +<selector xmlns:android="http://schemas.android.com/apk/res/android">
 +    <item android:state_pressed="true">
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
++        <inset android:insetTop="3dp" android:insetBottom="3dp" android:insetLeft="6dp" android:insetRight="6dp">
 +            <shape android:shape="rectangle">
 +                <solid android:color="@color/n9_key_pressed" />
 +                <corners android:radius="@dimen/n9_key_corner_radius" />
 +            </shape>
 +        </inset>
 +    </item>
-+    <item>
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
-+            <shape android:shape="rectangle">
-+                <solid android:color="@color/n9_key_digit" />
-+                <stroke android:width="1dp" android:color="@color/n9_separator" />
-+                <corners android:radius="@dimen/n9_key_corner_radius" />
-+            </shape>
-+        </inset>
-+    </item>
++    <item><color android:color="@android:color/transparent" /></item>
 +</selector>
 diff --git a/res/drawable/n9_key_equals.xml b/res/drawable/n9_key_equals.xml
 new file mode 100644
-index 0000000..a2cb5d2
+index 0000000..970b78a
 --- /dev/null
 +++ b/res/drawable/n9_key_equals.xml
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
++<!-- N9 calculator key: a bare glyph, no box; a dark squircle only while pressed. -->
 +<selector xmlns:android="http://schemas.android.com/apk/res/android">
 +    <item android:state_pressed="true">
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
-+            <shape android:shape="rectangle">
-+                <solid android:color="@color/n9_blue_dark" />
-+                <corners android:radius="@dimen/n9_key_corner_radius" />
-+            </shape>
-+        </inset>
-+    </item>
-+    <item>
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
-+            <shape android:shape="rectangle">
-+                <gradient android:angle="270" android:startColor="#1FB6F0" android:endColor="@color/n9_blue" />
-+                <corners android:radius="@dimen/n9_key_corner_radius" />
-+            </shape>
-+        </inset>
-+    </item>
-+</selector>
-diff --git a/res/drawable/n9_key_function.xml b/res/drawable/n9_key_function.xml
-new file mode 100644
-index 0000000..60c4117
---- /dev/null
-+++ b/res/drawable/n9_key_function.xml
-@@ -0,0 +1,20 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 calculator key: squircle-ish rounded square, orange when pressed. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_pressed="true">
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
++        <inset android:insetTop="3dp" android:insetBottom="3dp" android:insetLeft="6dp" android:insetRight="6dp">
 +            <shape android:shape="rectangle">
 +                <solid android:color="@color/n9_key_pressed" />
 +                <corners android:radius="@dimen/n9_key_corner_radius" />
 +            </shape>
 +        </inset>
 +    </item>
-+    <item>
-+        <inset android:insetTop="3dp" android:insetBottom="3dp">
++    <item><color android:color="@android:color/transparent" /></item>
++</selector>
+diff --git a/res/drawable/n9_key_function.xml b/res/drawable/n9_key_function.xml
+new file mode 100644
+index 0000000..970b78a
+--- /dev/null
++++ b/res/drawable/n9_key_function.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 calculator key: a bare glyph, no box; a dark squircle only while pressed. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_pressed="true">
++        <inset android:insetTop="3dp" android:insetBottom="3dp" android:insetLeft="6dp" android:insetRight="6dp">
 +            <shape android:shape="rectangle">
-+                <solid android:color="@color/n9_key_function" />
++                <solid android:color="@color/n9_key_pressed" />
 +                <corners android:radius="@dimen/n9_key_corner_radius" />
 +            </shape>
 +        </inset>
 +    </item>
++    <item><color android:color="@android:color/transparent" /></item>
 +</selector>
+diff --git a/res/drawable/n9_tb_menu.xml b/res/drawable/n9_tb_menu.xml
+new file mode 100644
+index 0000000..eb6af69
+--- /dev/null
++++ b/res/drawable/n9_tb_menu.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: menu -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="#FF282828"
++        android:pathData="M6,8h20v3H6zM6,14.5h20v3H6zM6,21h20v3H6z" />
++</vector>
 diff --git a/res/values-night-v34/color.xml b/res/values-night-v34/color.xml
 deleted file mode 100644
 index 71f9f31..0000000
@@ -185,24 +184,26 @@ index 4e998db..16ca772 100644
 +
  </resources>
 diff --git a/res/values/color.xml b/res/values/color.xml
-index d49facd..28009c6 100644
+index d49facd..d88cda3 100644
 --- a/res/values/color.xml
 +++ b/res/values/color.xml
-@@ -5,13 +5,25 @@
+@@ -5,13 +5,27 @@
  -->
  <resources>
  
-+    <!-- N9 (Etesian blanco) static palette; no dynamic colour, no night variant. -->
-+    <color name="n9_window">#E9E9E9</color>
-+    <color name="n9_card">#F4F4F4</color>
-+    <color name="n9_text">#191919</color>
++    <!-- N9 calculator (Etesian): black, white light digits, grey operators, orange result and =. Static, no dynamic colour. -->
++    <color name="n9_window">#000000</color>
++    <color name="n9_card">#0E0E0E</color>
++    <color name="n9_text">#FFFFFF</color>
 +    <color name="n9_text_secondary">#8C8C8C</color>
-+    <color name="n9_separator">#D6D6D6</color>
++    <color name="n9_separator">#333333</color>
 +    <color name="n9_blue">#00A5E5</color>
 +    <color name="n9_blue_dark">#0086BA</color>
-+    <color name="n9_key_digit">#FFFFFF</color>
-+    <color name="n9_key_function">#D9D9D9</color>
-+    <color name="n9_key_pressed">#F2B111</color>
++    <color name="n9_key_digit">#00000000</color>
++    <color name="n9_key_function">#00000000</color>
++    <color name="n9_key_pressed">#2E2E2E</color>
++    <color name="n9_orange">#F28C00</color>
++    <color name="n9_operator">#BDBDBD</color>
 +
      <!-- Display background -->
 -    <color name="history_background_color">@color/material_dynamic_neutral95</color>
@@ -214,9 +215,9 @@ index d49facd..28009c6 100644
 -    <color name="display_formula_text_color">@color/material_dynamic_neutral20</color>
 -    <color name="display_result_text_color">@color/material_dynamic_neutral40</color>
 -    <color name="display_result_exponent_text_color">@color/material_dynamic_neutral40</color>
-+    <color name="display_formula_text_color">@color/n9_text_secondary</color>
-+    <color name="display_result_text_color">@color/n9_text</color>
-+    <color name="display_result_exponent_text_color">@color/n9_blue</color>
++    <color name="display_formula_text_color">@color/n9_orange</color>
++    <color name="display_result_text_color">@color/n9_text_secondary</color>
++    <color name="display_result_exponent_text_color">@color/n9_orange</color>
  
  </resources>
 diff --git a/res/values/dimens.xml b/res/values/dimens.xml
@@ -232,6 +233,17 @@ index 0fd3098..00393fe 100644
  
      <!-- Dimens for display formula. -->
      <dimen name="formula_padding_top">16dip</dimen>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 39c91c5..aa2a621 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -295,4 +295,6 @@
+     <!-- Placeholder string when there is no history to be shown. [CHAR_LIMIT=40] -->
+     <string name="no_history">No History</string>
+ 
++    <!-- Etesian: the bottom toolbar's menu button. -->
++    <string name="n9_menu">Menu</string>
+ </resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
 index 3855c43..fca263d 100644
 --- a/res/values/styles.xml
@@ -273,7 +285,7 @@ index 3855c43..fca263d 100644
  
      <style name="PadButtonStyle.Caps">
 diff --git a/res/values/themes.xml b/res/values/themes.xml
-index 6fbc2af..696766b 100644
+index 6fbc2af..d4507b9 100644
 --- a/res/values/themes.xml
 +++ b/res/values/themes.xml
 @@ -6,10 +6,21 @@
@@ -295,9 +307,9 @@ index 6fbc2af..696766b 100644
 -        <item name="android:windowLightStatusBar">?isLightTheme</item>
 -        <item name="android:navigationBarColor">?colorSurface</item>
 -        <item name="android:windowLightNavigationBar">?isLightTheme</item>
-+        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:windowLightStatusBar">false</item>
 +        <item name="android:navigationBarColor">@color/n9_window</item>
-+        <item name="android:windowLightNavigationBar">true</item>
++        <item name="android:windowLightNavigationBar">false</item>
      </style>
  
      <style name="Theme.Calculator">
@@ -315,9 +327,9 @@ index 6fbc2af..696766b 100644
 +        <item name="android:colorBackground">@color/n9_window</item>
 +        <item name="android:fontFamily">etesian-text</item>
 +        <item name="android:statusBarColor">@color/n9_window</item>
-+        <item name="android:windowLightStatusBar">true</item>
++        <item name="android:windowLightStatusBar">false</item>
 +        <item name="android:navigationBarColor">@color/n9_window</item>
-+        <item name="android:windowLightNavigationBar">true</item>
++        <item name="android:windowLightNavigationBar">false</item>
      </style>
  
      <style name="Theme.Button" parent="ThemeOverlay.Material3Expressive.Button.TextButton">
@@ -343,7 +355,7 @@ index 6fbc2af..696766b 100644
 -        <item name="colorContainer">?colorSecondaryContainer</item>
 -        <item name="colorOnContainer">?colorOnSecondaryContainer</item>
 +        <item name="colorContainer">@color/n9_key_function</item>
-+        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="colorOnContainer">@color/n9_operator</item>
 +        <item name="n9KeyBackground">@drawable/n9_key_function</item>
      </style>
  
@@ -351,7 +363,7 @@ index 6fbc2af..696766b 100644
 -        <item name="colorContainer">?colorSurfaceVariant</item>
 -        <item name="colorOnContainer">?colorOnSurfaceVariant</item>
 +        <item name="colorContainer">@color/n9_key_function</item>
-+        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="colorOnContainer">@color/n9_operator</item>
 +        <item name="n9KeyBackground">@drawable/n9_key_function</item>
      </style>
  
@@ -359,7 +371,7 @@ index 6fbc2af..696766b 100644
 -        <item name="colorContainer">?colorPrimaryContainer</item>
 -        <item name="colorOnContainer">?colorOnPrimaryContainer</item>
 +        <item name="colorContainer">@color/n9_key_function</item>
-+        <item name="colorOnContainer">@color/n9_text</item>
++        <item name="colorOnContainer">@color/n9_operator</item>
 +        <item name="n9KeyBackground">@drawable/n9_key_function</item>
      </style>
  
@@ -367,11 +379,61 @@ index 6fbc2af..696766b 100644
 -        <item name="colorContainer">?colorTertiary</item>
 -        <item name="colorOnContainer">?colorOnTertiary</item>
 +        <item name="colorContainer">@color/n9_key_function</item>
-+        <item name="colorOnContainer">@android:color/white</item>
++        <item name="colorOnContainer">@color/n9_orange</item>
 +        <item name="n9KeyBackground">@drawable/n9_key_equals</item>
      </style>
  
  </resources>
+diff --git a/src/com/android/calculator2/Calculator.java b/src/com/android/calculator2/Calculator.java
+index 6551570..50aa3b7 100644
+--- a/src/com/android/calculator2/Calculator.java
++++ b/src/com/android/calculator2/Calculator.java
+@@ -302,6 +302,9 @@ public class Calculator extends AppCompatActivity
+         }
+     }
+ 
++    /** Etesian: the menu lives on the system bottom toolbar instead of the top bar. */
++    private boolean mEtesianToolbar;
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+@@ -312,6 +315,18 @@ public class Calculator extends AppCompatActivity
+ 
+         // Hide all default options in the ActionBar.
+         getSupportActionBar().setDisplayOptions(0);
++        // Etesian: as on the N9, nothing on top. The menu (history, full result, fraction, licences) is on the
++        // bottom toolbar, as the N9 menu sheet. The app's only screen: no Back (rule 2).
++        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this)) {
++            mEtesianToolbar = true;
++            com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setBack(false).setItems(id -> {
++                if ("menu".equals(id)) {
++                    com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.activity_calculator,
++                            this::onPrepareOptionsMenu, this::onOptionsItemSelected);
++                }
++            }, com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("menu", R.drawable.n9_tb_menu,
++                    getString(R.string.n9_menu)));
++        }
+ 
+         mMainCalculator = findViewById(R.id.main_calculator);
+         mModeView = findViewById(R.id.mode);
+@@ -1041,6 +1056,7 @@ public class Calculator extends AppCompatActivity
+     @Override
+     public boolean onCreateOptionsMenu(Menu menu) {
+         super.onCreateOptionsMenu(menu);
++        if (mEtesianToolbar) return true; // the menu is on the bottom toolbar
+ 
+         getMenuInflater().inflate(R.menu.activity_calculator, menu);
+         return true;
+@@ -1049,6 +1065,8 @@ public class Calculator extends AppCompatActivity
+     @Override
+     public boolean onPrepareOptionsMenu(Menu menu) {
+         super.onPrepareOptionsMenu(menu);
++        // Etesian: the top menu is empty when the menu is on the bottom toolbar (the N9 sheet prepares its own).
++        if (menu.findItem(R.id.menu_leading) == null) return false;
+ 
+         // Show the leading option when displaying a result.
+         menu.findItem(R.id.menu_leading).setVisible(mCurrentState == CalculatorState.RESULT);
 diff --git a/src/com/android/calculator2/CalculatorApplication.java b/src/com/android/calculator2/CalculatorApplication.java
 index 00b71b5..970883c 100644
 --- a/src/com/android/calculator2/CalculatorApplication.java

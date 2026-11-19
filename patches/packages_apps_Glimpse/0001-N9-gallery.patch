@@ -462,7 +462,7 @@ index 9552773..6a63b99 100644
          // Clear action mode if still active
          endSelectionMode()
 diff --git a/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt b/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
-index 390b284..e4c6978 100644
+index 390b284..de24966 100644
 --- a/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
 +++ b/app/src/main/java/org/lineageos/glimpse/fragments/MainFragment.kt
 @@ -8,6 +8,7 @@ package org.lineageos.glimpse.fragments
@@ -545,7 +545,7 @@ index 390b284..e4c6978 100644
 +     * Publish the main tabs to the system N9 toolbar (no Back on the main screen).
 +     */
 +    private fun updateSystemToolbar() {
-+        if (!isResumed || !EtesianToolbar.isAvailable(requireContext())) {
++        if (!isAdded || view == null || !EtesianToolbar.isAvailable(requireContext())) {
 +            return
 +        }
 +

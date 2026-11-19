@@ -198,6 +198,8 @@ final class EtesianToolbarView extends LinearLayout {
             cell.setBackground(new ColorDrawable(mTheme.selected));
         }
         target.setContentDescription(item.mLabel);
+        // Never colour alone: a screen reader hears which tab is the current one.
+        target.setSelected(item.mTab && item.mSelected);
         if (item.mEnabled) {
             target.setOnClickListener(v -> {
                 v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);

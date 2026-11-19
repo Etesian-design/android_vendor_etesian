@@ -455,7 +455,7 @@ class SettingsActivity : AppCompatActivity() {
             val owner = mapOf(
                 "Home screen views" to "home", "Appearance" to "apps", "App grid" to "apps", "Search" to "apps",
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
-                "Gestures" to "gestures", "Leaving an app" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
+                "Gestures" to "gestures", "Single hand mode" to "gestures", "Leaving an app" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
                 "Breeze shortcuts" to "sidesense", "Breeze widgets" to "sidesense", "Notifications on the lock screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
@@ -671,6 +671,19 @@ class SettingsActivity : AppCompatActivity() {
                     arrayOf("Disabled", "Swipe from the left side", "Swipe from the right side"),
                     arrayOf(Prefs.BACK_DISABLED, Prefs.BACK_LEFT, Prefs.BACK_RIGHT),
                     Prefs.backGesture(ctx))   // also migrates a removed choice
+                // Single hand mode's size, live: the small screen grows or shrinks as the slider moves (also while on).
+                val single = category("Single hand mode")
+                single.addPreference(SettingsPreview.Row(ctx, "singlehand"))
+                androidx.preference.SeekBarPreference(ctx).apply {
+                    key = "single_hand_size"; title = "Size"; isIconSpaceReserved = false; isPersistent = false
+                    min = 50; max = 90; seekBarIncrement = 5; showSeekBarValue = false; updatesContinuously = true
+                    value = Settings.Secure.getInt(ctx.contentResolver, "etesian_single_hand_size", 70).coerceIn(50, 90)
+                    summary = "The small screen's width; it always sits in a corner, and a tap moves it to the nearest one"
+                    setOnPreferenceChangeListener { _, v ->
+                        Settings.Secure.putInt(ctx.contentResolver, "etesian_single_hand_size", v as Int); true
+                    }
+                    single.addPreference(this)
+                }
                 // Where an application swiped away goes, per edge (Back by swiping in takes over its side).
                 val leave = category("Leaving an app")
                 leave.title = "After swiping an app away"

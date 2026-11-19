@@ -1,6 +1,7 @@
-# User 2026-11-19: single hand mode. The whole screen at half its size, the same shape (zoomed out: the resolution
-# stays), within reach of the thumb. Tapping the empty space moves it to that side; a double tap there returns to
-# full screen. On from an app shortcut, a toolbar or Breeze button, or a Breeze gesture.
+# User 2026-11-19: single hand mode. The whole screen smaller, the same shape (zoomed out: the resolution stays),
+# within reach of the thumb. Its size is the user's (a slider with a live preview in Etesian settings, default 70%:
+# half suits only very large phones). It always sits in a corner, never the middle; a tap in the empty space moves
+# it to the corner nearest the tap; a double tap there returns to full screen. On from an app shortcut, a toolbar or Breeze button, or a Breeze gesture.
 L=~/android/lineage/vendor/etesian/launcher/app/src/main/java/com/bompotis/etesian/launcher
 G=com.bompotis.etesian.glance
 # Real screen coordinates throughout (the library maps taps and dumps onto 1080 x 2160): raw adb.
@@ -10,6 +11,7 @@ bounds() { state | grep -o 'bounds=\[[-0-9]*,[-0-9]*\]\[[-0-9]*,[-0-9]*\]' | tr 
 raw_tap() { A shell input tap "$1" "$2"; }
 set -- $(A shell wm size | grep -o '[0-9]*x[0-9]*' | head -1 | tr x ' '); SW=$1; SH=$2
 unlock; home
+sh_ settings delete secure etesian_single_hand_size
 
 check "offered as a toolbar/Breeze button, a macro step and a Breeze gesture" \
   'grep -q "Single hand mode" $L/ToolbarConfig.kt && grep -q "\"singlehand\" -> SingleHand.toggle" $L/ToolbarActions.kt && grep -q "ACTION_SINGLE_HAND" $L/SettingsActivity.kt && grep -q "ACTION_SINGLE_HAND -> " $L/../../../../../../platform/java/com/bompotis/etesian/launcher/platform/EdgeGestures.kt'
@@ -19,8 +21,17 @@ check "and as an app shortcut on Etesian settings' icon" 'sh_ dumpsys shortcut |
 sh_ am start -n $LAUNCHER/.SingleHandActivity >/dev/null; sleep 1.5
 check "on ($(state))" 'state | grep -q "active=true"'
 set -- $(bounds); l=$1; t=$2; r=$3; b=$4
-check "half the size, the same shape ($((r - l))x$((b - t)) of ${SW}x$SH)" '[ $(( (r - l) * 2 - SW )) -ge -4 ] && [ $(( (r - l) * 2 - SW )) -le 4 ] && [ $(( (b - t) * 2 - SH )) -ge -4 ] && [ $(( (b - t) * 2 - SH )) -le 4 ]'
-check "at the bottom, in the middle" '[ $b -gt $((SH * 85 / 100)) ] && [ $(( l + r - SW )) -ge -4 ] && [ $(( l + r - SW )) -le 4 ]'
+check "70% of the size by default, the same shape ($((r - l))x$((b - t)) of ${SW}x$SH)" '[ $(( (r - l) * 100 - SW * 70 )) -ge -400 ] && [ $(( (r - l) * 100 - SW * 70 )) -le 400 ] && [ $(( (b - t) * 100 - SH * 70 )) -ge -400 ] && [ $(( (b - t) * 100 - SH * 70 )) -le 400 ]'
+check "in a corner, never the middle ($l,$t $r,$b)" '{ [ $l -le 2 ] || [ $r -ge $((SW - 2)) ]; } && { [ $t -le 2 ] || [ $b -gt $((SH * 85 / 100)) ]; }'
+
+# The size setting applies at once while on.
+sh_ settings put secure etesian_single_hand_size 55; sleep 1
+set -- $(bounds); l=$1; r=$3
+check "the size setting applies at once (55%: $((r - l)) of $SW)" '[ $(( (r - l) * 100 - SW * 55 )) -ge -400 ] && [ $(( (r - l) * 100 - SW * 55 )) -le 400 ]'
+sh_ settings put secure etesian_single_hand_size 30; sleep 1
+set -- $(bounds); l=$1; r=$3
+check "and is kept between 50% and 90% (asked for 30%: $((r - l)))" '[ $(( (r - l) * 100 - SW * 50 )) -ge -400 ] && [ $(( (r - l) * 100 - SW * 50 )) -le 400 ]'
+sh_ settings delete secure etesian_single_hand_size; sleep 1
 check "the empty space is SystemUI's (taps there are caught)" 'sh_ dumpsys window windows | grep -q "EtesianSingleHand"'
 A exec-out screencap -p > "$SHOTS/single_hand.png"
 
@@ -33,19 +44,21 @@ A exec-out screencap -p > "$SHOTS/single_hand_glance.png"
 check "a tap in the small screen reaches the app at that spot ($(top_activity))" 'top_activity | grep -q "$G/.ReaderActivity"'
 check "and the mode stays on in another app" 'state | grep -q "active=true"'
 
-# Tap left of it: it moves left. Tap above it: it moves up.
-set -- $(bounds); l=$1; t=$2; r=$3; b=$4
-raw_tap $(( l / 2 )) $(( (t + b) / 2 )); sleep 1
-check "a tap on its left moves it to the left ($(state))" 'state | grep -q "column=0"'
-set -- $(bounds); l=$1; t=$2; r=$3; b=$4
-raw_tap $(( (l + r) / 2 )) $(( t / 2 )); sleep 1
-check "a tap above it moves it up ($(state))" 'state | grep -q "row=0" && [ "$(bounds | cut -d" " -f2)" -le 2 ]'
+# A tap in the empty space: to the corner nearest the tap. Beside it, high up, then beside it, low down.
+set -- $(bounds); l=$1; r=$3
+if [ $l -le 2 ]; then x=$(( (r + SW) / 2 )); col=1; else x=$(( l / 2 )); col=0; fi
+raw_tap $x $(( SH / 6 )); sleep 1
+check "a tap high up beside it moves it to that top corner ($(state))" 'state | grep -q "column=$col row=0" && [ "$(bounds | cut -d" " -f2)" -le 2 ]'
+set -- $(bounds); l=$1; r=$3
+if [ $l -le 2 ]; then x=$(( (r + SW) / 2 )); col=1; else x=$(( l / 2 )); col=0; fi
+raw_tap $x $(( SH * 5 / 6 )); sleep 1
+check "a tap low down beside it moves it to that bottom corner, never the middle ($(state))" 'state | grep -q "column=$col row=1"'
 A exec-out screencap -p > "$SHOTS/single_hand_moved.png"
 
 # A double tap on the empty space: full screen again.
 set -- $(bounds); l=$1; t=$2; r=$3; b=$4
 x=$(( (r + SW) / 2 )); y=$(( (t + b) / 2 )); before=$(state)
-A shell "input tap $x $y; input tap $x $y"; sleep 1.2
+A shell "input tap $x $y; sleep 0.12; input tap $x $y"; sleep 1.2
 check "the double tap did not first move it (was: $before)" '[ "$(state | grep -o "column=[0-9]")" = "$(echo "$before" | grep -o "column=[0-9]")" ]'
 check "a double tap on the empty space returns to full screen ($(state))" 'state | grep -q "active=false"'
 check "and its setting is off again" '[ "$(sh_ settings get secure etesian_single_hand)" = 0 ]'
@@ -56,6 +69,14 @@ sh_ am start -n $LAUNCHER/.SingleHandActivity >/dev/null; sleep 1.2
 sh_ input keyevent SLEEP; sleep 1.5; unlock; sleep 1
 check "locking the phone ends it ($(state))" 'state | grep -q "active=false"'
 
+sh_ settings put secure etesian_single_hand 0
+# The setting: Etesian settings > Gestures, a preview of the phone with the small screen, and the Size slider.
+sh_ am start -n $LAUNCHER/.SettingsActivity --es section gestures >/dev/null; sleep 2
+for i in 1 2 3; do u=$(A shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; A shell cat /sdcard/u.xml); echo "$u" | grep -q "Preview: singlehand" && break; A shell input swipe $((SW/2)) $((SH*3/4)) $((SW/2)) $((SH/4)) 300; sleep 1; done
+A exec-out screencap -p > "$SHOTS/single_hand_setting.png"
+check "Gestures has Single hand mode with a live preview" 'echo "$u" | grep -q "text=\"Single hand mode\"" && echo "$u" | grep -q "Preview: singlehand"'
+check "and its Size slider" 'echo "$u" | grep -q "text=\"Size\"" && echo "$u" | grep -q "SeekBar"'
+home
 sh_ settings put secure etesian_single_hand 0
 check "SystemUI did not crash" '! crashed com.android.systemui'
 check "launcher did not crash" '! crashed $LAUNCHER'

@@ -372,6 +372,9 @@ public final class EtesianToolbar {
     private void fitBottom(FrameLayout decor) {
         if (mView == null) return;
         final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mView.getLayoutParams();
+        // The bar sits in the decor's bottom padding; a FrameLayout clips its children to its
+        // padding, so the bar was there (it took taps) but never drawn (Calendar, 2026-11-19).
+        if (decor.getPaddingBottom() > 0 && decor.getClipToPadding()) decor.setClipToPadding(false);
         if (lp.bottomMargin != -decor.getPaddingBottom()) {
             lp.bottomMargin = -decor.getPaddingBottom();
             mView.setLayoutParams(lp);

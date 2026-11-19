@@ -1,0 +1,14 @@
+diff --git a/overlay/rro_packages/DocumentsUIOverlay/res/values/config.xml b/overlay/rro_packages/DocumentsUIOverlay/res/values/config.xml
+index f6e0f8ea..f1d7ee2b 100644
+--- a/overlay/rro_packages/DocumentsUIOverlay/res/values/config.xml
++++ b/overlay/rro_packages/DocumentsUIOverlay/res/values/config.xml
+@@ -7,7 +7,8 @@
+     <!-- Indicates if showing as search bar design -->
+     <bool name="show_search_bar">true</bool>
+ 
+-    <string name="default_root_uri" translatable="false">content://com.android.externalstorage.documents/root/primary</string>
++    <!-- Etesian: every document on the phone, as the N9's Documents (not the storage root). -->
++    <string name="default_root_uri" translatable="false">content://com.android.providers.media.documents/root/documents_root</string>
+ 
+     <!-- Whether to show capitalize string on Button -->
+     <bool name="config_button_all_caps">false</bool>

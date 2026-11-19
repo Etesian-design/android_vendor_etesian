@@ -53,6 +53,10 @@ PRODUCT_PACKAGES += \
     Meeye
 endif
 
+# Clock's alarm permissions, granted with the ROM (permissions/default-permissions_com.android.deskclock.xml)
+PRODUCT_PACKAGES += \
+    default-permissions_com.android.deskclock.xml
+
 # Glance: news and search across the phone (prebuilt from vendor/etesian/glance/build-glance.sh)
 ifneq ($(wildcard vendor/etesian/glance/EtesianGlance.apk),)
 PRODUCT_PACKAGES += \

@@ -34,7 +34,7 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
     init { contentDescription = "Preview: $kind" }
 
     override fun onMeasure(w: Int, h: Int) {
-        val height = when (kind) { "status", "events", "dismissed", "apps" -> 236f; "open" -> 262f; else -> 172f }
+        val height = when (kind) { "status", "events", "dismissed", "apps", "singlehand" -> 236f; "open" -> 262f; else -> 172f }
         setMeasuredDimension(MeasureSpec.getSize(w), (height * d).toInt())
     }
 
@@ -74,6 +74,7 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
             "open" -> openApps(c)
             "apps" -> apps(c)
             "sharing" -> sharing(c)
+            "singlehand" -> singleHand(c)
         }
         c.restore()
         p.style = Paint.Style.STROKE; p.strokeWidth = d; p.color = 0xFF393839.toInt(); p.shader = null
@@ -417,6 +418,36 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
                 bar(c, qx + i * cell, qy + j * cell, cell, cell, 0xFF000000.toInt(), 0f)
             text(c, "Share network", qx + q / 2, qy - 5 * d, 9f, 0xFFBDBDBD.toInt(), align = Paint.Align.CENTER)
         }
+    }
+
+    private val SH_TILES = intArrayOf(0xFF2F7FD8.toInt(), 0xFFE8483F.toInt(), 0xFF3DA35A.toInt(), 0xFFF2A20C.toInt(), 0xFF7A4FD1.toInt(), 0xFF09A7CC.toInt())
+
+    /** Single hand mode: the phone, and the small screen at the user's size in the bottom-right corner. */
+    private fun singleHand(c: Canvas) {
+        val dm = resources.displayMetrics
+        val ratio = maxOf(dm.heightPixels, dm.widthPixels).toFloat() / minOf(dm.heightPixels, dm.widthPixels)
+        val ph = screen.height() - 16 * d
+        val pw = ph / ratio
+        val phone = RectF(screen.centerX() - pw / 2, screen.top + 8 * d, screen.centerX() + pw / 2, screen.top + 8 * d + ph)
+        p.style = Paint.Style.FILL; p.shader = null; p.color = 0xFF1E1E1E.toInt()
+        c.drawRoundRect(phone, 8 * d, 8 * d, p)
+        val pct = Settings.Secure.getInt(cr, "etesian_single_hand_size", 70).coerceIn(50, 90)
+        val sw = pw * pct / 100f; val sh = ph * pct / 100f
+        val nav = 6 * d
+        val small = RectF(phone.right - sw, phone.bottom - nav - sh, phone.right, phone.bottom - nav)
+        p.color = 0xFF000000.toInt(); c.drawRoundRect(small, 4 * d, 4 * d, p)
+        // The app grid inside, at the same scale.
+        val cell = sw / 4
+        val icon = cell * 0.62f
+        for (row in 0 until 5) for (col in 0 until 4) {
+            val y = small.top + cell * 0.4f + row * cell * 1.15f
+            if (y + icon > small.bottom - 4 * d) break
+            squircle(c, small.left + col * cell + (cell - icon) / 2, y, icon, SH_TILES[(row * 4 + col) % SH_TILES.size])
+        }
+        p.style = Paint.Style.STROKE; p.strokeWidth = d; p.color = 0xFF6E6E6E.toInt()
+        c.drawRoundRect(small, 4 * d, 4 * d, p); c.drawRoundRect(phone, 8 * d, 8 * d, p)
+        p.style = Paint.Style.FILL
+        text(c, "$pct% of the screen", phone.left - 12 * d, screen.centerY(), 12f, 0xFFBDBDBD.toInt(), align = Paint.Align.RIGHT)
     }
 
     /** The miniature as a preference row at the top of a page. */

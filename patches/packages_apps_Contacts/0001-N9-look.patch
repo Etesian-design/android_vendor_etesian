@@ -260,6 +260,23 @@ index 000000000..01066cde7
 +    android:insetRight="8dp">
 +    <nine-patch android:src="@drawable/n9_search_box_sq0" /><!-- N9: squircle-half ends (vendor/etesian/patches/tools/squircle-shapes.py) -->
 +</inset>
+diff --git a/res/drawable/n9_tb_menu.xml b/res/drawable/n9_tb_menu.xml
+new file mode 100644
+index 000000000..eb6af6954
+--- /dev/null
++++ b/res/drawable/n9_tb_menu.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- N9 bottom toolbar icon: menu -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32">
++    <path
++        android:fillColor="#FF282828"
++        android:pathData="M6,8h20v3H6zM6,14.5h20v3H6zM6,21h20v3H6z" />
++</vector>
 diff --git a/res/drawable/quantum_launchscreen_contacts.xml b/res/drawable/quantum_launchscreen_contacts.xml
 index 4cb718c7b..8ae2de46e 100755
 --- a/res/drawable/quantum_launchscreen_contacts.xml
@@ -801,6 +818,18 @@ index 9bd8bbe2b..f2fc14c2e 100644
 +    <dimen name="n9_contact_list_section_gap">8dp</dimen>
 +
  </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index fc24b1089..5bf4d4058 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -1555,4 +1555,6 @@
+     <!-- The label to display as a section header in the contact list for an SDN directory [CHAR LIMIT=40] -->
+     <string name="sdn_contacts_directory_search_label">Carrier service numbers</string>
+ 
++    <!-- Etesian: bottom toolbar menu entry that opens the drawer. -->
++    <string name="n9_menu_labels_accounts">Labels and accounts</string>
+ </resources>
+\ No newline at end of file
 diff --git a/res/values/styles.xml b/res/values/styles.xml
 index a4c10b809..25873b71c 100644
 --- a/res/values/styles.xml
@@ -1118,7 +1147,7 @@ index e6f29a4ab..06469f2b1 100644
          mSearchView.setHint(mActivity.getString(mSearchHintResId));
          mSearchView.addTextChangedListener(new SearchTextWatcher());
 diff --git a/src/com/android/contacts/activities/PeopleActivity.java b/src/com/android/contacts/activities/PeopleActivity.java
-index 62dc48ef4..028e904c4 100644
+index 62dc48ef4..6671f4604 100644
 --- a/src/com/android/contacts/activities/PeopleActivity.java
 +++ b/src/com/android/contacts/activities/PeopleActivity.java
 @@ -97,6 +97,8 @@ import com.android.contacts.util.SyncUtil;
@@ -1139,7 +1168,17 @@ index 62dc48ef4..028e904c4 100644
  
      private ProviderStatusWatcher mProviderStatusWatcher;
      private Integer mProviderStatus;
-@@ -365,6 +369,9 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -313,6 +317,9 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+         @Override
+         public void onDrawerClosed(View view) {
+             super.onDrawerClosed(view);
++            if (mUseN9Toolbar) {
++                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
++            }
+             invalidateOptionsMenu();
+         }
+ 
+@@ -365,6 +372,9 @@ public class PeopleActivity extends AppCompatContactsActivity implements
  
          mContactListFilterController.checkFilterValidity(false);
  
@@ -1149,7 +1188,7 @@ index 62dc48ef4..028e904c4 100644
          super.setContentView(R.layout.contacts_drawer_activity);
  
          // Set up the action bar.
-@@ -418,7 +425,13 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -418,7 +428,13 @@ public class PeopleActivity extends AppCompatContactsActivity implements
          if (Log.isLoggable(Constants.PERFORMANCE_TAG, Log.DEBUG)) {
              Log.d(Constants.PERFORMANCE_TAG, "PeopleActivity.onCreate finish");
          }
@@ -1164,7 +1203,7 @@ index 62dc48ef4..028e904c4 100644
      }
  
      @SuppressWarnings("MissingSuperCall") // TODO: Fix me
-@@ -634,6 +647,7 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -634,6 +650,7 @@ public class PeopleActivity extends AppCompatContactsActivity implements
  
          initializeFabVisibility();
          initializeHomeVisibility();
@@ -1172,7 +1211,7 @@ index 62dc48ef4..028e904c4 100644
  
          mSaveServiceListener = new SaveServiceListener();
          LocalBroadcastManager.getInstance(this).registerReceiver(mSaveServiceListener,
-@@ -654,6 +668,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -654,6 +671,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
          }
          mDrawerLayout.invalidate();
          getWindow().setStatusBarColor(Color.TRANSPARENT);
@@ -1184,7 +1223,7 @@ index 62dc48ef4..028e904c4 100644
      }
  
      @Override
-@@ -663,7 +682,42 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -663,7 +685,60 @@ public class PeopleActivity extends AppCompatContactsActivity implements
          super.onDestroy();
      }
  
@@ -1204,17 +1243,35 @@ index 62dc48ef4..028e904c4 100644
 +                    getString(R.string.action_menu_add_new_contact_button)));
 +        }
 +        items.add(EtesianToolbar.Item.action("menu",
-+                R.drawable.quantum_ic_more_vert_vd_theme_24,
++                R.drawable.n9_tb_menu,
 +                getString(R.string.abc_action_menu_overflow_description)));
 +        EtesianToolbar.of(this).setBack(!mainList).setItems(items, id -> {
 +            if ("add".equals(id)) {
 +                AccountFilterUtil.startEditorIntent(PeopleActivity.this, getIntent(),
 +                        mContactListFilterController.getFilter());
 +            } else if ("menu".equals(id)) {
-+                if (mToolbar != null) {
-+                    mToolbar.showOverflowMenu();
-+                }
++                showN9Menu();
 +            }
++        });
++    }
++
++    /** Etesian: the bar's menu id for opening the drawer (labels, accounts, settings, help). */
++    private static final int N9_MENU_DRAWER = 0x7e5150;
++
++    /** The toolbar's menu as the N9 sheet, plus the drawer's contents (it has no button of its own). */
++    private void showN9Menu() {
++        if (mToolbar == null) return;
++        final android.view.Menu menu = mToolbar.getMenu();
++        if (menu.findItem(N9_MENU_DRAWER) == null) {
++            menu.add(android.view.Menu.NONE, N9_MENU_DRAWER, 1000, R.string.n9_menu_labels_accounts);
++        }
++        com.bompotis.etesian.toolbar.EtesianMenu.show(this, menu, item -> {
++            if (item.getItemId() == N9_MENU_DRAWER) {
++                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
++                mDrawerLayout.openDrawer(androidx.core.view.GravityCompat.START);
++                return true;
++            }
++            return onOptionsItemSelected(item);
 +        });
 +    }
 +
@@ -1227,7 +1284,7 @@ index 62dc48ef4..028e904c4 100644
          mFloatingActionButtonContainer.setVisibility(shouldHideFab() ? View.GONE : View.VISIBLE);
          mFloatingActionButtonController.resetIn();
          wasLastFabAnimationScaleIn = !shouldHideFab();
-@@ -691,6 +745,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -691,6 +766,11 @@ public class PeopleActivity extends AppCompatContactsActivity implements
          if (mFloatingActionButtonContainer == null) {
              return;
          }
@@ -1239,7 +1296,7 @@ index 62dc48ef4..028e904c4 100644
          if (showFab) {
              if (!wasLastFabAnimationScaleIn) {
                  mFloatingActionButtonContainer.setVisibility(View.VISIBLE);
-@@ -1040,9 +1099,10 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+@@ -1040,9 +1120,10 @@ public class PeopleActivity extends AppCompatContactsActivity implements
  
      // Reset toolbar and status bar color to Contacts theme color.
      private void resetToolBarStatusBarColor() {
@@ -1252,6 +1309,29 @@ index 62dc48ef4..028e904c4 100644
      }
  
      protected DefaultContactBrowseListFragment getListFragment() {
+@@ -1084,6 +1165,14 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+     }
+ 
+     public void setDrawerLockMode(boolean enabled) {
++        if (mUseN9Toolbar) {
++            // Etesian: nothing on top, as on the N9. No drawer button and no drawer swipe (the edge
++            // belongs to the system gestures); the drawer opens from the bottom toolbar's menu.
++            mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
++            mToggle.setDrawerIndicatorEnabled(false);
++            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
++            return;
++        }
+         // Prevent drawer from being opened by sliding from the start of screen.
+         mDrawerLayout.setDrawerLockMode(enabled ? DrawerLayout.LOCK_MODE_UNLOCKED
+                 : DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+@@ -1107,6 +1196,7 @@ public class PeopleActivity extends AppCompatContactsActivity implements
+     protected void onPostCreate(Bundle savedInstanceState) {
+         super.onPostCreate(savedInstanceState);
+         mToggle.syncState();
++        if (mUseN9Toolbar) setDrawerLockMode(false); // Etesian: no drawer button on top
+     }
+ 
+     @Override
 diff --git a/src/com/android/contacts/editor/AggregationSuggestionView.java b/src/com/android/contacts/editor/AggregationSuggestionView.java
 index d391c400a..ea969fba5 100644
 --- a/src/com/android/contacts/editor/AggregationSuggestionView.java

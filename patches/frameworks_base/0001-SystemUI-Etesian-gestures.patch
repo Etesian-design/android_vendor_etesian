@@ -90,10 +90,10 @@ index 9b95b04149bf..07e2feeb1116 100644
  } // namespace
 diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java
 new file mode 100644
-index 000000000000..a2e66e0fb054
+index 000000000000..6692f89bea68
 --- /dev/null
 +++ b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java
-@@ -0,0 +1,304 @@
+@@ -0,0 +1,323 @@
 +/*
 + * Copyright (C) 2026 The LineageOS Project
 + *
@@ -144,18 +144,21 @@ index 000000000000..a2e66e0fb054
 + * notifications, the keyboard) drawn at half its size, the same shape, at the bottom within reach of the thumb.
 + * The resolution stays the same; it only looks zoomed out (a scale on the surfaces, so touch follows it).
 + *
-+ * Tapping the empty space moves it to that side (left/right, up/down); a double tap there returns to full screen.
++ * It always sits in a corner; a tap in the empty space moves it to the corner nearest the tap, and a double tap
++ * there returns to full screen. Its width is the user's ({@code etesian_single_hand_size}, % of the screen, 50-90,
++ * default 70: half the size suits only very large phones), and a change applies at once.
 + * On and off by {@code Settings.Secure etesian_single_hand} (1/0): the launcher's toolbar, Breeze and gesture
 + * actions and its app shortcut set it. Locking the phone or rotating it ends it.
 + */
 +public class EtesianSingleHand {
 +    private static final String TAG = "EtesianSingleHand";
 +    public static final String SETTING = "etesian_single_hand";
-+    private static final float SCALE = 0.5f;
++    public static final String SETTING_SIZE = "etesian_single_hand_size";
++    static final int SIZE_DEFAULT = 70, SIZE_MIN = 50, SIZE_MAX = 90;
 +    private static final int ANIM_MS = 260;
 +    private static final int BACKDROP = 0xF0101010;
 +
-+    /** Where the small screen sits: horizontally (0 left, 1 centre, 2 right), vertically (0 top, 1 bottom). */
++    /** The corner the small screen sits in: column 0 left, 1 right; row 0 top, 1 bottom. Kept between uses. */
 +    private int mColumn = 1;
 +    private int mRow = 1;
 +
@@ -187,6 +190,14 @@ index 000000000000..a2e66e0fb054
 +                        mMainExecutor.execute(EtesianSingleHand.this::onSettingChanged);
 +                    }
 +                });
++        context.getContentResolver().registerContentObserver(
++                Settings.Secure.getUriFor(SETTING_SIZE), false,
++                new ContentObserver(new Handler(Looper.getMainLooper())) {
++                    @Override
++                    public void onChange(boolean selfChange) {
++                        mMainExecutor.execute(EtesianSingleHand.this::onSizeChanged);
++                    }
++                });
 +        // Never come back up in it (a crash, a reboot): it starts off.
 +        Settings.Secure.putInt(context.getContentResolver(), SETTING, 0);
 +    }
@@ -197,7 +208,7 @@ index 000000000000..a2e66e0fb054
 +
 +    /** "EtesianSingleHand active=true bounds=[l,t][r,b]": for dumpsys (and the device tests). */
 +    void dump(java.io.PrintWriter pw, String prefix) {
-+        pw.println(prefix + "EtesianSingleHand active=" + mActive + " column=" + mColumn + " row=" + mRow
++        pw.println(prefix + "EtesianSingleHand active=" + mActive + " column=" + mColumn + " row=" + mRow + " size=" + Math.round(scale() * 100)
 +                + " bounds=[" + Math.round(mCurrent.left) + "," + Math.round(mCurrent.top) + "]["
 +                + Math.round(mCurrent.right) + "," + Math.round(mCurrent.bottom) + "]");
 +    }
@@ -222,8 +233,6 @@ index 000000000000..a2e66e0fb054
 +            return;
 +        }
 +        mActive = true;
-+        mColumn = 1;
-+        mRow = 1;
 +        mCurrent.set(0, 0, dl.width(), dl.height());
 +        showBackdrop(dl);
 +        animateTo(target(dl), null);
@@ -251,11 +260,23 @@ index 000000000000..a2e66e0fb054
 +
 +    private RectF target(DisplayLayout dl) {
 +        final Rect u = usable(dl);
-+        final float w = dl.width() * SCALE;
-+        final float h = dl.height() * SCALE;
-+        final float left = mColumn == 0 ? u.left : mColumn == 2 ? u.right - w : u.left + (u.width() - w) / 2f;
++        final float scale = scale();
++        final float w = dl.width() * scale;
++        final float h = dl.height() * scale;
++        final float left = mColumn == 0 ? u.left : u.right - w;
 +        final float top = mRow == 0 ? u.top : u.bottom - h;
 +        return new RectF(left, top, left + w, top + h);
++    }
++
++    /** The user's size, as a fraction of the screen's width (and height: the shape stays). */
++    private float scale() {
++        int pct = Settings.Secure.getInt(mContext.getContentResolver(), SETTING_SIZE, SIZE_DEFAULT);
++        return Math.max(SIZE_MIN, Math.min(SIZE_MAX, pct)) / 100f;
++    }
++
++    /** The size setting changed: while on, the small screen grows or shrinks to it in its corner. */
++    void onSizeChanged() {
++        if (mActive) animateTo(target(mOrganizer.getDisplayLayout()), null);
 +    }
 +
 +    private void animateTo(RectF to, Runnable end) {
@@ -283,14 +304,12 @@ index 000000000000..a2e66e0fb054
 +        mAnimator.start();
 +    }
 +
-+    /** A tap outside the small screen: move it towards that side. */
++    /** A tap outside the small screen: move it to the corner nearest the tap. */
 +    private void onTapOutside(float x, float y) {
 +        if (!mActive) return;
-+        final RectF r = target(mOrganizer.getDisplayLayout());
-+        if (y < r.top) mRow = 0;
-+        else if (y > r.bottom) mRow = 1;
-+        if (x < r.left) mColumn = mColumn == 2 ? 1 : 0;
-+        else if (x > r.right) mColumn = mColumn == 0 ? 1 : 2;
++        final Rect u = usable(mOrganizer.getDisplayLayout());
++        mColumn = x < u.centerX() ? 0 : 1;
++        mRow = y < u.centerY() ? 0 : 1;
 +        animateTo(target(mOrganizer.getDisplayLayout()), null);
 +    }
 +

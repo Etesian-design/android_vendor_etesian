@@ -21,3 +21,11 @@ prebuilt_etc {
     sub_dir: "default-permissions",
     system_ext_specific: true,
 }
+
+// Clock: alarms work without asking, as on the N9.
+prebuilt_etc {
+    name: "default-permissions_com.android.deskclock.xml",
+    src: "permissions/default-permissions_com.android.deskclock.xml",
+    sub_dir: "default-permissions",
+    system_ext_specific: true,
+}

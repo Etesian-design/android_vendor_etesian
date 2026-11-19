@@ -491,36 +491,36 @@ index 000000000..0617c037d
 +</layer-list>
 diff --git a/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
 new file mode 100644
-index 000000000..58fa6630e
+index 000000000..760323064
 --- /dev/null
 +++ b/java/com/android/dialer/dialpadview/res/drawable/n9_dialpad_key.xml
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 (Etesian) style dialpad key: white rounded square inset on the grey page,
-+     light grey when pressed. -->
++<!-- N9 dial pad key: no box, a bold digit on the grey page; a soft light ripple when pressed. -->
 +<ripple xmlns:android="http://schemas.android.com/apk/res/android"
 +    android:color="@color/n9_dialpad_key_ripple">
-+  <item>
++  <item android:id="@android:id/mask">
 +    <inset android:inset="3dp">
 +      <shape android:shape="rectangle">
-+        <solid android:color="@color/n9_dialpad_key"/>
++        <solid android:color="#FFFFFFFF"/>
 +        <corners android:radius="14dp"/>
-+        <stroke android:width="1dp" android:color="@color/n9_dialpad_key_stroke"/>
 +      </shape>
 +    </inset>
 +  </item>
 +</ripple>
 diff --git a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml b/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
-index 4540c31fe..c0af27c1b 100644
+index 4540c31fe..1e60a7ad9 100644
 --- a/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
 +++ b/java/com/android/dialer/dialpadview/res/drawable/rounded_dialpad_bg.xml
-@@ -1,7 +1,4 @@
+@@ -1,7 +1,5 @@
  <?xml version="1.0" encoding="utf-8"?>
++<!-- N9 dial pad page: light grey, a little darker at the bottom. -->
  <shape xmlns:android="http://schemas.android.com/apk/res/android">
-     <solid android:color="@color/rounded_dialpad_bg_color" />
+-    <solid android:color="@color/rounded_dialpad_bg_color" />
 -    <corners
 -        android:topLeftRadius="28dp"
 -        android:topRightRadius="28dp" />
++    <gradient android:angle="270" android:startColor="@color/n9_dialpad_page_top" android:endColor="@color/n9_dialpad_page_bottom" />
  </shape>
 diff --git a/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml b/java/com/android/dialer/dialpadview/res/layout-land/dialpad_fragment.xml
 index d60fbba89..291c2c4de 100644
@@ -551,7 +551,7 @@ index 71c297712..e96e363f2 100644
        app:elevation="@dimen/floating_action_button_translation_z"/>
  </view>
 diff --git a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
-index b7fe92ef5..11ba8a90f 100644
+index b7fe92ef5..de91a8b03 100644
 --- a/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
 +++ b/java/com/android/dialer/dialpadview/res/layout/dialpad_view_unthemed.xml
 @@ -73,6 +73,7 @@
@@ -562,15 +562,34 @@ index b7fe92ef5..11ba8a90f 100644
        android:orientation="horizontal"
        tools:layout_height="50dp">
  
-@@ -128,7 +129,7 @@
+@@ -128,14 +129,15 @@
              android:background="@android:color/transparent"
              android:cursorVisible="false"
              android:focusableInTouchMode="true"
 -            android:fontFamily="@*android:string/config_bodyFontFamily"
 +            android:fontFamily="etesian-text"
              android:freezesText="true"
-             android:gravity="center"
+-            android:gravity="center"
              android:importantForAutofill="no"
+             android:maxLines="1"
+             android:scrollHorizontally="true"
+             android:singleLine="true"
+-            android:textColor="?attr/dialpad_text_color"
++            android:textColor="@color/n9_dialpad_digits_text"
++            android:textFontWeight="300"
++            android:gravity="end|center_vertical"
+             android:textCursorDrawable="@null"
+             android:textSize="?attr/dialpad_digits_adjustable_text_size"
+             ex:resizing_text_min_size="@dimen/dialpad_digits_text_min_size"/>
+@@ -152,7 +154,7 @@
+         android:src="@drawable/quantum_ic_backspace_vd_theme_24"
+         android:state_enabled="false"
+         android:tintMode="src_in"
+-        app:tint="@color/dialer_theme_color_light" />
++        app:tint="@color/n9_dialpad_delete" />
+   </LinearLayout>
+ 
+   <View
 diff --git a/java/com/android/dialer/dialpadview/res/values-land/styles.xml b/java/com/android/dialer/dialpadview/res/values-land/styles.xml
 index a04ae2348..b514f4bc6 100644
 --- a/java/com/android/dialer/dialpadview/res/values-land/styles.xml
@@ -612,19 +631,20 @@ index a04ae2348..b514f4bc6 100644
      <item name="android:layout_height">wrap_content</item>
      <item name="android:layout_gravity">left|center_vertical</item>
 diff --git a/java/com/android/dialer/dialpadview/res/values/styles.xml b/java/com/android/dialer/dialpadview/res/values/styles.xml
-index 712af38eac..a1df6259c 100644
+index 712af38eac..59b28ba3f 100644
 --- a/java/com/android/dialer/dialpadview/res/values/styles.xml
 +++ b/java/com/android/dialer/dialpadview/res/values/styles.xml
-@@ -25,7 +25,7 @@
+@@ -25,7 +25,8 @@
    <style name="DialpadKeyNumberStyle">
      <item name="android:textColor">?attr/dialpad_text_color_primary</item>
      <item name="android:textSize">?attr/dialpad_key_numbers_size</item>
 -    <item name="android:fontFamily">@*android:string/config_bodyFontFamily</item>
 +    <item name="android:fontFamily">etesian-text</item>
++    <item name="android:textStyle">bold</item>
      <item name="android:layout_width">wrap_content</item>
      <item name="android:layout_height">wrap_content</item>
      <item name="android:layout_marginBottom">?attr/dialpad_key_number_margin_bottom</item>
-@@ -35,7 +35,7 @@
+@@ -35,7 +36,7 @@
    <style name="DialpadKeyStarStyle">
      <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
      <item name="android:textSize">@dimen/dialpad_key_star_size</item>
@@ -633,7 +653,7 @@ index 712af38eac..a1df6259c 100644
      <item name="android:alpha">0.8</item>
      <item name="android:layout_width">wrap_content</item>
      <item name="android:layout_height">wrap_content</item>
-@@ -46,7 +46,7 @@
+@@ -46,7 +47,7 @@
    <style name="DialpadKeyPoundStyle">
      <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
      <item name="android:textSize">@dimen/dialpad_key_pound_size</item>
@@ -642,7 +662,7 @@ index 712af38eac..a1df6259c 100644
      <item name="android:alpha">0.8</item>
      <item name="android:layout_width">wrap_content</item>
      <item name="android:layout_height">wrap_content</item>
-@@ -57,7 +57,7 @@
+@@ -57,7 +58,7 @@
    <style name="DialpadKeyLettersStyle">
      <item name="android:textColor">?attr/dialpad_text_color_secondary</item>
      <item name="android:textSize">?attr/dialpad_key_letters_size_for_single_alphabet</item>
@@ -651,7 +671,7 @@ index 712af38eac..a1df6259c 100644
      <item name="android:layout_width">wrap_content</item>
      <item name="android:layout_height">wrap_content</item>
      <item name="android:layout_gravity">center</item>
-@@ -70,7 +70,7 @@
+@@ -70,7 +71,7 @@
      <item name="android:layout_height">match_parent</item>
      <item name="android:layout_weight">15</item>
      <item name="android:minHeight">@dimen/dialpad_key_height</item>
@@ -660,7 +680,7 @@ index 712af38eac..a1df6259c 100644
      <item name="android:focusable">true</item>
    </style>
  
-@@ -86,4 +86,10 @@
+@@ -86,4 +87,10 @@
      <item name="android:textColor">?android:attr/textColorPrimary</item>
      <item name="android:textSize">16sp</item>
    </style>
@@ -671,6 +691,22 @@ index 712af38eac..a1df6259c 100644
 +    <item name="cornerSize">28%</item>
 +  </style>
  </resources>
+diff --git a/java/com/android/dialer/dialpadview/theme/res/values/dimens.xml b/java/com/android/dialer/dialpadview/theme/res/values/dimens.xml
+index e90ee1c92..007083954 100644
+--- a/java/com/android/dialer/dialpadview/theme/res/values/dimens.xml
++++ b/java/com/android/dialer/dialpadview/theme/res/values/dimens.xml
+@@ -20,8 +20,8 @@
+   <dimen name="dialpad_key_letters_default_size_for_single_alphabet">12sp</dimen>
+   <dimen name="dialpad_key_letters_default_size_for_dual_alphabets">10sp</dimen>
+   <dimen name="dialpad_key_number_default_margin_bottom">3dp</dimen>
+-  <dimen name="dialpad_digits_text_size">34sp</dimen>
+-  <dimen name="dialpad_digits_height">60dp</dimen>
++  <dimen name="dialpad_digits_text_size">46sp</dimen>
++  <dimen name="dialpad_digits_height">84dp</dimen>
+   <!-- The bottom space of the dialpad to account for the dial button -->
+   <dimen name="dialpad_bottom_space_height">80dp</dimen>
+ </resources>
+\ No newline at end of file
 diff --git a/java/com/android/dialer/dialpadview/theme/res/values/styles.xml b/java/com/android/dialer/dialpadview/theme/res/values/styles.xml
 index 9729b91e8..b1c5a5b7a 100644
 --- a/java/com/android/dialer/dialpadview/theme/res/values/styles.xml
@@ -1790,10 +1826,10 @@ index 99fda0728..a4233194e 100644
  </resources>
 diff --git a/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
 new file mode 100644
-index 000000000..ea4fba998
+index 000000000..bca2e9178
 --- /dev/null
 +++ b/java/com/android/dialer/theme/hidden/res/values-night/n9_colors.xml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,26 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +  SPDX-FileCopyrightText: The LineageOS Project
@@ -1806,14 +1842,19 @@ index 000000000..ea4fba998
 +  <color name="n9_icon">#DDDDDD</color>
 +  <color name="n9_icon_secondary">#B0B0B0</color>
 +  <color name="n9_call_notification_background">#1E1E1E</color>
-+  <color name="n9_dialpad_text">#FFFFFF</color>
-+  <color name="n9_dialpad_text_secondary">#B0B0B0</color>
-+  <color name="n9_dialpad_key">#2A2A2A</color>
-+  <color name="n9_dialpad_key_stroke">#3A3A3A</color>
++  <color name="n9_dialpad_text">#2A2A2A</color>
++  <color name="n9_dialpad_text_secondary">#555555</color>
++  <color name="n9_dialpad_key">#00000000</color>
++  <color name="n9_dialpad_key_stroke">#00000000</color>
 +  <color name="n9_dialpad_key_ripple">#33FFFFFF</color>
-+  <color name="n9_dialpad_digits_top">#2A2A2A</color>
-+  <color name="n9_dialpad_digits_bottom">#141414</color>
++  <color name="n9_dialpad_digits_top">#2C2C2C</color>
++  <color name="n9_dialpad_digits_bottom">#111111</color>
 +  <color name="n9_dialpad_digits_rule">#000000</color>
++  <!-- N9 dial pad page and number header (the same in light and dark) -->
++  <color name="n9_dialpad_page_top">#D6D7DA</color>
++  <color name="n9_dialpad_page_bottom">#C7C8CC</color>
++  <color name="n9_dialpad_digits_text">#FFFFFF</color>
++  <color name="n9_dialpad_delete">#9A9A9A</color>
 +</resources>
 diff --git a/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml b/java/com/android/dialer/theme/hidden/res/values/colors_dialer_dark.xml
 index 41c5fd1c5..3f8396740 100644
@@ -1861,10 +1902,10 @@ index c894da3ff..df609f6b6 100644
  </resources>
 diff --git a/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml b/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml
 new file mode 100644
-index 000000000..c8d31892d
+index 000000000..e37433a69
 --- /dev/null
 +++ b/java/com/android/dialer/theme/hidden/res/values/n9_colors.xml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,26 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!--
 +  SPDX-FileCopyrightText: The LineageOS Project
@@ -1877,14 +1918,19 @@ index 000000000..c8d31892d
 +  <color name="n9_icon">#5A5A5A</color>
 +  <color name="n9_icon_secondary">#8C8C8C</color>
 +  <color name="n9_call_notification_background">#F4F4F4</color>
-+  <color name="n9_dialpad_text">#191919</color>
-+  <color name="n9_dialpad_text_secondary">#8C8C8C</color>
-+  <color name="n9_dialpad_key">#FFFFFF</color>
-+  <color name="n9_dialpad_key_stroke">#D6D6D6</color>
-+  <color name="n9_dialpad_key_ripple">#26000000</color>
-+  <color name="n9_dialpad_digits_top">#FFFFFF</color>
-+  <color name="n9_dialpad_digits_bottom">#DCDCDC</color>
-+  <color name="n9_dialpad_digits_rule">#C8C8C8</color>
++  <color name="n9_dialpad_text">#2A2A2A</color>
++  <color name="n9_dialpad_text_secondary">#555555</color>
++  <color name="n9_dialpad_key">#00000000</color>
++  <color name="n9_dialpad_key_stroke">#00000000</color>
++  <color name="n9_dialpad_key_ripple">#33FFFFFF</color>
++  <color name="n9_dialpad_digits_top">#2C2C2C</color>
++  <color name="n9_dialpad_digits_bottom">#111111</color>
++  <color name="n9_dialpad_digits_rule">#000000</color>
++  <!-- N9 dial pad page and number header (the same in light and dark) -->
++  <color name="n9_dialpad_page_top">#D6D7DA</color>
++  <color name="n9_dialpad_page_bottom">#C7C8CC</color>
++  <color name="n9_dialpad_digits_text">#FFFFFF</color>
++  <color name="n9_dialpad_delete">#9A9A9A</color>
 +</resources>
 diff --git a/java/com/android/dialer/util/DrawableConverter.java b/java/com/android/dialer/util/DrawableConverter.java
 index 22fe22c8b..e3365b0c0 100644
