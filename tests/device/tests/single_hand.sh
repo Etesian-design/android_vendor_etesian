@@ -57,7 +57,7 @@ A exec-out screencap -p > "$SHOTS/single_hand_moved.png"
 
 # A double tap on the empty space: full screen again.
 set -- $(bounds); l=$1; t=$2; r=$3; b=$4
-x=$(( (r + SW) / 2 )); y=$(( (t + b) / 2 )); before=$(state)
+x=$(( SW / 2 )); if [ $t -gt 2 ]; then y=$(( t / 2 )); else y=$(( (b + SH) / 2 )); fi; before=$(state)
 A shell "input tap $x $y; sleep 0.12; input tap $x $y"; sleep 1.2
 check "the double tap did not first move it (was: $before)" '[ "$(state | grep -o "column=[0-9]")" = "$(echo "$before" | grep -o "column=[0-9]")" ]'
 check "a double tap on the empty space returns to full screen ($(state))" 'state | grep -q "active=false"'

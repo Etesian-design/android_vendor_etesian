@@ -19,8 +19,8 @@ open_app org.lineageos.etar; u=$(dump); A exec-out screencap -p > "$SHOTS/apps_c
 check "Calendar opens on the month (its tab selected, not only lit)" 'echo "$u" | grep -q "content-desc=\"Month\"[^>]*selected=\"true\""'
 
 open_app com.android.calculator2; u=$(dump); A exec-out screencap -p > "$SHOTS/apps_calculator.png"
-set -- $(px 40 700)
-check "Calculator is black ($*)" '[ $1 -lt 30 ] && [ $2 -lt 30 ] && [ $3 -lt 30 ]'
+set -- $(px 40 700); cr=$1 cg=$2 cb=$3
+check "Calculator is black ($cr $cg $cb)" '[ $cr -lt 30 ] && [ $cg -lt 30 ] && [ $cb -lt 30 ]'
 check "Calculator has nothing on top (no overflow menu)" '! echo "$u" | grep -q "content-desc=\"More options\""'
 check "Calculator's menu is on the bar" 'echo "$u" | grep -q "content-desc=\"Menu\""'
 sh_ input keyevent 8; sh_ input keyevent 9; sleep 1
