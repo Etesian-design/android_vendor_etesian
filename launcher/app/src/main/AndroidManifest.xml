@@ -118,7 +118,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Long press on its icon: Single hand mode. -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/home_shortcuts" />
         </activity>
+
+        <!-- The Single hand mode app shortcut: toggles it and closes. -->
+        <activity
+            android:name=".SingleHandActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity
             android:name=".SettingsActivity"

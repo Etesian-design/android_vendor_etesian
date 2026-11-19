@@ -116,7 +116,11 @@ object ToolbarConfig {
         "add" to R.drawable.tb_add, "refresh" to R.drawable.tb_refresh,
         "browser" to R.drawable.tb_browser, "share" to R.drawable.tb_share,
         "back" to R.drawable.tb_back, "tasks" to R.drawable.tb_tasks, "menu" to R.drawable.tb_menu,
+        "singlehand" to R.drawable.tb_single_hand,
     )
+
+    /** System toggles offered with the system buttons: (label, glyph, action). */
+    val SYSTEM_TOGGLES = listOf(Triple("Single hand mode", "singlehand", "singlehand"))
 
     /** Android's own buttons, for the toolbar and Breeze: (label, glyph, key). */
     val SYSTEM_BUTTONS = listOf(

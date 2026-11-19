@@ -106,6 +106,7 @@ class EdgeGestures(private val ctx: Context) {
             Prefs.ACTION_MINIMISE -> if (inApp) WindowDrag(ctx, Edge.RIGHT, id, closing = false).apply { begin(); commit() }
             Prefs.ACTION_CLOSE -> if (inApp) WindowDrag(ctx, Edge.TOP, id, closing = true).apply { begin(); commit() }
             Prefs.ACTION_SWITCHER -> ctx.startActivity(com.bompotis.etesian.launcher.HomeActivity.switcherIntent(ctx))
+            Prefs.ACTION_SINGLE_HAND -> com.bompotis.etesian.launcher.SingleHand.toggle(ctx)
         }
     }
 

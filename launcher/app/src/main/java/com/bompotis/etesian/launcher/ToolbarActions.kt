@@ -84,6 +84,7 @@ object ToolbarActions {
                 @Suppress("DEPRECATION", "MissingPermission")
                 if (adapter.isEnabled) adapter.disable() else adapter.enable()
             }
+            "singlehand" -> SingleHand.toggle(ctx)
             "rotation" -> {
                 val cr = ctx.contentResolver
                 val auto = Settings.System.getInt(cr, Settings.System.ACCELEROMETER_ROTATION, 1)
@@ -147,6 +148,7 @@ object ToolbarActions {
         "wifi" -> "Wi-Fi on/off"
         "bluetooth" -> "Bluetooth on/off"
         "rotation" -> "Auto-rotate on/off"
+        "singlehand" -> "Single hand mode on/off"
         "wait" -> "Waits ${a.optLong("ms", 500)} ms"
         "macro" -> (a.optJSONArray("steps")?.length() ?: 0).let { "Macro, $it step" + if (it == 1) "" else "s" }
         else -> ""

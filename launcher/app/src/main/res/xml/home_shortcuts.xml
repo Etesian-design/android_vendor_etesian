@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="single_hand"
+        android:enabled="true"
+        android:icon="@drawable/tb_single_hand"
+        android:shortcutShortLabel="@string/single_hand"
+        android:shortcutLongLabel="@string/single_hand">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.bompotis.etesian.launcher"
+            android:targetClass="com.bompotis.etesian.launcher.SingleHandActivity" />
+    </shortcut>
+</shortcuts>

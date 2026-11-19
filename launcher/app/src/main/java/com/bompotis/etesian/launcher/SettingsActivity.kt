@@ -681,9 +681,10 @@ class SettingsActivity : AppCompatActivity() {
                 for ((edge, t) in listOf("left" to "From the left side", "right" to "From the right side", "bottom" to "From the bottom")) {
                     list(leave, Prefs.LEAVE_TO + edge, t, leaveNames.toTypedArray(), leaveValues.toTypedArray(), Prefs.LEAVE_SWITCHER)
                 }
-                val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Breeze menu", "Nothing")
+                val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Breeze menu",
+                    "Single hand mode", "Nothing")
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,
-                    Prefs.ACTION_SWITCHER, Prefs.ACTION_MENU, Prefs.ACTION_NONE)
+                    Prefs.ACTION_SWITCHER, Prefs.ACTION_MENU, Prefs.ACTION_SINGLE_HAND, Prefs.ACTION_NONE)
                 val bar = category("Breeze")
                 if (section == "sidesense") bar.title = null
                 switch(bar, Prefs.SIDE_SENSE, "Breeze",

@@ -245,7 +245,13 @@ class BreezeButtonsActivity : Activity() {
                 ToolbarConfig.Button(label, icon, true, JSONObject().put("t", "key").put("k", key))
             }
         }
-        group("System buttons", sys)
+        val toggles = ToolbarConfig.SYSTEM_TOGGLES.map { (label, glyph, t) ->
+            val icon = ToolbarConfig.glyph(this, glyph)
+            Candidate(label, ToolbarConfig.decode(icon)?.let { BitmapDrawable(resources, it) }, true) {
+                ToolbarConfig.Button(label, icon, true, JSONObject().put("t", t))
+            }
+        }
+        group("System buttons", sys + toggles)
         val tune = ToolbarConfig.glyph(this, "tune")
         group("Settings pages", ToolbarConfig.SETTINGS_PAGES.map { (label, action) ->
             Candidate(label, ToolbarConfig.decode(tune)?.let { BitmapDrawable(resources, it) }, true) {

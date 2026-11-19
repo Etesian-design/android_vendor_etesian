@@ -232,9 +232,15 @@ class ToolbarSettingsActivity : Activity() {
             .setItems(arrayOf("System button", "App", "App shortcut", "Settings page", "Macro")) { _, which0 ->
                 if (which0 == 0) {
                     val sys = ToolbarConfig.SYSTEM_BUTTONS
-                    dialog().setTitle("System button").setItems(sys.map { it.first }.toTypedArray()) { _, i ->
-                        val (label, glyph, key) = sys[i]
-                        add(label, ToolbarConfig.glyph(this, glyph), true, JSONObject().put("t", "key").put("k", key))
+                    val toggles = ToolbarConfig.SYSTEM_TOGGLES
+                    dialog().setTitle("System button").setItems((sys.map { it.first } + toggles.map { it.first }).toTypedArray()) { _, i ->
+                        if (i < sys.size) {
+                            val (label, glyph, key) = sys[i]
+                            add(label, ToolbarConfig.glyph(this, glyph), true, JSONObject().put("t", "key").put("k", key))
+                        } else {
+                            val (label, glyph, t) = toggles[i - sys.size]
+                            add(label, ToolbarConfig.glyph(this, glyph), true, JSONObject().put("t", t))
+                        }
                     }.show()
                     return@setItems
                 }
@@ -419,7 +425,7 @@ class ToolbarSettingsActivity : Activity() {
 
     private fun addStep(done: (JSONObject) -> Unit) {
         val kinds = arrayOf("Open app", "Open shortcut", "Open settings page", "Press a key",
-            "Torch on/off", "Wi-Fi on/off", "Bluetooth on/off", "Auto-rotate on/off", "Wait")
+            "Torch on/off", "Wi-Fi on/off", "Bluetooth on/off", "Auto-rotate on/off", "Wait", "Single hand mode on/off")
         dialog().setTitle("Add step").setItems(kinds) { _, which ->
             when (which) {
                 0 -> pickApp("Open which app?") { done(JSONObject().put("t", "app").put("c", it.flattenToString())) }
@@ -435,6 +441,7 @@ class ToolbarSettingsActivity : Activity() {
                 8 -> dialog().setTitle("Wait").setItems(arrayOf("0.5 seconds", "1 second", "2 seconds", "5 seconds")) { _, i ->
                     done(JSONObject().put("t", "wait").put("ms", longArrayOf(500, 1000, 2000, 5000)[i]))
                 }.show()
+                9 -> done(JSONObject().put("t", "singlehand"))
             }
         }.show()
     }

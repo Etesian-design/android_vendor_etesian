@@ -10,4 +10,5 @@
     <string name="belle_shortcuts_desc">Four application shortcuts of your choice</string>
     <string name="belle_feeds_desc">Latest items from your feeds</string>
     <string name="belle_music_desc">Now playing, with playback controls</string>
+    <string name="single_hand">Single hand mode</string>
 </resources>

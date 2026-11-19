@@ -55,6 +55,8 @@ object Prefs {
     const val ACTION_SWITCHER = "switcher"
     /** Breeze only: its small menu of shortcuts and widgets, under the button. */
     const val ACTION_MENU = "menu"
+    /** Single hand mode on/off (the whole screen at half size). */
+    const val ACTION_SINGLE_HAND = "single_hand"
 
     // Breeze: the edge bar, or a floating button when dragged away from the edges. Its place is set by
     // long-pressing it and dragging it.

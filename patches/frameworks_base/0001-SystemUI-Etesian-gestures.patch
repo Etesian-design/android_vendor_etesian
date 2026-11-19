@@ -88,6 +88,418 @@ index 9b95b04149bf..07e2feeb1116 100644
  };
  
  } // namespace
+diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java
+new file mode 100644
+index 000000000000..a2e66e0fb054
+--- /dev/null
++++ b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java
+@@ -0,0 +1,304 @@
++/*
++ * Copyright (C) 2026 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.wm.shell.onehanded;
++
++import android.animation.ValueAnimator;
++import android.content.Context;
++import android.database.ContentObserver;
++import android.graphics.Canvas;
++import android.graphics.Color;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.RectF;
++import android.graphics.Region;
++import android.net.Uri;
++import android.os.Handler;
++import android.os.Looper;
++import android.provider.Settings;
++import android.util.Slog;
++import android.view.GestureDetector;
++import android.view.Gravity;
++import android.view.MotionEvent;
++import android.view.View;
++import android.view.ViewTreeObserver;
++import android.view.WindowManager;
++import android.view.animation.DecelerateInterpolator;
++
++import com.android.wm.shell.common.DisplayLayout;
++import com.android.wm.shell.common.ShellExecutor;
++
++/**
++ * Etesian single hand mode: the whole screen (everything in the one-handed display area: apps, status bar,
++ * notifications, the keyboard) drawn at half its size, the same shape, at the bottom within reach of the thumb.
++ * The resolution stays the same; it only looks zoomed out (a scale on the surfaces, so touch follows it).
++ *
++ * Tapping the empty space moves it to that side (left/right, up/down); a double tap there returns to full screen.
++ * On and off by {@code Settings.Secure etesian_single_hand} (1/0): the launcher's toolbar, Breeze and gesture
++ * actions and its app shortcut set it. Locking the phone or rotating it ends it.
++ */
++public class EtesianSingleHand {
++    private static final String TAG = "EtesianSingleHand";
++    public static final String SETTING = "etesian_single_hand";
++    private static final float SCALE = 0.5f;
++    private static final int ANIM_MS = 260;
++    private static final int BACKDROP = 0xF0101010;
++
++    /** Where the small screen sits: horizontally (0 left, 1 centre, 2 right), vertically (0 top, 1 bottom). */
++    private int mColumn = 1;
++    private int mRow = 1;
++
++    private final Context mContext;
++    private final ShellExecutor mMainExecutor;
++    private final OneHandedDisplayAreaOrganizer mOrganizer;
++    private final Runnable mAcquire;
++    private final Runnable mRelease;
++    private final WindowManager mWindowManager;
++    private boolean mActive;
++    private Backdrop mBackdrop;
++    /** The small screen's bounds now (display pixels), and the scale it is drawn at (animated). */
++    private final RectF mCurrent = new RectF();
++    private ValueAnimator mAnimator;
++
++    EtesianSingleHand(Context context, ShellExecutor mainExecutor, OneHandedDisplayAreaOrganizer organizer,
++            Runnable acquireOrganizer, Runnable releaseOrganizer) {
++        mContext = context;
++        mMainExecutor = mainExecutor;
++        mOrganizer = organizer;
++        mAcquire = acquireOrganizer;
++        mRelease = releaseOrganizer;
++        mWindowManager = context.getSystemService(WindowManager.class);
++        final Uri uri = Settings.Secure.getUriFor(SETTING);
++        context.getContentResolver().registerContentObserver(uri, false,
++                new ContentObserver(new Handler(Looper.getMainLooper())) {
++                    @Override
++                    public void onChange(boolean selfChange) {
++                        mMainExecutor.execute(EtesianSingleHand.this::onSettingChanged);
++                    }
++                });
++        // Never come back up in it (a crash, a reboot): it starts off.
++        Settings.Secure.putInt(context.getContentResolver(), SETTING, 0);
++    }
++
++    boolean isActive() {
++        return mActive;
++    }
++
++    /** "EtesianSingleHand active=true bounds=[l,t][r,b]": for dumpsys (and the device tests). */
++    void dump(java.io.PrintWriter pw, String prefix) {
++        pw.println(prefix + "EtesianSingleHand active=" + mActive + " column=" + mColumn + " row=" + mRow
++                + " bounds=[" + Math.round(mCurrent.left) + "," + Math.round(mCurrent.top) + "]["
++                + Math.round(mCurrent.right) + "," + Math.round(mCurrent.bottom) + "]");
++    }
++
++    private void onSettingChanged() {
++        final boolean on = Settings.Secure.getInt(mContext.getContentResolver(), SETTING, 0) == 1;
++        if (on && !mActive) start();
++        else if (!on && mActive) stop();
++    }
++
++    private void start() {
++        mAcquire.run();
++        if (!mOrganizer.isReady()) {
++            // The organizer registers asynchronously the first time: try again shortly.
++            mMainExecutor.executeDelayed(this::onSettingChanged, 50);
++            return;
++        }
++        final DisplayLayout dl = mOrganizer.getDisplayLayout();
++        if (dl.isLandscape()) {
++            Slog.w(TAG, "portrait only");
++            Settings.Secure.putInt(mContext.getContentResolver(), SETTING, 0);
++            return;
++        }
++        mActive = true;
++        mColumn = 1;
++        mRow = 1;
++        mCurrent.set(0, 0, dl.width(), dl.height());
++        showBackdrop(dl);
++        animateTo(target(dl), null);
++    }
++
++    /** Back to full screen (double tap, the toggle, locking, rotating). */
++    void stop() {
++        if (!mActive) return;
++        mActive = false;
++        final DisplayLayout dl = mOrganizer.getDisplayLayout();
++        if (Settings.Secure.getInt(mContext.getContentResolver(), SETTING, 0) != 0) {
++            Settings.Secure.putInt(mContext.getContentResolver(), SETTING, 0);
++        }
++        animateTo(new RectF(0, 0, dl.width(), dl.height()), () -> {
++            mOrganizer.resetWindowsOffset();
++            removeBackdrop();
++            mRelease.run();
++        });
++    }
++
++    /** The area the small screen can sit in: the display above the navigation (bottom) bar. */
++    private Rect usable(DisplayLayout dl) {
++        return new Rect(0, 0, dl.width(), dl.height() - dl.navBarFrameHeight());
++    }
++
++    private RectF target(DisplayLayout dl) {
++        final Rect u = usable(dl);
++        final float w = dl.width() * SCALE;
++        final float h = dl.height() * SCALE;
++        final float left = mColumn == 0 ? u.left : mColumn == 2 ? u.right - w : u.left + (u.width() - w) / 2f;
++        final float top = mRow == 0 ? u.top : u.bottom - h;
++        return new RectF(left, top, left + w, top + h);
++    }
++
++    private void animateTo(RectF to, Runnable end) {
++        if (mAnimator != null) mAnimator.cancel();
++        final RectF from = new RectF(mCurrent);
++        final float fullW = mOrganizer.getDisplayLayout().width();
++        mAnimator = ValueAnimator.ofFloat(0f, 1f);
++        mAnimator.setDuration(ANIM_MS);
++        mAnimator.setInterpolator(new DecelerateInterpolator());
++        mAnimator.addUpdateListener(a -> {
++            final float t = (float) a.getAnimatedValue();
++            mCurrent.set(from.left + (to.left - from.left) * t, from.top + (to.top - from.top) * t,
++                    from.right + (to.right - from.right) * t, from.bottom + (to.bottom - from.bottom) * t);
++            mOrganizer.etesianTransform(mCurrent.width() / fullW, mCurrent.left, mCurrent.top,
++                    mCurrent.width() < fullW ? 24f : 0f);
++            if (mBackdrop != null) mBackdrop.setHole(mCurrent);
++        });
++        mAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
++            private boolean mCancelled;
++            @Override public void onAnimationCancel(android.animation.Animator a) { mCancelled = true; }
++            @Override public void onAnimationEnd(android.animation.Animator a) {
++                if (!mCancelled && end != null) end.run();
++            }
++        });
++        mAnimator.start();
++    }
++
++    /** A tap outside the small screen: move it towards that side. */
++    private void onTapOutside(float x, float y) {
++        if (!mActive) return;
++        final RectF r = target(mOrganizer.getDisplayLayout());
++        if (y < r.top) mRow = 0;
++        else if (y > r.bottom) mRow = 1;
++        if (x < r.left) mColumn = mColumn == 2 ? 1 : 0;
++        else if (x > r.right) mColumn = mColumn == 0 ? 1 : 2;
++        animateTo(target(mOrganizer.getDisplayLayout()), null);
++    }
++
++    private void showBackdrop(DisplayLayout dl) {
++        if (mBackdrop != null) return;
++        mBackdrop = new Backdrop(mContext);
++        final Rect u = usable(dl);
++        final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(u.width(), u.height(),
++                // Outside the one-handed area: not scaled with the rest.
++                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
++                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
++                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
++                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
++                PixelFormat.TRANSLUCENT);
++        lp.gravity = Gravity.TOP | Gravity.LEFT;
++        lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
++        lp.privateFlags |= WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
++        lp.setFitInsetsTypes(0);
++        lp.setTitle("EtesianSingleHand");
++        mWindowManager.addView(mBackdrop, lp);
++    }
++
++    private void removeBackdrop() {
++        if (mBackdrop == null) return;
++        mWindowManager.removeViewImmediate(mBackdrop);
++        mBackdrop = null;
++    }
++
++    /**
++     * The empty space around the small screen: dark, with a word on what to do, and touchable only there
++     * (the small screen itself gets its touches as usual).
++     */
++    private final class Backdrop extends View {
++        private final RectF mHole = new RectF();
++        private final Path mPath = new Path();
++        private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final Paint mText = new Paint(Paint.ANTI_ALIAS_FLAG);
++        private final GestureDetector mGestures;
++        private final ViewTreeObserver.OnComputeInternalInsetsListener mInsets = info -> {
++            final Region r = new Region(0, 0, getWidth(), getHeight());
++            r.op(new Rect((int) mHole.left, (int) mHole.top, (int) Math.ceil(mHole.right),
++                    (int) Math.ceil(mHole.bottom)), Region.Op.DIFFERENCE);
++            info.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
++            info.touchableRegion.set(r);
++        };
++
++        Backdrop(Context context) {
++            super(context);
++            mPaint.setColor(BACKDROP);
++            mText.setColor(0xFFA0A0A0);
++            mText.setTextAlign(Paint.Align.CENTER);
++            mText.setTextSize(15 * context.getResources().getDisplayMetrics().scaledDensity);
++            setContentDescription("Single hand mode: tap to move, double tap for full screen");
++            mGestures = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
++                @Override public boolean onDown(MotionEvent e) { return true; }
++                @Override public boolean onSingleTapConfirmed(MotionEvent e) {
++                    onTapOutside(e.getX(), e.getY());
++                    return true;
++                }
++                @Override public boolean onDoubleTap(MotionEvent e) {
++                    stop();
++                    return true;
++                }
++            });
++        }
++
++        void setHole(RectF hole) {
++            mHole.set(hole);
++            // Redraws, and the touchable region (computed on each traversal) follows.
++            invalidate();
++            requestLayout();
++        }
++
++        @Override
++        protected void onAttachedToWindow() {
++            super.onAttachedToWindow();
++            getViewTreeObserver().addOnComputeInternalInsetsListener(mInsets);
++        }
++
++        @Override
++        protected void onDetachedFromWindow() {
++            getViewTreeObserver().removeOnComputeInternalInsetsListener(mInsets);
++            super.onDetachedFromWindow();
++        }
++
++        @Override
++        public boolean onTouchEvent(MotionEvent e) {
++            return mGestures.onTouchEvent(e);
++        }
++
++        @Override
++        protected void onDraw(Canvas c) {
++            mPath.reset();
++            mPath.setFillType(Path.FillType.EVEN_ODD);
++            mPath.addRect(0, 0, getWidth(), getHeight(), Path.Direction.CW);
++            mPath.addRoundRect(mHole, 24f, 24f, Path.Direction.CW);
++            c.drawPath(mPath, mPaint);
++            // The hint in the larger free band (above or below the small screen).
++            final float above = mHole.top;
++            final float below = getHeight() - mHole.bottom;
++            if (Math.max(above, below) > mText.getTextSize() * 3) {
++                final float y = above >= below ? above / 2f : mHole.bottom + below / 2f;
++                c.drawText("Tap here to move · Double tap for full screen", getWidth() / 2f, y, mText);
++            }
++        }
++    }
++}
+diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedController.java b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedController.java
+index 862520208d23..839d1b49e8e1 100644
+--- a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedController.java
++++ b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedController.java
+@@ -280,7 +280,22 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+         shellInit.addInitCallback(this::onInit, this);
+     }
+ 
++    /** Etesian single hand mode (half size, see {@link EtesianSingleHand}): shares this organizer. */
++    private EtesianSingleHand mEtesianSingleHand;
++
+     private void onInit() {
++        mEtesianSingleHand = new EtesianSingleHand(mContext, mMainExecutor, mDisplayAreaOrganizer,
++                () -> {
++                    // Stock one-handed mode off first; the display areas organized either way.
++                    stopOneHanded();
++                    if (mDisplayAreaOrganizer.getDisplayAreaTokenMap().isEmpty()) {
++                        mDisplayAreaOrganizer.registerOrganizer(
++                                OneHandedDisplayAreaOrganizer.FEATURE_ONE_HANDED);
++                    }
++                },
++                () -> {
++                    if (!mIsOneHandedEnabled) mDisplayAreaOrganizer.unregisterOrganizer();
++                });
+         mShellCommandHandler.addDumpCallback(this::dump, this);
+         mDisplayController.addDisplayWindowListener(mDisplaysChangedListener);
+         mDisplayController.addDisplayChangingController(this);
+@@ -372,6 +387,10 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+             return;
+         }
+ 
++        if (mEtesianSingleHand != null && mEtesianSingleHand.isActive()) {
++            return;
++        }
++
+         if (mDisplayAreaOrganizer.getDisplayLayout().isLandscape()) {
+             Slog.w(TAG, "One handed mode only support portrait mode");
+             return;
+@@ -596,6 +615,8 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+         mTouchHandler.onOneHandedEnabled(mIsOneHandedEnabled);
+ 
+         if (!mIsOneHandedEnabled) {
++            // Single hand mode keeps the organizer while it is on.
++            if (mEtesianSingleHand != null && mEtesianSingleHand.isActive()) return;
+             mDisplayAreaOrganizer.unregisterOrganizer();
+             // Do NOT register + unRegister DA in the same call
+             return;
+@@ -634,6 +655,7 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+             boolean animatingDismiss) {
+         mKeyguardShowing = visible;
+         stopOneHanded();
++        if (visible && mEtesianSingleHand != null) mEtesianSingleHand.stop();
+     }
+ 
+     @Override
+@@ -649,6 +671,7 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+         final String innerPrefix = "  ";
+         pw.println();
+         pw.println(TAG);
++        if (mEtesianSingleHand != null) mEtesianSingleHand.dump(pw, innerPrefix);
+         pw.print(innerPrefix + "mOffSetFraction=");
+         pw.println(mOffSetFraction);
+         pw.print(innerPrefix + "mLockedDisabled=");
+@@ -708,6 +731,7 @@ public class OneHandedController implements RemoteCallable<OneHandedController>,
+                     OneHandedUiEventLogger.EVENT_ONE_HANDED_TRIGGER_ROTATION_OUT);
+         }
+ 
++        if (mEtesianSingleHand != null) mEtesianSingleHand.stop();
+         mDisplayAreaOrganizer.onRotateDisplay(mContext, toRotation, wct);
+     }
+ 
+diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedDisplayAreaOrganizer.java b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedDisplayAreaOrganizer.java
+index 5db25fdd4026..be7b0ca4227e 100644
+--- a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedDisplayAreaOrganizer.java
++++ b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/OneHandedDisplayAreaOrganizer.java
+@@ -250,6 +250,7 @@ public class OneHandedDisplayAreaOrganizer extends DisplayAreaOrganizer {
+                         animator.cancel();
+                     }
+                     tx.setPosition(leash, 0, 0)
++                            .setMatrix(leash, 1f, 0f, 0f, 1f)
+                             .setWindowCrop(leash, -1, -1)
+                             .setCornerRadius(leash, -1);
+                 });
+@@ -258,6 +259,18 @@ public class OneHandedDisplayAreaOrganizer extends DisplayAreaOrganizer {
+         mLastVisualDisplayBounds.offsetTo(0, 0);
+     }
+ 
++    /**
++     * Etesian single hand mode: everything drawn at [scale] with its top left at ([x], [y]), corners rounded by
++     * [radius] (display pixels). A transform on the surfaces only: the resolution stays, touch follows it.
++     */
++    void etesianTransform(float scale, float x, float y, float radius) {
++        final SurfaceControl.Transaction tx = mSurfaceControlTransactionFactory.getTransaction();
++        mDisplayAreaTokenMap.forEach((token, leash) -> tx.setMatrix(leash, scale, 0f, 0f, scale)
++                .setPosition(leash, x, y)
++                .setCornerRadius(leash, radius / Math.max(scale, 0.01f)));
++        tx.apply();
++    }
++
+     private void animateWindows(WindowContainerToken token, SurfaceControl leash, float fromPos,
+             float toPos, @OneHandedAnimationController.TransitionDirection int direction,
+             int durationMs) {
 diff --git a/media/java/android/media/MediaActionSound.java b/media/java/android/media/MediaActionSound.java
 index ad1405aa2356..2b467810f614 100644
 --- a/media/java/android/media/MediaActionSound.java
