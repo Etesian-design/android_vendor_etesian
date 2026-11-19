@@ -29,6 +29,8 @@ object Glance {
         val outlets: Int,
         val link: String,
         val open: String,
+        /** The story's picture (a URL), or "" (a tile in the outlet's colour stands in). */
+        val image: String = "",
     )
 
     /** A search result from Glance: [section] is its heading ("Contacts", "Messages"...). */
@@ -48,9 +50,11 @@ object Glance {
                 fun col(n: String) = c.getColumnIndexOrThrow(n)
                 val section = col("section"); val title = col("title"); val source = col("source"); val time = col("time")
                 val topic = col("topic"); val outlets = col("outlets"); val link = col("link"); val open = col("open")
+                val image = c.getColumnIndex("image")
                 buildList {
                     while (c.moveToNext()) add(Story(c.getString(section), c.getString(title), c.getString(source),
-                        c.getLong(time), c.getString(topic), c.getInt(outlets), c.getString(link), c.getString(open)))
+                        c.getLong(time), c.getString(topic), c.getInt(outlets), c.getString(link), c.getString(open),
+                        if (image >= 0) c.getString(image).orEmpty() else ""))
                 }
             }
         }.getOrNull().orEmpty()

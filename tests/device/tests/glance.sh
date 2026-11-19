@@ -21,10 +21,16 @@ check "the launcher may read Glance" 'sh_ dumpsys package $LAUNCHER | grep -q "c
 
 # The news: Google News' top stories, then picked for you.
 sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null
-for _ in $(seq 30); do [ "$(dumpx | grep -o 'content-desc="story:' | wc -l)" -ge 5 ] && break; sleep 2; done
+for _ in $(seq 30); do [ "$(dumpx | grep -o 'content-desc="story:' | wc -l)" -ge 2 ] && break; sleep 2; done
 shot glance_news
 n=$(dumpx | grep -o 'content-desc="story:' | wc -l)
-check "the news shows ($n stories on screen)" '[ "$n" -ge 5 ]'
+check "the news shows ($n stories on screen, pictures make them tall)" '[ "$n" -ge 2 ]'
+# User 2026-11-19: every story has a picture, as in Google News (Google's feeds carry none: publishers' do).
+Q=$(sh_ content query --uri content://$G/news --projection image)
+pics=$(echo "$Q" | grep -c "image=http"); all=$(echo "$Q" | grep -c "^Row")
+check "every story has a picture ($pics of $all)" '[ "$all" -ge 20 ] && [ "$pics" -eq "$all" ]'
+u=$(echo "$Q" | grep -o "image=http[^,]*" | head -1 | cut -d= -f2-)
+check "and it loads ($(curl -s -o /dev/null -w "%{http_code} %{content_type}" "$u"))" 'curl -s -o /dev/null -w "%{content_type}" "$u" | grep -q "^image/"'
 
 # Notifications: the setup card's button switches Glance's access on itself (platform key), when the user asks.
 L=$(sh_ settings get secure enabled_notification_listeners)
