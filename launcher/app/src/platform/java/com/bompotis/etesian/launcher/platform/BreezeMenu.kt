@@ -46,8 +46,12 @@ class BreezeMenu(private val ctx: Context) {
 
     private fun dp(v: Float) = (v * density).toInt()
 
-    /** Opens with its top at [top], out of the left side of the screen when [fromLeft], else the right. */
-    fun show(top: Int, fromLeft: Boolean) {
+    /**
+     * Opens with its top at [top], out of the left side of the screen when [fromLeft], else the right. Its window reaches
+     * down to [coverTo] at least (Breeze's bottom), so a handle taller than the menu is covered too: nothing under it is
+     * reachable until it closes, and a tap on that see-through part closes it as the backdrop does.
+     */
+    fun show(top: Int, fromLeft: Boolean, coverTo: Int = top) {
         dismiss(animate = false)
         val screenW = ctx.resources.displayMetrics.widthPixels
         val screenH = ctx.resources.displayMetrics.heightPixels
@@ -111,7 +115,8 @@ class BreezeMenu(private val ctx: Context) {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(widgets)
         }, LinearLayout.LayoutParams(w, widgetsH))
-        val ph = stripH + if (widgets.childCount > 0) widgetsH else 0
+        val ph = maxOf(stripH + if (widgets.childCount > 0) widgetsH else 0, minOf(coverTo, screenH) - y)
+        content.setOnTouchListener { _, e -> if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN) dismiss(); true }
 
         val x = if (fromLeft) 0 else screenW - w
         // A system dialog window: Android never lets a secure overlay take touches (they fell through to the app).

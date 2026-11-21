@@ -10,7 +10,7 @@ sh_ pm grant $LAUNCHER android.permission.POST_NOTIFICATIONS 2>/dev/null
 old=$(sh_ settings get secure etesian_notif_over)
 peeks_on
 unlock; home
-sh_ am start -n $LAUNCHER/.SettingsActivity >/dev/null; sleep 2
+sh_ am start -n $LAUNCHER/.SettingsActivity --activity-clear-task >/dev/null; sleep 2
 sh_ settings put secure etesian_notif_over card
 post; sleep 2.5
 check "card: bubble window shown" 'bubble_shown'
@@ -34,7 +34,7 @@ shot bubble_lock
 check "lock screen: the card is in the stack" 'dump | grep -q "Are we still on for lunch?"'
 post cancel; unlock; home
 # App pinned bubble
-sh_ am start -n $LAUNCHER/.SettingsActivity >/dev/null; sleep 2
+sh_ am start -n $LAUNCHER/.SettingsActivity --activity-clear-task >/dev/null; sleep 2
 tid=$(sh_ am stack list | grep SettingsActivity | grep -o 'taskId=[0-9]*' | head -1 | cut -d= -f2)
 sh_ am task lock $tid >/dev/null 2>&1; sleep 1.5
 check "app pinned bubble" 'bubble_shown'

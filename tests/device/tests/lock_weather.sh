@@ -7,7 +7,7 @@ sh_ settings put secure etesian_lock_weather 0
 # The launcher publishes its weather; use a reading if it has none yet.
 [ "$now" = null ] && sh_ settings put secure etesian_weather_now "'0|1|21|°C|Testville'"
 sh_ am force-stop com.bompotis.etesian.launcher; sleep 1; home
-sh_ am start -n com.bompotis.etesian.launcher/.SettingsActivity --es section lock >/dev/null; sleep 2.5
+sh_ am start -n com.bompotis.etesian.launcher/.SettingsActivity --activity-clear-task --es section lock >/dev/null; sleep 2.5
 for _ in 1 2 3 4; do dump | grep -q 'text="Weather"' && break; sh_ input swipe 540 1700 540 900 300; sleep 0.8; done
 check "switch on the Lock screen page" 'tap_text "Weather" && sleep 1'
 check "switch turns it on" '[ "$(sh_ settings get secure etesian_lock_weather)" = 1 ]'

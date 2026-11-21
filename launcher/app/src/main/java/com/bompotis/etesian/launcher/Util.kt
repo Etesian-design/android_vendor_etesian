@@ -32,6 +32,11 @@ object N9 {
         // its ends: a squircle as tall as the button, cut in half (blanco button background)
         return FieldDrawable(intArrayOf(0xFF1C1C1C.toInt(), 0xFF101010.toInt(), 0xFF080808.toInt()), 0xFF393839.toInt(), d, shade = false)
     }
+    /** A button on a section line (Events' Clear, Refresh): the N9's filled grey pill, no rim (gsmarena 007). */
+    fun sectionButton(context: Context): android.graphics.drawable.Drawable {
+        val d = context.resources.displayMetrics.density
+        return FieldDrawable(intArrayOf(0xFF2E2E2E.toInt(), 0xFF242424.toInt(), 0xFF171717.toInt()), 0x00000000, d, shade = false)
+    }
     /**
      * An edit-mode toolbar button (n9-grid-edit.png): compact, centred in the bar, a dark lit face
      * with a thin light rim and well rounded corners, bold label.

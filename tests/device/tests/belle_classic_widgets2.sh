@@ -40,6 +40,7 @@ if [ -n "$feed" ]; then
   check "feed widget shows $feed" 'seek "$site"'
   check "and its posts" 'dump | grep -o "<node[^>]*bc_title\"[^>]*>" | grep -vq "text=\"\""'
   # Regression 2026-10-30: four fixed posts; Belle's feed widget scrolls through up to 20.
+  # 2026-11-20: and it scrolls when the Widgets view is taller than the screen (the view used to take the drag).
   titles() { dump | grep -o "<node[^>]*resource-id=\"com.bompotis.etesian.launcher:id/bc_title\"[^>]*>" | grep -o 'text="[^"]*"'; }
   l=$(dump | grep -o "<node[^>]*resource-id=\"com.bompotis.etesian.launcher:id/bc_items\"[^>]*>" | head -1 | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' ')
   set -- $l; lx=$(( (${1:-0} + ${3:-0}) / 2 )); ltop=${2:-0}; lbot=${4:-0}
@@ -47,6 +48,7 @@ if [ -n "$feed" ]; then
   [ "$lbot" -gt 0 ] && for _ in 1 2 3 4 5; do sh_ input swipe $lx $(( ltop + 30 )) $lx $(( lbot - 30 )) 150; done; sleep 1
   first=$(titles | sort)
   [ "$lbot" -gt 0 ] && { sh_ input swipe $lx $(( lbot - 30 )) $lx $(( ltop + 30 )) 400; sleep 1; }
+  shot feed_list_swiped
   check "swiping the feed list shows more posts" '[ "$lbot" -gt 0 ] && [ -n "$(comm -13 <(echo "$first") <(titles | sort))" ]'
 fi
 # FM and 3G switches show their state (not tapped: FM is audible, 2G-only could drop the connection).

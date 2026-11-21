@@ -13,11 +13,15 @@ resumed() { sh_ dumpsys activity activities | grep -m1 "ResumedActivity" | grep 
 # Long-press at ($1,$2), drag to ($3,$4) in steps, let go.
 ddrag() { raw_sh "input motionevent DOWN $1 $2; sleep 1.0; for i in 1 2 3 4 5 6 7 8; do input motionevent MOVE \$(( $1 + ($3-$1)*i/8 )) \$(( $2 + ($4-$2)*i/8 )); sleep 0.05; done; sleep 0.5; input motionevent UP $3 $4"; sleep 1.5; }
 unlock
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section sidesense >/dev/null; sleep 2.5
+sh_ am start -n $LAUNCHER/.SettingsActivity --activity-clear-task --es section sidesense >/dev/null; sleep 2.5
 tap_text "Add and arrange buttons"; sleep 2.5
 check "opens the editor" '[ "$(resumed)" = BreezeButtonsActivity ]'
 shot breeze_editor
-for t in "System buttons" "Settings pages" "Macros"; do check "category: $t" '[ -n "$(at "$t")" ]'; done
+# A short screen shows the first two; the list scrolls to the rest (and back for the drags below).
+for t in "System buttons" "Settings pages" "Macros"; do
+  [ -z "$(at "$t")" ] && for _ in 1 2 3; do raw_sh input swipe 540 1400 540 600 300; sleep 0.8; [ -n "$(at "$t")" ] && break; done
+  check "category: $t" '[ -n "$(at "$t")" ]'; done
+for _ in 1 2 3; do raw_sh input swipe 540 500 540 1500 200; done; sleep 0.8
 read SL ST SR SB <<< "$(box "Breeze strip")"
 check "the strip at the bottom, under the buttons" '[ -n "$SB" ] && [ $ST -gt $(( $(raw_sh wm size | grep -o "x[0-9]*" | tail -1 | tr -d x) * 2 / 3 )) ]'
 check "the strip shows Breeze's buttons (defaults)" '[ -n "$(at "On Breeze: Back")" ] && [ -n "$(at "On Breeze: Home")" ] && [ -n "$(at "On Breeze: Open applications")" ]'

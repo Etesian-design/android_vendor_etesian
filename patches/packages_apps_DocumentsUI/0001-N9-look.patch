@@ -1271,7 +1271,7 @@ index c82ff5814..4478dc2e3 100644
      <item name="android:textAppearance">@style/EmptyStateButtonTextAppearance
      </item>
 diff --git a/res/values/colors.xml b/res/values/colors.xml
-index 7c87372dc..e339eaf99 100644
+index 7c87372dc..af15288af 100644
 --- a/res/values/colors.xml
 +++ b/res/values/colors.xml
 @@ -18,13 +18,13 @@
@@ -1313,11 +1313,13 @@ index 7c87372dc..e339eaf99 100644
    <color name="list_item_selected_background_color">?android:colorSecondary
    </color>
    <color name="color_surface_header">@color/app_background_color</color>
-@@ -72,4 +72,18 @@
+@@ -72,4 +72,20 @@
    <color name="fragment_pick_active_text_color">@android:color/white</color>
  
    <color name="search_chip_text_selected_color">@android:color/white</color>
 +  <!-- N9 (Etesian) static palette -->
++  <!-- The N9 Documents title bar (measured) -->
++  <color name="n9_documents_header">#F26F17</color>
 +  <color name="n9_window_bg">#E9E9E9</color>
 +  <color name="n9_list_bg">#F4F4F4</color>
 +  <color name="n9_text_primary">#191919</color>
@@ -1359,6 +1361,21 @@ index a2ec6e4af..ed2e9f01c 100644
 +    <!-- N9 search pill -->
 +    <dimen name="n9_search_pill_height">40dp</dimen>
 +    <dimen name="n9_search_pill_radius">20dp</dimen>
+ </resources>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index b02d7d050..665fdd1c1 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -1113,4 +1113,10 @@
+ 
+     <!-- Message shown in a banner when offline for roots that have limited functionality when offline. [CHAR_LIMIT=NONE] -->
+     <string name="you_are_offline_banner_message">You are currently offline. Some files and functionality are not available. Connect to the internet for full access.</string>
++    <!-- Etesian: age groups in the Documents list (N9) -->
++    <string name="n9_age_today">Today</string>
++    <string name="n9_age_yesterday">Yesterday</string>
++    <string name="n9_age_week">This week</string>
++    <string name="n9_age_month">This month</string>
++    <string name="n9_age_older">Older</string>
  </resources>
 diff --git a/res/values/strings_font.xml b/res/values/strings_font.xml
 index 0c3fbc0b4..365350c8f 100644
@@ -1426,6 +1443,51 @@ index 91b36526d..fd38e6af0 100644
  
          <!-- This only used by support lib, not allow to overlay -->
          <item name="windowActionBar">false</item>
+diff --git a/src/com/android/documentsui/AbstractActionHandler.java b/src/com/android/documentsui/AbstractActionHandler.java
+index acddb155b..2c0f238c7 100644
+--- a/src/com/android/documentsui/AbstractActionHandler.java
++++ b/src/com/android/documentsui/AbstractActionHandler.java
+@@ -1501,10 +1501,19 @@ public abstract class AbstractActionHandler<T extends FragmentActivity & CommonA
+                                 authority,
+                                 documentId);
+ 
+-                final Bundle queryArgs = mSearchMgr.isSearching()
++                Bundle queryArgs = mSearchMgr.isSearching()
+                         ? mSearchMgr.buildQueryArgs()
+                         : null;
+ 
++                // Etesian: Documents is one list of every document, newest first, as on the N9
++                // (the provider's recent documents), not folders.
++                if (!mSearchMgr.isSearching() && isEtesianDocumentsTop(mState)) {
++                    contentsUri = DocumentsContract.buildRecentDocumentsUri(
++                            mState.stack.getRoot().authority, mState.stack.getRoot().rootId);
++                    queryArgs = new Bundle();
++                    queryArgs.putInt(android.content.ContentResolver.QUERY_ARG_LIMIT, 2000);
++                }
++
+                 if (mInjector.config.managedModeEnabled(mState.stack)) {
+                     contentsUri = DocumentsContract.setManageMode(contentsUri);
+                 }
+@@ -1804,4 +1813,19 @@ public abstract class AbstractActionHandler<T extends FragmentActivity & CommonA
+         @VisibleForTesting
+         void notifyDirectoryNavigated(Uri docUri);
+     }
++
++    /** Etesian: the top of the media provider's Documents root, shown as one dated list. */
++    public static boolean isEtesianDocumentsTop(com.android.documentsui.base.State state) {
++        final com.android.documentsui.base.RootInfo root = state.stack.getRoot();
++        final DocumentInfo top = state.stack.peek();
++        final boolean result = root != null
++                && com.android.documentsui.base.Providers.AUTHORITY_MEDIA.equals(root.authority)
++                && com.android.documentsui.base.Providers.ROOT_ID_DOCUMENTS.equals(root.rootId)
++                && (top == null || com.android.documentsui.base.Providers.ROOT_ID_DOCUMENTS
++                        .equals(top.documentId));
++        Log.i("EtesianDocs", "documents top=" + result + " root=" + (root == null ? null
++                : root.authority + "/" + root.rootId) + " doc=" + (top == null ? null
++                : top.documentId) + " size=" + state.stack.size());
++        return result;
++    }
+ }
 diff --git a/src/com/android/documentsui/BaseActivity.java b/src/com/android/documentsui/BaseActivity.java
 index c919edb00..9b70b8a38 100644
 --- a/src/com/android/documentsui/BaseActivity.java
@@ -1933,7 +1995,7 @@ index 000000000..47ffcf875
 +    }
 +}
 diff --git a/src/com/android/documentsui/NavigationViewManager.java b/src/com/android/documentsui/NavigationViewManager.java
-index be0ed53fd..503046a22 100644
+index be0ed53fd..01ccb87b7 100644
 --- a/src/com/android/documentsui/NavigationViewManager.java
 +++ b/src/com/android/documentsui/NavigationViewManager.java
 @@ -56,6 +56,8 @@ import com.android.modules.utils.build.SdkLevel;
@@ -1945,7 +2007,46 @@ index be0ed53fd..503046a22 100644
  import java.util.Objects;
  import java.util.function.IntConsumer;
  
-@@ -358,9 +360,11 @@ public class NavigationViewManager implements AppBarLayout.OnOffsetChangedListen
+@@ -271,6 +273,7 @@ public class NavigationViewManager implements AppBarLayout.OnOffsetChangedListen
+             // Do not change search bar background.
+         } else {
+             mToolbar.setBackground(new ColorDrawable(dynamicHeaderColor));
++            applyN9Header();
+         }
+     }
+ 
+@@ -340,9 +343,30 @@ public class NavigationViewManager implements AppBarLayout.OnOffsetChangedListen
+         update();
+     }
+ 
++    /** Etesian: Documents' title bar is the N9's orange, its title white (as Feeds, Notes...). */
++    private void applyN9Header() {
++        if (!EtesianToolbar.isAvailable(mActivity) || mIsActionModeActivated) return;
++        final int orange = ContextCompat.getColor(mActivity, getRes(R.color.n9_documents_header));
++        mToolbar.setBackground(new ColorDrawable(orange));
++        mToolbar.setOutlineProvider(null);
++        mToolbar.setTitleTextColor(android.graphics.Color.WHITE);
++        for (int i = 0; i < mToolbar.getChildCount(); i++) {
++            final View c = mToolbar.getChildAt(i);
++            if (c instanceof android.widget.TextView) {
++                ((android.widget.TextView) c).setTextColor(android.graphics.Color.WHITE);
++            } else if (c instanceof android.widget.ImageView) {
++                ((android.widget.ImageView) c).setColorFilter(android.graphics.Color.WHITE);
++            }
++        }
++        if (mToolbar.getOverflowIcon() != null) {
++            mToolbar.getOverflowIcon().setTint(android.graphics.Color.WHITE);
++        }
++    }
++
+     public void update() {
+         updateScrollFlag();
+         updateToolbar();
++        mToolbar.post(this::applyN9Header);
+         mProfileTabs.updateView();
+ 
+         // When the search view is expanded, most of the toolbar is hidden. Except when docked
+@@ -358,9 +382,11 @@ public class NavigationViewManager implements AppBarLayout.OnOffsetChangedListen
  
          // Show burger menu on toolbar unless `use_material3` flag is on and the nav rail exists
          // (the burger menu will show on the nav rail instead).
@@ -1960,7 +2061,7 @@ index be0ed53fd..503046a22 100644
              mToolbar.setNavigationIcon(getActionBarIcon());
              mToolbar.setNavigationContentDescription(getRes(R.string.drawer_open));
 diff --git a/src/com/android/documentsui/dirlist/DirectoryFragment.java b/src/com/android/documentsui/dirlist/DirectoryFragment.java
-index 689cb9ec6..28aba6b2c 100644
+index 689cb9ec6..2a2626145 100644
 --- a/src/com/android/documentsui/dirlist/DirectoryFragment.java
 +++ b/src/com/android/documentsui/dirlist/DirectoryFragment.java
 @@ -168,6 +168,8 @@ import java.lang.annotation.RetentionPolicy;
@@ -1982,7 +2083,7 @@ index 689cb9ec6..28aba6b2c 100644
      private DocumentsAdapter mAdapter;
      private DocumentClipper mClipper;
      private GridLayoutManager mLayout;
-@@ -626,6 +631,30 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+@@ -626,6 +631,53 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
          }
      }
  
@@ -1990,11 +2091,34 @@ index 689cb9ec6..28aba6b2c 100644
 +     * N9 (Etesian): the section of an adapter position, the first letter of the document's
 +     * name, when the list is sorted by name; null otherwise (and for messages and dividers).
 +     */
++    /** The N9's age groups for a dated list. */
++    private String etesianAge(long millis) {
++        final java.util.Calendar c = java.util.Calendar.getInstance();
++        c.set(java.util.Calendar.HOUR_OF_DAY, 0); c.set(java.util.Calendar.MINUTE, 0);
++        c.set(java.util.Calendar.SECOND, 0); c.set(java.util.Calendar.MILLISECOND, 0);
++        final long today = c.getTimeInMillis();
++        final long day = 24L * 60 * 60 * 1000;
++        if (millis >= today) return getString(R.string.n9_age_today);
++        if (millis >= today - day) return getString(R.string.n9_age_yesterday);
++        if (millis >= today - 6 * day) return getString(R.string.n9_age_week);
++        if (millis >= today - 30 * day) return getString(R.string.n9_age_month);
++        return getString(R.string.n9_age_older);
++    }
++
 +    private @Nullable String etesianSectionFor(int position) {
 +        if (mState == null || mAdapter == null || mModel == null
 +                || mState.derivedMode != MODE_LIST
-+                || mState.sortModel.getSortedDimensionId() != SortModel.SORT_DIMENSION_ID_TITLE
 +                || position < 0 || position >= mAdapter.getItemCount()) {
++            return null;
++        }
++        final int sorted = mState.sortModel.getSortedDimensionId();
++        if (sorted == SortModel.SORT_DIMENSION_ID_DATE) {
++            // Etesian: by date, the N9's age groups (Today, Yesterday, ...).
++            final String id = mAdapter.getStableId(position);
++            final DocumentInfo d = id == null ? null : mModel.getDocument(id);
++            return d == null || d.lastModified <= 0 ? null : etesianAge(d.lastModified);
++        }
++        if (sorted != SortModel.SORT_DIMENSION_ID_TITLE) {
 +            return null;
 +        }
 +        final String modelId = mAdapter.getStableId(position);
@@ -2013,7 +2137,7 @@ index 689cb9ec6..28aba6b2c 100644
      @Override
      public void onDestroyView() {
          mInjector.actions.unregisterDisplayStateChangedListener(mOnDisplayStateChanged);
-@@ -665,6 +694,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+@@ -665,6 +717,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
              mItemDecorationInvalidator = null;
          }
  
@@ -2029,7 +2153,7 @@ index 689cb9ec6..28aba6b2c 100644
          if (isSyncStateEnabled()) {
              mInjector.networkMonitor.removeNetworkListener(mAdapter.getNetworkListener());
          }
-@@ -736,6 +774,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+@@ -736,6 +797,15 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
          }
          mRecView.setLayoutManager(mLayout);
  
@@ -2045,6 +2169,17 @@ index 689cb9ec6..28aba6b2c 100644
          mModel.addUpdateListener(mAdapter.getModelUpdateListener());
          mModel.addUpdateListener(mModelUpdateListener);
          if (isUseFileSummaryEnabled()) {
+@@ -873,7 +943,9 @@ public class DirectoryFragment extends Fragment implements SwipeRefreshLayout.On
+         // If mDocument is null, we sort it by last modified by default because it's in Recents.
+         final boolean prefersLastModified =
+                 (mLocalState.mDocument == null)
+-                        || mLocalState.mDocument.prefersSortByLastModified();
++                        || mLocalState.mDocument.prefersSortByLastModified()
++                        || com.android.documentsui.AbstractActionHandler
++                                .isEtesianDocumentsTop(mState);
+         // Call this before adding the listener to avoid restarting the loader one more time
+         mState.sortModel.setDefaultDimension(
+                 prefersLastModified
 diff --git a/src/com/android/documentsui/dirlist/EtesianRuleDecoration.java b/src/com/android/documentsui/dirlist/EtesianRuleDecoration.java
 new file mode 100644
 index 000000000..a61adab8d
@@ -2243,6 +2378,43 @@ index 07cc2065d..dddc2f04c 100644
          return true;
      }
  
+diff --git a/src/com/android/documentsui/loaders/FolderLoader.kt b/src/com/android/documentsui/loaders/FolderLoader.kt
+index 0231e288c..d4a9e8f5f 100644
+--- a/src/com/android/documentsui/loaders/FolderLoader.kt
++++ b/src/com/android/documentsui/loaders/FolderLoader.kt
+@@ -84,8 +84,15 @@ class FolderLoader(
+             cancelNotifier = CancellationSignal()
+         }
+         val rejectBeforeTimestamp = options.getRejectBeforeTimestamp()
++        // Etesian: Documents is one list of every document, newest first, as on the N9 (the provider's recent
++        // documents), not its folders. The V2 loader is the one Files uses; AbstractActionHandler's older path too.
++        val etesianDocuments = root.authority == com.android.documentsui.base.Providers.AUTHORITY_MEDIA &&
++            root.rootId == com.android.documentsui.base.Providers.ROOT_ID_DOCUMENTS &&
++            (listedDir == null || listedDir.documentId == root.documentId)
+         val folderChildrenUri =
+-            if (listedDir == null) {
++            if (etesianDocuments) {
++                DocumentsContract.buildRecentDocumentsUri(root.authority, root.rootId)
++            } else if (listedDir == null) {
+                 DocumentsContract.buildChildDocumentsUri(root.authority, root.documentId)
+             } else {
+                 DocumentsContract.buildChildDocumentsUri(listedDir.authority, listedDir.documentId)
+@@ -99,7 +106,14 @@ class FolderLoader(
+         }
+         var cursor: Cursor? = null
+         try {
+-            cursor = queryLocation(root, folderChildrenUri, options.otherQueryArgs)
++            val args = if (etesianDocuments) {
++                android.os.Bundle(options.otherQueryArgs).apply {
++                    putInt(android.content.ContentResolver.QUERY_ARG_LIMIT, 2000)
++                }
++            } else {
++                options.otherQueryArgs
++            }
++            cursor = queryLocation(root, folderChildrenUri, args)
+         } catch (e: Exception) {
+             result.exception = e
+         } finally {
 diff --git a/src/com/android/documentsui/picker/PickActivity.java b/src/com/android/documentsui/picker/PickActivity.java
 index f4fe0e475..534045643 100644
 --- a/src/com/android/documentsui/picker/PickActivity.java

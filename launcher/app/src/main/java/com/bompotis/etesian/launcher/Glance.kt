@@ -62,16 +62,29 @@ object Glance {
 
     /**
      * Glance's results for [query] except applications (the launcher's grid shows those), in Glance's section
-     * order. Off the main thread: Glance waits up to a second and a half for slow sources.
+     * order. Off the main thread. [kinds]: only those of Glance's sources (its Kind names), so each can be asked
+     * on its own and shown as it answers; [Answer.all] when Glance searched everything anyway (an older Glance).
      */
-    fun search(ctx: Context, query: String, perSection: Int = 3): List<Result> {
-        if (!available(ctx) || query.isBlank()) return emptyList()
+    fun search(ctx: Context, query: String, perSection: Int = 3, kinds: List<String>? = null, apps: Boolean = false): Answer {
+        if (!available(ctx) || query.isBlank()) return Answer(emptyList(), true)
         val out = runCatching {
-            ctx.contentResolver.call(ROOT, "search", query, Bundle().apply { putInt("perSection", perSection) })
-        }.getOrNull() ?: return emptyList()
+            ctx.contentResolver.call(ROOT, "search", query, Bundle().apply {
+                putInt("perSection", perSection); kinds?.let { putStringArray("kinds", it.toTypedArray()) }
+            })
+        }.getOrNull() ?: return Answer(emptyList(), kinds == null)
+        return Answer(results(out, apps), kinds == null || out.getStringArray("kinds") == null)
+    }
+
+    /** One search's answer; [all]: every source, not only the kinds asked for. */
+    class Answer(val results: List<Result>, val all: Boolean)
+
+    /** The sources the launcher asks for one by one, in the order their sections show (applications are its own). */
+    val KINDS = listOf("CONTACT", "MESSAGE", "NOTIFICATION", "SHORTCUT", "SETTING", "FILE", "NEWS", "WEB")
+
+    private fun results(out: Bundle, apps: Boolean): List<Result> {
         @Suppress("DEPRECATION")
         val sections = out.getParcelableArrayList<Bundle>("sections").orEmpty()
-        return sections.filter { it.getString("kind") != "APP" }.flatMap { s ->
+        return sections.filter { apps || it.getString("kind") != "APP" }.flatMap { s ->
             @Suppress("DEPRECATION")
             s.getParcelableArrayList<Bundle>("results").orEmpty().map { r ->
                 Result(r.getString("kind").orEmpty(), s.getString("title").orEmpty(), r.getString("title").orEmpty(),

@@ -30,6 +30,10 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- The standby screen: dozing (DreamService.startDozing) and the system load from the cpuinfo service. -->
+    <uses-permission android:name="android.permission.DEVICE_POWER" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.DUMP" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" tools:ignore="ProtectedPermissions" />
@@ -185,6 +189,26 @@
             android:taskAffinity="com.bompotis.etesian.launcher.settings"
             android:label="Toolbar buttons"
             android:theme="@style/Theme.EtesianSettings" />
+
+        <activity
+            android:name=".standby.StandbySettingsActivity"
+            android:exported="false"
+            android:taskAffinity="com.bompotis.etesian.launcher.settings"
+            android:label="Standby screen"
+            android:theme="@style/Theme.EtesianSettings" />
+
+        <!-- The standby screen: Android's doze screen in Etesian mode (the framework names this component). -->
+        <service
+            android:name=".standby.StandbyDream"
+            android:exported="true"
+            android:label="Standby screen"
+            android:directBootAware="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
 
         <!-- Runs the user's toolbar buttons when SystemUI (and only SystemUI) asks. -->
         <!-- Device tests only (am broadcast -n as root): posts silent sample notifications. -->

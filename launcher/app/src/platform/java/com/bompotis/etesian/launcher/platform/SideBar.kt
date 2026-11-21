@@ -176,7 +176,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
             else {
                 // Out of the side the handle is on; the button's from the nearer side.
                 val left = if (free) drawn.centerX() < screenW / 2 else onLeft
-                menu.show(drawn.top, left)
+                menu.show(drawn.top, left, drawn.bottom)
                 view?.animate()?.alpha(0f)?.setDuration(160)?.start()
             }
             return

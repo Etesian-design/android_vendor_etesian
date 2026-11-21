@@ -10,7 +10,7 @@ breeze_labels() { raw_sh settings get secure etesian_toolbar_config | python3 -c
 dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml; }
 on_screen() { dump | grep -q "text=\"$1\""; }
 resumed() { sh_ dumpsys activity activities | grep -m1 "ResumedActivity" | grep -o '[A-Za-z]*Activity' | tail -1; }
-open_page() { sh_ am start -n $LAUNCHER/.SettingsActivity --es section sidesense >/dev/null; sleep 2.5; }
+open_page() { sh_ am start -n $LAUNCHER/.SettingsActivity --activity-clear-task --es section sidesense >/dev/null; sleep 2.5; }
 unlock; sh_ am force-stop $LAUNCHER; home
 open_page
 check "Breeze page opens" '[ "$(resumed)" = SettingsActivity ] && on_screen Place'

@@ -98,6 +98,15 @@ final class EtesianToolbarView extends LinearLayout {
         mTheme = theme;
         removeAllViews();
         invalidate();
+        // Bound while the window is mid-layout (a page opened over another app's bar), the new
+        // buttons' layout request was dropped: the bar stayed, empty (Gallery, 2026-11-19). Lay
+        // it out again once this pass is over, and say what it holds.
+        post(() -> {
+            requestLayout();
+            invalidate();
+            Log.i(TAG, "bound " + getChildCount() + " cells, " + getWidth() + "x" + getHeight()
+                    + (getChildCount() > 0 ? ", first " + getChildAt(0).getWidth() : ""));
+        });
         final View backButton = back ? backButton(onBack) : null;
         final List<View> all = new ArrayList<>();
         if (backButton != null && !backRight) all.add(backButton);

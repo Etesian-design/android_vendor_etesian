@@ -30,12 +30,44 @@ sh_ am start -a android.intent.action.VIEW -d content://com.android.calendar/tim
 if top_activity | grep -q $E; then
   sh_ input tap 754 2090; sleep 2.5  # toolbar: Agenda (4th of 5)
   sh_ input swipe 540 1500 540 1000 200; sleep 0.3
-  sh_ input swipe 1040 900 1040 1100 2500 &
+  # Below Breeze's handle (mid right edge, when it is on): it takes the touches on its part of the edge.
+  sh_ input swipe 1040 1400 1040 1600 2500 &
   sleep 1.5; adb exec-out screencap -p > /tmp/fs-agenda.png; wait
   band=$($PY -c "
 from PIL import Image; im=Image.open('/tmp/fs-agenda.png').convert('L'); w,h=im.size
 c=im.crop((40,int(h*.3),w//2,int(h*.7))); px=list(c.tobytes()); print(sum(1 for p in px if p<70)*100//len(px))")
   check "agenda: dark finger band shows ($band% dark)" "[ $band -ge 20 ]"
+  # 2026-11-19 (user): at rest the band is the app's colour; a finger on it turns it grey (smoothly); the letters
+  # come once the finger moves. Brightest pixel down the band's middle vs. down the list's middle.
+  bright() { $PY -c "
+from PIL import Image; im=Image.open('$1').convert('L'); w,h=im.size
+col=lambda x: max(im.getpixel((x,y)) for y in range(int(h*.15),int(h*.85),4))
+print(col(w - w*35//480), col(w*6//10))"; }
+  sleep 1.5; adb exec-out screencap -p > /tmp/fs-rest.png; set -- $(bright /tmp/fs-rest.png); rs=$1 rc=$2
+  check "agenda: at rest the band is the app's colour (band $rs, list $rc)" "[ $rs -ge $(( rc - 8 )) ]"
+  # 2026-11-20 (user): a swipe scroll of the list (not on the column) puts the dimmed bar with its position dot on
+  # top of the letters; it goes again a second after the list stops.
+  sh_ input swipe 540 1700 540 900 250; sleep 0.35; adb exec-out screencap -p > /tmp/fs-swipe.png
+  set -- $(bright /tmp/fs-swipe.png); ss=$1 sc=$2
+  check "agenda: a swipe scroll greys the column (band $ss, list $sc)" "[ $ss -le $(( sc - 15 )) ]"
+  dot=$($PY -c "
+from PIL import Image; im=Image.open('/tmp/fs-swipe.png').convert('L'); w,h=im.size
+x0=w-w*70//480; xs=range(x0+w*25//480, x0+w*45//480); n=0
+for y in range(int(h*.08),int(h*.94),2):
+    r=[im.getpixel((x,y)) for x in xs]
+    if max(r)>=225: n+=1
+print(n)")
+  check "agenda: the swipe shows the position dot (light rim rows $dot)" "[ $dot -ge 3 ]"
+  sleep 2.2; adb exec-out screencap -p > /tmp/fs-after.png; set -- $(bright /tmp/fs-after.png); as=$1 ac=$2
+  check "agenda: a second after the scroll the column is the app's colour again (band $as, list $ac)" "[ $as -ge $(( ac - 8 )) ]"
+  sh_ input swipe 1040 1500 1040 1500 2600 &
+  sleep 1.3; adb exec-out screencap -p > /tmp/fs-touch.png; wait
+  set -- $(bright /tmp/fs-touch.png); ts=$1 tc=$2
+  check "agenda: a finger on it turns it grey (band $ts, list $tc)" "[ $ts -le $(( tc - 15 )) ]"
+  tb=$($PY -c "
+from PIL import Image; im=Image.open('/tmp/fs-touch.png').convert('L'); w,h=im.size
+c=im.crop((40,int(h*.3),w//2,int(h*.7))); px=list(c.tobytes()); print(sum(1 for p in px if p<70)*100//len(px))")
+  check "agenda: a still finger shows no letters yet ($tb% dark)" "[ $tb -lt 20 ]"
   sleep 1; sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1
   n=$(under_band); check "agenda: no row text under the band ($n)" "[ $n = 0 ]"
   check "agenda rows show event titles" 'sh_ cat /sdcard/u.xml | grep -o "<node[^>]*text=\"hdtest[0-9]*\"[^>]*>" | grep -v "bounds=\"\[0,0\]\[0," | grep -q .'

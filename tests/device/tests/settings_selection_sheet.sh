@@ -17,6 +17,8 @@ for entry in "sidesense:Double tap:Open applications" "toolbar:Back button:Right
     check "$title: no radio buttons" '! xml | grep -q "RadioButton\|CheckedTextView\|select_dialog"'
     [ "$page" = sidesense ] && shot selection_sheet
     tap_text "$pick"; sleep 1.2
+    # On a short screen the row may be the last one shown, its summary just below: bring it up.
+    sh_ input swipe 540 1500 540 1100 300; sleep 0.8
     check "$title: picked \"$pick\", the sheet closed and the row says so" '! xml | grep -q "Selection sheet" && xml | grep -q "text=\"$pick\""'
 done
 sh_ am start -S -n $LAUNCHER/.SettingsActivity --es section events >/dev/null; sleep 2.5

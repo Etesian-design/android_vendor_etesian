@@ -51,6 +51,14 @@ public final class EtesianListFastScroller {
         return this;
     }
 
+    /**
+     * Whether the band is there now. While it is, it carries the one column of section letters, so a list that
+     * draws its own letter on each section header (Contacts) leaves it out; without the band, the list's own show.
+     */
+    public boolean isBandShown() {
+        return mCore.isBandShown();
+    }
+
     /** Turns the scroller on or off (e.g. off while searching). */
     public void setEnabled(boolean enabled) {
         mCore.setEnabled(enabled);

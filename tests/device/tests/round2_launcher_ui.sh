@@ -53,8 +53,8 @@ check "a long hold on a widget enters edit mode" 'dump | grep -q "text=\"Add wid
 set -- $(centre 'content-desc="Remove widget"'); bx=$1; by=$2
 check "✕ sits at the widget's top right (x $bx, widget centre $wx)" '[ "${bx:-0}" -gt "$wx" ]'
 sh_ input swipe 540 1700 540 800 300; sleep 1
-set -- $(centre 'content-desc="Remove widget"')
-check "edit mode scrolls instead of dragging (✕ y $by -> $2)" '[ -n "$2" ] && [ "$2" != "$by" ]'
+set -- $(centre 'content-desc="Remove widget"'); by2=$2  # named: inside check, $1.. are check's own
+check "edit mode scrolls instead of dragging (✕ y $by -> $by2)" '[ -n "$by2" ] && [ "$by2" != "$by" ]'
 check "edit bar has Done" 'dump | grep -q "text=\"Done\""'
 sh_ input keyevent BACK; sleep 1
 check "Back leaves widget edit mode" '! dump | grep -q "text=\"Done\""'

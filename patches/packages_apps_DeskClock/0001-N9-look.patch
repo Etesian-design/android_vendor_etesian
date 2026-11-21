@@ -2610,12 +2610,18 @@ index cf785bde4..55b594a00 100644
  
      /**
 diff --git a/src/com/android/deskclock/ClockFragment.java b/src/com/android/deskclock/ClockFragment.java
-index bb271b756..8e27a428e 100644
+index bb271b756..6dde3449f 100644
 --- a/src/com/android/deskclock/ClockFragment.java
 +++ b/src/com/android/deskclock/ClockFragment.java
-@@ -189,7 +189,8 @@ public final class ClockFragment extends DeskClockFragment {
+@@ -188,8 +188,14 @@ public final class ClockFragment extends DeskClockFragment {
+ 
      @Override
      public void onUpdateFab(@NonNull ImageView fab) {
++        // Etesian: with the N9 bottom toolbar, Add city is a button on it, not a floating pill.
++        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(fab.getContext())) {
++            fab.setVisibility(android.view.View.GONE);
++            return;
++        }
          fab.setVisibility(VISIBLE);
 -        fab.setImageResource(R.drawable.ic_public);
 +        // N9: add-city is a "+" on the orange pill.
@@ -2624,10 +2630,10 @@ index bb271b756..8e27a428e 100644
      }
  
 diff --git a/src/com/android/deskclock/DeskClock.java b/src/com/android/deskclock/DeskClock.java
-index d1e95ad6a..1e0a1eb02 100644
+index d1e95ad6a..5beb448af 100644
 --- a/src/com/android/deskclock/DeskClock.java
 +++ b/src/com/android/deskclock/DeskClock.java
-@@ -115,6 +115,41 @@ public class DeskClock extends BaseActivity
+@@ -115,6 +115,50 @@ public class DeskClock extends BaseActivity
      /** The bottom navigation bar */
      private BottomNavigationView mBottomNavigation;
  
@@ -2636,8 +2642,26 @@ index d1e95ad6a..1e0a1eb02 100644
 +
 +    /** Clock's pages and settings on the system toolbar, with Back first. */
 +    private void updateSystemToolbar(int selectedPage) {
-+        com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setBack(true).setItems(id -> {
-+            if ("settings".equals(id)) {
++        final java.util.List<com.bompotis.etesian.toolbar.EtesianToolbar.Item> items =
++                new java.util.ArrayList<>();
++        items.add(tab(R.id.page_alarm, R.drawable.ic_tab_alarm_static, R.string.menu_alarm,
++                selectedPage));
++        items.add(tab(R.id.page_clock, R.drawable.ic_public, R.string.n9_world_clock, selectedPage));
++        items.add(tab(R.id.page_timer, R.drawable.ic_tab_timer_static, R.string.menu_timer,
++                selectedPage));
++        items.add(tab(R.id.page_stopwatch, R.drawable.ic_tab_stopwatch_static,
++                R.string.menu_stopwatch, selectedPage));
++        // The world clock's Add city (the floating + elsewhere) is a toolbar button here.
++        if (selectedPage == R.id.page_clock) {
++            items.add(com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("add_city",
++                    R.drawable.ic_add_24dp, getString(R.string.button_cities)));
++        }
++        items.add(com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("settings",
++                R.drawable.ic_settings, getString(R.string.menu_item_settings)));
++        com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setBack(true).setItems(items, id -> {
++            if ("add_city".equals(id)) {
++                startActivity(new Intent(this, com.android.deskclock.worldclock.CitySelectionActivity.class));
++            } else if ("settings".equals(id)) {
 +                startActivityForResult(new Intent(this,
 +                                com.android.deskclock.settings.SettingsActivity.class),
 +                        com.android.deskclock.actionbarmenu.SettingsMenuItemController
@@ -2645,16 +2669,7 @@ index d1e95ad6a..1e0a1eb02 100644
 +            } else {
 +                mBottomNavigation.setSelectedItemId(Integer.parseInt(id));
 +            }
-+        },
-+                tab(R.id.page_alarm, R.drawable.ic_tab_alarm_static, R.string.menu_alarm,
-+                        selectedPage),
-+                tab(R.id.page_clock, R.drawable.ic_public, R.string.n9_world_clock, selectedPage),
-+                tab(R.id.page_timer, R.drawable.ic_tab_timer_static, R.string.menu_timer,
-+                        selectedPage),
-+                tab(R.id.page_stopwatch, R.drawable.ic_tab_stopwatch_static,
-+                        R.string.menu_stopwatch, selectedPage),
-+                com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("settings",
-+                        R.drawable.ic_settings, getString(R.string.menu_item_settings)));
++        });
 +    }
 +
 +    private com.bompotis.etesian.toolbar.EtesianToolbar.Item tab(int page, int icon, int label,
@@ -2669,7 +2684,7 @@ index d1e95ad6a..1e0a1eb02 100644
      private FragmentUtils mFragmentUtils;
  
      /** {@code true} when a settings change necessitates recreating this activity. */
-@@ -143,6 +178,12 @@ public class DeskClock extends BaseActivity
+@@ -143,6 +187,12 @@ public class DeskClock extends BaseActivity
      @Override
      protected void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
@@ -2682,7 +2697,7 @@ index d1e95ad6a..1e0a1eb02 100644
  
          setContentView(R.layout.desk_clock);
          mSnackbarAnchor = findViewById(R.id.content);
-@@ -233,6 +274,32 @@ public class DeskClock extends BaseActivity
+@@ -233,6 +283,32 @@ public class DeskClock extends BaseActivity
          mBottomNavigation = findViewById(R.id.bottom_view);
          mBottomNavigation.setOnItemSelectedListener(mNavigationListener);
  
@@ -2715,7 +2730,7 @@ index d1e95ad6a..1e0a1eb02 100644
          // Honor changes to the selected tab from outside entities.
          UiDataModel.getUiDataModel().addTabListener(mTabChangeWatcher);
  
-@@ -541,6 +608,10 @@ public class DeskClock extends BaseActivity
+@@ -541,6 +617,10 @@ public class DeskClock extends BaseActivity
          final UiDataModel.Tab selectedTab = UiDataModel.getUiDataModel().getSelectedTab();
          // Update the selected tab in the mBottomNavigation if it does not agree with UiDataModel.
          mBottomNavigation.setSelectedItemId(selectedTab.getPageResId());

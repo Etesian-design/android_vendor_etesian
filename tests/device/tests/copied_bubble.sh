@@ -18,10 +18,10 @@ sh_ settings put secure etesian_extra_copied 1; copy "On test"; sleep 0.8
 shot copied_bubble
 check "on: the Copied bubble with the green check" 'bubble && green copied_bubble'
 # Solid, like the mock: over the app grid (the Calendar icon sits behind the bubble's right part)
-# its background stays one dark colour.
+# its background stays one dark colour (sampled inside the bubble, right of the text: it ends near y 230).
 check "on: the bubble is solid (nothing shows through)" '/home/memphisx/android/.venv-tools/bin/python -c "
 from PIL import Image; im=Image.open(\"$SHOTS/copied_bubble.png\").convert(\"RGB\"); w,h=im.size
-px=[im.getpixel((x,y)) for x in range(w-330,w-60,6) for y in range(205,235,3)]
+px=[im.getpixel((x,y)) for x in range(w-330,w-60,6) for y in range(110,200,3)]
 import sys; sys.exit(0 if all(max(p)<45 for p in px) else 1)"'
 check "on: no stock clipboard overlay" '! dump | grep -q "clipboard_overlay\|clipboard_preview"'
 check "the clip itself is not shown" '! dump | grep -q "On test"'

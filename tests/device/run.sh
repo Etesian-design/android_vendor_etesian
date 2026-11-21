@@ -24,8 +24,14 @@ interrupted() { echo "interrupted: restoring the user's settings"
   quiet_off; adb shell settings put global stay_on_while_plugged_in "${_awake0:-0}"; exit 130; }
 trap interrupted INT TERM HUP
 for t in ${@:-tests/*.sh}; do [ -f "$t" ] || t=tests/$t.sh; echo "== $(basename "$t" .sh)"
+  # Every test starts from Settings' main screen: a page left open (by an earlier test, or the last run) would come
+  # back in front of the next "am start SETTINGS" (2026-11-21: Ambient display, left by standby_n9, broke three tests).
+  # A force-stop keeps the task and its page stack, so the tasks themselves are removed.
+  for _id in $(sh_ am stack list | grep -E 'taskId=[0-9]+: (com\.android\.settings|org\.lineageos\.settings\.device)/' | sed 's/.*taskId=\([0-9]*\).*/\1/'); do
+    sh_ am stack remove "$_id"; done
   _us0=$(user_state); sh_ "cp $LP /data/local/tmp/run_user_prefs.bak"; . "$t"; _us1=$(user_state)
   check "left the user's settings as they were" '[ "$_us0" = "$_us1" ]'
+  [ "$_us0" = "$_us1" ] || diff <(echo "$_us0") <(echo "$_us1") | grep '^[<>]' | sed 's/^/       /'
   # Restore only from a sane snapshot, and only by writing values back (never deleting).
   [ "$_us0" = "$_us1" ] || ! echo "$_us0" | grep -q "^etesian_extra_" || {
     diff <(echo "$_us0") <(echo "$_us1") | sed 's/^/     /'

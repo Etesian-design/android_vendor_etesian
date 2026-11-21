@@ -34,18 +34,10 @@ index d64c48a..d31ed20 100644
          // Set backward compatible camera ids
          CameraCompatibilityFilter.setBackwardCompatibleCameraIds(
 diff --git a/app/src/main/java/org/lineageos/aperture/CameraActivity.kt b/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
-index edae6e0..e0fada3 100644
+index 16a248d..a954b1e 100644
 --- a/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
 +++ b/app/src/main/java/org/lineageos/aperture/CameraActivity.kt
-@@ -10,6 +10,7 @@ import android.app.KeyguardManager
- import android.content.ClipData
- import android.content.Intent
- import android.content.pm.ActivityInfo
-+import android.content.res.Configuration
- import android.graphics.BitmapFactory
- import android.graphics.Color
- import android.graphics.Rect
-@@ -27,6 +28,7 @@ import android.util.Log
+@@ -27,6 +27,7 @@ import android.util.Log
  import android.view.GestureDetector
  import android.view.KeyEvent
  import android.view.MotionEvent
@@ -53,234 +45,437 @@ index edae6e0..e0fada3 100644
  import android.view.ViewGroup
  import android.view.WindowManager
  import android.widget.Button
-@@ -55,6 +57,7 @@ import androidx.camera.view.ScreenFlashView
- import androidx.camera.viewfinder.core.ZoomGestureDetector
- import androidx.cardview.widget.CardView
- import androidx.constraintlayout.widget.ConstraintLayout
-+import androidx.constraintlayout.widget.ConstraintSet
- import androidx.core.content.ContextCompat
- import androidx.core.view.ViewCompat
- import androidx.core.view.WindowCompat
-@@ -81,6 +84,7 @@ import kotlinx.coroutines.flow.collectLatest
- import kotlinx.coroutines.guava.await
- import kotlinx.coroutines.launch
- import kotlinx.coroutines.withContext
-+import com.bompotis.etesian.toolbar.EtesianToolbar
- import org.lineageos.aperture.ext.camera2CameraControl
- import org.lineageos.aperture.ext.flashMode
- import org.lineageos.aperture.ext.mapToRange
-@@ -184,6 +188,17 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
-     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
+@@ -45,6 +46,7 @@ import androidx.camera.core.ImageCapture
+ import androidx.camera.core.MirrorMode
+ import androidx.camera.core.resolutionselector.AspectRatioStrategy
+ import androidx.camera.core.resolutionselector.ResolutionSelector
++import androidx.camera.core.resolutionselector.ResolutionStrategy
+ import androidx.camera.extensions.ExtensionMode
+ import androidx.camera.video.Quality
+ import androidx.camera.video.QualitySelector
+@@ -122,6 +124,8 @@ import org.lineageos.aperture.models.VideoMirrorMode
+ import org.lineageos.aperture.models.VideoStabilizationMode
+ import org.lineageos.aperture.ui.dialogs.LocationPermissionsDialog
+ import org.lineageos.aperture.ui.dialogs.QrBottomSheetDialog
++import org.lineageos.aperture.ui.n9.N9CameraUi
++import org.lineageos.aperture.ui.n9.N9Capture
+ import org.lineageos.aperture.ui.views.CameraModeSelectorLayout
+ import org.lineageos.aperture.ui.views.CapturePreviewLayout
+ import org.lineageos.aperture.ui.views.CountDownView
+@@ -185,6 +189,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
      private val viewFinderFocus by lazy { findViewById<ImageView>(R.id.viewFinderFocus) }
      private val zoomLevel by lazy { findViewById<HorizontalSlider>(R.id.zoomLevel) }
-+    private val primaryBarLayout by lazy { findViewById<ConstraintLayout>(R.id.primaryBarLayout) }
-+
-+    // N9 portrait / landscape arrangements
-+    private val portraitMainSet = ConstraintSet()
-+    private val portraitPrimarySet = ConstraintSet()
-+    private val portraitSecondarySet = ConstraintSet()
-+    private val landscapeMainSet = ConstraintSet()
-+    private val landscapePrimarySet = ConstraintSet()
-+    private val landscapeSecondarySet = ConstraintSet()
-+    private var isLandscapeLayout = false
-+    private var etesianLayoutApplied = false
  
++    // Etesian: the N9 camera
++    private val n9Capture by lazy { N9Capture(this) }
++    private lateinit var n9: N9CameraUi
++    private var lastCameraConfiguration: CameraConfiguration? = null
++
      // System services
      private val keyguardManager by lazy { getSystemService(KeyguardManager::class.java) }
-@@ -414,10 +429,37 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
-         ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { _, windowInsets ->
-             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
  
--            cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
--                bottomMargin = insets.bottom
--                leftMargin = insets.left
--                rightMargin = insets.right
-+            if (isLandscapeLayout) {
-+                // N9 landscape: mode switch on top of the right-hand strip
-+                cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    topMargin = insets.top
-+                    bottomMargin = 0
-+                    leftMargin = 0
-+                    rightMargin = insets.right
-+                }
-+                primaryBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    bottomMargin = insets.bottom
-+                    rightMargin = insets.right
-+                }
-+                secondaryBottomBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    topMargin = insets.top
-+                    leftMargin = insets.left
-+                }
-+            } else {
-+                cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    topMargin = 0
-+                    bottomMargin = insets.bottom
-+                    leftMargin = insets.left
-+                    rightMargin = insets.right
-+                }
-+                primaryBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    bottomMargin = 0
-+                    rightMargin = 0
-+                }
-+                secondaryBottomBarLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-+                    topMargin = 0
-+                    leftMargin = 0
-+                }
+@@ -218,12 +227,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                     if (!handler.hasMessages(MSG_ON_PINCH_TO_ZOOM) &&
+                         abs(it.x - e2.x) > 75 * resources.displayMetrics.density
+                     ) {
+-                        if (e2.x > it.x) {
+-                            // Left to right
+-                            viewModel.previousCameraMode()
+-                        } else {
+-                            // Right to left
+-                            viewModel.nextCameraMode()
++                        // N9: only photo and video
++                        val target = if (e2.x > it.x) CameraMode.PHOTO else CameraMode.VIDEO
++                        if (viewModel.cameraMode.value != CameraMode.QR) {
++                            viewModel.setCameraMode(target)
+                         }
+                     }
+                     true
+@@ -259,10 +266,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+             when (msg.what) {
+                 MSG_HIDE_ZOOM_SLIDER -> {
+                     zoomLevel.isVisible = false
++                    if (::n9.isInitialized) n9.hideZoom()
+                 }
+ 
+                 MSG_HIDE_FOCUS_RING -> {
+-                    viewFinderFocus.isVisible = false
++                    // N9: the brackets go back to the middle
++                    n9.recentreFocus()
+                 }
+ 
+                 MSG_HIDE_EXPOSURE_SLIDER -> {
+@@ -420,6 +429,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                 rightMargin = insets.right
              }
  
++            if (::n9.isInitialized) n9.onInsets(insets)
++
              capturePreviewLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-@@ -429,6 +471,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
-             windowInsets
+                 bottomMargin = insets.bottom
+                 leftMargin = insets.left
+@@ -460,14 +471,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+             return@setOnTouchListener gestureDetector.onTouchEvent(event)
+         }
+         viewFinder.setOnClickListener {
+-            // Reset exposure level to 0 EV
+-            viewModel.setExposureCompensationLevel(0.5f)
+-
+-            exposureLevel.isVisible = true
+-            handler.removeMessages(MSG_HIDE_EXPOSURE_SLIDER)
+-            handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_EXPOSURE_SLIDER), 2000)
+-
+-            secondaryTopBarLayout.slideDown()
++            // N9: a tap on the picture focuses there (CameraX) and never takes the picture.
++            if (::n9.isInitialized) n9.onPictureTapped()
          }
  
-+        // N9: landscape-first arrangement (viewfinder + right-hand strip)
-+        setupEtesianLayouts()
-+        applyEtesianOrientation(resources.configuration)
-+
-         // Set secondary top bar button callbacks
-         aspectRatioButton.setOnClickListener { viewModel.cyclePhotoAspectRatio() }
-         videoQualityButton.setOnClickListener { viewModel.cycleVideoQuality() }
-@@ -632,6 +678,140 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         // Observe preview stream state
+@@ -630,6 +635,44 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         lifecycleScope.launch {
+             queueSetupWithCameraPermissions()
          }
-     }
- 
-+    override fun onConfigurationChanged(newConfig: Configuration) {
-+        super.onConfigurationChanged(newConfig)
 +
-+        // The activity handles orientation itself (configChanges), so swap layouts here
-+        applyEtesianOrientation(newConfig)
++        installN9()
 +    }
 +
-+    private fun setupEtesianLayouts() {
-+        val dp = resources.displayMetrics.density
-+        val stripWidth = (120 * dp).toInt()
-+        val margin = (16 * dp).toInt()
-+
-+        portraitMainSet.clone(mainLayout)
-+        portraitPrimarySet.clone(primaryBarLayout)
-+        portraitSecondarySet.clone(secondaryBottomBarLayout)
-+
-+        landscapeMainSet.clone(mainLayout)
-+        landscapeMainSet.apply {
-+            // Viewfinder fills everything left of the strip
-+            clear(R.id.viewFinder, ConstraintSet.BOTTOM)
-+            connect(R.id.viewFinder, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-+            connect(R.id.viewFinder, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-+            connect(R.id.viewFinder, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
-+            connect(R.id.viewFinder, ConstraintSet.END, R.id.primaryBarLayout, ConstraintSet.START)
-+
-+            // Mode switch at the top of the right-hand strip
-+            clear(R.id.cameraModeSelectorLayout)
-+            constrainWidth(R.id.cameraModeSelectorLayout, ConstraintSet.WRAP_CONTENT)
-+            constrainHeight(R.id.cameraModeSelectorLayout, ConstraintSet.WRAP_CONTENT)
-+            connect(R.id.cameraModeSelectorLayout, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-+            connect(R.id.cameraModeSelectorLayout, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
-+
-+            // Vertical strip on the right: shutter centered, gallery at the bottom
-+            clear(R.id.primaryBarLayout)
-+            constrainWidth(R.id.primaryBarLayout, stripWidth)
-+            constrainHeight(R.id.primaryBarLayout, ConstraintSet.MATCH_CONSTRAINT)
-+            connect(R.id.primaryBarLayout, ConstraintSet.TOP, R.id.cameraModeSelectorLayout, ConstraintSet.BOTTOM)
-+            connect(R.id.primaryBarLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-+            connect(R.id.primaryBarLayout, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
-+
-+            // Flash / lens / pro: small icons at the top-left over the preview
-+            clear(R.id.secondaryBottomBarLayout)
-+            constrainWidth(R.id.secondaryBottomBarLayout, ConstraintSet.MATCH_CONSTRAINT)
-+            constrainHeight(R.id.secondaryBottomBarLayout, (72 * dp).toInt())
-+            connect(R.id.secondaryBottomBarLayout, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-+            connect(R.id.secondaryBottomBarLayout, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
-+            connect(R.id.secondaryBottomBarLayout, ConstraintSet.END, R.id.cameraModeSelectorLayout, ConstraintSet.START)
-+
-+            // Settings popup along the bottom of the viewfinder
-+            clear(R.id.secondaryTopBarLayout)
-+            constrainWidth(R.id.secondaryTopBarLayout, ConstraintSet.MATCH_CONSTRAINT)
-+            constrainHeight(R.id.secondaryTopBarLayout, ConstraintSet.WRAP_CONTENT)
-+            connect(R.id.secondaryTopBarLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-+            connect(R.id.secondaryTopBarLayout, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
-+            connect(R.id.secondaryTopBarLayout, ConstraintSet.END, R.id.primaryBarLayout, ConstraintSet.START)
-+
-+            // Sliders stay within the viewfinder
-+            connect(R.id.zoomLevel, ConstraintSet.END, R.id.viewFinder, ConstraintSet.END)
-+            connect(R.id.exposureLevel, ConstraintSet.END, R.id.viewFinder, ConstraintSet.END)
++    /**
++     * Etesian: the N9 camera over the picture; Aperture's own bars stay in the layout (their code
++     * still runs) but are not shown.
++     */
++    private fun installN9() {
++        n9 = N9CameraUi(
++            this, viewModel, n9Capture, mainLayout, viewFinder, flashButton, shutterButton,
++            galleryButtonCardView, galleryButtonIconImageView, viewFinderFocus,
++            onCaptureOptionsChanged = { applyCaptureRequestOptions() },
++            onRebind = {
++                lastCameraConfiguration?.let {
++                    if (viewModel.cameraState.value == CameraState.IDLE) bindCameraUseCases(it)
++                }
++            },
++            onGpsChanged = { on ->
++                viewModel.setSaveLocation(on)
++                if (on) lifecycleScope.launch { permissionsManager.requestPermission(Permission.LOCATION) }
++            },
++            onAllSettings = { openSettings() },
++        )
++        n9.install()
++        for (id in listOf(R.id.primaryBarLayout, R.id.secondaryBottomBarLayout)) {
++            findViewById<View>(id).visibility = View.GONE
 +        }
-+
-+        landscapePrimarySet.clone(primaryBarLayout)
-+        landscapePrimarySet.apply {
-+            // Flip camera at the top, gallery thumbnail at the bottom
-+            clear(R.id.flipCameraButton)
-+            constrainWidth(R.id.flipCameraButton, (60 * dp).toInt())
-+            constrainHeight(R.id.flipCameraButton, (60 * dp).toInt())
-+            connect(R.id.flipCameraButton, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP, margin)
-+            centerHorizontally(R.id.flipCameraButton, ConstraintSet.PARENT_ID)
-+
-+            clear(R.id.galleryButtonCardView)
-+            constrainWidth(R.id.galleryButtonCardView, (60 * dp).toInt())
-+            constrainHeight(R.id.galleryButtonCardView, (60 * dp).toInt())
-+            connect(R.id.galleryButtonCardView, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM, margin)
-+            centerHorizontally(R.id.galleryButtonCardView, ConstraintSet.PARENT_ID)
-+
-+            clear(R.id.videoRecordingStateButton)
-+            constrainWidth(R.id.videoRecordingStateButton, (32 * dp).toInt())
-+            constrainHeight(R.id.videoRecordingStateButton, (32 * dp).toInt())
-+            centerVertically(R.id.videoRecordingStateButton, R.id.flipCameraButton)
-+            centerHorizontally(R.id.videoRecordingStateButton, R.id.flipCameraButton)
-+        }
-+
-+        landscapeSecondarySet.clone(secondaryBottomBarLayout)
-+        landscapeSecondarySet.apply {
-+            setVisibility(R.id.secondaryBottomBarDivider, View.GONE)
-+
-+            // Flash first at the far left, then pro / lens toggle next to it
-+            clear(R.id.flashButton, ConstraintSet.END)
-+            connect(R.id.flashButton, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, margin)
-+            connect(R.id.proButton, ConstraintSet.START, R.id.flashButton, ConstraintSet.END, margin)
-+            connect(R.id.googleLensButton, ConstraintSet.START, R.id.flashButton, ConstraintSet.END, margin)
-+        }
-+    }
-+
-+    private fun applyEtesianOrientation(config: Configuration) {
-+        val landscape = config.orientation == Configuration.ORIENTATION_LANDSCAPE
-+        if (landscape == isLandscapeLayout && etesianLayoutApplied) {
-+            return
-+        }
-+        isLandscapeLayout = landscape
-+        etesianLayoutApplied = true
-+
-+        if (landscape) {
-+            landscapeMainSet.applyTo(mainLayout)
-+            landscapePrimarySet.applyTo(primaryBarLayout)
-+            landscapeSecondarySet.applyTo(secondaryBottomBarLayout)
-+            secondaryBottomBarLayout.background = null
-+            primaryBarLayout.setPadding(0, 0, 0, 0)
-+        } else {
-+            portraitMainSet.applyTo(mainLayout)
-+            portraitPrimarySet.applyTo(primaryBarLayout)
-+            portraitSecondarySet.applyTo(secondaryBottomBarLayout)
-+            secondaryBottomBarLayout.setBackgroundColor(getColor(R.color.n9_panel))
-+            val dp = resources.displayMetrics.density
-+            primaryBarLayout.setPadding(0, (16 * dp).toInt(), 0, (8 * dp).toInt())
-+        }
-+
++        cameraModeSelectorLayout.visibility = View.GONE
++        secondaryTopBarLayout.visibility = View.GONE
++        islandView.visibility = View.GONE
++        exposureLevel.visibility = View.GONE
 +        ViewCompat.requestApplyInsets(mainLayout)
 +    }
 +
 +    override fun onResume() {
 +        super.onResume()
++        if (::n9.isInitialized) n9.onResume()
+     }
+ 
+     override fun onDestroy() {
+@@ -684,6 +727,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                         is Event.PhotoCaptureStatus.ImageSaved -> {
+                             if (!viewModel.inSingleCaptureMode.value) {
+                                 onCapturedMedia(event.output.savedUri)
++                                n9.onPhotoSaved(event.output.savedUri)
+                             } else {
+                                 event.output.savedUri?.let {
+                                     openCapturePreview(it, MediaType.PHOTO)
+@@ -708,6 +752,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+ 
+         launch {
+             viewModel.cameraConfiguration.collectLatest { cameraConfiguration ->
++                n9.onConfiguration(cameraConfiguration)
+                 bindCameraUseCases(cameraConfiguration)
+             }
+         }
+@@ -733,6 +778,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+ 
+                 // Update camera mode selector
+                 cameraModeSelectorLayout.setCurrentCameraMode(cameraMode)
++                n9.onCameraMode(cameraMode)
+             }
+         }
+ 
+@@ -883,6 +929,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+ 
+                 // Update camera mode selector
+                 cameraModeSelectorLayout.setCameraState(cameraState)
++                n9.onCameraState(cameraState)
+             }
+         }
+ 
+@@ -936,6 +983,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                 // Rotate capture preview
+                 capturePreviewLayout.setScreenRotation(screenRotation)
+ 
++                // N9: only the contents of the controls turn
++                n9.onRotation(compensationValue)
 +
-+        // N9: the viewfinder is full screen, no system toolbar items
-+        if (EtesianToolbar.isAvailable(this)) {
-+            // Black bar with only Back, like the N9 camera's dark chrome.
-+            EtesianToolbar.of(this)
-+                .setStyle(EtesianToolbar.STYLE_DARK)
-+                .setBack(true)
-+                .setItems(listOf()) { }
+                 // Rotate count down view
+                 countDownView.setScreenRotation(screenRotation)
+             }
+@@ -963,6 +1013,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                 // we want the user to know if any other mode is being used
+                 flashButton.isVisible = supportedFlashModes.size != 1
+                         || supportedFlashModes.first() != FlashMode.OFF
++                n9.onFlash(viewModel.flashMode.value, supportedFlashModes)
+             }
+         }
+ 
+@@ -978,6 +1029,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                         FlashMode.SCREEN -> R.drawable.ic_flash_screen
+                     }
+                 )
++                n9.onFlash(flashMode, viewModel.supportedFlashModes.value)
++                applyCaptureRequestOptions()
+             }
+         }
+ 
+@@ -1102,7 +1155,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+             viewModel.zoomState.collectLatest { zoomState ->
+                 zoomState?.takeIf { it.minZoomRatio != it.maxZoomRatio }?.let {
+                     zoomLevel.progress = it.linearZoom
+-                    zoomLevel.isVisible = true
++                    // N9: the stepped zoom slider along the right edge, not Aperture's under the shutter
++                    zoomLevel.isVisible = false
++                    n9.onZoom(it.linearZoom, it.zoomRatio, it.minZoomRatio, it.maxZoomRatio) { l ->
++                        viewModel.cameraController.setLinearZoom(l)
++                    }
+ 
+                     handler.removeMessages(MSG_HIDE_ZOOM_SLIDER)
+                     handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_ZOOM_SLIDER), 2000)
+@@ -1114,30 +1171,23 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+ 
+         launch {
+             viewModel.tapToFocusInfoState.collectLatest { tapToFocusInfoState ->
++                // N9: white brackets move to the tap, blue once the focus locks
+                 when (tapToFocusInfoState.focusState) {
+                     CameraController.TAP_TO_FOCUS_STARTED -> {
+-                        viewFinderFocus.x =
+-                            tapToFocusInfoState.tapPoint!!.x - (viewFinderFocus.width / 2)
+-                        viewFinderFocus.y =
+-                            tapToFocusInfoState.tapPoint!!.y - (viewFinderFocus.height / 2)
+-                        viewFinderFocus.isVisible = true
+                         handler.removeMessages(MSG_HIDE_FOCUS_RING)
+-                        ValueAnimator.ofInt(0.px, 8.px).apply {
+-                            addUpdateListener { anim ->
+-                                viewFinderFocus.setPadding(anim.animatedValue as Int)
+-                            }
+-                        }.start()
++                        n9.onFocus(true, false, tapToFocusInfoState.tapPoint)
+                     }
+ 
++                    CameraController.TAP_TO_FOCUS_NOT_STARTED -> {}
++
+                     else -> {
++                        n9.onFocus(
++                            false,
++                            tapToFocusInfoState.focusState == CameraController.TAP_TO_FOCUS_FOCUSED,
++                            null,
++                        )
+                         handler.removeMessages(MSG_HIDE_FOCUS_RING)
+-                        ValueAnimator.ofInt(8.px, 0.px).apply {
+-                            addUpdateListener { anim ->
+-                                viewFinderFocus.setPadding(anim.animatedValue as Int)
+-                            }
+-                        }.start()
+-
+-                        handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_FOCUS_RING), 500)
++                        handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_FOCUS_RING), 3000)
+                     }
+                 }
+             }
+@@ -1327,6 +1377,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         launch {
+             viewModel.videoRecordingDuration.collectLatest { videoRecordingDuration ->
+                 cameraModeSelectorLayout.setVideoRecordingDuration(videoRecordingDuration)
++                n9.onDuration(videoRecordingDuration)
+             }
+         }
+ 
+@@ -1388,7 +1439,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+ 
+         launch {
+             viewModel.islandItems.collectLatest { islandItems ->
+-                islandView.setItems(islandItems)
++                // N9: no island
++                islandView.isVisible = false
+             }
+         }
+     }
+@@ -1430,7 +1482,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         }
+     }
+ 
++    @Suppress("UNUSED_PARAMETER")
+     private fun startShutterAnimation(shutterAnimation: ShutterAnimation) {
++        // N9: the shutter is a squircle with the mode's glyph (set by N9CameraUi), no animation.
++        if (::n9.isInitialized) return
+         // Get appropriate drawable
+         val drawable = ContextCompat.getDrawable(
+             this, shutterAnimation.resourceId
+@@ -1468,6 +1523,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+      * Rebind cameraProvider use cases
+      */
+     private fun bindCameraUseCases(cameraConfiguration: CameraConfiguration) {
++        lastCameraConfiguration = cameraConfiguration
++
+         require(viewModel.cameraState.value == CameraState.IDLE) {
+             "Trying to rebind camera while camera is not in IDLE state"
+         }
+@@ -1539,6 +1596,24 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                                 AspectRatioStrategy.FALLBACK_RULE_AUTO,
+                             )
+                         )
++                        .apply {
++                            // N9: the Resolution group (High / Medium / Low of this aspect ratio)
++                            n9Capture.resolutionSize(
++                                cameraConfiguration.camera.cameraId,
++                                if (cameraConfiguration.photoAspectRatio == AspectRatio.RATIO_16_9) {
++                                    16f / 9f
++                                } else {
++                                    4f / 3f
++                                },
++                            )?.let {
++                                setResolutionStrategy(
++                                    ResolutionStrategy(
++                                        it,
++                                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER,
++                                    )
++                                )
++                            }
++                        }
+                         .setAllowedResolutionMode(
+                             if (cameraConfiguration.enableHighResolution) {
+                                 ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
+@@ -1635,36 +1710,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                 return@launch
+             }
+ 
+-            val camera2Options = cameraConfiguration.camera2Options
+-
+-            // Set Camera2 CaptureRequest options
+-            camera2CameraControl.setCaptureRequestOptions(CaptureRequestOptions.Builder()
+-                .setFrameRate(
+-                    when (cameraConfiguration) {
+-                        is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
+-                        else -> null
+-                    }
+-                )
+-                .setVideoStabilizationMode(
+-                    when (cameraConfiguration) {
+-                        is CameraConfiguration.Video -> when (
+-                            cameraConfiguration.enableVideoStabilization
+-                        ) {
+-                            true -> VideoStabilizationMode.getMode(cameraConfiguration.camera)
+-                            false -> null
+-                        }
+-
+-                        else -> null
+-                    } ?: VideoStabilizationMode.OFF
+-                )
+-                .setEdgeMode(camera2Options.edgeMode)
+-                .setNoiseReductionMode(camera2Options.noiseReductionMode)
+-                .setShadingMode(camera2Options.shadingMode)
+-                .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
+-                .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
+-                .setHotPixelMode(camera2Options.hotPixelMode)
+-                .build()
+-            )
++            applyCaptureRequestOptions()
+         }
+ 
+         // Restore settings that can be set on the fly
+@@ -1674,6 +1720,64 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+         viewModel.setExposureCompensationLevel(0.5f)
+     }
+ 
++    /**
++     * Sets the Camera2 capture request options: Aperture's processing modes plus the N9 settings
++     * (scene, white balance, colour filter, face detection, red-eye) and the N9 exposure.
++     */
++    private fun applyCaptureRequestOptions() {
++        val cameraConfiguration = lastCameraConfiguration ?: return
++        val camera2CameraControl = viewModel.cameraController.camera2CameraControl ?: return
++        val camera2Options = cameraConfiguration.camera2Options
++
++        // Set Camera2 CaptureRequest options
++        camera2CameraControl.setCaptureRequestOptions(CaptureRequestOptions.Builder()
++            .setFrameRate(
++                when (cameraConfiguration) {
++                    is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
++                    else -> null
++                }
++            )
++            .setVideoStabilizationMode(
++                when (cameraConfiguration) {
++                    is CameraConfiguration.Video -> when (
++                        cameraConfiguration.enableVideoStabilization
++                    ) {
++                        true -> VideoStabilizationMode.getMode(cameraConfiguration.camera)
++                        false -> null
++                    }
++
++                    else -> null
++                } ?: VideoStabilizationMode.OFF
++            )
++            .setEdgeMode(camera2Options.edgeMode)
++            .setNoiseReductionMode(camera2Options.noiseReductionMode)
++            .setShadingMode(camera2Options.shadingMode)
++            .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
++            .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
++            .setHotPixelMode(camera2Options.hotPixelMode)
++            .apply {
++                n9Capture.apply(
++                    this,
++                    cameraConfiguration.camera.cameraId,
++                    cameraConfiguration is CameraConfiguration.Video,
++                    viewModel.flashMode.value,
++                )
++            }
++            .build()
++        )
++
++        viewModel.cameraController.cameraInfo?.exposureState?.takeIf {
++            it.isExposureCompensationSupported
++        }?.let {
++            viewModel.cameraController.cameraControl?.setExposureCompensationIndex(
++                n9Capture.exposureIndex(
++                    it.exposureCompensationStep.toFloat(),
++                    it.exposureCompensationRange.lower..it.exposureCompensationRange.upper,
++                )
++            )
 +        }
 +    }
 +
-     override fun onDestroy() {
-         // Detach CameraController from ScreenFlashView
-         screenFlashView.setController(null)
+     private fun updateGalleryButton(uri: Uri?, fromCapture: Boolean) {
+         runOnUiThread {
+             val keyguardLocked = keyguardManager.isKeyguardLocked
+@@ -1681,7 +1785,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+             galleryButtonIconImageView.setImageResource(
+                 when (keyguardLocked) {
+                     true -> R.drawable.ic_lock
+-                    false -> R.drawable.ic_image
++                    false -> R.drawable.n9_ic_gallery
+                 }
+             )
+ 
+@@ -1711,8 +1815,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
+                             galleryButtonIconImageView.isVisible = true
+                         },
+                         onSuccess = { _, _ ->
+-                            galleryButtonPreviewImageView.isVisible = true
+-                            galleryButtonIconImageView.isVisible = false
++                            // N9: the gallery button keeps its glyph
++                            galleryButtonPreviewImageView.isVisible = false
++                            galleryButtonIconImageView.isVisible = true
+                         }
+                     )
+                 }
 diff --git a/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt b/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt
 index 9198171..dc320b5 100644
 --- a/app/src/main/java/org/lineageos/aperture/SettingsActivity.kt
@@ -301,86 +496,2359 @@ index 9198171..dc320b5 100644
          }
      }
  
-diff --git a/app/src/main/res/drawable/ic_shutter_base.xml b/app/src/main/res/drawable/ic_shutter_base.xml
-index f6f3800..89a6c41 100644
---- a/app/src/main/res/drawable/ic_shutter_base.xml
-+++ b/app/src/main/res/drawable/ic_shutter_base.xml
-@@ -10,7 +10,7 @@
-     android:viewportHeight="72">
-     <group android:name="backplate">
-         <path
--            android:fillColor="@color/gray_10"
-+            android:fillColor="@color/n9_panel"
-             android:fillType="evenOdd"
-             android:pathData="M70 36C70 54.7777 54.7777 70 36 70C17.2223 70 2 54.7777 2 36C2 17.2223 17.2223 2 36 2C54.7777 2 70 17.2223 70 36Z"
-             android:strokeWidth="4"
-@@ -36,7 +36,7 @@
-         android:scaleY="1.0">
-         <path
-             android:name="capture_src"
--            android:fillColor="?attr/colorSecondaryContainer"
-+            android:fillColor="@color/n9_shutter_fill"
-             android:fillType="evenOdd"
-             android:pathData="M68 36C68 53.6731 53.6731 68 36 68C18.3269 68 4 53.6731 4 36C4 18.3269 18.3269 4 36 4C53.6731 4 68 18.3269 68 36Z" />
-     </group>
+diff --git a/app/src/main/java/org/lineageos/aperture/ui/n9/N9CameraUi.kt b/app/src/main/java/org/lineageos/aperture/ui/n9/N9CameraUi.kt
+new file mode 100644
+index 0000000..90b6786
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/aperture/ui/n9/N9CameraUi.kt
+@@ -0,0 +1,1059 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.aperture.ui.n9
++
++import android.animation.Animator
++import android.animation.AnimatorListenerAdapter
++import android.animation.ValueAnimator
++import android.content.res.ColorStateList
++import android.graphics.Color
++import android.graphics.PointF
++import android.graphics.drawable.GradientDrawable
++import android.hardware.camera2.CameraMetadata
++import android.net.Uri
++import android.text.Editable
++import android.text.TextWatcher
++import android.util.TypedValue
++import android.view.Gravity
++import android.view.View
++import android.view.ViewGroup
++import android.widget.EditText
++import android.widget.FrameLayout
++import android.widget.ImageButton
++import android.widget.ImageView
++import android.widget.LinearLayout
++import android.widget.ScrollView
++import android.widget.TextView
++import androidx.activity.OnBackPressedCallback
++import androidx.appcompat.app.AppCompatActivity
++import androidx.camera.core.AspectRatio
++import androidx.camera.video.Quality
++import androidx.cardview.widget.CardView
++import androidx.core.content.edit
++import androidx.core.graphics.Insets
++import androidx.core.view.isVisible
++import androidx.core.view.setPadding
++import coil3.load
++import com.bompotis.etesian.toolbar.EtesianToolbar
++import org.lineageos.aperture.R
++import org.lineageos.aperture.ext.smoothRotate
++import org.lineageos.aperture.models.CameraConfiguration
++import org.lineageos.aperture.models.CameraFacing
++import org.lineageos.aperture.models.CameraMode
++import org.lineageos.aperture.models.CameraState
++import org.lineageos.aperture.models.FlashMode
++import org.lineageos.aperture.models.GridMode
++import org.lineageos.aperture.models.TimerMode
++import org.lineageos.aperture.viewmodels.CameraViewModel
++import kotlin.math.roundToInt
++
++/**
++ * Etesian: the Nokia N9 camera, drawn over Aperture's viewfinder (from the user's N9, PR1.3).
++ *
++ * All picture, no toolbar. Top left one see-through pill (face detection, scene, megapixels; in
++ * video the quality and scene) that opens the capture settings; top right the flash (photo: a strip
++ * of Auto / On / Off / Red-eye; video: a straight torch toggle); bottom left the photo/video switch,
++ * bottom centre the shutter, bottom right the gallery. Tapping the picture focuses. The layout is
++ * fixed to the device: on turning only the contents of each control rotate.
++ *
++ * The capture settings page and the panels over the live picture (white balance, exposure, colour
++ * filter) live in this activity too, so a change is seen at once, with the dark toolbar's Back.
++ */
++class N9CameraUi(
++    private val a: AppCompatActivity,
++    private val vm: CameraViewModel,
++    private val cap: N9Capture,
++    private val mainLayout: ViewGroup,
++    private val viewFinder: View,
++    private val flashButton: ImageButton,
++    private val shutterButton: ImageButton,
++    private val gallery: CardView,
++    private val galleryIcon: ImageView,
++    private val focus: ImageView,
++    /** The Camera2 options changed (scene, white balance, …): apply them now. */
++    private val onCaptureOptionsChanged: () -> Unit,
++    /** The photo resolution changed: rebind. */
++    private val onRebind: () -> Unit,
++    private val onGpsChanged: (Boolean) -> Unit,
++    private val onAllSettings: () -> Unit,
++) {
++    /** One "dp" of the N9 (1.5 N9 px) on this screen: sized by the short side, as the N9's 480 px. */
++    private val d = N9.unit(a)
++    private fun dp(v: Number) = (v.toFloat() * d).roundToInt()
++    private val prefs = a.getSharedPreferences("n9_capture", 0)
++
++    // Viewfinder
++    private val vf = FrameLayout(a)
++    private val infoPill = LinearLayout(a)
++    private val recPill = LinearLayout(a)
++    private val recTime = TextView(a)
++    private val flashFace = N9SquircleDrawable(N9.CONTROL_FILL, N9.CONTROL_RIM, d)
++    private val flashStrip = LinearLayout(a)
++    private val modeSwitch = LinearLayout(a)
++    private val modeVideo = ImageView(a)
++    private val modePhoto = ImageView(a)
++    private val zoom by lazy { N9ZoomSlider(a) }
++    private val zoomHide = Runnable {
++        zoom.animate().alpha(0f).setDuration(250).withEndAction { zoom.isVisible = false }.start()
++    }
++    private val brackets by lazy { N9BracketsDrawable(d) }
++
++    // Settings page, panels, captured content
++    private val page = ScrollView(a)
++    private val pageBody = LinearLayout(a)
++    private val panel = LinearLayout(a)
++    private val ownBar = FrameLayout(a)
++    private val review = ImageView(a)
++
++    private var mode = CameraMode.PHOTO
++    private var recording = false
++    private var rotation = 0f
++    private var flashMode = FlashMode.OFF
++    private var flashModes = setOf<FlashMode>()
++    private var config: CameraConfiguration? = null
++
++    private val toolbar = EtesianToolbar.isAvailable(a)
++
++    private val back = object : OnBackPressedCallback(false) {
++        override fun handleOnBackPressed() {
++            when {
++                review.isVisible -> hideReview()
++                panel.isVisible -> closePanel()
++                page.isVisible -> closePage()
++                flashStrip.isVisible -> showFlashStrip(false)
++            }
++        }
++    }
++
++    fun install() {
++        val full = { ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) }
++        // Above the picture's own overlays, under the screen flash and Aperture's capture preview.
++        val at = mainLayout.indexOfChild(mainLayout.findViewById<View>(R.id.screenFlashView))
++        mainLayout.addView(vf, at, constraintFull())
++        buildViewfinder()
++
++        review.setBackgroundColor(Color.BLACK)
++        review.scaleType = ImageView.ScaleType.FIT_CENTER
++        review.isVisible = false
++        review.contentDescription = "Captured photo"
++        review.setOnClickListener { hideReview() }
++        mainLayout.addView(review, constraintFull())
++
++        panel.orientation = LinearLayout.VERTICAL
++        panel.id = R.id.n9Panel
++        panel.isVisible = false
++        panel.isClickable = true
++        panel.setBackgroundColor(N9.PANEL_FILL)
++        mainLayout.addView(panel, constraintBottom())
++
++        page.id = R.id.n9SettingsPage
++        page.setBackgroundColor(Color.BLACK)
++        page.isVisible = false
++        page.isFillViewport = true
++        pageBody.orientation = LinearLayout.VERTICAL
++        pageBody.setPadding(dp(11), 0, dp(11), dp(16))
++        page.addView(pageBody, full())
++        mainLayout.addView(page, constraintFull())
++
++        if (!toolbar) buildOwnBar()
++
++        a.onBackPressedDispatcher.addCallback(a, back)
++
++        // Focus brackets: always shown, in the middle until a tap moves them.
++        focus.setImageDrawable(brackets)
++        focus.setPadding(0)
++        focus.updateSize(dp(91), dp(129))
++        focus.isVisible = true
++        recentreFocus()
++    }
++
++    private fun constraintFull() = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(0, 0).apply {
++        topToTop = 0; bottomToBottom = 0; startToStart = 0; endToEnd = 0
++    }
++
++    private fun constraintBottom() = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(0,
++        ViewGroup.LayoutParams.WRAP_CONTENT).apply {
++        bottomToBottom = 0; startToStart = 0; endToEnd = 0
++    }
++
++    private fun View.updateSize(w: Int, h: Int) {
++        layoutParams = layoutParams.also { it.width = w; it.height = h }
++    }
++
++    private var insets = Insets.NONE
++
++    fun onInsets(i: Insets) {
++        insets = i
++        vf.setPadding(i.left, i.top, i.right, i.bottom)
++        val bar = if (toolbar) 0 else dp(56)
++        page.setPadding(i.left, i.top, i.right, i.bottom + bar)
++        panel.setPadding(i.left, 0, i.right, i.bottom + bar + dp(8))
++        ownBar.setPadding(i.left, 0, i.right, i.bottom)
++    }
++
++    // The viewfinder
++
++    private fun lp(w: Int, h: Int, g: Int, l: Int = 0, t: Int = 0, r: Int = 0, b: Int = 0) =
++        FrameLayout.LayoutParams(w, h, g).apply { setMargins(l, t, r, b) }
++
++    private fun buildViewfinder() {
++        val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
++
++        // Top left: the strip pill (46 N9 px tall), opens the settings.
++        infoPill.id = R.id.n9InfoPill
++        infoPill.orientation = LinearLayout.HORIZONTAL
++        infoPill.gravity = Gravity.CENTER_VERTICAL
++        infoPill.background = N9SquircleDrawable(N9.CONTROL_FILL, N9.CONTROL_RIM, d, ends = true)
++        infoPill.setPadding(dp(12), 0, dp(12), 0)
++        infoPill.contentDescription = "Capture settings"
++        infoPill.setOnClickListener { openPage() }
++        vf.addView(infoPill, lp(wrap, dp(31), Gravity.TOP or Gravity.START, l = dp(11), t = dp(11)))
++
++        // The recording pill, in the strip's corner while recording.
++        recPill.id = R.id.n9RecordingPill
++        recPill.orientation = LinearLayout.HORIZONTAL
++        recPill.gravity = Gravity.CENTER_VERTICAL
++        recPill.background = N9SquircleDrawable(0x80000000.toInt(), N9.CONTROL_RIM, d, ends = true)
++        recPill.setPadding(dp(8), 0, dp(10), 0)
++        recPill.addView(View(a).apply {
++            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xFFE0262A.toInt()) }
++        }, LinearLayout.LayoutParams(dp(7), dp(7)).apply { marginEnd = dp(7) })
++        recTime.setTextColor(Color.WHITE)
++        recTime.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13f * d)
++        recTime.typeface = N9.text
++        recTime.text = "00:00"
++        recPill.addView(recTime)
++        recPill.isVisible = false
++        vf.addView(recPill, lp(wrap, dp(21), Gravity.TOP or Gravity.START, l = dp(11), t = dp(11)))
++
++        // Top right: flash (60 N9 px).
++        (flashButton.parent as? ViewGroup)?.removeView(flashButton)
++        flashButton.background = flashFace
++        flashButton.scaleType = ImageView.ScaleType.FIT_CENTER
++        flashButton.setPadding(dp(8))
++        flashButton.imageTintList = ColorStateList.valueOf(Color.WHITE)
++        flashButton.setOnLongClickListener(null)
++        flashButton.isLongClickable = false
++        flashButton.setOnClickListener { onFlashTap() }
++        vf.addView(flashButton, lp(dp(40), dp(40), Gravity.TOP or Gravity.END, r = dp(11), t = dp(11)))
++
++        // The flash strip slides out from the button along the long edge.
++        flashStrip.id = R.id.n9FlashStrip
++        flashStrip.orientation = LinearLayout.VERTICAL
++        flashStrip.gravity = Gravity.CENTER_HORIZONTAL
++        flashStrip.background = N9SquircleDrawable(N9.STRIP_FILL, 0, d, ends = true)
++        flashStrip.setPadding(0, dp(4), 0, dp(4))
++        flashStrip.isVisible = false
++        vf.addView(flashStrip, lp(dp(40), wrap, Gravity.TOP or Gravity.END, r = dp(11), t = dp(63)))
++
++        // Bottom left: photo/video switch (120 x 58 N9 px), video first, the current one a white squircle.
++        modeSwitch.id = R.id.n9ModeSwitch
++        modeSwitch.orientation = LinearLayout.HORIZONTAL
++        modeSwitch.gravity = Gravity.CENTER_VERTICAL
++        modeSwitch.background = N9SquircleDrawable(N9.CONTROL_FILL, N9.CONTROL_RIM, d, ends = true)
++        modeSwitch.setPadding(dp(3), 0, dp(3), 0)
++        for ((v, m) in listOf(modeVideo to CameraMode.VIDEO, modePhoto to CameraMode.PHOTO)) {
++            v.id = if (m == CameraMode.VIDEO) R.id.n9ModeVideo else R.id.n9ModePhoto
++            v.setImageResource(if (m == CameraMode.VIDEO) R.drawable.n9_ic_video else R.drawable.n9_ic_camera)
++            v.scaleType = ImageView.ScaleType.FIT_CENTER
++            v.setPadding(dp(7))
++            v.contentDescription = if (m == CameraMode.VIDEO) "Video" else "Photo"
++            v.setOnClickListener { switchMode(m) }
++            modeSwitch.addView(v, LinearLayout.LayoutParams(dp(34), dp(34)).apply { marginStart = dp(2); marginEnd = dp(2) })
++        }
++        vf.addView(modeSwitch, lp(wrap, dp(39), Gravity.BOTTOM or Gravity.START, l = dp(11), b = dp(21)))
++
++        // Bottom centre: the shutter, the largest control (86 x 88 N9 px).
++        (shutterButton.parent as? ViewGroup)?.removeView(shutterButton)
++        shutterButton.background = N9SquircleDrawable(N9.CONTROL_FILL, N9.CONTROL_RIM, d)
++        shutterButton.scaleType = ImageView.ScaleType.FIT_CENTER
++        shutterButton.setPadding(dp(16), dp(17), dp(16), dp(17))
++        shutterButton.setImageResource(R.drawable.n9_ic_camera)
++        shutterButton.imageTintList = ColorStateList.valueOf(Color.WHITE)
++        vf.addView(shutterButton, lp(dp(57), dp(59), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, b = dp(11)))
++
++        // Bottom right: the gallery (60 N9 px).
++        (gallery.parent as? ViewGroup)?.removeView(gallery)
++        gallery.radius = 0f
++        gallery.cardElevation = 0f
++        gallery.setCardBackgroundColor(Color.TRANSPARENT)
++        gallery.background = N9SquircleDrawable(N9.CONTROL_FILL, N9.CONTROL_RIM, d)
++        gallery.contentDescription = "Gallery"
++        galleryIcon.scaleX = 1f
++        galleryIcon.scaleY = 1f
++        galleryIcon.scaleType = ImageView.ScaleType.FIT_CENTER
++        galleryIcon.setPadding(dp(8))
++        galleryIcon.imageTintList = ColorStateList.valueOf(Color.WHITE)
++        vf.addView(gallery, lp(dp(40), dp(40), Gravity.BOTTOM or Gravity.END, r = dp(11), b = dp(21)))
++
++        // Zoom: a stepped slider standing along the right edge, in the empty band between the flash
++        // and the gallery, shown while zooming.
++        zoom.id = R.id.n9ZoomSlider
++        zoom.contentDescription = "Zoom"
++        zoom.isVisible = false
++        vf.addView(zoom, lp(dp(40), dp(187), Gravity.END or Gravity.CENTER_VERTICAL, r = dp(11)))
++
++        // A tap on the picture (outside the controls) closes the flash strip.
++        vf.setOnTouchListener { _, _ -> false }
++    }
++
++    /** Called when the picture is tapped: it focuses (CameraX); here only the strip closes. */
++    fun onPictureTapped() {
++        if (flashStrip.isVisible) showFlashStrip(false)
++    }
++
++    private fun updateModeSwitch() {
++        for ((v, m) in listOf(modeVideo to CameraMode.VIDEO, modePhoto to CameraMode.PHOTO)) {
++            val on = m == mode
++            v.background = if (on) N9SquircleDrawable(Color.WHITE, 0, d) else null
++            v.imageTintList = ColorStateList.valueOf(if (on) Color.BLACK else Color.WHITE)
++            v.isSelected = on
++        }
++    }
++
++    /** Photo <-> video: the whole screen turns over like a card, video on the back. */
++    private fun switchMode(target: CameraMode) {
++        if (target == mode || recording) return
++        showFlashStrip(false)
++        val reduce = !ValueAnimator.areAnimatorsEnabled()
++        val v = mainLayout
++        if (reduce) {
++            v.animate().alpha(0.4f).setDuration(90).withEndAction {
++                vm.setCameraMode(target)
++                v.animate().alpha(1f).setDuration(90).start()
++            }.start()
++            return
++        }
++        v.cameraDistance = 8000 * d
++        val dir = if (target == CameraMode.VIDEO) 1f else -1f
++        v.animate().rotationY(90f * dir).setDuration(180).setInterpolator(android.view.animation.AccelerateInterpolator())
++            .setListener(object : AnimatorListenerAdapter() {
++                override fun onAnimationEnd(animation: Animator) {
++                    v.animate().setListener(null)
++                    vm.setCameraMode(target)
++                    v.rotationY = -90f * dir
++                    v.animate().rotationY(0f).setDuration(180)
++                        .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
++                }
++            }).start()
++    }
++
++    // Flash
++
++    private fun flashIcon(m: FlashMode) = when (m) {
++        FlashMode.AUTO -> R.drawable.n9_ic_flash_auto
++        FlashMode.ON -> R.drawable.n9_ic_flash_on
++        FlashMode.OFF -> if (mode == CameraMode.VIDEO) R.drawable.n9_ic_torch_off else R.drawable.n9_ic_flash_off
++        FlashMode.TORCH -> R.drawable.n9_ic_torch_on
++        FlashMode.SCREEN -> R.drawable.ic_flash_screen
++    }
++
++    private val redEyeShown get() = mode == CameraMode.PHOTO && prefs.getBoolean("redeye", false) && flashMode == FlashMode.AUTO
++
++    fun onFlash(m: FlashMode, supported: Set<FlashMode>) {
++        flashMode = m
++        flashModes = supported
++        flashButton.setImageResource(if (redEyeShown) R.drawable.n9_ic_redeye else flashIcon(m))
++        flashButton.contentDescription = if (mode == CameraMode.VIDEO) "Torch" else "Flash"
++        flashButton.isSelected = m == FlashMode.TORCH
++        if (flashStrip.isVisible) fillFlashStrip()
++    }
++
++    private data class FlashChoice(val mode: FlashMode, val redEye: Boolean, val icon: Int, val label: String)
++
++    private fun flashChoices(): List<FlashChoice> {
++        val camId = config?.camera?.cameraId
++        val redEyeOk = camId != null && cap.caps(camId).redEye
++        return buildList {
++            if (FlashMode.AUTO in flashModes) add(FlashChoice(FlashMode.AUTO, false, R.drawable.n9_ic_flash_auto, "Automatic"))
++            if (FlashMode.ON in flashModes) add(FlashChoice(FlashMode.ON, false, R.drawable.n9_ic_flash_on, "On"))
++            if (FlashMode.SCREEN in flashModes) add(FlashChoice(FlashMode.SCREEN, false, R.drawable.ic_flash_screen, "Screen flash"))
++            if (FlashMode.OFF in flashModes) add(FlashChoice(FlashMode.OFF, false, R.drawable.n9_ic_flash_off, "Off"))
++            if (FlashMode.AUTO in flashModes && redEyeOk) {
++                add(FlashChoice(FlashMode.AUTO, true, R.drawable.n9_ic_redeye, "Red-eye reduction"))
++            }
++        }
++    }
++
++    private fun onFlashTap() {
++        if (mode == CameraMode.VIDEO) {
++            // A straight torch toggle; only the icon changes.
++            vm.setFlashMode(if (flashMode == FlashMode.TORCH) FlashMode.OFF else FlashMode.TORCH)
++            return
++        }
++        val choices = flashChoices()
++        if (choices.size <= 2) {
++            // Two values toggle straight from the button.
++            val next = choices.firstOrNull { it.mode != flashMode } ?: return
++            cap.redEye = next.redEye
++            vm.setFlashMode(next.mode)
++            onCaptureOptionsChanged()
++            return
++        }
++        showFlashStrip(!flashStrip.isVisible)
++    }
++
++    private fun fillFlashStrip() {
++        flashStrip.removeAllViews()
++        for (c in flashChoices()) {
++            val current = c.mode == flashMode && c.redEye == (redEyeShown)
++            flashStrip.addView(ImageView(a).apply {
++                setImageResource(c.icon)
++                scaleType = ImageView.ScaleType.FIT_CENTER
++                setPadding(dp(8), dp(11), dp(8), dp(11))
++                imageTintList = ColorStateList.valueOf(if (current) N9.BLUE else Color.WHITE)
++                contentDescription = c.label
++                isSelected = current
++                rotation = this@N9CameraUi.rotation
++                setOnClickListener {
++                    cap.redEye = c.redEye
++                    vm.setFlashMode(c.mode)
++                    onCaptureOptionsChanged()
++                    flashMode = c.mode
++                    onFlash(c.mode, flashModes)
++                    showFlashStrip(false)
++                }
++            }, LinearLayout.LayoutParams(dp(40), dp(46)))
++        }
++    }
++
++    private fun showFlashStrip(show: Boolean) {
++        if (show) fillFlashStrip()
++        flashFace.fill = if (show) N9.BLUE else N9.CONTROL_FILL
++        flashFace.rim = if (show) N9.BLUE else N9.CONTROL_RIM
++        if (show == flashStrip.isVisible) return
++        if (show) {
++            flashStrip.isVisible = true
++            flashStrip.pivotY = 0f
++            flashStrip.scaleY = 0f
++            flashStrip.animate().scaleY(1f).setDuration(160).start()
++        } else {
++            flashStrip.animate().scaleY(0f).setDuration(120).withEndAction {
++                flashStrip.isVisible = false
++                flashStrip.scaleY = 1f
++            }.start()
++        }
++        updateBack()
++    }
++
++    // State from the activity
++
++    fun onConfiguration(c: CameraConfiguration) {
++        config = c
++        updateInfoPill()
++    }
++
++    fun onCameraMode(m: CameraMode) {
++        mode = m
++        if (m != CameraMode.PHOTO) showFlashStrip(false)
++        shutterButton.setImageResource(if (m == CameraMode.VIDEO) R.drawable.n9_ic_video else R.drawable.n9_ic_camera)
++        updateModeSwitch()
++        updateInfoPill()
++        onFlash(flashMode, flashModes)
++        if (page.isVisible) renderPage()
++    }
++
++    fun onCameraState(s: CameraState) {
++        val rec = s.isRecordingVideo
++        if (rec == recording) return
++        recording = rec
++        // Recording: everything hides but the shutter; the time in the strip's corner.
++        for (v in listOf(infoPill, flashButton, modeSwitch, gallery)) v.isVisible = !rec
++        if (rec) showFlashStrip(false)
++        recPill.isVisible = rec
++    }
++
++    fun onDuration(nanos: Long) {
++        val s = nanos / 1_000_000_000L
++        recTime.text = "%02d:%02d".format(s / 60, s % 60)
++    }
++
++    /** Pinch zoom (or the slider): show the zoom slider; Aperture's timer hides it again. */
++    fun onZoom(linear: Float, ratio: Float, min: Float, max: Float, setLinear: (Float) -> Unit) {
++        if (min >= max) return
++        zoom.minRatio = min
++        zoom.maxRatio = max
++        zoom.ratio = ratio
++        zoom.linear = linear
++        zoom.onChange = setLinear
++        zoom.animate().cancel()
++        zoom.alpha = 1f
++        zoom.isVisible = !page.isVisible && !panel.isVisible
++    }
++
++    /** Aperture's own zoom slider timeout (MSG_HIDE_ZOOM_SLIDER) hides it. */
++    fun hideZoom() = zoomHide.run()
++
++    /** Turning the phone: only the contents of the controls turn, animated. */
++    fun onRotation(degrees: Float) {
++        rotation = degrees
++        ValueAnimator.ofFloat(zoom.contentRotation, degrees).apply {
++            duration = 260
++            addUpdateListener { zoom.contentRotation = it.animatedValue as Float }
++        }.start()
++        for (v in listOf(flashButton, shutterButton, gallery, modeVideo, modePhoto, recTime)) v.smoothRotate(degrees)
++        for (i in 0 until infoPill.childCount) infoPill.getChildAt(i).smoothRotate(degrees)
++        for (i in 0 until flashStrip.childCount) flashStrip.getChildAt(i).smoothRotate(degrees)
++    }
++
++    /** The focus brackets: moved to the tap, blue once the focus locks; back to the middle later. */
++    fun onFocus(started: Boolean, locked: Boolean, point: PointF?) {
++        if (started && point != null) {
++            focus.x = point.x - focus.width / 2f
++            focus.y = point.y - focus.height / 2f
++            brackets.color = Color.WHITE
++        } else {
++            brackets.color = if (locked) N9.BLUE else Color.WHITE
++        }
++        focus.isVisible = true
++    }
++
++    fun recentreFocus() {
++        focus.post {
++            focus.translationX = 0f
++            focus.translationY = 0f
++            val parent = focus.parent as View
++            focus.x = (parent.width - focus.width) / 2f
++            focus.y = (parent.height - focus.height) / 2f
++            brackets.color = Color.WHITE
++            focus.isVisible = true
++        }
++    }
++
++    private fun sceneIcon(scene: Int) = when (scene) {
++        N9Capture.MACRO_SCENE -> R.drawable.n9_ic_scene_macro
++        CameraMetadata.CONTROL_SCENE_MODE_LANDSCAPE -> R.drawable.n9_ic_scene_landscape
++        CameraMetadata.CONTROL_SCENE_MODE_PORTRAIT -> R.drawable.n9_ic_scene_portrait
++        CameraMetadata.CONTROL_SCENE_MODE_NIGHT -> R.drawable.n9_ic_scene_night
++        CameraMetadata.CONTROL_SCENE_MODE_SPORTS -> R.drawable.n9_ic_scene_sports
++        else -> R.drawable.n9_ic_scene_auto
++    }
++
++    private fun videoLabel(q: Quality?) = when (q) {
++        Quality.UHD -> "4K"
++        Quality.QHD -> "QHD"
++        Quality.FHD -> "FHD"
++        Quality.HD -> "HD"
++        Quality.SD -> "SD"
++        else -> "HD"
++    }
++
++    private fun ratio(c: CameraConfiguration.Photo) =
++        if (c.photoAspectRatio == AspectRatio.RATIO_16_9) 16f / 9f else 4f / 3f
++
++    private fun updateInfoPill() {
++        infoPill.removeAllViews()
++        val c = config ?: return
++        val caps = cap.caps(c.camera.cameraId)
++        fun icon(res: Int) = ImageView(a).apply {
++            setImageResource(res); imageTintList = ColorStateList.valueOf(Color.WHITE)
++        }
++        fun label(t: String, boxed: Boolean) = TextView(a).apply {
++            text = t; setTextColor(Color.WHITE); typeface = N9.bold; setTextSize(TypedValue.COMPLEX_UNIT_PX, 13f * d)
++            if (boxed) {
++                background = GradientDrawable().apply { setStroke(dp(1.5f), Color.WHITE); cornerRadius = dp(2).toFloat() }
++                setPadding(dp(3), 0, dp(3), 0)
++            }
++        }
++        val views = mutableListOf<View>()
++        when (c) {
++            is CameraConfiguration.Photo -> {
++                if (cap.faceDetection && caps.faceDetection) views += icon(R.drawable.n9_ic_face)
++                views += icon(sceneIcon(cap.scene(false)))
++                cap.resolutionSize(c.camera.cameraId, ratio(c))?.let { views += label(N9Capture.megapixels(it), false) }
++            }
++            is CameraConfiguration.Video -> {
++                views += label(videoLabel(c.videoQuality), true)
++                views += icon(sceneIcon(cap.scene(true)))
++            }
++            else -> {}
++        }
++        views.forEachIndexed { i, v ->
++            v.rotation = rotation
++            infoPill.addView(v, LinearLayout.LayoutParams(
++                if (v is ImageView) dp(20) else ViewGroup.LayoutParams.WRAP_CONTENT,
++                if (v is ImageView) dp(20) else ViewGroup.LayoutParams.WRAP_CONTENT,
++            ).apply { if (i > 0) marginStart = dp(13) })
++        }
++    }
++
++    // Show captured content
++
++    fun onPhotoSaved(uri: Uri?) {
++        uri ?: return
++        cap.writeCreator(a, uri, prefs.getString("creator", null))
++        val seconds = prefs.getInt("review", 0)
++        if (seconds == 0) return
++        review.load(uri)
++        review.isVisible = true
++        updateBack()
++        handler.removeCallbacksAndMessages(null)
++        if (seconds > 0) handler.postDelayed({ hideReview() }, seconds * 1000L)
++    }
++
++    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
++
++    private fun hideReview() {
++        handler.removeCallbacksAndMessages(null)
++        review.isVisible = false
++        review.setImageDrawable(null)
++        updateBack()
++    }
++
++    // Toolbar
++
++    fun onResume() = updateBack()
++
++    private fun updateBack() {
++        // Full screen as on the N9 (no status bar on the viewfinder nor the settings page); a swipe
++        // from the edge shows it for a moment.
++        androidx.core.view.WindowCompat.getInsetsController(a.window, a.window.decorView).apply {
++            systemBarsBehavior =
++                androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
++            hide(androidx.core.view.WindowInsetsCompat.Type.statusBars())
++        }
++        val overlay = page.isVisible || panel.isVisible
++        back.isEnabled = overlay || flashStrip.isVisible || review.isVisible
++        if (toolbar) {
++            EtesianToolbar.of(a).setStyle(EtesianToolbar.STYLE_DARK).setBack(true).setHidden(!overlay)
++                .setItems(emptyList()) {}
++        } else {
++            ownBar.isVisible = overlay
++        }
++    }
++
++    private fun buildOwnBar() {
++        ownBar.setBackgroundColor(0xFF111111.toInt())
++        ownBar.isVisible = false
++        ownBar.addView(ImageButton(a).apply {
++            setImageResource(R.drawable.n9_ic_back)
++            background = N9SquircleDrawable(0xFF2A2A2A.toInt(), 0x33FFFFFF, d)
++            contentDescription = "Back"
++            setOnClickListener { a.onBackPressedDispatcher.onBackPressed() }
++        }, FrameLayout.LayoutParams(dp(48), dp(40), Gravity.CENTER_VERTICAL or Gravity.START).apply {
++            setMargins(dp(12), dp(8), 0, dp(8))
++        })
++        mainLayout.addView(ownBar, constraintBottom())
++    }
++
++    // The settings page
++
++    private fun openPage() {
++        if (recording) return
++        showFlashStrip(false)
++        renderPage()
++        page.scrollTo(0, 0)
++        page.isVisible = true
++        vf.isVisible = false
++        updateBack()
++    }
++
++    private fun closePage() {
++        page.isVisible = false
++        vf.isVisible = true
++        updateBack()
++    }
++
++    private fun changed(rebind: Boolean = false) {
++        if (rebind) onRebind() else onCaptureOptionsChanged()
++        updateInfoPill()
++        if (page.isVisible) {
++            val y = page.scrollY
++            renderPage()
++            page.post { page.scrollTo(0, y) }
++        }
++    }
++
++    private fun tv(t: String, size: Float, color: Int = Color.WHITE, face: android.graphics.Typeface = N9.text) =
++        TextView(a).apply { text = t; setTextSize(TypedValue.COMPLEX_UNIT_PX, size * d); setTextColor(color); typeface = face }
++
++    /** The large light heading of a part ("Image capture settings", "Camera settings"). */
++    private fun heading(t: String) {
++        pageBody.addView(tv(t, 21f, face = N9.light).apply { setPadding(0, dp(14), 0, dp(6)) })
++    }
++
++    /** A small bold grey section title with a thin rule after it. */
++    private fun section(t: String, into: LinearLayout = pageBody) {
++        into.addView(LinearLayout(a).apply {
++            orientation = LinearLayout.HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++            addView(tv(t, 10.5f, N9.GREY_TEXT, N9.bold))
++            addView(View(a).apply { setBackgroundColor(N9.RULE) },
++                LinearLayout.LayoutParams(0, dp(1), 1f).apply { marginStart = dp(8) })
++            setPadding(0, dp(9), 0, dp(8))
++        })
++    }
++
++    private data class Tile(val icon: Int, val label: String, val selected: Boolean, val onClick: () -> Unit)
++
++    /** Tiles, 3 per row: solid dark on the page ([glass] false), see-through grey over the picture. */
++    private fun tiles(items: List<Tile>, into: LinearLayout, glass: Boolean) {
++        items.chunked(3).forEach { row ->
++            val r = LinearLayout(a).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 0, 0, dp(11)) }
++            row.forEach { t ->
++                r.addView(LinearLayout(a).apply {
++                    orientation = LinearLayout.VERTICAL
++                    gravity = Gravity.CENTER_HORIZONTAL
++                    contentDescription = t.label
++                    isSelected = t.selected
++                    setOnClickListener { t.onClick() }
++                    addView(ImageView(a).apply {
++                        setImageResource(t.icon)
++                        scaleType = ImageView.ScaleType.FIT_CENTER
++                        setPadding(dp(8))
++                        imageTintList = ColorStateList.valueOf(Color.WHITE)
++                        background = N9SquircleDrawable(N9.TILE_BOTTOM, 0, d).apply {
++                            when {
++                                t.selected -> { setGradient(intArrayOf(N9.BLUE_TOP, N9.BLUE_BOTTOM)); rim = N9.BLUE_RIM }
++                                glass -> fill = N9.TILE_GLASS
++                                else -> setGradient(intArrayOf(N9.TILE_TOP, N9.TILE_BOTTOM))
++                            }
++                            Unit
++                        }
++                    }, LinearLayout.LayoutParams(dp(40), dp(40)))
++                    addView(tv(t.label, 11.5f, 0xFFCCCCCC.toInt()).apply { setPadding(0, dp(5), 0, 0) })
++                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
++            }
++            repeat(3 - row.size) { r.addView(View(a), LinearLayout.LayoutParams(0, 0, 1f)) }
++            into.addView(r)
++        }
++    }
++
++    /** A row with a round blue icon, bold title and grey value. */
++    private fun iconRow(icon: Int, title: String, value: String, id: Int, onClick: () -> Unit) {
++        pageBody.addView(LinearLayout(a).apply {
++            this.id = id
++            orientation = LinearLayout.HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++            minimumHeight = dp(53)
++            setOnClickListener { onClick() }
++            addView(ImageView(a).apply {
++                setImageResource(icon)
++                scaleType = ImageView.ScaleType.FIT_CENTER
++                setPadding(dp(7))
++                imageTintList = ColorStateList.valueOf(Color.WHITE)
++                // A blue squircle (n9cam-0), as the scene tiles.
++                background = N9SquircleDrawable(N9.BLUE, 0, d).apply {
++                    setGradient(intArrayOf(N9.BLUE_TOP, N9.BLUE_BOTTOM))
++                }
++            }, LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(12) })
++            addView(LinearLayout(a).apply {
++                orientation = LinearLayout.VERTICAL
++                addView(tv(title, 17f, face = N9.bold))
++                addView(tv(value, 13f, N9.VALUE_TEXT))
++            })
++        })
++    }
++
++    /** A segmented group, portrait: stacked, centred, 2/3 of the width; the selected row flat blue. */
++    private fun group(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
++        val box = LinearLayout(a).apply {
++            orientation = LinearLayout.VERTICAL
++            clipToOutline = true
++            outlineProvider = object : android.view.ViewOutlineProvider() {
++                override fun getOutline(v: View, o: android.graphics.Outline) =
++                    o.setRoundRect(0, 0, v.width, v.height, dp(6).toFloat())
++            }
++        }
++        options.forEachIndexed { i, s ->
++            box.addView(tv(s, 13.5f, face = N9.bold).apply {
++                gravity = Gravity.CENTER
++                isSelected = i == selected
++                background = if (i == selected) {
++                    GradientDrawable().apply { setColor(N9.BLUE) }
++                } else {
++                    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
++                        intArrayOf(0xFF3A3A3A.toInt(), 0xFF1E1E1E.toInt()))
++                }
++                setOnClickListener { onSelect(i) }
++            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(33)).apply {
++                if (i > 0) topMargin = dp(1)
++            })
++        }
++        box.setBackgroundColor(Color.BLACK)
++        val w = (a.resources.displayMetrics.widthPixels * 2 / 3)
++        pageBody.addView(box, LinearLayout.LayoutParams(w, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
++            gravity = Gravity.CENTER_HORIZONTAL
++            bottomMargin = dp(4)
++        })
++    }
++
++    /** A switch row: title, an optional icon before the switch, an optional explanation under it. */
++    private fun switchRow(title: String, on: Boolean, icon: Int? = null, note: String? = null, onChange: (Boolean) -> Unit) {
++        val sw = N9Switch(a).apply { setCheckedNow(on); contentDescription = title; this.onChange = onChange }
++        pageBody.addView(LinearLayout(a).apply {
++            orientation = LinearLayout.HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++            minimumHeight = dp(44)
++            setOnClickListener { sw.performClick() }
++            addView(tv(title, 17f, face = N9.bold), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
++            icon?.let {
++                addView(ImageView(a).apply {
++                    setImageResource(it); imageTintList = ColorStateList.valueOf(Color.WHITE)
++                }, LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginEnd = dp(18) })
++            }
++            addView(sw)
++        })
++        note?.let { pageBody.addView(tv(it, 14f).apply { setPadding(0, dp(2), 0, dp(8)) }) }
++    }
++
++    private fun renderPage() {
++        pageBody.removeAllViews()
++        val c = config ?: return
++        val video = c is CameraConfiguration.Video
++        val caps = cap.caps(c.camera.cameraId)
++
++        heading(if (video) "Video recording settings" else "Image capture settings")
++
++        // Scene: Automatic plus what the camera lists (Camera2 scene modes; macro is the AF mode).
++        val scenes = buildList {
++            add(N9Capture.AUTO_SCENE to "Automatic")
++            if (video) {
++                if (CameraMetadata.CONTROL_SCENE_MODE_NIGHT in caps.scenes) {
++                    add(CameraMetadata.CONTROL_SCENE_MODE_NIGHT to "Video at night")
++                }
++            } else {
++                if (caps.macro) add(N9Capture.MACRO_SCENE to "Macro")
++                for ((m, l) in listOf(
++                    CameraMetadata.CONTROL_SCENE_MODE_LANDSCAPE to "Landscape",
++                    CameraMetadata.CONTROL_SCENE_MODE_PORTRAIT to "Portrait",
++                    CameraMetadata.CONTROL_SCENE_MODE_NIGHT to "Night",
++                    CameraMetadata.CONTROL_SCENE_MODE_SPORTS to "Sports",
++                )) if (m in caps.scenes) add(m to l)
++            }
++        }
++        if (scenes.size > 1) {
++            section("Scene")
++            val cur = cap.scene(video)
++            tiles(scenes.map { (m, l) ->
++                Tile(sceneIcon(m), l, m == cur) { cap.setScene(video, m); changed() }
++            }, pageBody, glass = false)
++        }
++
++        if (wbChoices(caps).size > 1) {
++            iconRow(wbIcon(cap.whiteBalance), "White balance", wbChoices(caps)
++                .firstOrNull { it.first == cap.whiteBalance }?.second ?: "Automatic", R.id.n9WhiteBalance) {
++                openPanel(Panel.WB)
++            }
++        }
++        if (c.camera.exposureCompensationRange.let { it.start < it.endInclusive }) {
++            iconRow(R.drawable.n9_ic_exposure, "Exposure compensation",
++                "%.1f".format(cap.exposureThirds / 3f).replace("-0.0", "0.0").let {
++                    if (cap.exposureThirds > 0) "+$it" else it
++                }, R.id.n9Exposure) { openPanel(Panel.EV) }
++        }
++        if (filterChoices(caps).size > 1) {
++            iconRow(filterIcon(cap.colourFilter), "Colour filter", filterChoices(caps)
++                .firstOrNull { it.first == cap.colourFilter }?.second ?: "Off", R.id.n9ColourFilter) {
++                openPanel(Panel.FILTER)
++            }
++        }
++
++        section("Self-timer")
++        val timers = listOf(TimerMode.OFF to "Disabled", TimerMode.ON_3S to "3 seconds", TimerMode.ON_10S to "10 seconds")
++        group(timers.map { it.second }, timers.indexOfFirst { it.first == vm.timerMode.value }) {
++            vm.setTimerMode(timers[it].first); changed()
++        }
++
++        when (c) {
++            is CameraConfiguration.Photo -> {
++                section("Aspect ratio")
++                val ratios = listOf(AspectRatio.RATIO_16_9 to "16:9", AspectRatio.RATIO_4_3 to "4:3")
++                group(ratios.map { it.second }, ratios.indexOfFirst { it.first == c.photoAspectRatio }) {
++                    if (ratios[it].first != c.photoAspectRatio) vm.cyclePhotoAspectRatio()
++                    page.postDelayed({ changed() }, 400)
++                }
++                val sizes = caps.resolutions(ratio(c))
++                if (sizes.size > 1) {
++                    section("Resolution")
++                    val names = listOf("High", "Medium", "Low")
++                    group(sizes.mapIndexed { i, s -> "${names[i]} ${N9Capture.megapixels(s).dropLast(1)} Mpx" },
++                        cap.resolution.coerceAtMost(sizes.size - 1)) {
++                        cap.resolution = it; changed(rebind = true)
++                    }
++                }
++                if (caps.faceDetection) {
++                    switchRow("Face detection", cap.faceDetection, R.drawable.n9_ic_face) {
++                        cap.faceDetection = it; changed()
++                    }
++                }
++            }
++
++            is CameraConfiguration.Video -> {
++                val qualities = c.camera.supportedVideoQualities.keys.sortedBy {
++                    listOf(Quality.UHD, Quality.QHD, Quality.FHD, Quality.HD, Quality.SD).indexOf(it)
++                }
++                if (qualities.size > 1) {
++                    section("Resolution")
++                    group(qualities.map { qualityName(it) }, qualities.indexOf(c.videoQuality)) {
++                        vm.setVideoQuality(qualities[it])
++                        page.postDelayed({ changed() }, 400)
++                    }
++                }
++            }
++
++            else -> {}
++        }
++
++        // Front or back: two values, a straight toggle (kept off the viewfinder).
++        if (vm.canFlipCamera.value) {
++            switchRow("Front camera", c.camera.cameraFacing == CameraFacing.FRONT) {
++                vm.flipCamera()
++                page.postDelayed({ changed() }, 400)
++            }
++        }
++
++        heading("Camera settings")
++        if (!video) {
++            section("Show captured content")
++            val reviews = listOf(0 to "Disabled", 2 to "2 seconds", 5 to "5 seconds", -1 to "No time-out")
++            group(reviews.map { it.second }, reviews.indexOfFirst { it.first == prefs.getInt("review", 0) }) {
++                prefs.edit { putInt("review", reviews[it].first) }; changed()
++            }
++        }
++        switchRow("Show grid lines", vm.gridMode.value != GridMode.OFF) {
++            vm.setGridMode(if (it) GridMode.ON_3 else GridMode.OFF)
++        }
++        if (!video) {
++            pageBody.addView(tv("Creator name", 14f, N9.GREY_TEXT).apply { setPadding(0, dp(6), 0, dp(4)) })
++            pageBody.addView(EditText(a).apply {
++                id = R.id.n9CreatorName
++                hint = "Name or copyright"
++                setText(prefs.getString("creator", ""))
++                setTextColor(Color.BLACK)
++                setHintTextColor(0xFF8C8C8C.toInt())
++                typeface = N9.text
++                setTextSize(TypedValue.COMPLEX_UNIT_PX, 15f * d)
++                setSingleLine(true)
++                background = N9SquircleDrawable(0xFFE6E6E6.toInt(), 0xFFB4B4B4.toInt(), d, ends = true)
++                setPadding(dp(14), 0, dp(14), 0)
++                addTextChangedListener(object : TextWatcher {
++                    override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, af: Int) {}
++                    override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
++                    override fun afterTextChanged(s: Editable?) {
++                        prefs.edit { putString("creator", s?.toString()?.trim()) }
++                    }
++                })
++            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(32)))
++        }
++        switchRow("Use GPS", vm.saveLocation.value == true, R.drawable.ic_location_on,
++            "GPS coordinates will be attached to images and videos if GPS is available. If images or " +
++                    "videos are shared, location data might be visible to third parties.") {
++            onGpsChanged(it)
++        }
++
++        pageBody.addView(tv("All camera settings", 17f, face = N9.bold).apply {
++            id = R.id.n9AllSettings
++            minHeight = dp(44)
++            gravity = Gravity.CENTER_VERTICAL
++            setOnClickListener { onAllSettings() }
++        })
++    }
++
++    private fun qualityName(q: Quality) = when (q) {
++        Quality.UHD -> "4K (2160p)"
++        Quality.QHD -> "QHD (1440p)"
++        Quality.FHD -> "Full HD (1080p)"
++        Quality.HD -> "HD (720p)"
++        Quality.SD -> "SD (480p)"
++        else -> q.toString()
++    }
++
++    // Panels over the live picture
++
++    private enum class Panel { WB, EV, FILTER }
++
++    private fun wbChoices(caps: N9Capture.Caps) = listOf(
++        CameraMetadata.CONTROL_AWB_MODE_AUTO to "Automatic",
++        CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT to "Sunny",
++        CameraMetadata.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT to "Cloudy",
++        CameraMetadata.CONTROL_AWB_MODE_FLUORESCENT to "Fluorescent",
++        CameraMetadata.CONTROL_AWB_MODE_INCANDESCENT to "Incandescent",
++    ).filter { it.first == CameraMetadata.CONTROL_AWB_MODE_AUTO || it.first in caps.awb }
++
++    private fun wbIcon(m: Int) = when (m) {
++        CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT -> R.drawable.n9_ic_wb_sunny
++        CameraMetadata.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT -> R.drawable.n9_ic_wb_cloudy
++        CameraMetadata.CONTROL_AWB_MODE_FLUORESCENT -> R.drawable.n9_ic_wb_fluorescent
++        CameraMetadata.CONTROL_AWB_MODE_INCANDESCENT -> R.drawable.n9_ic_wb_incandescent
++        else -> R.drawable.n9_ic_wb_auto
++    }
++
++    // Vivid has no Camera2 colour effect, so it is not offered.
++    private fun filterChoices(caps: N9Capture.Caps) = listOf(
++        CameraMetadata.CONTROL_EFFECT_MODE_OFF to "Off",
++        CameraMetadata.CONTROL_EFFECT_MODE_MONO to "Black & white",
++        CameraMetadata.CONTROL_EFFECT_MODE_SEPIA to "Sepia",
++        CameraMetadata.CONTROL_EFFECT_MODE_NEGATIVE to "Negative",
++        CameraMetadata.CONTROL_EFFECT_MODE_SOLARIZE to "Solarise",
++        CameraMetadata.CONTROL_EFFECT_MODE_POSTERIZE to "Posterise",
++    ).filter { it.first == CameraMetadata.CONTROL_EFFECT_MODE_OFF || it.first in caps.effects }
++
++    private fun filterIcon(m: Int) = when (m) {
++        CameraMetadata.CONTROL_EFFECT_MODE_MONO -> R.drawable.n9_ic_filter_mono
++        CameraMetadata.CONTROL_EFFECT_MODE_SEPIA -> R.drawable.n9_ic_filter_sepia
++        CameraMetadata.CONTROL_EFFECT_MODE_NEGATIVE -> R.drawable.n9_ic_filter_negative
++        CameraMetadata.CONTROL_EFFECT_MODE_SOLARIZE -> R.drawable.n9_ic_filter_solarise
++        CameraMetadata.CONTROL_EFFECT_MODE_POSTERIZE -> R.drawable.n9_ic_filter_posterize
++        else -> R.drawable.n9_ic_filter_off
++    }
++
++    private var openPanelKind: Panel? = null
++
++    private fun openPanel(p: Panel) {
++        openPanelKind = p
++        renderPanel()
++        page.isVisible = false
++        vf.isVisible = false
++        panel.isVisible = true
++        updateBack()
++    }
++
++    private fun closePanel() {
++        panel.isVisible = false
++        openPanelKind = null
++        renderPage()
++        page.isVisible = true
++        updateBack()
++    }
++
++    private fun renderPanel() {
++        panel.removeAllViews()
++        val c = config ?: return
++        val caps = cap.caps(c.camera.cameraId)
++        val body = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, dp(11), 0) }
++        panel.addView(body)
++        when (openPanelKind) {
++            Panel.WB -> {
++                section("White balance", body)
++                tiles(wbChoices(caps).map { (m, l) ->
++                    Tile(wbIcon(m), l, m == cap.whiteBalance) { cap.whiteBalance = m; onCaptureOptionsChanged(); renderPanel() }
++                }, body, glass = true)
++            }
++
++            Panel.FILTER -> {
++                section("Colour filter", body)
++                tiles(filterChoices(caps).map { (m, l) ->
++                    Tile(filterIcon(m), l, m == cap.colourFilter) { cap.colourFilter = m; onCaptureOptionsChanged(); renderPanel() }
++                }, body, glass = true)
++            }
++
++            Panel.EV -> {
++                section("Exposure compensation", body)
++                body.addView(N9SteppedSlider(a).apply {
++                    id = R.id.n9ExposureSlider
++                    contentDescription = "Exposure compensation"
++                    value = cap.exposureThirds
++                    onChange = { cap.exposureThirds = it; onCaptureOptionsChanged() }
++                })
++            }
++
++            null -> {}
++        }
++    }
++
++    fun isOverlayOpen() = page.isVisible || panel.isVisible
++}
+diff --git a/app/src/main/java/org/lineageos/aperture/ui/n9/N9Capture.kt b/app/src/main/java/org/lineageos/aperture/ui/n9/N9Capture.kt
+new file mode 100644
+index 0000000..b7f9f2a
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/aperture/ui/n9/N9Capture.kt
+@@ -0,0 +1,168 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.aperture.ui.n9
++
++import android.content.Context
++import android.graphics.ImageFormat
++import android.hardware.camera2.CameraCharacteristics
++import android.hardware.camera2.CameraManager
++import android.hardware.camera2.CameraMetadata
++import android.hardware.camera2.CaptureRequest
++import android.util.Size
++import androidx.camera.camera2.interop.CaptureRequestOptions
++import androidx.core.content.edit
++import org.lineageos.aperture.models.FlashMode
++import kotlin.math.abs
++import kotlin.math.roundToInt
++
++/**
++ * Etesian: the N9 image capture settings that Aperture has no setting for, all of them real
++ * Camera2 controls applied through CameraX's Camera2 interop: scene, white balance, colour
++ * filter, face detection, red-eye flash, and the picture's resolution. Each one is only offered
++ * when the camera lists it in its characteristics.
++ */
++@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
++class N9Capture(context: Context) {
++    private val prefs = context.getSharedPreferences("n9_capture", Context.MODE_PRIVATE)
++    private val cameraManager = context.getSystemService(CameraManager::class.java)
++
++    /** What one camera can do. */
++    class Caps(c: CameraCharacteristics?) {
++        val scenes: Set<Int> = c?.get(CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES)
++            ?.toSet().orEmpty()
++        val awb: Set<Int> = c?.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
++            ?.toSet().orEmpty()
++        val effects: Set<Int> = c?.get(CameraCharacteristics.CONTROL_AVAILABLE_EFFECTS)
++            ?.toSet().orEmpty()
++        val afModes: Set<Int> = c?.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
++            ?.toSet().orEmpty()
++        val aeModes: Set<Int> = c?.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
++            ?.toSet().orEmpty()
++        val faceModes: Set<Int> =
++            c?.get(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES)
++                ?.toSet().orEmpty()
++        val jpegSizes: List<Size> = c?.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
++            ?.getOutputSizes(ImageFormat.JPEG)?.sortedByDescending { it.width * it.height }
++            .orEmpty()
++
++        val macro get() = CameraMetadata.CONTROL_AF_MODE_MACRO in afModes
++        val redEye get() = CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE in aeModes
++        val faceDetection get() = faceModes.any { it != CameraMetadata.STATISTICS_FACE_DETECT_MODE_OFF }
++
++        /** High, medium and low sizes of [ratio] (w/h), as the N9's 7, 6 and 3 Mpx. */
++        fun resolutions(ratio: Float): List<Size> {
++            val sizes = jpegSizes.filter { abs(it.width.toFloat() / it.height - ratio) < 0.02f }
++            if (sizes.isEmpty()) return listOf()
++            val max = sizes.first().width * sizes.first().height
++            val picks = listOf(1.0, 0.5, 0.25).map { f ->
++                sizes.minBy { abs(it.width * it.height - max * f) }
++            }
++            return picks.distinct()
++        }
++    }
++
++    private val capsCache = mutableMapOf<String, Caps>()
++
++    fun caps(cameraId: String): Caps = capsCache.getOrPut(cameraId) {
++        Caps(runCatching { cameraManager.getCameraCharacteristics(cameraId) }.getOrNull())
++    }
++
++    // The settings (N9 values; AUTO_SCENE means Automatic)
++
++    fun scene(video: Boolean) = prefs.getInt(if (video) "scene_video" else "scene_photo", AUTO_SCENE)
++    fun setScene(video: Boolean, scene: Int) =
++        prefs.edit { putInt(if (video) "scene_video" else "scene_photo", scene) }
++
++    var whiteBalance: Int
++        get() = prefs.getInt("wb", CameraMetadata.CONTROL_AWB_MODE_AUTO)
++        set(v) = prefs.edit { putInt("wb", v) }
++
++    var colourFilter: Int
++        get() = prefs.getInt("effect", CameraMetadata.CONTROL_EFFECT_MODE_OFF)
++        set(v) = prefs.edit { putInt("effect", v) }
++
++    /** Exposure compensation in thirds of a step, -6..6 (the N9's -2..+2). */
++    var exposureThirds: Int
++        get() = prefs.getInt("ev_thirds", 0)
++        set(v) = prefs.edit { putInt("ev_thirds", v.coerceIn(-6, 6)) }
++
++    var faceDetection: Boolean
++        get() = prefs.getBoolean("face", true)
++        set(v) = prefs.edit { putBoolean("face", v) }
++
++    var redEye: Boolean
++        get() = prefs.getBoolean("redeye", false)
++        set(v) = prefs.edit { putBoolean("redeye", v) }
++
++    /** 0 high, 1 medium, 2 low. */
++    var resolution: Int
++        get() = prefs.getInt("resolution", 0)
++        set(v) = prefs.edit { putInt("resolution", v) }
++
++    fun resolutionSize(cameraId: String, ratio: Float): Size? =
++        caps(cameraId).resolutions(ratio).let { it.getOrNull(resolution) ?: it.firstOrNull() }
++
++    /** Adds the N9 settings this camera supports to [builder]. */
++    fun apply(builder: CaptureRequestOptions.Builder, cameraId: String, video: Boolean, flashMode: FlashMode) {
++        val caps = caps(cameraId)
++        val scene = scene(video)
++        when {
++            scene == MACRO_SCENE && caps.macro && !video ->
++                builder.setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_MACRO)
++
++            scene >= 0 && scene in caps.scenes -> {
++                builder.setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_USE_SCENE_MODE)
++                builder.setCaptureRequestOption(CaptureRequest.CONTROL_SCENE_MODE, scene)
++            }
++        }
++        whiteBalance.takeIf { it in caps.awb && it != CameraMetadata.CONTROL_AWB_MODE_AUTO }?.let {
++            builder.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, it)
++        }
++        colourFilter.takeIf { it in caps.effects && it != CameraMetadata.CONTROL_EFFECT_MODE_OFF }?.let {
++            builder.setCaptureRequestOption(CaptureRequest.CONTROL_EFFECT_MODE, it)
++        }
++        if (faceDetection && caps.faceDetection) {
++            builder.setCaptureRequestOption(
++                CaptureRequest.STATISTICS_FACE_DETECT_MODE,
++                if (CameraMetadata.STATISTICS_FACE_DETECT_MODE_FULL in caps.faceModes) {
++                    CameraMetadata.STATISTICS_FACE_DETECT_MODE_FULL
++                } else {
++                    CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE
++                }
++            )
++        }
++        if (!video && redEye && flashMode == FlashMode.AUTO && caps.redEye) {
++            builder.setCaptureRequestOption(
++                CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE
++            )
++        }
++    }
++
++    /** The exposure index for the camera's step (EV per index). */
++    fun exposureIndex(step: Float, range: IntRange): Int =
++        if (step <= 0f) 0 else (exposureThirds / 3f / step).roundToInt().coerceIn(range)
++
++    /** Creator name: written into the saved photo's EXIF (Artist and Copyright). */
++    fun writeCreator(context: Context, uri: android.net.Uri, name: String?) {
++        if (name.isNullOrBlank()) return
++        runCatching {
++            context.contentResolver.openFileDescriptor(uri, "rw")?.use { pfd ->
++                val exif = androidx.exifinterface.media.ExifInterface(pfd.fileDescriptor)
++                exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_ARTIST, name)
++                exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_COPYRIGHT, name)
++                exif.saveAttributes()
++            }
++        }
++    }
++
++    companion object {
++        const val AUTO_SCENE = -1
++        const val MACRO_SCENE = -2
++
++        /** Megapixels as the N9 writes them on the viewfinder ("7M"). */
++        fun megapixels(s: Size) = "${((s.width.toLong() * s.height) / 1_000_000.0).roundToInt().coerceAtLeast(1)}M"
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/aperture/ui/n9/N9SquircleDrawable.kt b/app/src/main/java/org/lineageos/aperture/ui/n9/N9SquircleDrawable.kt
+new file mode 100644
+index 0000000..1be5301
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/aperture/ui/n9/N9SquircleDrawable.kt
+@@ -0,0 +1,177 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.aperture.ui.n9
++
++import android.graphics.Canvas
++import android.graphics.LinearGradient
++import android.graphics.Shader
++import android.graphics.ColorFilter
++import android.graphics.Outline
++import android.graphics.Paint
++import android.graphics.Path
++import android.graphics.PixelFormat
++import android.graphics.Rect
++import android.graphics.drawable.Drawable
++import android.view.View
++import android.view.ViewOutlineProvider
++import kotlin.math.abs
++import kotlin.math.cos
++import kotlin.math.pow
++import kotlin.math.sign
++import kotlin.math.sin
++
++/**
++ * Etesian: the N9 camera's control face. A squircle (n = 2.8, the curve of the ROM's icons and
++ * vendor/etesian/patches/tools/squircle9.py) with a thin light rim. A long control ([ends]) gets
++ * squircle-half ends as wide as its short side, pulled apart, the middle straight (the pills).
++ */
++class N9SquircleDrawable(
++    fill: Int,
++    rim: Int,
++    private val density: Float,
++    private val ends: Boolean = false,
++) : Drawable() {
++    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fill }
++    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++        style = Paint.Style.STROKE; strokeWidth = density; color = rim
++    }
++    private val path = Path()
++
++    var fill: Int
++        get() = fillPaint.color
++        set(value) { fillPaint.color = value; gradient = null; fillPaint.shader = null; invalidateSelf() }
++
++    var rim: Int
++        get() = rimPaint.color
++        set(value) { rimPaint.color = value; invalidateSelf() }
++
++    private var gradient: IntArray? = null
++
++    /** A top-to-bottom gradient fill in place of [fill] (null: the plain fill). */
++    fun setGradient(colors: IntArray?) {
++        if (colors.contentEquals(gradient)) return
++        gradient = colors
++        updateShader()
++        invalidateSelf()
++    }
++
++    private fun updateShader() {
++        val g = gradient
++        val b = bounds
++        fillPaint.shader = if (g == null || b.isEmpty) null else LinearGradient(
++            0f, b.top.toFloat(), 0f, b.bottom.toFloat(), g, null, Shader.TileMode.CLAMP
++        )
++    }
++
++    override fun onBoundsChange(b: Rect) {
++        updateShader()
++        path.reset()
++        val inset = density / 2
++        path.addPath(shape(b.left + inset, b.top + inset, b.right - inset, b.bottom - inset, ends))
++    }
++
++    override fun draw(c: Canvas) {
++        c.drawPath(path, fillPaint)
++        if (rimPaint.alpha > 0) c.drawPath(path, rimPaint)
++    }
++
++    override fun getOutline(outline: Outline) {
++        @Suppress("DEPRECATION")
++        outline.setConvexPath(path)
++    }
++
++    override fun setAlpha(a: Int) { fillPaint.alpha = a; rimPaint.alpha = a }
++    override fun setColorFilter(cf: ColorFilter?) { fillPaint.colorFilter = cf; rimPaint.colorFilter = cf }
++
++    @Deprecated("Deprecated in Java")
++    override fun getOpacity() = PixelFormat.TRANSLUCENT
++
++    companion object {
++        private const val N = 2.8
++
++        /** A squircle in the box; with [ends], squircle halves at the ends of its long side. */
++        fun shape(l: Float, t: Float, r: Float, b: Float, ends: Boolean): Path {
++            val p = Path()
++            val h = b - t
++            val w = r - l
++            when {
++                !ends || abs(w - h) < 1f -> curve(p, (l + r) / 2, (t + b) / 2, w / 2, h / 2, 0.0, 360.0, true)
++                w > h -> {
++                    val ry = h / 2
++                    curve(p, l + ry, t + ry, ry, ry, 90.0, 270.0, true)
++                    curve(p, r - ry, t + ry, ry, ry, 270.0, 450.0, false)
++                }
++                else -> {
++                    val rx = w / 2
++                    curve(p, l + rx, t + rx, rx, rx, 0.0, 180.0, true)
++                    curve(p, l + rx, b - rx, rx, rx, 180.0, 360.0, false)
++                }
++            }
++            p.close()
++            return p
++        }
++
++        private fun curve(
++            p: Path, cx: Float, cy: Float, rx: Float, ry: Float, from: Double, to: Double, first: Boolean,
++        ) {
++            var a = from
++            var move = first
++            while (a <= to + 0.001) {
++                val th = Math.toRadians(a)
++                val c = cos(th)
++                val s = sin(th)
++                val x = cx + rx * sign(c) * abs(c).pow(2.0 / N)
++                val y = cy - ry * sign(s) * abs(s).pow(2.0 / N)
++                if (move) {
++                    p.moveTo(x.toFloat(), y.toFloat()); move = false
++                } else {
++                    p.lineTo(x.toFloat(), y.toFloat())
++                }
++                a += 3.0
++            }
++        }
++
++        /** Clips a view (the gallery's picture) to the same squircle. */
++        fun outline() = object : ViewOutlineProvider() {
++            override fun getOutline(v: View, o: Outline) {
++                @Suppress("DEPRECATION")
++                o.setConvexPath(shape(0f, 0f, v.width.toFloat(), v.height.toFloat(), false))
++            }
++        }
++    }
++}
++
++/** The N9 focus brackets: four corners, white, blue once the focus locks. */
++class N9BracketsDrawable(private val density: Float) : Drawable() {
++    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++        style = Paint.Style.STROKE; strokeWidth = 2 * density; color = 0xFFFFFFFF.toInt()
++        strokeCap = Paint.Cap.SQUARE
++    }
++
++    var color: Int
++        get() = paint.color
++        set(value) { paint.color = value; invalidateSelf() }
++
++    override fun draw(c: Canvas) {
++        val b = bounds
++        val i = paint.strokeWidth / 2
++        val l = b.left + i
++        val t = b.top + i
++        val r = b.right - i
++        val btm = b.bottom - i
++        val arm = 12 * density
++        c.drawLine(l, t, l + arm, t, paint); c.drawLine(l, t, l, t + arm, paint)
++        c.drawLine(r, t, r - arm, t, paint); c.drawLine(r, t, r, t + arm, paint)
++        c.drawLine(l, btm, l + arm, btm, paint); c.drawLine(l, btm, l, btm - arm, paint)
++        c.drawLine(r, btm, r - arm, btm, paint); c.drawLine(r, btm, r, btm - arm, paint)
++    }
++
++    override fun setAlpha(a: Int) { paint.alpha = a }
++    override fun setColorFilter(cf: ColorFilter?) { paint.colorFilter = cf }
++
++    @Deprecated("Deprecated in Java")
++    override fun getOpacity() = PixelFormat.TRANSLUCENT
++}
+diff --git a/app/src/main/java/org/lineageos/aperture/ui/n9/N9Widgets.kt b/app/src/main/java/org/lineageos/aperture/ui/n9/N9Widgets.kt
+new file mode 100644
+index 0000000..1e228f9
+--- /dev/null
++++ b/app/src/main/java/org/lineageos/aperture/ui/n9/N9Widgets.kt
+@@ -0,0 +1,256 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.lineageos.aperture.ui.n9
++
++import android.annotation.SuppressLint
++import android.content.Context
++import android.graphics.Canvas
++import android.graphics.Paint
++import android.graphics.Typeface
++import android.view.MotionEvent
++import android.view.View
++import kotlin.math.roundToInt
++
++/** The N9's colours and type. */
++object N9 {
++    const val BLUE = 0xFF268CE1.toInt()
++    const val BLUE_TOP = 0xFF3B9BEA.toInt()
++    const val BLUE_BOTTOM = 0xFF1678D2.toInt()
++    const val BLUE_RIM = 0xFF7FC0F6.toInt()
++    const val GREY_TEXT = 0xFF8C8C8C.toInt()
++    const val VALUE_TEXT = 0xFF9A9A9A.toInt()
++    const val RULE = 0xFF3A3A3A.toInt()
++    const val TILE_TOP = 0xFF4A4A4A.toInt()
++    const val TILE_BOTTOM = 0xFF262626.toInt()
++    const val TILE_GLASS = 0x59FFFFFF
++    const val CONTROL_FILL = 0x99000000.toInt()
++    const val CONTROL_RIM = 0x59FFFFFF
++    const val STRIP_FILL = 0x73808080
++    const val PANEL_FILL = 0xA6000000.toInt()
++
++    val text: Typeface = Typeface.create("etesian-text", Typeface.NORMAL)
++    val bold: Typeface = Typeface.create(text, Typeface.BOLD)
++    val light: Typeface = Typeface.create(text, 300, false)
++
++    /** Px per N9 "dp" (1.5 N9 px) on this screen: the N9's 480 px short side maps onto this one's. */
++    fun unit(context: Context): Float {
++        val m = context.resources.displayMetrics
++        return minOf(m.widthPixels, m.heightPixels) / 320f
++    }
++}
++
++/**
++ * The N9 switch: a 42 x 26 dp track with squircle-half ends (off #2D2E2D, on a blue gradient) and a
++ * white squircle knob inset 3 dp, sliding over when toggled.
++ */
++class N9Switch(context: Context) : View(context) {
++    private val d = N9.unit(context)
++    private val track = N9SquircleDrawable(0xFF2D2E2D.toInt(), 0x33FFFFFF, d, ends = true)
++    private val knob = N9SquircleDrawable(0xFFFFFFFF.toInt(), 0, d)
++    private var pos = 0f
++
++    var onChange: ((Boolean) -> Unit)? = null
++
++    var isChecked = false
++        set(value) {
++            if (field == value) return
++            field = value
++            animateTo(if (value) 1f else 0f)
++        }
++
++    init {
++        isClickable = true
++        isFocusable = true
++        setOnClickListener {
++            isChecked = !isChecked
++            onChange?.invoke(isChecked)
++        }
++    }
++
++    fun setCheckedNow(value: Boolean) {
++        isChecked = value
++        pos = if (value) 1f else 0f
++        invalidate()
++    }
++
++    private fun animateTo(target: Float) {
++        android.animation.ValueAnimator.ofFloat(pos, target).apply {
++            duration = 150
++            addUpdateListener { pos = it.animatedValue as Float; invalidate() }
++        }.start()
++    }
++
++    override fun onMeasure(w: Int, h: Int) = setMeasuredDimension((42 * d).roundToInt(), (26 * d).roundToInt())
++
++    override fun onDraw(c: Canvas) {
++        track.setBounds(0, 0, width, height)
++        track.setGradient(if (pos > 0.5f) intArrayOf(0xFF4195DE.toInt(), 0xFF107DD6.toInt()) else null)
++        track.draw(c)
++        val inset = (3 * d).roundToInt()
++        val k = height - 2 * inset
++        val x = inset + ((width - 2 * inset - k) * pos).roundToInt()
++        knob.setBounds(x, inset, x + k, inset + k)
++        knob.draw(c)
++    }
++
++    override fun onInitializeAccessibilityNodeInfo(info: android.view.accessibility.AccessibilityNodeInfo) {
++        super.onInitializeAccessibilityNodeInfo(info)
++        info.className = android.widget.Switch::class.java.name
++        info.isCheckable = true
++        info.isChecked = isChecked
++    }
++}
++
++/**
++ * The N9 stepped slider (exposure compensation): labels above (-2 -1 0 +1 +2, the current one blue),
++ * a tick every third of a step, the track blue up to the handle and grey after, a white squircle handle.
++ * Values are in thirds of a step, [min]..[max].
++ */
++class N9SteppedSlider(context: Context) : View(context) {
++    private val d = N9.unit(context)
++    private val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++        textSize = 15 * d; typeface = N9.text; textAlign = Paint.Align.CENTER
++    }
++    private val tick = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFFFFF.toInt(); strokeWidth = d }
++    private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = 5 * d; strokeCap = Paint.Cap.ROUND }
++    private val handle = N9SquircleDrawable(0xFFFFFFFF.toInt(), 0x33000000, d)
++
++    var min = -6
++    var max = 6
++    var value = 0
++        set(v) { field = v.coerceIn(min, max); invalidate() }
++    var onChange: ((Int) -> Unit)? = null
++
++    init {
++        isFocusable = true
++    }
++
++    override fun onMeasure(w: Int, h: Int) =
++        setMeasuredDimension(MeasureSpec.getSize(w), (92 * d).roundToInt())
++
++    private val trackL get() = 18 * d
++    private val trackR get() = width - 18 * d
++    private fun xOf(v: Int) = trackL + (trackR - trackL) * (v - min) / (max - min).coerceAtLeast(1)
++
++    override fun onDraw(c: Canvas) {
++        for (v in min..max) {
++            val x = xOf(v)
++            if (v % 3 == 0) {
++                label.color = if (v == value) N9.BLUE else 0xFFFFFFFF.toInt()
++                val s = when {
++                    v == 0 -> "0"
++                    v > 0 -> "+${v / 3}"
++                    else -> "${v / 3}"
++                }
++                c.drawText(s, x, 22 * d, label)
++            }
++            val top = if (v % 3 == 0) 34 * d else 37 * d
++            c.drawLine(x, top, x, 43 * d, tick)
++        }
++        val y = 68 * d
++        trackPaint.color = 0x80B4B4B4.toInt()
++        c.drawLine(trackL, y, trackR, y, trackPaint)
++        trackPaint.color = N9.BLUE
++        c.drawLine(trackL, y, xOf(value), y, trackPaint)
++        val hw = (20 * d).roundToInt()
++        val hh = (16 * d).roundToInt()
++        val hx = xOf(value).roundToInt()
++        handle.setBounds(hx - hw, y.roundToInt() - hh, hx + hw, y.roundToInt() + hh)
++        handle.draw(c)
++    }
++
++    @SuppressLint("ClickableViewAccessibility")
++    override fun onTouchEvent(e: MotionEvent): Boolean {
++        when (e.actionMasked) {
++            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE, MotionEvent.ACTION_UP -> {
++                parent?.requestDisallowInterceptTouchEvent(true)
++                val f = ((e.x - trackL) / (trackR - trackL)).coerceIn(0f, 1f)
++                val v = (min + f * (max - min)).roundToInt()
++                if (v != value) {
++                    value = v
++                    onChange?.invoke(v)
++                }
++            }
++        }
++        return true
++    }
++}
++
++/**
++ * Zoom as the N9's stepped slider, standing along the edge: a see-through dark pill, the track blue
++ * from the bottom up to a white squircle handle, a tick and a label at each whole ratio stop (1x, 2x,
++ * 5x, ...; the current one blue). [linear] is CameraX's linear zoom (0..1). Labels turn with the device.
++ */
++class N9ZoomSlider(context: Context) : View(context) {
++    private val d = N9.unit(context)
++    private val face = N9SquircleDrawable(0x80000000.toInt(), N9.CONTROL_RIM, d, ends = true)
++    private val handle = N9SquircleDrawable(0xFFFFFFFF.toInt(), 0x33000000, d)
++    private val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++        textSize = 10 * d; typeface = N9.bold; textAlign = Paint.Align.CENTER
++    }
++    private val tick = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFFFFF.toInt(); strokeWidth = d }
++    private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = 3 * d; strokeCap = Paint.Cap.ROUND }
++
++    var minRatio = 1f
++    var maxRatio = 1f
++    var linear = 0f
++        set(v) { field = v.coerceIn(0f, 1f); invalidate() }
++    var ratio = 1f
++    var contentRotation = 0f
++        set(v) { field = v; invalidate() }
++    var onChange: ((Float) -> Unit)? = null
++
++    /** CameraX's linear zoom for a ratio (linear in 1/ratio). */
++    private fun linearOf(r: Float): Float {
++        val a = 1f / minRatio
++        val b = 1f / maxRatio
++        return if (a == b) 0f else ((a - 1f / r) / (a - b)).coerceIn(0f, 1f)
++    }
++
++    private val tTop get() = 26 * d
++    private val tBot get() = height - 26 * d
++    private fun yOf(l: Float) = tBot - (tBot - tTop) * l
++
++    override fun onDraw(c: Canvas) {
++        face.setBounds(0, 0, width, height)
++        face.draw(c)
++        val x = width * 0.62f
++        track.color = 0x80B4B4B4.toInt()
++        c.drawLine(x, tTop, x, tBot, track)
++        track.color = N9.BLUE
++        c.drawLine(x, tBot, x, yOf(linear), track)
++        val stops = listOf(minRatio, 1f, 2f, 5f, 10f, maxRatio).filter { it in minRatio..maxRatio }.distinct()
++        val near = stops.minByOrNull { kotlin.math.abs(it - ratio) }
++        for (r in stops) {
++            val y = yOf(linearOf(r))
++            c.drawLine(x - 5 * d, y, x + 5 * d, y, tick)
++            label.color = if (r == near && kotlin.math.abs(r - ratio) < 0.15f) N9.BLUE else 0xFFFFFFFF.toInt()
++            val text = if (r == r.toInt().toFloat()) "${r.toInt()}x" else "%.1fx".format(r)
++            val lx = width * 0.27f
++            c.save()
++            c.rotate(contentRotation, lx, y)
++            c.drawText(text, lx, y + label.textSize / 3, label)
++            c.restore()
++        }
++        val hw = (12 * d).roundToInt()
++        val hh = (10 * d).roundToInt()
++        val hy = yOf(linear).roundToInt()
++        handle.setBounds(x.roundToInt() - hw, hy - hh, x.roundToInt() + hw, hy + hh)
++        handle.draw(c)
++    }
++
++    @SuppressLint("ClickableViewAccessibility")
++    override fun onTouchEvent(e: MotionEvent): Boolean {
++        when (e.actionMasked) {
++            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE, MotionEvent.ACTION_UP -> {
++                parent?.requestDisallowInterceptTouchEvent(true)
++                linear = ((tBot - e.y) / (tBot - tTop)).coerceIn(0f, 1f)
++                onChange?.invoke(linear)
++            }
++        }
++        return true
++    }
++}
+diff --git a/app/src/main/java/org/lineageos/aperture/viewmodels/CameraViewModel.kt b/app/src/main/java/org/lineageos/aperture/viewmodels/CameraViewModel.kt
+index 2fc11c2..ec47923 100644
+--- a/app/src/main/java/org/lineageos/aperture/viewmodels/CameraViewModel.kt
++++ b/app/src/main/java/org/lineageos/aperture/viewmodels/CameraViewModel.kt
+@@ -1358,6 +1358,67 @@ class CameraViewModel(application: Application) : ApertureViewModel(application)
+         return true
+     }
+ 
++    /**
++     * Etesian (N9): pick a flash mode directly (the flash strip), for the current camera mode.
++     */
++    fun setFlashMode(flashMode: FlashMode) {
++        val cameraConfiguration = _cameraConfiguration.value ?: return
++        if (flashMode !in supportedFlashModes.value) return
++        forceTorch.value = false
++        when (cameraConfiguration.cameraMode) {
++            CameraMode.PHOTO -> preferencesRepository.photoFlashMode.value = flashMode
++            CameraMode.VIDEO -> preferencesRepository.videoFlashMode.value = flashMode
++            CameraMode.QR -> qrFlashMode.value = flashMode
++        }
++    }
++
++    /**
++     * Etesian (N9): grid lines on or off.
++     */
++    fun setGridMode(gridMode: GridMode) {
++        preferencesRepository.lastGridMode.value = gridMode
++    }
++
++    /**
++     * Etesian (N9): the self-timer as a selection.
++     */
++    fun setTimerMode(timerMode: TimerMode) {
++        preferencesRepository.timerMode.value = timerMode
++    }
++
++    /**
++     * Etesian (N9): the current configuration, if any.
++     */
++    val currentCameraConfiguration: CameraConfiguration?
++        get() = _cameraConfiguration.value
++
++    /**
++     * Etesian (N9): pick a video quality (the Resolution group).
++     */
++    fun setVideoQuality(videoQuality: Quality) =
++        updateConfiguration<CameraConfiguration.Video> { cameraConfiguration ->
++            val videoQualityInfo = cameraConfiguration.camera.supportedVideoQualities[
++                videoQuality
++            ] ?: return@updateConfiguration cameraConfiguration
++
++            val videoFrameRate = cameraConfiguration.videoFrameRate.takeIf {
++                videoQualityInfo.supportedFrameRates.contains(it)
++            } ?: videoQualityInfo.supportedFrameRates.firstOrNull()
++
++            val videoDynamicRange = cameraConfiguration.videoDynamicRange.takeIf {
++                videoQualityInfo.supportedDynamicRanges.contains(it)
++            } ?: videoQualityInfo.supportedDynamicRanges.firstOrNull()
++            ?: return@updateConfiguration cameraConfiguration
++
++            preferencesRepository.videoQuality.value = videoQuality
++
++            cameraConfiguration.copy(
++                videoQuality = videoQuality,
++                videoFrameRate = videoFrameRate,
++                videoDynamicRange = videoDynamicRange,
++            )
++        }
++
+     /**
+      * Set whether the force torch help has been shown.
+      */
+diff --git a/app/src/main/res/drawable/n9_choice_item_background.xml b/app/src/main/res/drawable/n9_choice_item_background.xml
+new file mode 100644
+index 0000000..5299044
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_choice_item_background.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Segmented choice box row: selected row is solid N9 blue. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_checked="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++    <item android:state_pressed="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile_pressed" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile" />
++            <corners android:radius="8dp" />
++        </shape>
++    </item>
++</selector>
+diff --git a/app/src/main/res/drawable/n9_ic_back.xml b/app/src/main/res/drawable/n9_ic_back.xml
+new file mode 100644
+index 0000000..3a05629
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_back.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="true"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M20,12H5 M11,5l-7,7 7,7" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_camera.xml b/app/src/main/res/drawable/n9_ic_camera.xml
+new file mode 100644
+index 0000000..836c43b
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_camera.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:fillType="evenOdd"
++        android:pathData="M3.5,5h3.5v1.5h1.6l1.4,-2.3h5.4l1.4,2.3H20.5c0.8,0 1.5,0.7 1.5,1.5v11c0,0.8 -0.7,1.5 -1.5,1.5h-17c-0.8,0 -1.5,-0.7 -1.5,-1.5v-11c0,-0.6 0.4,-1.1 1,-1.4z M12.5,8.3a4.9,4.9 0,1 0,0 9.8a4.9,4.9 0,1 0,0 -9.8z" />
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M12.5,10.4a2.8,2.8 0,1 0,0 5.6a2.8,2.8 0,1 0,0 -5.6z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_exposure.xml b/app/src/main/res/drawable/n9_ic_exposure.xml
+new file mode 100644
+index 0000000..942516d
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_exposure.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,3a9,9 0,1 1,0 18a9,9 0,1 1,0 -18z M6.5,17.5l11,-11 M7,9.5h4 M9,7.5v4 M13,15h4" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_face.xml b/app/src/main/res/drawable/n9_ic_face.xml
+new file mode 100644
+index 0000000..20c17ad
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_face.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M4,8V4h4 M16,4h4v4 M20,16v4h-4 M8,20H4v-4" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,7a2.7,2.7 0,1 1,0 5.4a2.7,2.7 0,1 1,0 -5.4z M7,17.5c0,-2.3 2.2,-3.6 5,-3.6s5,1.3 5,3.6z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_mono.xml b/app/src/main/res/drawable/n9_ic_filter_mono.xml
+new file mode 100644
+index 0000000..55385d8
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_mono.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,4a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,4a8,8 0,0 1,0 16z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_negative.xml b/app/src/main/res/drawable/n9_ic_filter_negative.xml
+new file mode 100644
+index 0000000..3655805
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_negative.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,4a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.4" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M8,12h8" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_off.xml b/app/src/main/res/drawable/n9_ic_filter_off.xml
+new file mode 100644
+index 0000000..71ccb1b
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_off.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,4a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_posterize.xml b/app/src/main/res/drawable/n9_ic_filter_posterize.xml
+new file mode 100644
+index 0000000..4b595cf
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_posterize.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,3.5a8.5,8.5 0,1 1,0 17a8.5,8.5 0,1 1,0 -17z M12,7a5,5 0,1 1,0 10a5,5 0,1 1,0 -10z M12,10.3a1.7,1.7 0,1 1,0 3.4a1.7,1.7 0,1 1,0 -3.4z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_sepia.xml b/app/src/main/res/drawable/n9_ic_filter_sepia.xml
+new file mode 100644
+index 0000000..7e3b1f8
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_sepia.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,4a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,7c-1.8,2.6 -3,4.3 -3,6a3,3 0,0 0,6 0c0,-1.7 -1.2,-3.4 -3,-6z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_filter_solarise.xml b/app/src/main/res/drawable/n9_ic_filter_solarise.xml
+new file mode 100644
+index 0000000..ce652b1
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_filter_solarise.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,2l2,4.2 4.5,-1.5 -1,4.6 4.3,2.2 -4.3,2.2 1,4.6 -4.5,-1.5L12,22l-2,-4.2 -4.5,1.5 1,-4.6L2.2,12.5l4.3,-2.2 -1,-4.6 4.5,1.5z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_flash_auto.xml b/app/src/main/res/drawable/n9_ic_flash_auto.xml
+new file mode 100644
+index 0000000..4bd3307
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_flash_auto.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M5.5,1.5h7.5l-3.2,7.3h4.6L4.0,22.5l2.6,-9.6H2.7z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.1" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M14.6,22.5l2.9,-8 2.9,8 M15.7,19.6h3.6" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_flash_off.xml b/app/src/main/res/drawable/n9_ic_flash_off.xml
+new file mode 100644
+index 0000000..8504fc7
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_flash_off.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M8,1.5h7.5l-3.2,7.3h4.6L6.5,22.5l2.6,-9.6H5.2z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.4" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M3.5,3.5L20.5,20.5" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_flash_on.xml b/app/src/main/res/drawable/n9_ic_flash_on.xml
+new file mode 100644
+index 0000000..1ea8cd8
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_flash_on.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M8,1.5h7.5l-3.2,7.3h4.6L6.5,22.5l2.6,-9.6H5.2z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_gallery.xml b/app/src/main/res/drawable/n9_ic_gallery.xml
+new file mode 100644
+index 0000000..e66ca03
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_gallery.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M6.5,8.5L7.6,3.6 20.8,6.6 19,14.6" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M3,9h14.5v11.5H3z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M4.8,18.8l3.8,-5 2.8,3.2 1.8,-1.8 3,3.6z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_redeye.xml b/app/src/main/res/drawable/n9_ic_redeye.xml
+new file mode 100644
+index 0000000..402fc05
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_redeye.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M2.5,12C5,7.5 19,7.5 21.5,12C19,16.5 5,16.5 2.5,12z" />
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,9.3a2.7,2.7 0,1 1,0 5.4a2.7,2.7 0,1 1,0 -5.4z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_auto.xml b/app/src/main/res/drawable/n9_ic_scene_auto.xml
+new file mode 100644
+index 0000000..10abb59
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_auto.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M3.5,5.5h17v13h-17z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.7" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9,16l3,-8 3,8 M10.1,13.2h3.8" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_landscape.xml b/app/src/main/res/drawable/n9_ic_scene_landscape.xml
+new file mode 100644
+index 0000000..3e59fd9
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_landscape.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M2,19.5l6.5,-10 4,6 2.5,-3.5 7,7.5z M17,4.5a2,2 0,1 1,0 4a2,2 0,1 1,0 -4z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_macro.xml b/app/src/main/res/drawable/n9_ic_scene_macro.xml
+new file mode 100644
+index 0000000..9bf98e1
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_macro.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,13c-3.3,0 -5.5,-2.6 -5.5,-7.5c2,0.3 3.8,1.3 5.5,3.3c1.7,-2 3.5,-3 5.5,-3.3C17.5,10.4 15.3,13 12,13z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,13v8 M12,18c-1.5,-2.2 -3.5,-2.6 -5,-2.4 M12,17c1.5,-2 3.3,-2.4 5,-2.2" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_night.xml b/app/src/main/res/drawable/n9_ic_scene_night.xml
+new file mode 100644
+index 0000000..3d4e1b6
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_night.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M14.5,2.5A9.5,9.5 0,1 0,21.5 15A7.5,7.5 0,0 1,14.5 2.5z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_portrait.xml b/app/src/main/res/drawable/n9_ic_scene_portrait.xml
+new file mode 100644
+index 0000000..ef0a3c3
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_portrait.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M12,3.5a4,4 0,1 1,0 8a4,4 0,1 1,0 -8z M4,20.5c0,-4.4 3.6,-7 8,-7s8,2.6 8,7z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_scene_sports.xml b/app/src/main/res/drawable/n9_ic_scene_sports.xml
+new file mode 100644
+index 0000000..0250834
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_scene_sports.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M15.5,2.5a2,2 0,1 1,0 4a2,2 0,1 1,0 -4z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M13.5,8l-3,5 4,2.5 -1,5.5 M10.5,13l-3,4.5 -3.5,0 M12.5,9l4,2.5 3,-1 M12.5,9l-4,0.5 -2,2.5" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_torch_off.xml b/app/src/main/res/drawable/n9_ic_torch_off.xml
+new file mode 100644
+index 0000000..4d08be7
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_torch_off.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="false"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M8,9h8v2.5l-1.5,2V21h-5v-7.5L8,11.5z M8,5h8v3H8z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_torch_on.xml b/app/src/main/res/drawable/n9_ic_torch_on.xml
+new file mode 100644
+index 0000000..a03a4b8
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_torch_on.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:autoMirrored="false"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M8,9h8v2.5l-1.5,2V21h-5v-7.5L8,11.5z M8,5h8v3H8z" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M4,4l2,1.5 M20,4l-2,1.5 M12,1v2 M3.5,9h2 M18.5,9h2" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_video.xml b/app/src/main/res/drawable/n9_ic_video.xml
+new file mode 100644
+index 0000000..fb0ca3d
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_video.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="#FFFFFFFF" android:pathData="M16,10.5V7c0,-0.55 -0.45,-1 -1,-1H3c-0.55,0 -1,0.45 -1,1v10c0,0.55 0.45,1 1,1h12c0.55,0 1,-0.45 1,-1v-3.5l5,4v-11l-5,4z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_wb_auto.xml b/app/src/main/res/drawable/n9_ic_wb_auto.xml
+new file mode 100644
+index 0000000..bfde431
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_wb_auto.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M10,8.2a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z M10,2.5v2 M10,18v2 M2.5,11.2h2 M4.6,5.8l1.4,1.4 M15.4,5.8l-1.4,1.4" />
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M15,21.5l2.5,-7 2.5,7 M15.9,19.2h3.2" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_wb_cloudy.xml b/app/src/main/res/drawable/n9_ic_wb_cloudy.xml
+new file mode 100644
+index 0000000..ec036e9
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_wb_cloudy.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M7,19h10.5a3.5,3.5 0,0 0,0 -7h-0.3A5,5 0,0 0,7.5 13.3A2.9,2.9 0,0 0,7 19z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_wb_fluorescent.xml b/app/src/main/res/drawable/n9_ic_wb_fluorescent.xml
+new file mode 100644
+index 0000000..ccfceab
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_wb_fluorescent.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M4,10h16v4H4z M6,6.5l1,1.5 M12,5v2 M18,6.5l-1,1.5 M6,17.5l1,-1.5 M12,19v-2 M18,17.5l-1,-1.5" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_wb_incandescent.xml b/app/src/main/res/drawable/n9_ic_wb_incandescent.xml
+new file mode 100644
+index 0000000..2df8e4b
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_wb_incandescent.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9.5,21h5 M9.5,18h5 M12,3a5.8,5.8 0,0 0,-3.5 10.4V15.5h7v-2.1A5.8,5.8 0,0 0,12 3z" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_ic_wb_sunny.xml b/app/src/main/res/drawable/n9_ic_wb_sunny.xml
+new file mode 100644
+index 0000000..0811419
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_ic_wb_sunny.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,8.5a3.5,3.5 0,1 1,0 7a3.5,3.5 0,1 1,0 -7z M12,2.5v2.2 M12,19.3v2.2 M2.5,12h2.2 M19.3,12h2.2 M5.3,5.3l1.5,1.5 M17.2,17.2l1.5,1.5 M5.3,18.7l1.5,-1.5 M17.2,6.8l1.5,-1.5" />
++</vector>
+diff --git a/app/src/main/res/drawable/n9_icon_squircle_blue.xml b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
+new file mode 100644
+index 0000000..3e80375
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <solid android:color="@color/n9_blue" />
++    <corners android:radius="11dp" />
++</shape>
+diff --git a/app/src/main/res/drawable/n9_tile_background.xml b/app/src/main/res/drawable/n9_tile_background.xml
+new file mode 100644
+index 0000000..f0cc0bb
+--- /dev/null
++++ b/app/src/main/res/drawable/n9_tile_background.xml
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 round-squircle icon tile: dark, blue when selected/checked/activated. -->
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_selected="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item android:state_activated="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_blue" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item android:state_pressed="true">
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile_pressed" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++    <item>
++        <shape android:shape="rectangle">
++            <solid android:color="@color/n9_tile" />
++            <corners android:radius="14dp" />
++        </shape>
++    </item>
++</selector>
 diff --git a/app/src/main/res/layout/activity_camera.xml b/app/src/main/res/layout/activity_camera.xml
-index d5f291f..0df8179 100644
+index d5f291f..4798f83 100644
 --- a/app/src/main/res/layout/activity_camera.xml
 +++ b/app/src/main/res/layout/activity_camera.xml
-@@ -122,7 +122,7 @@
-         android:id="@+id/secondaryTopBarLayout"
+@@ -18,7 +18,7 @@
          android:layout_width="0dp"
-         android:layout_height="wrap_content"
--        android:background="#99000000"
-+        android:background="@color/n9_panel"
-         android:fillViewport="true"
-         android:scrollbars="none"
-         android:visibility="gone"
-@@ -211,11 +211,13 @@
-         android:id="@+id/secondaryBottomBarLayout"
-         android:layout_width="0dp"
-         android:layout_height="72dp"
-+        android:background="@color/n9_panel"
-         app:layout_constraintBottom_toTopOf="@+id/primaryBarLayout"
+         android:layout_height="0dp"
+         android:soundEffectsEnabled="false"
+-        app:layout_constraintBottom_toTopOf="@+id/secondaryBottomBarLayout"
++        app:layout_constraintBottom_toBottomOf="parent"
          app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent">
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+@@ -37,8 +37,8 @@
  
-         <com.google.android.material.divider.MaterialDivider
-+            android:id="@+id/secondaryBottomBarDivider"
-             android:layout_width="0dp"
-             android:layout_height="wrap_content"
-             app:layout_constraintBottom_toBottomOf="parent"
-@@ -270,7 +272,9 @@
-         android:id="@+id/primaryBarLayout"
-         android:layout_width="0dp"
-         android:layout_height="wrap_content"
-+        android:background="@color/n9_panel"
-         android:paddingTop="16dp"
-+        android:paddingBottom="8dp"
-         app:layout_constraintBottom_toTopOf="@+id/cameraModeSelectorLayout"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent">
-@@ -294,9 +298,10 @@
-             android:layout_height="60dp"
-             android:layout_gravity="center"
-             android:layout_marginStart="32dp"
--            android:backgroundTint="?colorSecondaryContainer"
-+            android:backgroundTint="@color/n9_tile"
-             android:scaleType="fitXY"
--            app:cardCornerRadius="8dp"
-+            app:cardCornerRadius="4dp"
-+            app:cardElevation="0dp"
-             app:layout_constraintBottom_toBottomOf="parent"
-             app:layout_constraintStart_toStartOf="parent"
-             app:layout_constraintTop_toTopOf="parent">
-@@ -357,6 +362,7 @@
-         android:id="@+id/cameraModeSelectorLayout"
-         android:layout_width="0dp"
-         android:layout_height="wrap_content"
-+        android:background="@color/n9_panel"
-         app:layout_constraintBottom_toBottomOf="parent"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent" />
+     <ImageView
+         android:id="@+id/viewFinderFocus"
+-        android:layout_width="75dp"
+-        android:layout_height="75dp"
++        android:layout_width="91dp"
++        android:layout_height="129dp"
+         android:src="@drawable/camera_focus_circle"
+         android:visibility="invisible"
+         app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
 diff --git a/app/src/main/res/layout/activity_settings.xml b/app/src/main/res/layout/activity_settings.xml
 index 04de566..fb852ce 100644
 --- a/app/src/main/res/layout/activity_settings.xml
@@ -440,23 +2908,216 @@ index 04de566..fb852ce 100644
 +    </FrameLayout>
 +
  </androidx.coordinatorlayout.widget.CoordinatorLayout>
-diff --git a/app/src/main/res/layout/camera_mode_button.xml b/app/src/main/res/layout/camera_mode_button.xml
-index ce5f072..0a81ce1 100644
---- a/app/src/main/res/layout/camera_mode_button.xml
-+++ b/app/src/main/res/layout/camera_mode_button.xml
-@@ -9,8 +9,8 @@
-     android:layout_height="wrap_content"
-     android:backgroundTint="@android:color/transparent"
-     android:padding="0dp"
--    android:textAllCaps="true"
-+    android:textAllCaps="false"
-     android:textColor="@color/camera_mode_selector_text"
-     android:textStyle="bold"
--    android:typeface="monospace"
+diff --git a/app/src/main/res/layout/n9_choice_item.xml b/app/src/main/res/layout/n9_choice_item.xml
+new file mode 100644
+index 0000000..33f6380
+--- /dev/null
++++ b/app/src/main/res/layout/n9_choice_item.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Segmented choice box row (single choice dialogs). -->
++<CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@android:id/text1"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:layout_marginHorizontal="16dp"
++    android:layout_marginVertical="2dp"
++    android:background="@drawable/n9_choice_item_background"
++    android:checkMark="@null"
 +    android:fontFamily="etesian-text"
-     app:iconPadding="0dp" />
++    android:gravity="center_vertical"
++    android:minHeight="52dp"
++    android:paddingHorizontal="16dp"
++    android:textAlignment="viewStart"
++    android:textColor="@color/n9_text"
++    android:textSize="18sp" />
+diff --git a/app/src/main/res/layout/n9_preference.xml b/app/src/main/res/layout/n9_preference.xml
+new file mode 100644
+index 0000000..151c2af
+--- /dev/null
++++ b/app/src/main/res/layout/n9_preference.xml
+@@ -0,0 +1,70 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 list row: blue squircle icon, bold white title, grey value. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:background="?android:attr/selectableItemBackground"
++    android:gravity="center_vertical"
++    android:minHeight="72dp"
++    android:orientation="horizontal"
++    android:paddingStart="16dp"
++    android:paddingEnd="16dp">
++
++    <FrameLayout
++        android:id="@+id/icon_frame"
++        android:layout_width="44dp"
++        android:layout_height="44dp"
++        android:layout_marginEnd="16dp"
++        android:background="@drawable/n9_icon_squircle_blue">
++
++        <ImageView
++            android:id="@android:id/icon"
++            android:layout_width="24dp"
++            android:layout_height="24dp"
++            android:layout_gravity="center"
++            android:tint="@color/n9_text" />
++
++    </FrameLayout>
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:orientation="vertical"
++        android:paddingVertical="12dp">
++
++        <TextView
++            android:id="@android:id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:fontFamily="etesian-text"
++            android:maxLines="2"
++            android:textColor="@color/n9_text"
++            android:textSize="18sp"
++            android:textStyle="bold" />
++
++        <TextView
++            android:id="@android:id/summary"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:fontFamily="etesian-text"
++            android:maxLines="4"
++            android:textColor="@color/n9_text_secondary"
++            android:textSize="14sp" />
++
++    </LinearLayout>
++
++    <LinearLayout
++        android:id="@android:id/widget_frame"
++        android:layout_width="wrap_content"
++        android:layout_height="match_parent"
++        android:gravity="center_vertical"
++        android:orientation="vertical"
++        android:paddingStart="16dp" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/layout/n9_preference_category.xml b/app/src/main/res/layout/n9_preference_category.xml
+new file mode 100644
+index 0000000..6271592
+--- /dev/null
++++ b/app/src/main/res/layout/n9_preference_category.xml
+@@ -0,0 +1,38 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- N9 group header: grey label followed by a thin line to the right. -->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:orientation="horizontal"
++    android:paddingStart="16dp"
++    android:paddingTop="20dp"
++    android:paddingEnd="16dp"
++    android:paddingBottom="8dp">
++
++    <TextView
++        android:id="@android:id/title"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:fontFamily="etesian-text"
++        android:textColor="@color/n9_text_secondary"
++        android:textSize="14sp" />
++
++    <View
++        android:layout_width="0dp"
++        android:layout_height="1dp"
++        android:layout_marginStart="12dp"
++        android:layout_weight="1"
++        android:background="@color/n9_separator" />
++
++    <TextView
++        android:id="@android:id/summary"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:visibility="gone" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/values/colors_n9.xml b/app/src/main/res/values/colors_n9.xml
+new file mode 100644
+index 0000000..97058d9
+--- /dev/null
++++ b/app/src/main/res/values/colors_n9.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: The LineageOS Project
++     SPDX-License-Identifier: Apache-2.0
++-->
++<!-- Nokia N9 (Etesian) camera palette: black UI, dark tiles, blue selection. -->
++<resources>
++    <color name="n9_black">#FF000000</color>
++    <color name="n9_tile">#FF2A2A2A</color>
++    <color name="n9_tile_pressed">#FF3A3A3A</color>
++    <color name="n9_blue">#FF1E88E5</color>
++    <color name="n9_text">#FFFFFFFF</color>
++    <color name="n9_text_secondary">#FF8C8C8C</color>
++    <color name="n9_separator">#FF3C3C3C</color>
++    <!-- Viewfinder overlays: translucent dark panel, white-ring round shutter -->
++    <color name="n9_panel">#99000000</color>
++    <color name="n9_shutter_fill">#FFE6E6E6</color>
++</resources>
+diff --git a/app/src/main/res/values/dimens_n9.xml b/app/src/main/res/values/dimens_n9.xml
+new file mode 100644
+index 0000000..0b38bef
+--- /dev/null
++++ b/app/src/main/res/values/dimens_n9.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <dimen name="n9_bottom_bar_height">64dp</dimen>
++</resources>
+diff --git a/app/src/main/res/values/ids_n9.xml b/app/src/main/res/values/ids_n9.xml
+new file mode 100644
+index 0000000..2c8c9f4
+--- /dev/null
++++ b/app/src/main/res/values/ids_n9.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- SPDX-FileCopyrightText: 2026 Etesian
++     SPDX-License-Identifier: Apache-2.0 -->
++<!-- Etesian: the N9 camera's views (found by the device tests). -->
++<resources>
++    <item name="n9InfoPill" type="id" />
++    <item name="n9RecordingPill" type="id" />
++    <item name="n9FlashStrip" type="id" />
++    <item name="n9ModeSwitch" type="id" />
++    <item name="n9ModePhoto" type="id" />
++    <item name="n9ModeVideo" type="id" />
++    <item name="n9SettingsPage" type="id" />
++    <item name="n9Panel" type="id" />
++    <item name="n9WhiteBalance" type="id" />
++    <item name="n9Exposure" type="id" />
++    <item name="n9ColourFilter" type="id" />
++    <item name="n9ExposureSlider" type="id" />
++    <item name="n9CreatorName" type="id" />
++    <item name="n9AllSettings" type="id" />
++    <item name="n9ZoomSlider" type="id" />
++</resources>
 diff --git a/app/src/main/res/values/themes.xml b/app/src/main/res/values/themes.xml
-index 7d061a2..f7ea053 100644
+index 7d061a2..2a80733 100644
 --- a/app/src/main/res/values/themes.xml
 +++ b/app/src/main/res/values/themes.xml
 @@ -5,8 +5,16 @@
@@ -503,7 +3164,7 @@ index 7d061a2..f7ea053 100644
  
      <!-- Secondary bottom bar icons theme -->
 diff --git a/app/src/main/res/values/themes_settingslib.xml b/app/src/main/res/values/themes_settingslib.xml
-index 3286e8c..0960b2e 100644
+index 3286e8c..91ceae8 100644
 --- a/app/src/main/res/values/themes_settingslib.xml
 +++ b/app/src/main/res/values/themes_settingslib.xml
 @@ -5,7 +5,21 @@
@@ -580,291 +3241,3 @@ index 3286e8c..0960b2e 100644
          <item name="widgetLayout">@layout/settingslib_switch_compat</item>
      </style>
  </resources>
-diff --git a/app/src/main/res/drawable/n9_choice_item_background.xml b/app/src/main/res/drawable/n9_choice_item_background.xml
-new file mode 100644
-index 0000000..5299044
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_choice_item_background.xml
-@@ -0,0 +1,26 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Segmented choice box row: selected row is solid N9 blue. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_checked="true">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_blue" />
-+            <corners android:radius="8dp" />
-+        </shape>
-+    </item>
-+    <item android:state_pressed="true">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_tile_pressed" />
-+            <corners android:radius="8dp" />
-+        </shape>
-+    </item>
-+    <item>
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_tile" />
-+            <corners android:radius="8dp" />
-+        </shape>
-+    </item>
-+</selector>
-diff --git a/app/src/main/res/drawable/n9_ic_back.xml b/app/src/main/res/drawable/n9_ic_back.xml
-new file mode 100644
-index 0000000..e40a0e2
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_ic_back.xml
-@@ -0,0 +1,15 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="24dp"
-+    android:height="24dp"
-+    android:autoMirrored="true"
-+    android:viewportWidth="24"
-+    android:viewportHeight="24">
-+    <path
-+        android:fillColor="@color/n9_text"
-+        android:pathData="M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z" />
-+</vector>
-diff --git a/app/src/main/res/drawable/n9_icon_squircle_blue.xml b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
-new file mode 100644
-index 0000000..3e80375
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_icon_squircle_blue.xml
-@@ -0,0 +1,10 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<shape xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:shape="rectangle">
-+    <solid android:color="@color/n9_blue" />
-+    <corners android:radius="11dp" />
-+</shape>
-diff --git a/app/src/main/res/drawable/n9_tile_background.xml b/app/src/main/res/drawable/n9_tile_background.xml
-new file mode 100644
-index 0000000..f0cc0bb
---- /dev/null
-+++ b/app/src/main/res/drawable/n9_tile_background.xml
-@@ -0,0 +1,32 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 round-squircle icon tile: dark, blue when selected/checked/activated. -->
-+<selector xmlns:android="http://schemas.android.com/apk/res/android">
-+    <item android:state_selected="true">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_blue" />
-+            <corners android:radius="14dp" />
-+        </shape>
-+    </item>
-+    <item android:state_activated="true">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_blue" />
-+            <corners android:radius="14dp" />
-+        </shape>
-+    </item>
-+    <item android:state_pressed="true">
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_tile_pressed" />
-+            <corners android:radius="14dp" />
-+        </shape>
-+    </item>
-+    <item>
-+        <shape android:shape="rectangle">
-+            <solid android:color="@color/n9_tile" />
-+            <corners android:radius="14dp" />
-+        </shape>
-+    </item>
-+</selector>
-diff --git a/app/src/main/res/layout/n9_choice_item.xml b/app/src/main/res/layout/n9_choice_item.xml
-new file mode 100644
-index 0000000..9e4d109
---- /dev/null
-+++ b/app/src/main/res/layout/n9_choice_item.xml
-@@ -0,0 +1,21 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Segmented choice box row (single choice dialogs). -->
-+<CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:id="@android:id/text1"
-+    android:layout_width="match_parent"
-+    android:layout_height="wrap_content"
-+    android:layout_marginHorizontal="16dp"
-+    android:layout_marginVertical="2dp"
-+    android:background="@drawable/n9_choice_item_background"
-+    android:checkMark="@null"
-+    android:fontFamily="etesian-text"
-+    android:gravity="center_vertical"
-+    android:minHeight="52dp"
-+    android:paddingHorizontal="16dp"
-+    android:textAlignment="viewStart"
-+    android:textColor="@color/n9_text"
-+    android:textSize="18sp" />
-diff --git a/app/src/main/res/layout/n9_preference.xml b/app/src/main/res/layout/n9_preference.xml
-new file mode 100644
-index 0000000..866992b
---- /dev/null
-+++ b/app/src/main/res/layout/n9_preference.xml
-@@ -0,0 +1,70 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 list row: blue squircle icon, bold white title, grey value. -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:layout_width="match_parent"
-+    android:layout_height="wrap_content"
-+    android:background="?android:attr/selectableItemBackground"
-+    android:gravity="center_vertical"
-+    android:minHeight="72dp"
-+    android:orientation="horizontal"
-+    android:paddingStart="16dp"
-+    android:paddingEnd="16dp">
-+
-+    <FrameLayout
-+        android:id="@+id/icon_frame"
-+        android:layout_width="44dp"
-+        android:layout_height="44dp"
-+        android:layout_marginEnd="16dp"
-+        android:background="@drawable/n9_icon_squircle_blue">
-+
-+        <ImageView
-+            android:id="@android:id/icon"
-+            android:layout_width="24dp"
-+            android:layout_height="24dp"
-+            android:layout_gravity="center"
-+            android:tint="@color/n9_text" />
-+
-+    </FrameLayout>
-+
-+    <LinearLayout
-+        android:layout_width="0dp"
-+        android:layout_height="wrap_content"
-+        android:layout_weight="1"
-+        android:orientation="vertical"
-+        android:paddingVertical="12dp">
-+
-+        <TextView
-+            android:id="@android:id/title"
-+            android:layout_width="wrap_content"
-+            android:layout_height="wrap_content"
-+            android:ellipsize="end"
-+            android:fontFamily="etesian-text"
-+            android:maxLines="2"
-+            android:textColor="@color/n9_text"
-+            android:textSize="18sp"
-+            android:textStyle="bold" />
-+
-+        <TextView
-+            android:id="@android:id/summary"
-+            android:layout_width="wrap_content"
-+            android:layout_height="wrap_content"
-+            android:fontFamily="etesian-text"
-+            android:maxLines="4"
-+            android:textColor="@color/n9_text_secondary"
-+            android:textSize="14sp" />
-+
-+    </LinearLayout>
-+
-+    <LinearLayout
-+        android:id="@android:id/widget_frame"
-+        android:layout_width="wrap_content"
-+        android:layout_height="match_parent"
-+        android:gravity="center_vertical"
-+        android:orientation="vertical"
-+        android:paddingStart="16dp" />
-+
-+</LinearLayout>
-diff --git a/app/src/main/res/layout/n9_preference_category.xml b/app/src/main/res/layout/n9_preference_category.xml
-new file mode 100644
-index 0000000..84e02ec
---- /dev/null
-+++ b/app/src/main/res/layout/n9_preference_category.xml
-@@ -0,0 +1,38 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- N9 group header: grey label followed by a thin line to the right. -->
-+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:layout_width="match_parent"
-+    android:layout_height="wrap_content"
-+    android:gravity="center_vertical"
-+    android:orientation="horizontal"
-+    android:paddingStart="16dp"
-+    android:paddingTop="20dp"
-+    android:paddingEnd="16dp"
-+    android:paddingBottom="8dp">
-+
-+    <TextView
-+        android:id="@android:id/title"
-+        android:layout_width="wrap_content"
-+        android:layout_height="wrap_content"
-+        android:fontFamily="etesian-text"
-+        android:textColor="@color/n9_text_secondary"
-+        android:textSize="14sp" />
-+
-+    <View
-+        android:layout_width="0dp"
-+        android:layout_height="1dp"
-+        android:layout_marginStart="12dp"
-+        android:layout_weight="1"
-+        android:background="@color/n9_separator" />
-+
-+    <TextView
-+        android:id="@android:id/summary"
-+        android:layout_width="wrap_content"
-+        android:layout_height="wrap_content"
-+        android:visibility="gone" />
-+
-+</LinearLayout>
-diff --git a/app/src/main/res/values/colors_n9.xml b/app/src/main/res/values/colors_n9.xml
-new file mode 100644
-index 0000000..97058d9
---- /dev/null
-+++ b/app/src/main/res/values/colors_n9.xml
-@@ -0,0 +1,18 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!--
-+     SPDX-FileCopyrightText: The LineageOS Project
-+     SPDX-License-Identifier: Apache-2.0
-+-->
-+<!-- Nokia N9 (Etesian) camera palette: black UI, dark tiles, blue selection. -->
-+<resources>
-+    <color name="n9_black">#FF000000</color>
-+    <color name="n9_tile">#FF2A2A2A</color>
-+    <color name="n9_tile_pressed">#FF3A3A3A</color>
-+    <color name="n9_blue">#FF1E88E5</color>
-+    <color name="n9_text">#FFFFFFFF</color>
-+    <color name="n9_text_secondary">#FF8C8C8C</color>
-+    <color name="n9_separator">#FF3C3C3C</color>
-+    <!-- Viewfinder overlays: translucent dark panel, white-ring round shutter -->
-+    <color name="n9_panel">#99000000</color>
-+    <color name="n9_shutter_fill">#FFE6E6E6</color>
-+</resources>
-diff --git a/app/src/main/res/values/dimens_n9.xml b/app/src/main/res/values/dimens_n9.xml
-new file mode 100644
-index 0000000..0b38bef
---- /dev/null
-+++ b/app/src/main/res/values/dimens_n9.xml
-@@ -0,0 +1,4 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<resources>
-+    <dimen name="n9_bottom_bar_height">64dp</dimen>
-+</resources>

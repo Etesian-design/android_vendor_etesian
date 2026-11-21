@@ -1429,7 +1429,7 @@ index fd299bf6e..deaf0c72d 100644
          mColor = pickColor(identifier);
          return this;
 diff --git a/src/com/android/contacts/list/ContactListItemView.java b/src/com/android/contacts/list/ContactListItemView.java
-index aafe5b188..8225701dd 100644
+index aafe5b188..2380f28ff 100644
 --- a/src/com/android/contacts/list/ContactListItemView.java
 +++ b/src/com/android/contacts/list/ContactListItemView.java
 @@ -99,6 +99,12 @@ public class ContactListItemView extends ViewGroup
@@ -1478,7 +1478,7 @@ index aafe5b188..8225701dd 100644
          setMeasuredDimension(specWidth, height);
      }
  
-@@ -617,23 +633,17 @@ public class ContactListItemView extends ViewGroup
+@@ -617,23 +633,20 @@ public class ContactListItemView extends ViewGroup
  
          final boolean isLayoutRtl = ViewUtil.isViewLayoutRtl(this);
  
@@ -1499,8 +1499,11 @@ index aafe5b188..8225701dd 100644
 -            } else {
 -                leftBound += mHeaderWidth;
 -            }
-+        // N9 look: the section letter at the end of a rule in a band above the contact.
++        // N9 look: the section letter at the end of a rule in a band above the contact. One column of letters at the
++        // right edge: while the fast-scroll band is there it draws them (grey behind them under a finger), so the
++        // row's own letter is left out (kept for accessibility) and the rule runs up to the band.
 +        if (isN9HeaderShown()) {
++            mHeaderView.setAlpha(n9BandCarriesLetters() ? 0f : 1f);
 +            final int headerWidth = mHeaderView.getMeasuredWidth();
 +            final int headerHeight = mHeaderView.getMeasuredHeight();
 +            final int headerTopBound = (mN9HeaderHeight - headerHeight) / 2;
@@ -1513,7 +1516,7 @@ index aafe5b188..8225701dd 100644
          }
  
          mBoundsWithoutHeader.set(left + leftBound, topBound, left + rightBound, bottomBound);
-@@ -972,6 +982,24 @@ public class ContactListItemView extends ViewGroup
+@@ -972,6 +985,32 @@ public class ContactListItemView extends ViewGroup
          }
  
          super.dispatchDraw(canvas);
@@ -1523,13 +1526,21 @@ index aafe5b188..8225701dd 100644
 +            final boolean isLayoutRtl = ViewUtil.isViewLayoutRtl(this);
 +            final float y = mN9HeaderHeight / 2f;
 +            final float start = isLayoutRtl
-+                    ? mHeaderView.getRight() + mN9HeaderGap : getPaddingLeft();
++                    ? (n9BandCarriesLetters() ? getPaddingLeft() : mHeaderView.getRight() + mN9HeaderGap)
++                    : getPaddingLeft();
++            final boolean band = n9BandCarriesLetters();
 +            final float end = isLayoutRtl
-+                    ? getWidth() - getPaddingRight() : mHeaderView.getLeft() - mN9HeaderGap;
++                    ? getWidth() - getPaddingRight()
++                    : band ? getWidth() - getPaddingRight() : mHeaderView.getLeft() - mN9HeaderGap;
 +            final float line = Math.max(1f, getResources().getDisplayMetrics().density);
 +            canvas.drawRect(start, y - line, end, y, mN9RulePaint);
 +            canvas.drawRect(start, y, end, y + line, mN9RuleHighlightPaint);
 +        }
++    }
++
++    private boolean n9BandCarriesLetters() {
++        return getParent() instanceof PinnedHeaderListView
++                && ((PinnedHeaderListView) getParent()).isN9BandShown();
 +    }
 +
 +    private boolean isN9HeaderShown() {
@@ -1538,7 +1549,7 @@ index aafe5b188..8225701dd 100644
      }
  
      /**
-@@ -1008,7 +1036,7 @@ public class ContactListItemView extends ViewGroup
+@@ -1008,7 +1047,7 @@ public class ContactListItemView extends ViewGroup
          mHeaderView = new TextView(getContext());
          final TextView headerTextView = (TextView) mHeaderView;
          headerTextView.setTextAppearance(getContext(), R.style.SectionHeaderStyle);
@@ -1591,7 +1602,7 @@ index 969e6a2df..b932b1c4c 100644
          }
  
 diff --git a/src/com/android/contacts/list/PinnedHeaderListView.java b/src/com/android/contacts/list/PinnedHeaderListView.java
-index e17866422..cbc012cab 100644
+index e17866422..03a2b20ea 100644
 --- a/src/com/android/contacts/list/PinnedHeaderListView.java
 +++ b/src/com/android/contacts/list/PinnedHeaderListView.java
 @@ -27,11 +27,15 @@ import android.widget.AbsListView;
@@ -1622,7 +1633,7 @@ index e17866422..cbc012cab 100644
      public PinnedHeaderListView(Context context) {
          this(context, null, android.R.attr.listViewStyle);
      }
-@@ -126,6 +135,53 @@ public class PinnedHeaderListView extends AutoScrollListView
+@@ -126,6 +135,58 @@ public class PinnedHeaderListView extends AutoScrollListView
          super.setOnItemSelectedListener(this);
      }
  
@@ -1633,6 +1644,11 @@ index e17866422..cbc012cab 100644
 +        }
 +        mN9FastScroller.setEnabled(enabled);
 +        super.setFastScrollEnabled(false);
++    }
++
++    /** N9 look: whether the fast-scroll band is there, carrying the section letters (rows then leave theirs out). */
++    public boolean isN9BandShown() {
++        return mN9FastScroller != null && mN9FastScroller.isBandShown();
 +    }
 +
 +    @Override
@@ -1676,7 +1692,7 @@ index e17866422..cbc012cab 100644
      @Override
      protected void onLayout(boolean changed, int l, int t, int r, int b) {
          super.onLayout(changed, l, t, r, b);
-@@ -182,6 +238,9 @@ public class PinnedHeaderListView extends AutoScrollListView
+@@ -182,6 +243,9 @@ public class PinnedHeaderListView extends AutoScrollListView
              mAdapter.configurePinnedHeaders(this);
              invalidateIfAnimating();
          }
@@ -1686,7 +1702,7 @@ index e17866422..cbc012cab 100644
          if (mOnScrollListener != null) {
              mOnScrollListener.onScroll(this, firstVisibleItem, visibleItemCount, totalItemCount);
          }
-@@ -196,6 +255,9 @@ public class PinnedHeaderListView extends AutoScrollListView
+@@ -196,6 +260,9 @@ public class PinnedHeaderListView extends AutoScrollListView
      @Override
      public void onScrollStateChanged(AbsListView view, int scrollState) {
          mScrollState = scrollState;
@@ -1696,7 +1712,7 @@ index e17866422..cbc012cab 100644
          if (mOnScrollListener != null) {
              mOnScrollListener.onScrollStateChanged(this, scrollState);
          }
-@@ -548,6 +610,10 @@ public class PinnedHeaderListView extends AutoScrollListView
+@@ -548,6 +615,10 @@ public class PinnedHeaderListView extends AutoScrollListView
              }
          }
  

@@ -88,6 +88,265 @@ index 9b95b04149bf..07e2feeb1116 100644
  };
  
  } // namespace
+diff --git a/core/java/android/hardware/display/AmbientDisplayConfiguration.java b/core/java/android/hardware/display/AmbientDisplayConfiguration.java
+index 3dde2e46f72b..69468a1ef12f 100644
+--- a/core/java/android/hardware/display/AmbientDisplayConfiguration.java
++++ b/core/java/android/hardware/display/AmbientDisplayConfiguration.java
+@@ -23,6 +23,7 @@ import android.content.Context;
+ import android.hardware.biometrics.Flags;
+ import android.os.Build;
+ import android.os.SystemProperties;
++import android.os.UserHandle;
+ import android.provider.Settings;
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+@@ -282,6 +283,13 @@ public class AmbientDisplayConfiguration {
+ 
+     /** @hide */
+     public String ambientDisplayComponent() {
++        // Etesian: in Etesian mode, with its standby screen on, the doze screen is the launcher's (the N9's standby:
++        // the clock and the user's lines, moving every minute) instead of SystemUI's.
++        final android.content.ContentResolver cr = mContext.getContentResolver();
++        if (Settings.Secure.getIntForUser(cr, "etesian_gestures", 0, UserHandle.USER_CURRENT) == 1
++                && Settings.Secure.getIntForUser(cr, "etesian_standby_on", 1, UserHandle.USER_CURRENT) == 1) {
++            return "com.bompotis.etesian.launcher/com.bompotis.etesian.launcher.standby.StandbyDream";
++        }
+         return mContext.getResources().getString(R.string.config_dozeComponent);
+     }
+ 
+diff --git a/core/java/android/widget/CompoundButton.java b/core/java/android/widget/CompoundButton.java
+index 3cc0042f2bcc..175ffab17cf4 100644
+--- a/core/java/android/widget/CompoundButton.java
++++ b/core/java/android/widget/CompoundButton.java
+@@ -484,6 +484,18 @@ public abstract class CompoundButton extends Button implements Checkable {
+         return CompoundButton.class.getName();
+     }
+ 
++    private boolean mEtesianLook;
++
++    /** Etesian: every switch, whichever library drew it (framework, AppCompat, Material), as the N9's. */
++    @Override
++    protected void onAttachedToWindow() {
++        super.onAttachedToWindow();
++        if (!mEtesianLook) {
++            mEtesianLook = true;
++            com.android.internal.widget.EtesianSwitchLook.apply(this);
++        }
++    }
++
+     /** @hide */
+     @Override
+     public void onInitializeAccessibilityEventInternal(AccessibilityEvent event) {
+diff --git a/core/java/com/android/internal/widget/EtesianSwitchLook.java b/core/java/com/android/internal/widget/EtesianSwitchLook.java
+new file mode 100644
+index 000000000000..e680d4c9c529
+--- /dev/null
++++ b/core/java/com/android/internal/widget/EtesianSwitchLook.java
+@@ -0,0 +1,204 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.internal.widget;
++
++import android.content.Context;
++import android.content.res.ColorStateList;
++import android.graphics.Canvas;
++import android.graphics.ColorFilter;
++import android.graphics.LinearGradient;
++import android.graphics.Paint;
++import android.graphics.Path;
++import android.graphics.PixelFormat;
++import android.graphics.Rect;
++import android.graphics.Shader;
++import android.graphics.drawable.Drawable;
++import android.provider.Settings;
++import android.util.Log;
++import android.widget.CompoundButton;
++
++import java.lang.reflect.Method;
++
++/**
++ * Etesian: the N9's switch for every switch on the phone, whichever library made it: the framework's Switch,
++ * AppCompat's SwitchCompat and Material's SwitchMaterial / MaterialSwitch (both SwitchCompat underneath). Measured on
++ * the N9 (PR1.3, 2026-11-19), n9px x 0.64 = dp: a track 66 x 41 n9px (42 x 26dp) with squircle-half ends, off a flat
++ * dark grey (#2D2E2D) with a darker rim (#181818), on a blue gradient (#4195DE to #107DD6); the knob a white squircle
++ * 30 n9px (18-19dp) inset 5 n9px (3dp), no border, no text, no icon in it. On while Etesian mode is ("etesian_gestures").
++ */
++public final class EtesianSwitchLook {
++    private static final String TAG = "EtesianSwitch";
++    private static final double N = 2.8;
++    private static final float TRACK_W = 42f, TRACK_H = 26f, KNOB = 18f, INSET = 3f;
++    // Both switch classes make the track at least 2 x the knob's width + the track's padding: 2 x 18 + 2 x 3 = 42.
++
++    private EtesianSwitchLook() {}
++
++    /** True while the N9 look is on (Etesian mode). */
++    public static boolean enabled(Context c) {
++        try {
++            return Settings.Secure.getInt(c.getContentResolver(), "etesian_gestures", 0) == 1;
++        } catch (RuntimeException e) {
++            return false;
++        }
++    }
++
++    /** Gives [b] the N9 look when it is a switch of any library; anything else is left alone. */
++    public static void apply(CompoundButton b) {
++        final float d = b.getResources().getDisplayMetrics().density;
++        if (b instanceof android.widget.Switch) {
++            if (!enabled(b.getContext())) return;
++            final android.widget.Switch s = (android.widget.Switch) b;
++            s.setThumbTintList(null);
++            s.setTrackTintList(null);
++            s.setShowText(false);
++            s.setThumbDrawable(new Knob(d));
++            s.setTrackDrawable(new Track(d));
++            s.setSwitchMinWidth(Math.round(TRACK_W * d));
++            return;
++        }
++        Class<?> k = b.getClass();
++        while (k != null && !"androidx.appcompat.widget.SwitchCompat".equals(k.getName())) k = k.getSuperclass();
++        if (k == null || !enabled(b.getContext())) return;
++        try {
++            call(b, "setThumbTintList", ColorStateList.class, null);
++            call(b, "setTrackTintList", ColorStateList.class, null);
++            call(b, "setShowText", boolean.class, false);
++            call(b, "setThumbIconDrawable", Drawable.class, null); // MaterialSwitch's icon in the knob
++            call(b, "setTrackDecorationDrawable", Drawable.class, null); // and its track outline
++            call(b, "setThumbDrawable", Drawable.class, new Knob(d));
++            call(b, "setTrackDrawable", Drawable.class, new Track(d));
++            call(b, "setSwitchMinWidth", int.class, Math.round(TRACK_W * d));
++            b.requestLayout();
++        } catch (RuntimeException e) {
++            Log.w(TAG, "could not restyle " + b.getClass().getName(), e);
++        }
++    }
++
++    /** Calls a public one-argument method if the class has it (not every version of each library has all). */
++    private static void call(Object o, String name, Class<?> type, Object arg) {
++        try {
++            Method m = o.getClass().getMethod(name, type);
++            m.invoke(o, arg);
++        } catch (NoSuchMethodException e) {
++            // this version has no such setter: nothing to undo
++        } catch (ReflectiveOperationException e) {
++            throw new RuntimeException(e);
++        }
++    }
++
++    /** A superellipse (n = 2.8) in the box; when wider than tall, its halves at the ends and straight between. */
++    static Path squircle(float l, float t, float r, float b) {
++        final Path p = new Path();
++        final float h = b - t, w = r - l;
++        if (w <= h + 0.5f) {
++            arc(p, (l + r) / 2, (t + b) / 2, w / 2, h / 2, 0, 360, true);
++        } else {
++            final float ry = h / 2;
++            arc(p, l + ry, t + ry, ry, ry, 90, 270, true);
++            arc(p, r - ry, t + ry, ry, ry, 270, 450, false);
++        }
++        p.close();
++        return p;
++    }
++
++    private static void arc(Path p, float cx, float cy, float rx, float ry, double from, double to,
++            boolean first) {
++        boolean move = first;
++        for (double a = from; a <= to + 0.001; a += 3) {
++            final double th = Math.toRadians(a), c = Math.cos(th), s = Math.sin(th);
++            final float x = (float) (cx + rx * Math.signum(c) * Math.pow(Math.abs(c), 2.0 / N));
++            final float y = (float) (cy - ry * Math.signum(s) * Math.pow(Math.abs(s), 2.0 / N));
++            if (move) { p.moveTo(x, y); move = false; } else p.lineTo(x, y);
++        }
++    }
++
++    private abstract static class Base extends Drawable {
++        final float mD;
++        final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
++        boolean mOn, mEnabled = true;
++        int mAlpha = 255;
++
++        Base(float d) { mD = d; }
++
++        @Override public boolean isStateful() { return true; }
++
++        @Override
++        protected boolean onStateChange(int[] state) {
++            boolean on = false, en = false;
++            for (int s : state) {
++                if (s == android.R.attr.state_checked) on = true;
++                if (s == android.R.attr.state_enabled) en = true;
++            }
++            final boolean changed = on != mOn || en != mEnabled;
++            mOn = on;
++            mEnabled = en;
++            if (changed) invalidateSelf();
++            return changed;
++        }
++
++        int alpha() { return mEnabled ? mAlpha : mAlpha * 2 / 5; }
++        @Override public void setAlpha(int a) { mAlpha = a; invalidateSelf(); }
++        @Override public void setColorFilter(ColorFilter cf) { mPaint.setColorFilter(cf); }
++        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
++    }
++
++    /** The track. */
++    static final class Track extends Base {
++        Track(float d) { super(d); }
++        @Override public int getIntrinsicWidth() { return Math.round(TRACK_W * mD); }
++        @Override public int getIntrinsicHeight() { return Math.round(TRACK_H * mD); }
++
++        /** The knob travels inside this: 3dp from each end. */
++        @Override
++        public boolean getPadding(Rect p) {
++            final int i = Math.round(INSET * mD);
++            p.set(i, 0, i, 0);
++            return true;
++        }
++
++        @Override
++        public void draw(Canvas c) {
++            final Rect b = getBounds();
++            final float h = TRACK_H * mD, top = b.centerY() - h / 2;
++            final Path outer = squircle(b.left, top, b.right, top + h);
++            final float i = mD * 0.75f;
++            final Path inner = squircle(b.left + i, top + i, b.right - i, top + h - i);
++            mPaint.setShader(null);
++            mPaint.setColor(mOn ? 0xFF1675C6 : 0xFF181818);
++            mPaint.setAlpha(alpha());
++            c.drawPath(outer, mPaint);
++            if (mOn) {
++                // the N9's: a short light top, flat blue from a third down, barely darker at the bottom
++                mPaint.setShader(new LinearGradient(0, top, 0, top + h,
++                        new int[] {0xFF4195DE, 0xFF1885DE, 0xFF1280D8}, new float[] {0f, 0.35f, 1f},
++                        Shader.TileMode.CLAMP));
++            } else {
++                mPaint.setColor(0xFF2D2E2D);
++            }
++            mPaint.setAlpha(alpha());
++            c.drawPath(inner, mPaint);
++            mPaint.setShader(null);
++        }
++    }
++
++    /** The knob: a white squircle, inset in the track (its box is the track's height, so it sits inset). */
++    static final class Knob extends Base {
++        Knob(float d) { super(d); }
++        @Override public int getIntrinsicWidth() { return Math.round(KNOB * mD); }
++        @Override public int getIntrinsicHeight() { return Math.round(TRACK_H * mD); }
++
++        @Override
++        public void draw(Canvas c) {
++            final Rect b = getBounds();
++            final float k = KNOB * mD, cx = b.centerX(), cy = b.centerY();
++            mPaint.setShader(null);
++            mPaint.setColor(0xFFFFFFFF);
++            mPaint.setAlpha(alpha());
++            c.drawPath(squircle(cx - k / 2, cy - k / 2, cx + k / 2, cy + k / 2), mPaint);
++        }
++    }
++}
 diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java b/libs/WindowManager/Shell/src/com/android/wm/shell/onehanded/EtesianSingleHand.java
 new file mode 100644
 index 000000000000..6692f89bea68
@@ -1870,6 +2129,203 @@ index 74ec0f0aa30d..7f561df597f5 100644
          private val STATE_SET_NONE = intArrayOf()
          private val STATE_SET_SINGLE = intArrayOf(android.R.attr.state_single)
          private val STATE_SET_FIRST = intArrayOf(android.R.attr.state_first)
+diff --git a/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/EtesianSwitch.kt b/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/EtesianSwitch.kt
+new file mode 100644
+index 000000000000..b43d34176322
+--- /dev/null
++++ b/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/EtesianSwitch.kt
+@@ -0,0 +1,178 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.settingslib.spa.widget.ui
++
++import android.content.Context
++import android.database.ContentObserver
++import android.graphics.LinearGradient
++import android.graphics.Paint
++import android.graphics.Path
++import android.graphics.Shader
++import android.os.Handler
++import android.os.Looper
++import android.provider.Settings
++import androidx.compose.animation.core.animateFloatAsState
++import androidx.compose.animation.core.tween
++import androidx.compose.foundation.Canvas
++import androidx.compose.foundation.interaction.MutableInteractionSource
++import androidx.compose.foundation.layout.requiredSize
++import androidx.compose.foundation.selection.toggleable
++import androidx.compose.material3.Switch
++import androidx.compose.material3.SwitchColors
++import androidx.compose.material3.SwitchDefaults
++import androidx.compose.material3.minimumInteractiveComponentSize
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.DisposableEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
++import androidx.compose.ui.graphics.nativeCanvas
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.semantics.Role
++import androidx.compose.ui.unit.dp
++import kotlin.math.abs
++import kotlin.math.cos
++import kotlin.math.pow
++import kotlin.math.sign
++import kotlin.math.sin
++
++/**
++ * Etesian: the N9's switch for Compose, the same as the framework's EtesianSwitchLook gives every View switch: a
++ * track 42 x 26 dp with squircle-half ends, off a flat dark grey (#2D2E2D) with a darker rim (#181818), on a blue
++ * gradient (#4195DE to #107DD6); the knob a white squircle 18 dp inset 3 dp, no icon in it. Only while Etesian mode is
++ * on ("etesian_gestures"); otherwise this is Material 3's [Switch] with the same arguments, untouched.
++ */
++@Composable
++fun EtesianSwitch(
++    checked: Boolean,
++    onCheckedChange: ((Boolean) -> Unit)?,
++    modifier: Modifier = Modifier,
++    thumbContent: (@Composable () -> Unit)? = null,
++    enabled: Boolean = true,
++    colors: SwitchColors = SwitchDefaults.colors(),
++    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
++) {
++    if (!etesianSwitchMode()) {
++        Switch(checked, onCheckedChange, modifier, thumbContent, enabled, colors, interactionSource)
++        return
++    }
++    val pos by animateFloatAsState(if (checked) 1f else 0f, tween(150), label = "EtesianSwitch")
++    val toggle =
++        if (onCheckedChange != null) {
++            Modifier.minimumInteractiveComponentSize()
++                .toggleable(
++                    value = checked,
++                    interactionSource = interactionSource,
++                    indication = null,
++                    enabled = enabled,
++                    role = Role.Switch,
++                    onValueChange = onCheckedChange,
++                )
++        } else {
++            Modifier
++        }
++    Canvas(modifier.then(toggle).requiredSize(42.dp, 26.dp)) {
++        val d = density
++        val w = 42f * d
++        val h = 26f * d
++        val l = (size.width - w) / 2
++        val t = (size.height - h) / 2
++        val a = if (enabled) 255 else 102
++        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
++        drawIntoCanvas { cc ->
++            val c = cc.nativeCanvas
++            val on = pos >= 0.5f
++            paint.color = if (on) 0xFF1675C6.toInt() else 0xFF181818.toInt()
++            paint.alpha = a
++            c.drawPath(etesianSquircle(l, t, l + w, t + h), paint)
++            val i = 0.75f * d
++            if (on) {
++                paint.shader = LinearGradient(0f, t, 0f, t + h,
++                    intArrayOf(0xFF4195DE.toInt(), 0xFF1885DE.toInt(), 0xFF1280D8.toInt()),
++                    floatArrayOf(0f, 0.35f, 1f), Shader.TileMode.CLAMP)
++            } else {
++                paint.color = 0xFF2D2E2D.toInt()
++            }
++            paint.alpha = a
++            c.drawPath(etesianSquircle(l + i, t + i, l + w - i, t + h - i), paint)
++            paint.shader = null
++            val k = 18f * d
++            val inset = 3f * d
++            val kl = l + inset + pos * (w - 2 * inset - k)
++            val kt = t + (h - k) / 2
++            paint.color = 0xFFFFFFFF.toInt()
++            paint.alpha = a
++            c.drawPath(etesianSquircle(kl, kt, kl + k, kt + k), paint)
++        }
++    }
++}
++
++/** True while Etesian mode is on; follows the setting while shown. */
++@Composable
++private fun etesianSwitchMode(): Boolean {
++    val context = LocalContext.current
++    val state = remember(context) { mutableStateOf(readEtesianMode(context)) }
++    DisposableEffect(context) {
++        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
++            override fun onChange(selfChange: Boolean) {
++                state.value = readEtesianMode(context)
++            }
++        }
++        val registered = try {
++            context.contentResolver.registerContentObserver(
++                Settings.Secure.getUriFor("etesian_gestures"), false, observer)
++            true
++        } catch (e: RuntimeException) {
++            false
++        }
++        onDispose { if (registered) context.contentResolver.unregisterContentObserver(observer) }
++    }
++    return state.value
++}
++
++private fun readEtesianMode(context: Context): Boolean =
++    try {
++        Settings.Secure.getInt(context.contentResolver, "etesian_gestures", 0) == 1
++    } catch (e: RuntimeException) {
++        false
++    }
++
++/** A superellipse (n = 2.8) in the box; when wider than tall, its halves at the ends and straight between. */
++private fun etesianSquircle(l: Float, t: Float, r: Float, b: Float): Path {
++    val p = Path()
++    val h = b - t
++    val w = r - l
++    if (w <= h + 0.5f) {
++        arc(p, (l + r) / 2, (t + b) / 2, w / 2, h / 2, 0.0, 360.0, true)
++    } else {
++        val ry = h / 2
++        arc(p, l + ry, t + ry, ry, ry, 90.0, 270.0, true)
++        arc(p, r - ry, t + ry, ry, ry, 270.0, 450.0, false)
++    }
++    p.close()
++    return p
++}
++
++private fun arc(p: Path, cx: Float, cy: Float, rx: Float, ry: Float, from: Double, to: Double, first: Boolean) {
++    var move = first
++    var a = from
++    while (a <= to + 0.001) {
++        val th = Math.toRadians(a)
++        val c = cos(th)
++        val s = sin(th)
++        val x = (cx + rx * sign(c) * abs(c).pow(2.0 / 2.8)).toFloat()
++        val y = (cy - ry * sign(s) * abs(s).pow(2.0 / 2.8)).toFloat()
++        if (move) {
++            p.moveTo(x, y)
++            move = false
++        } else {
++            p.lineTo(x, y)
++        }
++        a += 3.0
++    }
++}
+diff --git a/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/Switch.kt b/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/Switch.kt
+index 8619f31ab0ac..8c03296f1b7d 100644
+--- a/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/Switch.kt
++++ b/packages/SettingsLib/Spa/spa/src/com/android/settingslib/spa/widget/ui/Switch.kt
+@@ -22,7 +22,7 @@ import androidx.compose.material.icons.Icons
+ import androidx.compose.material.icons.filled.Check
+ import androidx.compose.material.icons.filled.Close
+ import androidx.compose.material3.Icon
+-import androidx.compose.material3.Switch
++import com.android.settingslib.spa.widget.ui.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.SwitchDefaults
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.remember
 diff --git a/packages/SettingsLib/src/com/android/settingslib/drawable/CircleFramedDrawable.java b/packages/SettingsLib/src/com/android/settingslib/drawable/CircleFramedDrawable.java
 index 7db00f34b2a2..054b71b905f6 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/drawable/CircleFramedDrawable.java
@@ -1905,6 +2361,203 @@ index dc2285f3eaee..ba9abb48d6e8 100644
              loadSecure35Settings(stmt);
  
              loadBooleanSetting(stmt, Settings.Secure.MOUNT_PLAY_NOTIFICATION_SND,
+diff --git a/packages/SystemUI/compose/core/src/com/android/compose/EtesianSwitch.kt b/packages/SystemUI/compose/core/src/com/android/compose/EtesianSwitch.kt
+new file mode 100644
+index 000000000000..5a582075a73e
+--- /dev/null
++++ b/packages/SystemUI/compose/core/src/com/android/compose/EtesianSwitch.kt
+@@ -0,0 +1,178 @@
++/*
++ * SPDX-FileCopyrightText: 2026 Etesian
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package com.android.compose
++
++import android.content.Context
++import android.database.ContentObserver
++import android.graphics.LinearGradient
++import android.graphics.Paint
++import android.graphics.Path
++import android.graphics.Shader
++import android.os.Handler
++import android.os.Looper
++import android.provider.Settings
++import androidx.compose.animation.core.animateFloatAsState
++import androidx.compose.animation.core.tween
++import androidx.compose.foundation.Canvas
++import androidx.compose.foundation.interaction.MutableInteractionSource
++import androidx.compose.foundation.layout.requiredSize
++import androidx.compose.foundation.selection.toggleable
++import androidx.compose.material3.Switch
++import androidx.compose.material3.SwitchColors
++import androidx.compose.material3.SwitchDefaults
++import androidx.compose.material3.minimumInteractiveComponentSize
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.DisposableEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
++import androidx.compose.ui.graphics.nativeCanvas
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.semantics.Role
++import androidx.compose.ui.unit.dp
++import kotlin.math.abs
++import kotlin.math.cos
++import kotlin.math.pow
++import kotlin.math.sign
++import kotlin.math.sin
++
++/**
++ * Etesian: the N9's switch for Compose, the same as the framework's EtesianSwitchLook gives every View switch: a
++ * track 42 x 26 dp with squircle-half ends, off a flat dark grey (#2D2E2D) with a darker rim (#181818), on a blue
++ * gradient (#4195DE to #107DD6); the knob a white squircle 18 dp inset 3 dp, no icon in it. Only while Etesian mode is
++ * on ("etesian_gestures"); otherwise this is Material 3's [Switch] with the same arguments, untouched.
++ */
++@Composable
++fun EtesianSwitch(
++    checked: Boolean,
++    onCheckedChange: ((Boolean) -> Unit)?,
++    modifier: Modifier = Modifier,
++    thumbContent: (@Composable () -> Unit)? = null,
++    enabled: Boolean = true,
++    colors: SwitchColors = SwitchDefaults.colors(),
++    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
++) {
++    if (!etesianSwitchMode()) {
++        Switch(checked, onCheckedChange, modifier, thumbContent, enabled, colors, interactionSource)
++        return
++    }
++    val pos by animateFloatAsState(if (checked) 1f else 0f, tween(150), label = "EtesianSwitch")
++    val toggle =
++        if (onCheckedChange != null) {
++            Modifier.minimumInteractiveComponentSize()
++                .toggleable(
++                    value = checked,
++                    interactionSource = interactionSource,
++                    indication = null,
++                    enabled = enabled,
++                    role = Role.Switch,
++                    onValueChange = onCheckedChange,
++                )
++        } else {
++            Modifier
++        }
++    Canvas(modifier.then(toggle).requiredSize(42.dp, 26.dp)) {
++        val d = density
++        val w = 42f * d
++        val h = 26f * d
++        val l = (size.width - w) / 2
++        val t = (size.height - h) / 2
++        val a = if (enabled) 255 else 102
++        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
++        drawIntoCanvas { cc ->
++            val c = cc.nativeCanvas
++            val on = pos >= 0.5f
++            paint.color = if (on) 0xFF1675C6.toInt() else 0xFF181818.toInt()
++            paint.alpha = a
++            c.drawPath(etesianSquircle(l, t, l + w, t + h), paint)
++            val i = 0.75f * d
++            if (on) {
++                paint.shader = LinearGradient(0f, t, 0f, t + h,
++                    intArrayOf(0xFF4195DE.toInt(), 0xFF1885DE.toInt(), 0xFF1280D8.toInt()),
++                    floatArrayOf(0f, 0.35f, 1f), Shader.TileMode.CLAMP)
++            } else {
++                paint.color = 0xFF2D2E2D.toInt()
++            }
++            paint.alpha = a
++            c.drawPath(etesianSquircle(l + i, t + i, l + w - i, t + h - i), paint)
++            paint.shader = null
++            val k = 18f * d
++            val inset = 3f * d
++            val kl = l + inset + pos * (w - 2 * inset - k)
++            val kt = t + (h - k) / 2
++            paint.color = 0xFFFFFFFF.toInt()
++            paint.alpha = a
++            c.drawPath(etesianSquircle(kl, kt, kl + k, kt + k), paint)
++        }
++    }
++}
++
++/** True while Etesian mode is on; follows the setting while shown. */
++@Composable
++private fun etesianSwitchMode(): Boolean {
++    val context = LocalContext.current
++    val state = remember(context) { mutableStateOf(readEtesianMode(context)) }
++    DisposableEffect(context) {
++        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
++            override fun onChange(selfChange: Boolean) {
++                state.value = readEtesianMode(context)
++            }
++        }
++        val registered = try {
++            context.contentResolver.registerContentObserver(
++                Settings.Secure.getUriFor("etesian_gestures"), false, observer)
++            true
++        } catch (e: RuntimeException) {
++            false
++        }
++        onDispose { if (registered) context.contentResolver.unregisterContentObserver(observer) }
++    }
++    return state.value
++}
++
++private fun readEtesianMode(context: Context): Boolean =
++    try {
++        Settings.Secure.getInt(context.contentResolver, "etesian_gestures", 0) == 1
++    } catch (e: RuntimeException) {
++        false
++    }
++
++/** A superellipse (n = 2.8) in the box; when wider than tall, its halves at the ends and straight between. */
++private fun etesianSquircle(l: Float, t: Float, r: Float, b: Float): Path {
++    val p = Path()
++    val h = b - t
++    val w = r - l
++    if (w <= h + 0.5f) {
++        arc(p, (l + r) / 2, (t + b) / 2, w / 2, h / 2, 0.0, 360.0, true)
++    } else {
++        val ry = h / 2
++        arc(p, l + ry, t + ry, ry, ry, 90.0, 270.0, true)
++        arc(p, r - ry, t + ry, ry, ry, 270.0, 450.0, false)
++    }
++    p.close()
++    return p
++}
++
++private fun arc(p: Path, cx: Float, cy: Float, rx: Float, ry: Float, from: Double, to: Double, first: Boolean) {
++    var move = first
++    var a = from
++    while (a <= to + 0.001) {
++        val th = Math.toRadians(a)
++        val c = cos(th)
++        val s = sin(th)
++        val x = (cx + rx * sign(c) * abs(c).pow(2.0 / 2.8)).toFloat()
++        val y = (cy - ry * sign(s) * abs(s).pow(2.0 / 2.8)).toFloat()
++        if (move) {
++            p.moveTo(x, y)
++            move = false
++        } else {
++            p.lineTo(x, y)
++        }
++        a += 3.0
++    }
++}
+diff --git a/packages/SystemUI/compose/features/src/com/android/systemui/notifications/ui/composable/row/BundleHeaderGuts.kt b/packages/SystemUI/compose/features/src/com/android/systemui/notifications/ui/composable/row/BundleHeaderGuts.kt
+index f577834ab9fd..b63ff8e9f969 100644
+--- a/packages/SystemUI/compose/features/src/com/android/systemui/notifications/ui/composable/row/BundleHeaderGuts.kt
++++ b/packages/SystemUI/compose/features/src/com/android/systemui/notifications/ui/composable/row/BundleHeaderGuts.kt
+@@ -35,7 +35,7 @@ import androidx.compose.material.icons.filled.Settings
+ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+ import androidx.compose.material3.Icon
+ import androidx.compose.material3.MaterialTheme
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.SwitchDefaults
+ import androidx.compose.material3.Text
+ import androidx.compose.material3.minimumInteractiveComponentSize
 diff --git a/packages/SystemUI/customization/clocks/common/res/values/dimens.xml b/packages/SystemUI/customization/clocks/common/res/values/dimens.xml
 index c89930aeca80..a345d05e7dc5 100644
 --- a/packages/SystemUI/customization/clocks/common/res/values/dimens.xml
@@ -2733,6 +3386,19 @@ index 394773df28c5..d6bc0e1ff700 100644
          mDrawPaint.setColor(mDrawColor);
          if (mPinShapeInput != null) {
              mPinShapeInput.setDrawColor(mDrawColor);
+diff --git a/packages/SystemUI/src/com/android/systemui/accessibility/shortcutchooser/ui/composable/ShortcutTargetRow.kt b/packages/SystemUI/src/com/android/systemui/accessibility/shortcutchooser/ui/composable/ShortcutTargetRow.kt
+index b20339cefef0..282896775eec 100644
+--- a/packages/SystemUI/src/com/android/systemui/accessibility/shortcutchooser/ui/composable/ShortcutTargetRow.kt
++++ b/packages/SystemUI/src/com/android/systemui/accessibility/shortcutchooser/ui/composable/ShortcutTargetRow.kt
+@@ -34,7 +34,7 @@ import androidx.compose.material3.Checkbox
+ import androidx.compose.material3.Icon
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.RadioButton
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.SwitchDefaults
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
 diff --git a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java b/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
 index a6eea297bb94..b329e27d4a9a 100644
 --- a/packages/SystemUI/src/com/android/systemui/clipboardoverlay/ClipboardListener.java
@@ -2964,7 +3630,7 @@ index 000000000000..b92737e64698
 +    @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
-index 26c5a40aad4a..34302df4d8e3 100644
+index 8ef6345cf946..17030cc8053e 100644
 --- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 +++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 @@ -303,6 +303,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
@@ -5228,6 +5894,45 @@ index 75a441c0de2d..f7530af04b01 100644
          }
          if (DEBUG) {
              android.widget.Toast.makeText(mContext, "Navbar flags = " + flags, 500)
+diff --git a/packages/SystemUI/src/com/android/systemui/screencapture/record/largescreen/ui/compose/CaptureSettingsMenu.kt b/packages/SystemUI/src/com/android/systemui/screencapture/record/largescreen/ui/compose/CaptureSettingsMenu.kt
+index 216d0f9ee49c..dcb704afa9ca 100644
+--- a/packages/SystemUI/src/com/android/systemui/screencapture/record/largescreen/ui/compose/CaptureSettingsMenu.kt
++++ b/packages/SystemUI/src/com/android/systemui/screencapture/record/largescreen/ui/compose/CaptureSettingsMenu.kt
+@@ -27,7 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
+ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+ import androidx.compose.material3.IconButtonDefaults
+ import androidx.compose.material3.IconToggleButton
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.getValue
+diff --git a/packages/SystemUI/src/com/android/systemui/screencapture/record/smallscreen/ui/compose/RecordDetailsSettings.kt b/packages/SystemUI/src/com/android/systemui/screencapture/record/smallscreen/ui/compose/RecordDetailsSettings.kt
+index 9f969935836d..6d0b01e2c8eb 100644
+--- a/packages/SystemUI/src/com/android/systemui/screencapture/record/smallscreen/ui/compose/RecordDetailsSettings.kt
++++ b/packages/SystemUI/src/com/android/systemui/screencapture/record/smallscreen/ui/compose/RecordDetailsSettings.kt
+@@ -42,7 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.foundation.verticalScroll
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.Surface
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.LaunchedEffect
+diff --git a/packages/SystemUI/src/com/android/systemui/screencapture/sharescreen/largescreen/ui/compose/ShareContentSelector.kt b/packages/SystemUI/src/com/android/systemui/screencapture/sharescreen/largescreen/ui/compose/ShareContentSelector.kt
+index 1329508fa1cc..7be3361abc79 100644
+--- a/packages/SystemUI/src/com/android/systemui/screencapture/sharescreen/largescreen/ui/compose/ShareContentSelector.kt
++++ b/packages/SystemUI/src/com/android/systemui/screencapture/sharescreen/largescreen/ui/compose/ShareContentSelector.kt
+@@ -33,7 +33,7 @@ import androidx.compose.material.icons.filled.Check
+ import androidx.compose.material3.Icon
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.Surface
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.SwitchDefaults
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
 diff --git a/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenRecordingCoreStartable.kt b/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenRecordingCoreStartable.kt
 index 5a56fa4ae9db..064b757becde 100644
 --- a/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenRecordingCoreStartable.kt
@@ -7144,7 +7849,7 @@ index 000000000000..e087dd7e6d7b
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt
 new file mode 100644
-index 000000000000..3908aae8d144
+index 000000000000..e7b413a453f9
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/notification/row/EtesianOverStyles.kt
 @@ -0,0 +1,278 @@
@@ -7335,7 +8040,7 @@ index 000000000000..3908aae8d144
 +        setPadding(dp(context, 16f).toInt(), pad, dp(context, 16f).toInt(), pad)
 +        background = GradientDrawable().apply {
 +            cornerRadius = dp(context, 8f)
-+            setColor(0xDB101010.toInt())
++            setColor(0xFF101010.toInt()) // solid, as the mock: nothing shows through
 +            setStroke(dp(context, 1f).toInt(), 0x47FFFFFF)
 +        }
 +        addView(squircleView(context, content.picture, 28f))
@@ -9306,6 +10011,19 @@ index 9758ec59cb95..ff080595b78c 100644
          mKeyguardUpdateMonitor.setKeyguardShowing(showing, occluded);
          Trace.instantForTrack(Trace.TRACE_TAG_APP, "UI Events",
                  "Keyguard showing: " + showing + " occluded: " + occluded);
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/av/ui/compose/StudioLookDrillIn.kt b/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/av/ui/compose/StudioLookDrillIn.kt
+index 29fdd1e28566..e8fa45f0e13c 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/av/ui/compose/StudioLookDrillIn.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/av/ui/compose/StudioLookDrillIn.kt
+@@ -20,7 +20,7 @@ import androidx.compose.foundation.clickable
+ import androidx.compose.material3.Icon
+ import androidx.compose.material3.ListItem
+ import androidx.compose.material3.MaterialTheme
+-import androidx.compose.material3.Switch
++import com.android.compose.EtesianSwitch as Switch // Etesian: the N9 switch in Etesian mode
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.rememberCoroutineScope
 diff --git a/packages/SystemUI/src/com/android/systemui/volume/N9VolumeTones.java b/packages/SystemUI/src/com/android/systemui/volume/N9VolumeTones.java
 new file mode 100644
 index 000000000000..08a9e758a396

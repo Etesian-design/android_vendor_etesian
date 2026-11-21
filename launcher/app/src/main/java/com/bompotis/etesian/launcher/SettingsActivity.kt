@@ -457,6 +457,7 @@ class SettingsActivity : AppCompatActivity() {
                 "Backgrounds" to "wallpapers", "Home wallpaper" to "wallpapers", "Events view" to "events",
                 "Gestures" to "gestures", "Single hand mode" to "gestures", "Leaving an app" to "gestures", "Breeze" to "sidesense", "Breeze gestures" to "sidesense",
                 "Breeze shortcuts" to "sidesense", "Breeze widgets" to "sidesense", "Notifications on the lock screen" to "lock",
+                "Standby screen" to "lock",
                 "Bottom toolbar" to "toolbar", "System" to "system",
                 "Notifications" to "events", "Today" to "events", "Over apps" to "events",
                 "Status menu" to "status", "Arranging" to "open", "Carousel" to "open", "Split screen" to "open",
@@ -732,6 +733,9 @@ class SettingsActivity : AppCompatActivity() {
                 breezeWidgets = category("Breeze widgets").apply { title = "Menu widgets" }
                 if (section == "sidesense") fillBreeze()
 
+                val standby = category("Standby screen")
+                link(standby, "Standby screen", "The clock, notifications and your own lines while locked, moving every minute",
+                    Intent(ctx, com.bompotis.etesian.launcher.standby.StandbySettingsActivity::class.java))
                 val lock = category("Notifications on the lock screen")
                 fun secureList(key: String, title: String, labels: Array<String>, values: Array<String>,
                                current: String) = ListPreference(ctx).apply {

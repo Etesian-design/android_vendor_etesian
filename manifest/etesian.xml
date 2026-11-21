@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Local manifest (.repo/local_manifests) for an Etesian ROM: Etesian's apps that live in their own repositories,
+     built from source with the ROM (each has an Android.bp). The build scripts put it in place before repo sync. -->
+<manifest>
+  <project name="Etesian-design/glance" path="packages/apps/EtesianGlance" remote="github" revision="main" />
+</manifest>

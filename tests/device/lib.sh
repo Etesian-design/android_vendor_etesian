@@ -7,6 +7,8 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 sh_() { adb shell "$@" | tr -d '\r'; }
 # The phone's own pixels, never mapped: for measuring sizes (with the phone's own density, raw_sh wm density).
 raw_sh() { command adb shell "$@" | tr -d '\r'; }
+# adb itself, unmapped: real screen coordinates (screenshots and dumps).
+A() { command adb "$@"; }
 # The tests are written for the Pro1-X's 1080x2160 screen. On another screen every tap, swipe and drag is mapped onto it,
 # every UI dump's bounds and every screenshot back to 1080x2160. Widths scale by W/1080; heights keep that scale at the top
 # (frame 0-900) and the bottom (frame 1260-2160, anchored to the bottom edge, where the bottom bar is), and the middle
@@ -54,7 +56,9 @@ adb() {
   else command adb "$@"; fi; }
 fi
 home() { sh_ input keyevent HOME >/dev/null; sleep 1.5; }
-unlock() { sh_ input keyevent WAKEUP; sleep 1; sh_ wm dismiss-keyguard >/dev/null 2>&1; sleep 1; }
+# Just after a boot the lock screen ignores the first dismiss: until it is really gone, try again.
+unlock() { local i; for i in 1 2 3 4 5; do sh_ input keyevent WAKEUP; sleep 1; sh_ wm dismiss-keyguard >/dev/null 2>&1; sleep 1
+  sh_ dumpsys window | grep -q "isKeyguardShowing=true" || return 0; sleep 2; done; }
 # The resumed activity, e.g. com.bompotis.etesian.launcher/.HomeActivity
 top_activity() { sh_ dumpsys activity activities | grep -m1 topResumedActivity | grep -o '[a-z][a-zA-Z0-9_.]*/[a-zA-Z0-9_.$]*'; }
 # Activity type (home, standard...) of the task holding activity $1
@@ -123,6 +127,8 @@ pref_switch() {
       row=$(sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | tr '>' '\n' |
         awk -v t="text=\"$2\"" 'index($0,t){f=1} f&&/switchWidget/{print; exit}')
       [ -n "$row" ] && break; sh_ input swipe 540 1700 540 600 300; sleep 0.8; done
+    # Not found (the page still loading, just after a boot): try again rather than read it as off.
+    [ -z "$row" ] && { sleep 2; continue; }
     local now=0; echo "$row" | grep -q 'checked="true"' && now=1; [ -z "$was" ] && was=$now
     [ -z "$3" ] || [ "$3" = "$now" ] && break
     local b; b=$(echo "$row" | grep -o '\[[0-9,]*\]\[[0-9,]*\]' | tr '[],' '   '); set -- "$1" "$2" "$3" $b

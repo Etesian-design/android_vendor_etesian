@@ -25,7 +25,9 @@ page; post cancel; post; sleep 2
 check "default is Discreet (N9): the line is shown" 'bubble_shown'
 read fl ft fr fb <<< "$(frame)"; echo "    frame: $fl $ft $fr $fb"; shot over_n9_line
 check "N9: the line covers the status bar (top 0, its height ${sb}px)" '[ "$ft" = 0 ] && [ $(( fb - ft )) -le $(( sb + 4 )) ]'
-check "N9: the line is black over the status bar, the page white below" '[ $(pixel 700 $(( sb / 2 ))) -lt 40 ] && [ $(pixel 700 $(( sb + 200 ))) -gt 200 ]'
+# the line carries the scrolling message in white: its darkest point along the line is the background, not a letter
+line_bg() { local m=255 x v; for x in 300 380 460 540 620 700 780 860 940 1020; do v=$(pixel $x $(( sb / 2 ))); [ "$v" -lt "$m" ] && m=$v; done; echo $m; }
+check "N9: the line is black over the status bar, the page white below" '[ $(line_bg) -lt 40 ] && [ $(pixel 700 $(( sb + 200 ))) -gt 200 ]'
 sleep 3; shot over_n9_scrolled
 for _ in $(seq 20); do bubble_shown || break; sleep 1; done
 check "N9: the line goes by itself once the text has scrolled" '! bubble_shown'

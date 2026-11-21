@@ -71,7 +71,7 @@ check "locking the phone ends it ($(state))" 'state | grep -q "active=false"'
 
 sh_ settings put secure etesian_single_hand 0
 # The setting: Etesian settings > Gestures, a preview of the phone with the small screen, and the Size slider.
-sh_ am start -n $LAUNCHER/.SettingsActivity --es section gestures >/dev/null; sleep 2
+sh_ am start -n $LAUNCHER/.SettingsActivity --activity-clear-task --es section gestures >/dev/null; sleep 2
 for i in 1 2 3; do u=$(A shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; A shell cat /sdcard/u.xml); echo "$u" | grep -q "Preview: singlehand" && break; A shell input swipe $((SW/2)) $((SH*3/4)) $((SW/2)) $((SH/4)) 300; sleep 1; done
 A exec-out screencap -p > "$SHOTS/single_hand_setting.png"
 check "Gestures has Single hand mode with a live preview" 'echo "$u" | grep -q "text=\"Single hand mode\"" && echo "$u" | grep -q "Preview: singlehand"'

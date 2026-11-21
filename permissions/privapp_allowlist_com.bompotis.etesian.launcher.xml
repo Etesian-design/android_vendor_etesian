@@ -28,5 +28,7 @@
         <permission name="android.permission.MANAGE_APP_PREDICTIONS" />
         <permission name="android.permission.READ_WIFI_CREDENTIAL" />
         <permission name="android.permission.PACKAGE_USAGE_STATS" />
+        <permission name="android.permission.DUMP" />
+        <permission name="android.permission.SCHEDULE_EXACT_ALARM" />
     </privapp-permissions>
 </permissions>

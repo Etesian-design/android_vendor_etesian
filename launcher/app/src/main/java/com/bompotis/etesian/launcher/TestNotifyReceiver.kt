@@ -12,7 +12,7 @@ import android.content.Intent
 /**
  * For the on-device tests only (not exported; `am broadcast -n` from a root shell): posts silent
  * sample notifications — kind "message" (heads-up, Reply + Mark as read), "progress" (an ongoing
- * live update), "mails" (count=N email notifications), "cancel" removes them; "widget" places a launcher widget. The channel has no sound or vibration.
+ * live update), "mails" (count=N email notifications), "cancel" removes them; "widget" places a launcher widget; "standby" logs every standby item's value and line. The channel has no sound or vibration.
  */
 class TestNotifyReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
@@ -23,6 +23,19 @@ class TestNotifyReceiver : BroadcastReceiver() {
         val open = PendingIntent.getActivity(ctx, 0, Intent(ctx, SettingsActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE)
         when (intent.getStringExtra("kind") ?: "message") {
+            // Every standby item's value now, and each configured line as the standby screen would show it
+            // ("EtesianStandbyTest" in the log).
+            "standby" -> {
+                val v = com.bompotis.etesian.launcher.standby.StandbyItems.values(ctx)
+                com.bompotis.etesian.launcher.standby.StandbyItems.ALL.forEach {
+                    android.util.Log.i("EtesianStandbyTest", "item ${it.id}=${v[it.id].orEmpty()}")
+                }
+                com.bompotis.etesian.launcher.standby.StandbyConfig.load(ctx).lines.forEachIndexed { i, l ->
+                    android.util.Log.i("EtesianStandbyTest",
+                        "line $i=${com.bompotis.etesian.launcher.standby.StandbyItems.text(l, v) ?: l.empty}")
+                }
+                android.util.Log.i("EtesianStandbyTest", "done")
+            }
             "message" -> {
                 val reply = PendingIntent.getBroadcast(ctx, 1, Intent(ctx, TestNotifyReceiver::class.java)
                     .putExtra("kind", "replied"), PendingIntent.FLAG_MUTABLE)

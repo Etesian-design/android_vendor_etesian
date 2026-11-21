@@ -14,7 +14,7 @@ prebuilt_etc {
 }
 
 
-// Etesian Glance (glance/, prebuilt from its own repo): contacts granted with the ROM, as for the launcher.
+// Etesian Glance (its own repo, packages/apps/EtesianGlance): contacts granted with the ROM, as for the launcher.
 prebuilt_etc {
     name: "default-permissions_com.bompotis.etesian.glance.xml",
     src: "permissions/default-permissions_com.bompotis.etesian.glance.xml",

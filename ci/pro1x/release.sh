@@ -38,10 +38,13 @@ run '
 cd /src
 ccache -M 60G >/dev/null
 repo forall -c "git reset -q --hard && git clean -fdq"
+# Etesian'"'"'s apps in their own repos (Glance), fetched and built from source with the ROM.
+cp /etesian/manifest/etesian.xml .repo/local_manifests/etesian.xml
 repo sync -c -j8 --no-tags --no-clone-bundle --optimized-fetch --force-sync
 # Never the N9 reference files or old snapshots. Etesian Mail is built outside the ROM (mail/build-mail.sh): the copy
 # already in the tree stays.
-rsync -a --delete --exclude .git --exclude node_modules --exclude /n9-files --exclude /backups --exclude /notes --exclude /local --exclude /release \
+# -O: folders get the time of the copy, so Soong lists a new folder (a kept old time hid it from its file globs).
+rsync -a -O --delete --exclude .git --exclude node_modules --exclude /n9-files --exclude /backups --exclude /notes --exclude /local --exclude /release \
     --filter "P /mail/EtesianMail.apk" --filter "P /mail/Android.bp" /etesian/ vendor/etesian/
 bash vendor/etesian/patches/apply.sh
 source build/envsetup.sh >/dev/null
@@ -49,6 +52,9 @@ breakfast pro1x >/dev/null
 # LineageOS copies TARGET_BOOTANIMATION without tracking it as an input: drop the copy so a changed boot animation is picked up.
 rm -f out/soong/.intermediates/vendor/lineage/bootanimation/gen-bootanimation.zip/gen/bootanimation.zip \
       out/soong/.intermediates/vendor/lineage/bootanimation/bootanimation.zip/android_common/bootanimation.zip
+# A module built on its own (m <app>) stays installed in out/ and would ship, even one the product overrides
+# (2026-11-20: a stray WallpaperPicker2 took com.android.wallpaper from ThemePicker). Only what the product lists goes in.
+m installclean >/dev/null
 m -j$(nproc) target-files-package otatools
 '
 

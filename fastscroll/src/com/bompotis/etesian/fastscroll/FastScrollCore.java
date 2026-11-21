@@ -21,10 +21,13 @@ import java.util.List;
  * The N9 fast scroll, shared by {@link EtesianFastScroller} (RecyclerView) and
  * {@link EtesianListFastScroller} (ListView) (n9-contacts-fastscroll*.png).
  *
- * <p>While the list scrolls, a wide grey translucent band shows down the right edge with each
- * visible section's label at its first row and a small rounded-square dot at the scroll position.
- * A finger on the band hides the dot; a dark band runs across the list centred on the finger with
- * the current section big and light at its left edge, and every small move steps one section.
+ * <p>Only when the list has more than a screen and has sections (user 2026-11-19: "If no scrolling is needed then no
+ * FastScroll element is needed either and the app can use the full width"): then a column down the right edge holding
+ * each visible section's letter at its first row, always, in the app's own colour. A swipe scroll of the list puts a
+ * dimmed grey bar with a dot (the position in the data) on top of the letters, fading a second after the list stops;
+ * a finger on the column turns it grey the same way. Moving the finger hides the dot; a dark band runs across the list
+ * centred on the finger with the current section big and light at its left edge, and every small move steps one
+ * section. Lifting the finger fades the band back to the app's colour.
  */
 final class FastScrollCore {
 
@@ -54,8 +57,8 @@ final class FastScrollCore {
     private static final int DOT_DP = 8;
     /** A move this long steps one section. */
     private static final int STEP_DP = 14;
-    private static final long FADE_DELAY_MS = 1000;
-    private static final long FADE_DURATION_MS = 250;
+    /** The band's turn to grey on touch, and back: smooth and gradual. */
+    private static final long FADE_DURATION_MS = 300;
 
     private final Host mHost;
     private final View mView;
@@ -82,9 +85,8 @@ final class FastScrollCore {
     private int mIndex = -1;
     private String mCurrentSection;
 
-    private final Runnable mFadeOut = () -> {
-        if (!mDragging) animateStrip(0f);
-    };
+    /** True while the list has more than fits (then, and only then, the band is there). */
+    private boolean mScrollable;
 
     FastScrollCore(Host host, EtesianFastScroller.SectionProvider sectionProvider) {
         mHost = host;
@@ -108,29 +110,73 @@ final class FastScrollCore {
         // The band's width is reserved at the list's end, so rows never run under it.
         mBasePaddingEnd = mView.getPaddingEnd();
         mView.addOnLayoutChangeListener(mLayoutListener);
+        // Rows added or removed (the app's data changed) lay the list out again: the band comes or goes.
+        mView.getViewTreeObserver().addOnGlobalLayoutListener(mGlobalLayout);
         mView.post(this::reserve);
     }
 
+    private final android.view.ViewTreeObserver.OnGlobalLayoutListener mGlobalLayout = this::reserve;
     private final int mBasePaddingEnd;
     private boolean mReleased;
     private final View.OnLayoutChangeListener mLayoutListener =
             (v, l, t, r, b, ol, ot, or, ob) -> {
-                if (r - l != or - ol) v.post(this::reserve);
+                if (r - l != or - ol || b - t != ob - ot) v.post(this::reserve);
             };
 
     /** Gives the list back its own end padding. */
     void release() {
         mReleased = true;
         stop();
+        mView.removeCallbacks(mHideAfterScroll);
         mView.removeOnLayoutChangeListener(mLayoutListener);
+        mView.getViewTreeObserver().removeOnGlobalLayoutListener(mGlobalLayout);
         mView.setPaddingRelative(mView.getPaddingStart(), mView.getPaddingTop(), mBasePaddingEnd,
                 mView.getPaddingBottom());
     }
 
+    /** Whether the content is taller than the list: the rows it holds don't all fit. */
+    private boolean measureScrollable() {
+        final int count = mHost.count();
+        final int children = mHost.childCount();
+        if (count == 0 || children == 0) return false;
+        if (count > children) return true;
+        // Every row is laid out: scrollable only if the last ends below the list or the first starts above it.
+        final View last = ((android.view.ViewGroup) mView).getChildAt(children - 1);
+        return mHost.childTop(0) < mView.getPaddingTop()
+                || last.getBottom() > mView.getHeight() - mView.getPaddingBottom();
+    }
+
+    /** Whether any row has a section (a letter for the column); checks at most the first 2000 rows. */
+    private boolean hasSections() {
+        final int n = Math.min(mHost.count(), 2000);
+        for (int i = 0; i < n; i++) {
+            if (sectionFor(i) != null) return true;
+        }
+        return false;
+    }
+
+    /** The content changed (new rows, a different size): the band comes or goes. */
+    void onContentChanged() {
+        mView.post(this::reserve);
+    }
+
     private void reserve() {
         if (mReleased || mView.getWidth() == 0) return;
+        // A list that scrolls but has no sections has no letters to show: no column, no space kept for one.
+        final boolean scrollable = measureScrollable() && hasSections();
+        if (scrollable != mScrollable) {
+            mScrollable = scrollable;
+            if (!scrollable) {
+                mDragging = false;
+                mCurrentSection = null;
+                stop();
+                mStripAlpha = 0f;
+                mStripTarget = 0f;
+            }
+            mView.invalidate();
+        }
         final int want = mBasePaddingEnd
-                + (mEnabled ? Math.round(mView.getWidth() * STRIP_WIDTH_FRACTION) : 0);
+                + (mEnabled && mScrollable ? Math.round(mView.getWidth() * STRIP_WIDTH_FRACTION) : 0);
         if (mView.getPaddingEnd() != want) {
             mView.setPaddingRelative(mView.getPaddingStart(), mView.getPaddingTop(), want,
                     mView.getPaddingBottom());
@@ -160,16 +206,36 @@ final class FastScrollCore {
     }
 
     void stop() {
-        mView.removeCallbacks(mFadeOut);
         if (mStripAnimator != null) mStripAnimator.cancel();
     }
 
-    /** The list scrolled: show the band, fade it out a second later. */
+    /** How long the grey bar and its dot stay after a swipe scroll stops. */
+    private static final long SCROLL_HIDE_DELAY_MS = 1000;
+    private int mLastFirst = -1;
+    private int mLastTop;
+    private final Runnable mHideAfterScroll = () -> {
+        if (!mDragging) animateStrip(0f);
+    };
+
+    /**
+     * The list scrolled: rows may have come or gone (the band shows only while there is more than fits). A real
+     * swipe scroll (the rows moved) puts the dimmed bar with its position dot on top of the letters (N9,
+     * n9-contacts-fastscroll.png); it fades a second after the list stops.
+     */
     void onListScrolled() {
-        if (!mEnabled || mDragging) return;
-        if (mStripTarget < 1f) animateStrip(1f);
-        mView.removeCallbacks(mFadeOut);
-        mView.postDelayed(mFadeOut, FADE_DELAY_MS);
+        if (!mEnabled) return;
+        if (!mScrollable) reserve();
+        final int first = mHost.firstVisible();
+        final int top = mHost.childCount() > 0 ? mHost.childTop(0) : 0;
+        final boolean moved = mLastFirst >= 0 && (first != mLastFirst || top != mLastTop);
+        mLastFirst = first;
+        mLastTop = top;
+        if (moved && mScrollable && !mDragging) {
+            if (mStripTarget != 1f) animateStrip(1f);
+            mView.removeCallbacks(mHideAfterScroll);
+            mView.postDelayed(mHideAfterScroll, SCROLL_HIDE_DELAY_MS);
+        }
+        mView.invalidate();
     }
 
     private void animateStrip(float target) {
@@ -196,32 +262,45 @@ final class FastScrollCore {
         return isRtl() ? x <= stripWidth() : x >= mView.getWidth() - stripWidth();
     }
 
-    /** 0 when the band is hidden, 1 when fully shown. */
+    /** 0 when the band is the app's colour (at rest), 1 when fully grey (touched). */
     float stripAlpha() {
-        return mEnabled ? mStripAlpha : 0f;
+        return mEnabled && mScrollable ? mStripAlpha : 0f;
+    }
+
+    /** Whether the band is there at all (the list has more than fits). */
+    boolean isShown() {
+        return mEnabled && mScrollable;
     }
 
     boolean isDragging() {
         return mDragging;
     }
 
+    /** Whether the band is there now (on, and the list has more than fits): it then carries the section letters. */
+    boolean isBandShown() {
+        return mEnabled && mScrollable && !mReleased;
+    }
+
     /** True when the core took the event (the list should not handle it). */
     boolean onTouchEvent(MotionEvent e) {
-        if (!mEnabled) return false;
+        if (!mEnabled || !mScrollable) return false;
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                if (mStripAlpha > 0f && inStrip(e.getX())) {
+                if (inStrip(e.getX())) {
                     mDragging = true;
-                    stop();
-                    mStripAlpha = 1f;
-                    mStripTarget = 1f;
+                    mView.removeCallbacks(mHideAfterScroll);
+                    animateStrip(1f); // to grey, smoothly
                     if (mView.getParent() != null) {
                         mView.getParent().requestDisallowInterceptTouchEvent(true);
                     }
                     readSections();
+                    // A touch turns the band grey; the letters (and the jump) come once the finger moves.
+                    mIndex = -1;
+                    mCurrentSection = null;
+                    mDownY = e.getY();
                     mStepY = e.getY();
                     mDragY = e.getY();
-                    jumpTo(indexAt(e.getY()));
+                    mView.invalidate();
                     return true;
                 }
                 return false;
@@ -234,8 +313,7 @@ final class FastScrollCore {
                 mDragging = false;
                 mCurrentSection = null;
                 mIndex = -1;
-                mView.invalidate();
-                mView.postDelayed(mFadeOut, FADE_DELAY_MS);
+                animateStrip(0f); // back to the app's colour
                 return true;
             default:
                 return mDragging;
@@ -267,8 +345,16 @@ final class FastScrollCore {
     }
 
     /** N9: the band snaps section by section; any small move steps to the next or previous one. */
+    private float mDownY;
+
     private void dragTo(float y) {
         mDragY = y;
+        if (mCurrentSection == null) {
+            if (Math.abs(y - mDownY) < 4 * mDensity) return; // still a touch, not a move
+            mStepY = y;
+            jumpTo(indexAt(y));
+            return;
+        }
         if (Math.abs(y - mStepY) >= STEP_DP * mDensity) {
             final int dir = y > mStepY ? 1 : -1;
             mStepY = y;
@@ -293,18 +379,23 @@ final class FastScrollCore {
     }
 
     void draw(Canvas c) {
-        if (!mEnabled) return;
+        if (!mEnabled || !mScrollable) return;
         final int width = mView.getWidth();
         final int height = mView.getHeight();
         final float strip = stripWidth();
         final float left = isRtl() ? 0 : width - strip;
 
-        if (mStripAlpha > 0f) {
-            final int a = (int) (255 * mStripAlpha);
-            mStripPaint.setAlpha((int) (Color.alpha(STRIP_COLOR) * mStripAlpha));
-            c.drawRect(left, 0, left + strip, height, mStripPaint);
+        {
+            // At rest the band is the app's own colour (nothing drawn); grey while touched.
+            final int a = 255;
+            if (mStripAlpha > 0f) {
+                mStripPaint.setAlpha((int) (Color.alpha(STRIP_COLOR) * mStripAlpha));
+                c.drawRect(left, 0, left + strip, height, mStripPaint);
+            }
 
-            // Each visible section's label at its first row.
+            // Each visible section's label at its first row, always: the one column of letters at the right edge (user
+            // 2026-11-20: "Letters are always visible. Only thing that changes is the grey scroll bar showing up on top
+            // of the letters"); lists draw no letter of their own beside it.
             mSectionPaint.setAlpha(a);
             final int first = mHost.firstVisible();
             final float half = (mSectionPaint.ascent() + mSectionPaint.descent()) / 2;
@@ -317,8 +408,9 @@ final class FastScrollCore {
                 c.drawText(bandLabel(s), left + strip / 2, y - half, mSectionPaint);
             }
 
-            // The scroll position dot, hidden while the finger is on the band.
-            if (!mDragging) {
+            // The scroll position dot, only on the dimmed bar (a swipe scroll or a finger on it), hidden while the
+            // finger moves sections; at rest the column holds the letters alone.
+            if (mCurrentSection == null && mStripAlpha > 0f) {
                 final int count = mHost.count();
                 final int visible = Math.max(1, mHost.childCount());
                 final float f = count <= visible ? 0f
@@ -326,12 +418,13 @@ final class FastScrollCore {
                 final float d = DOT_DP * mDensity;
                 final float top = d + f * (height - 3 * d);
                 final float x = left + (strip - d) / 2;
+                final int da = (int) (255 * mStripAlpha);
                 mDotPaint.setColor(DOT_RIM_COLOR);
-                mDotPaint.setAlpha(a);
+                mDotPaint.setAlpha(da);
                 c.drawRoundRect(x, top, x + d, top + d, 2 * mDensity, 2 * mDensity, mDotPaint);
                 final float r = 1.5f * mDensity;
                 mDotPaint.setColor(DOT_COLOR);
-                mDotPaint.setAlpha(a);
+                mDotPaint.setAlpha(da);
                 c.drawRoundRect(x + r, top + r, x + d - r, top + d - r, mDensity, mDensity, mDotPaint);
             }
         }

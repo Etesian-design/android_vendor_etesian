@@ -7,7 +7,9 @@ P=/data/data/$LAUNCHER/shared_prefs/com.bompotis.etesian.launcher_preferences.xm
 pref() { sh_ cat $P | grep -o "name=\"$1\">[^<]*" | cut -d'>' -f2; }
 frame() { raw_sh dumpsys window windows | grep -A40 "Window{[^ ]* u0 $1}" | grep -o "frame=\[[0-9-]*,[0-9-]*\]\[[0-9-]*,[0-9-]*\]" | head -1 | grep -o '[0-9-]\+' | tr '\n' ' '; }
 has() { sh_ dumpsys window windows | grep -q "u0 $1}"; }
-buzzes() { raw_sh dumpsys vibrator_manager | grep -c "$LAUNCHER"; }
+# The newest of the launcher's vibrations (its time). Not a count: the history keeps only the latest entries, so once
+# it is full (after earlier tests) a new vibration drops an old one and a count stays the same.
+buzzes() { raw_sh dumpsys vibrator_manager | grep "$LAUNCHER" | grep -o '^ *[0-9-]* [0-9:.]*' | sort | tail -n 1 | tr -d ' '; }
 grey() { command adb exec-out screencap -p | python3 -c "import sys,io;from PIL import Image;im=Image.open(io.BytesIO(sys.stdin.buffer.read())).convert('L');print(im.getpixel(($1,$2)))"; }
 D=$(raw_sh wm density | grep -o '[0-9]*' | tail -1); px() { echo $(( $1 * D / 160 )); }
 RW=$(raw_sh wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | cut -dx -f1); RH=$(raw_sh wm size | grep -o 'x[0-9]*' | tail -1 | tr -d x)
@@ -25,13 +27,15 @@ check "handle on the right edge" '[ -n "$R" ] && [ "$R" -ge $((RW - 2)) ]'
 check "handle window thick (over 30 dp)" '[ -n "$L" ] && [ $((R-L)) -ge $(px 30) ]'
 HY=$(( (T+B)/2 )); HX=$((RW - $(px 26)))
 # Drawn 20-32 dp in from the edge: its middle is outside the controller's 60 px grip strip.
+# The strip is the OnePlus 7 Pro's (guacamoleg) touch controller's; other phones have none.
+[ "$(sh_ getprop ro.product.device)" = guacamoleg ] && \
 check "handle's middle ($((RW-HX)) px in) outside the 60 px grip strip" '[ $((RW - HX)) -gt 60 ]'
 light=$(grey $HX $HY); setp dark; dark=$(grey $HX $HY)
 check "theme: light handle light ($light), dark handle dark ($dark)" '[ "$light" -gt 180 ] && [ "$dark" -lt 90 ]'
 setp light
 b0=$(buzzes); raw_sh input tap $HX $HY; sleep 1.5
 check "tap on the handle: Breeze menu" 'has EtesianBreezeMenu'
-check "tap felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+check "tap felt (vibration)" '[ "$(buzzes)" != "$b0" ]'
 read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
 check "menu against the right side (no gap)" '[ -n "$MR" ] && [ "$MR" -ge $((RW - 1)) ]'
 check "menu's top level with the handle ($MT vs $T)" '[ -n "$MT" ] && [ $((MT - T)) -le 2 ] && [ $((T - MT)) -le 2 ]'
@@ -62,18 +66,18 @@ raw_sh input tap $HX $HY; sleep 1.5
 check "Breeze's tap opens it again" 'has EtesianBreezeMenu'
 # Open, the menu covers Breeze (flush with its side, level with it): Breeze can't be reached until it closes.
 read ML MT MR MB <<< "$(frame EtesianBreezeMenu)"
-check "the open menu covers Breeze" '[ $HX -ge $ML ] && [ $HY -ge $MT ] && [ $HY -le $MB ]'
+check "the open menu covers Breeze (handle $HX,$HY; menu $ML $MT $MR $MB)" '[ $HX -ge $ML ] && [ $HY -ge $MT ] && [ $HY -le $MB ]'
 raw_sh input tap $PX $PY; sleep 1.5
 check "closed again" '! has EtesianBreezeMenu'
 home
 b0=$(buzzes); raw_sh input swipe $HX $HY $HX $((HY - $(px 80))) 120; sleep 1.5
-check "flick felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+check "flick felt (vibration)" '[ "$(buzzes)" != "$b0" ]'
 home
 b0=$(buzzes)
 raw_sh "input motionevent DOWN $HX $HY; sleep 1.0; input motionevent MOVE $((RW/2)) $((RH/2)); sleep 0.1"
 command adb exec-out screencap -p > "$SHOTS/breeze_morph_early.png"
 check "long press: picked up (drag layer)" 'has EtesianBreezeDrag'
-check "long press felt (vibration)" '[ $(buzzes) -gt $b0 ]'
+check "long press felt (vibration)" '[ "$(buzzes)" != "$b0" ]'
 sleep 0.6; command adb exec-out screencap -p > "$SHOTS/breeze_morph_done.png"
 raw_sh "input motionevent UP $((RW/2)) $((RH/2))"; sleep 1.5
 check "the button turns up slowly (still changing after the first moment)" '/home/memphisx/android/.venv-tools/bin/python -c "

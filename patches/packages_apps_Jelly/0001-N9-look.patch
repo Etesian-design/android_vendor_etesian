@@ -33,7 +33,7 @@ index 0b10e7e..660aad6 100644
      }
  }
 diff --git a/app/src/main/java/org/lineageos/jelly/MainActivity.kt b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
-index ac52c8e..ea26c22 100644
+index ac52c8e..8c9daab 100644
 --- a/app/src/main/java/org/lineageos/jelly/MainActivity.kt
 +++ b/app/src/main/java/org/lineageos/jelly/MainActivity.kt
 @@ -30,6 +30,7 @@ import android.os.Handler
@@ -70,7 +70,21 @@ index ac52c8e..ea26c22 100644
      // Views
      private val appBarLayout by lazy { findViewById<AppBarLayout>(R.id.appBarLayout) }
      private val constraintLayout by lazy { findViewById<ConstraintLayout>(R.id.constraintLayout) }
-@@ -351,6 +357,14 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -253,6 +259,13 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+ 
+         // Make sure prefs are set before loading them
+         PreferenceManager.setDefaultValues(this, R.xml.settings, false)
++        // Etesian: once, move the address bar to the bottom (rule 1) on phones that stored the old "off"
++        // default; after that the user's choice in Settings stands.
++        PreferenceManager.getDefaultSharedPreferences(this).let { p ->
++            if (!p.getBoolean("etesian_reach_v1", false)) {
++                p.edit().putBoolean("key_reach_mode", true).putBoolean("etesian_reach_v1", true).apply()
++            }
++        }
+         val preferenceManager = PreferenceManager.getDefaultSharedPreferences(this)
+         preferenceManager.registerOnSharedPreferenceChangeListener(this)
+ 
+@@ -351,6 +364,14 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
              menuDialog.showAsDropdownMenu(urlBarLayout, sharedPreferencesExt.reachModeEnabled)
          }
  
@@ -85,7 +99,7 @@ index ac52c8e..ea26c22 100644
          CookieManager.getInstance()
              .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
  
-@@ -432,6 +446,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -432,6 +453,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
      override fun onResume() {
          super.onResume()
          if (backgroundShortcutId == null) webView.onResume()
@@ -93,7 +107,7 @@ index ac52c8e..ea26c22 100644
          CookieManager.getInstance()
              .setAcceptCookie(!incognito && sharedPreferencesExt.cookiesEnabled)
          if (sharedPreferencesExt.lookLockEnabled) {
-@@ -477,14 +492,177 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -477,14 +499,177 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
          if (urlBarLayout.url == null) urlBarLayout.url = webView.url
          webView.parent?.let { ViewGroup::class.cast(it).removeView(webView) }
          constraintLayout.addView(webView)
@@ -210,8 +224,8 @@ index ac52c8e..ea26c22 100644
 +     */
 +    private fun setupBarsAutoHide() {
 +        webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
++            // At the bottom too (reach mode, Etesian's default): the page then grows downwards, its text stays put.
 +            if (isFullscreenPwa || customView != null ||
-+                sharedPreferencesExt.reachModeEnabled ||
 +                urlBarLayout.currentMode != UrlBarLayout.UrlBarMode.URL ||
 +                urlBarLayout.hasFocus()
 +            ) {
@@ -273,7 +287,7 @@ index ac52c8e..ea26c22 100644
      private fun registerShortcuts() {
          shortcutManager.dynamicShortcuts = listOf(
              ShortcutInfo.Builder(this, "new_incognito_tab_shortcut")
-@@ -501,6 +679,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -501,6 +686,7 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
      }
  
      private fun showSearch() {
@@ -281,7 +295,7 @@ index ac52c8e..ea26c22 100644
          urlBarLayout.currentMode = UrlBarLayout.UrlBarMode.SEARCH
      }
  
-@@ -670,6 +849,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -670,6 +856,9 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
              urlIcon = it.config?.let { config ->
                  it.copy(config, true)
              }
@@ -291,7 +305,7 @@ index ac52c8e..ea26c22 100644
              updateTaskDescription()
              if (!it.isRecycled) {
                  it.recycle()
-@@ -905,8 +1087,13 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
+@@ -905,8 +1094,13 @@ class MainActivity : WebViewExtActivity(), SharedPreferences.OnSharedPreferenceC
  
      companion object {
          private val TAG = MainActivity::class.java.simpleName
@@ -307,10 +321,10 @@ index ac52c8e..ea26c22 100644
  }
 diff --git a/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt b/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt
 new file mode 100644
-index 0000000..e2e10dc
+index 0000000..03fc06d
 --- /dev/null
 +++ b/app/src/main/java/org/lineageos/jelly/ui/StartPageView.kt
-@@ -0,0 +1,291 @@
+@@ -0,0 +1,298 @@
 +/*
 + * SPDX-FileCopyrightText: 2026 The LineageOS Project
 + * SPDX-License-Identifier: Apache-2.0
@@ -338,7 +352,6 @@ index 0000000..e2e10dc
 +import android.view.inputmethod.EditorInfo
 +import android.widget.EditText
 +import android.widget.FrameLayout
-+import android.widget.GridLayout
 +import android.widget.ImageView
 +import android.widget.LinearLayout
 +import android.widget.ScrollView
@@ -387,8 +400,19 @@ index 0000000..e2e10dc
 +            } else false
 +        }
 +    }
-+    private val topSitesTitle = sectionTitle(R.string.n9_start_top_sites)
-+    private val grid = GridLayout(context).apply { columnCount = 2 }
++    // N9: "Top sites", small and bold at the right, over a list of the sites' names in huge type.
++    private val topSitesTitle = TextView(context).apply {
++        setText(R.string.n9_start_top_sites)
++        textSize = 13f
++        typeface = Typeface.DEFAULT_BOLD
++        setTextColor(textColor)
++        gravity = Gravity.END
++        setPadding(0, dp(4), dp(4), dp(4))
++    }
++    private val grid = LinearLayout(context).apply {
++        orientation = LinearLayout.VERTICAL
++        setBackgroundColor(Color.WHITE)
++    }
 +    private val bookmarksTitle = sectionTitle(R.string.n9_start_bookmarks)
 +    private val bookmarksList = LinearLayout(context).apply {
 +        orientation = LinearLayout.VERTICAL
@@ -404,7 +428,10 @@ index 0000000..e2e10dc
 +        // The browser's own address bar is already above the page: no second field here.
 +        content.addView(topSitesTitle)
 +        content.addView(grid, LinearLayout.LayoutParams(
-+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
++            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
++                // Edge to edge, as on the N9.
++                marginStart = -dp(16); marginEnd = -dp(16)
++            })
 +        content.addView(bookmarksTitle)
 +        content.addView(bookmarksList, LinearLayout.LayoutParams(
 +            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
@@ -440,12 +467,11 @@ index 0000000..e2e10dc
 +
 +        grid.removeAllViews()
 +        sites.take(MAX_TOP_SITES).forEachIndexed { i, (title, url) ->
-+            grid.addView(siteCard(title, url), GridLayout.LayoutParams(
-+                GridLayout.spec(i / 2), GridLayout.spec(i % 2, 1f)
-+            ).apply {
-+                width = 0
-+                setMargins(if (i % 2 == 0) 0 else dp(6), dp(6), if (i % 2 == 0) dp(6) else 0, dp(6))
-+            })
++            if (i > 0) grid.addView(View(context).apply {
++                setBackgroundColor(context.getColor(R.color.n9_separator))
++            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1))
++            grid.addView(siteRow(title, url), LinearLayout.LayoutParams(
++                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
 +        }
 +        topSitesTitle.visibility = if (grid.childCount > 0) View.VISIBLE else View.GONE
 +
@@ -461,29 +487,24 @@ index 0000000..e2e10dc
 +        bookmarksList.visibility = if (hasBookmarks) View.VISIBLE else View.GONE
 +    }
 +
-+    private fun siteCard(title: String, url: String): View {
-+        val card = LinearLayout(context).apply {
-+            orientation = LinearLayout.VERTICAL
-+            setOnClickListener { onOpenUrl?.invoke(url) }
++    /** One top site as on the N9: its name in huge type, the first word bold, the rest light. */
++    private fun siteRow(title: String, url: String): View = TextView(context).apply {
++        val name = title.ifBlank { Uri.parse(url).host?.removePrefix("www.") ?: url }.trim()
++        val cut = name.indexOf(' ').let { if (it < 0) name.length else it }
++        text = android.text.SpannableString(name).apply {
++            setSpan(android.text.style.StyleSpan(Typeface.BOLD), 0, cut, 0)
++            if (cut < name.length) setSpan(android.text.style.TypefaceSpan(
++                Typeface.create("sans-serif-light", Typeface.NORMAL)), cut, name.length, 0)
 +        }
-+        val thumb = FrameLayout(context).apply {
-+            background = rounded(cardColor, dp(8).toFloat(), stroke = true)
-+            clipToOutline = true
-+        }
-+        thumb.addView(iconView(url, dp(48)), FrameLayout.LayoutParams(
-+            dp(48), dp(48), Gravity.CENTER))
-+        card.addView(thumb, LinearLayout.LayoutParams(
-+            LinearLayout.LayoutParams.MATCH_PARENT, dp(110)))
-+        card.addView(TextView(context).apply {
-+            text = title.ifBlank { Uri.parse(url).host ?: url }
-+            textSize = 15f
-+            setTextColor(textColor)
-+            setSingleLine()
-+            ellipsize = TextUtils.TruncateAt.END
-+            gravity = Gravity.CENTER_HORIZONTAL
-+            setPadding(0, dp(6), 0, 0)
-+        })
-+        return card
++        textSize = 34f
++        setTextColor(textColor)
++        // Type follows the user's size: two lines at most, never clipped.
++        maxLines = 2
++        ellipsize = TextUtils.TruncateAt.END
++        setLineSpacing(0f, 0.95f)
++        setPadding(dp(12), dp(8), dp(12), dp(8))
++        contentDescription = name
++        setOnClickListener { onOpenUrl?.invoke(url) }
 +    }
 +
 +    private fun bookmarkRow(fav: Favorite): View = LinearLayout(context).apply {
@@ -660,6 +681,19 @@ index 9cc8982..ec30b35 100644
      var onLoadUrlCallback: ((url: String) -> Unit)? = null
      var onStartSearchCallback: ((query: String) -> Unit)? = null
      var onSearchPositionChangeCallback: ((next: Boolean) -> Unit)? = null
+diff --git a/app/src/main/java/org/lineageos/jelly/utils/SharedPreferencesExt.kt b/app/src/main/java/org/lineageos/jelly/utils/SharedPreferencesExt.kt
+index 7dd6334..d731983 100644
+--- a/app/src/main/java/org/lineageos/jelly/utils/SharedPreferencesExt.kt
++++ b/app/src/main/java/org/lineageos/jelly/utils/SharedPreferencesExt.kt
+@@ -122,7 +122,7 @@ class SharedPreferencesExt(context: Context) {
+         private const val DO_NOT_TRACK_ENABLED_DEFAULT = false
+ 
+         private const val REACH_MODE_ENABLED_KEY = "key_reach_mode"
+-        private const val REACH_MODE_ENABLED_DEFAULT = false
++        private const val REACH_MODE_ENABLED_DEFAULT = true // Etesian: the address bar at the bottom, within reach (rule 1)
+ 
+         private const val WEB_DEBUGGING_ENABLED_KEY = "key_web_debugging"
+         private const val WEB_DEBUGGING_ENABLED_DEFAULT = false
 diff --git a/app/src/main/res/drawable-xxhdpi/n9_url_field.9.png b/app/src/main/res/drawable-xxhdpi/n9_url_field.9.png
 new file mode 100644
 index 0000000000000000000000000000000000000000..c4b12b7e00e94dc01cdcaa35f558257de2ad616b
@@ -820,6 +854,17 @@ Df6e9l
 literal 0
 HcmV?d00001
 
+diff --git a/app/src/main/res/drawable/ic_menu.xml b/app/src/main/res/drawable/ic_menu.xml
+index 8e44047..7adcdca 100644
+--- a/app/src/main/res/drawable/ic_menu.xml
++++ b/app/src/main/res/drawable/ic_menu.xml
+@@ -11,5 +11,5 @@
+     android:viewportHeight="24.0">
+     <path
+         android:fillColor="@android:color/white"
+-        android:pathData="M12,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,10c-1.1,0 -2,0.9 -2,2s0.9,2 2,2 2,-0.9 2,-2 -0.9,-2 -2,-2zM12,16c-1.1,0 -2,0.9 -2,2s0.9,2 2,2 2,-0.9 2,-2 -0.9,-2 -2,-2z" />
++        android:pathData="M4,5.5h16a1.5,1.5 0 0 1 0,3h-16a1.5,1.5 0 0 1 0,-3zM4,10.5h16a1.5,1.5 0 0 1 0,3h-16a1.5,1.5 0 0 1 0,-3zM4,15.5h16a1.5,1.5 0 0 1 0,3h-16a1.5,1.5 0 0 1 0,-3z" />
+ </vector>
 diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
 index c570449..97ada47 100644
 --- a/app/src/main/res/layout/activity_main.xml
@@ -1130,3 +1175,16 @@ index d9deed5..86ee879 100644
          <item name="drawableTint">?attr/colorOnSurface</item>
      </style>
  
+diff --git a/app/src/main/res/xml/settings.xml b/app/src/main/res/xml/settings.xml
+index 65373d4..8b8b08a 100644
+--- a/app/src/main/res/xml/settings.xml
++++ b/app/src/main/res/xml/settings.xml
+@@ -36,7 +36,7 @@
+         app:title="@string/pref_screenshot_snap_title" />
+ 
+     <SwitchPreference
+-        app:defaultValue="0"
++        app:defaultValue="true"
+         app:iconSpaceReserved="false"
+         app:key="key_reach_mode"
+         app:summary="@string/pref_reach_mode_summary"

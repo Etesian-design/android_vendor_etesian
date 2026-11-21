@@ -1006,6 +1006,50 @@ index 89e3a49d8..e225d8165 100644
          }
  
          if (key.hasPopupHint() && key.getMoreKeys() != null) {
+diff --git a/java/src/com/android/inputmethod/keyboard/PointerTracker.java b/java/src/com/android/inputmethod/keyboard/PointerTracker.java
+index 13463f164..1d2f9cf91 100644
+--- a/java/src/com/android/inputmethod/keyboard/PointerTracker.java
++++ b/java/src/com/android/inputmethod/keyboard/PointerTracker.java
+@@ -151,6 +151,10 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
+     private static final int MULTIPLIER_FOR_LONG_PRESS_TIMEOUT_IN_SLIDING_INPUT = 3;
+     // true if this pointer is in the dragging finger mode.
+     boolean mIsInDraggingFinger;
++    // N9: this finger made the press click, so it makes the release click when it lifts, however long it was
++    // held (a long press, the accents panel, a repeating backspace, a slide). Not on a key's release event,
++    // which the keyboard skips whenever the press did more than type one character.
++    private boolean mEtesianClickedIn;
+     // true if this pointer is sliding from a modifier key and in the sliding key input mode,
+     // so that further modifier keys should be ignored.
+     boolean mIsInSlidingKeyInput;
+@@ -276,6 +280,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
+         }
+         if (key.isEnabled()) {
+             sListener.onPressKey(key.getCode(), repeatCount, getActivePointerTrackerCount() == 1);
++            mEtesianClickedIn = true;
+             final boolean keyboardLayoutHasBeenChanged = mKeyboardLayoutHasBeenChanged;
+             mKeyboardLayoutHasBeenChanged = false;
+             sTimerProxy.startTypingStateTimer(key);
+@@ -1016,6 +1021,12 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
+         }
+         onUpEventInternal(x, y, eventTime);
+         sPointerTrackerQueue.remove(this);
++        // N9: the finger lifted: the release click, once, for the press click it made.
++        if (mEtesianClickedIn) {
++            mEtesianClickedIn = false;
++            com.android.inputmethod.latin.AudioAndHapticFeedbackManager.getInstance()
++                    .performReleaseAudioFeedback();
++        }
+     }
+ 
+     // Let this pointer tracker know that one of newer-than-this pointer trackers got an up event.
+@@ -1170,6 +1181,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
+     }
+ 
+     private void onCancelEventInternal() {
++        mEtesianClickedIn = false; // the touch was taken away (no finger lifted on the keyboard): no release click
+         sTimerProxy.cancelKeyTimersOf(this);
+         setReleasedKeyGraphics(mCurrentKey, true /* withAnimation */);
+         resetKeySelectionByDraggingFinger();
 diff --git a/java/src/com/android/inputmethod/keyboard/emoji/EmojiPalettesView.java b/java/src/com/android/inputmethod/keyboard/emoji/EmojiPalettesView.java
 index fae442c18..f96fdc865 100644
 --- a/java/src/com/android/inputmethod/keyboard/emoji/EmojiPalettesView.java
@@ -1021,13 +1065,17 @@ index fae442c18..f96fdc865 100644
          setMeasuredDimension(width, height);
      }
 diff --git a/java/src/com/android/inputmethod/latin/AudioAndHapticFeedbackManager.java b/java/src/com/android/inputmethod/latin/AudioAndHapticFeedbackManager.java
-index 5e6e4ab25..eee294221 100644
+index 5e6e4ab25..3c5d6ae63 100644
 --- a/java/src/com/android/inputmethod/latin/AudioAndHapticFeedbackManager.java
 +++ b/java/src/com/android/inputmethod/latin/AudioAndHapticFeedbackManager.java
-@@ -108,6 +108,19 @@ public final class AudioAndHapticFeedbackManager {
+@@ -106,6 +106,22 @@ public final class AudioAndHapticFeedbackManager {
+             break;
+         }
          mAudioManager.playSoundEffect(sound, mSettingsValues.mKeypressSoundVolume);
-     }
- 
++        // Etesian: one word per click, never which key (for the device test of the two clicks).
++        android.util.Log.v("EtesianKeyClick", "in");
++    }
++
 +    /**
 +     * N9: the second half of a key's click, played when the key is released. It is the system's
 +     * FX_KEYPRESS_INVALID, which Etesian maps to the release click (vkb_release, or the N9's static_release
@@ -1039,13 +1087,12 @@ index 5e6e4ab25..eee294221 100644
 +        }
 +        mAudioManager.playSoundEffect(AudioManager.FX_KEYPRESS_INVALID,
 +                mSettingsValues.mKeypressSoundVolume);
-+    }
-+
++        android.util.Log.v("EtesianKeyClick", "out");
+     }
+ 
      public void performHapticFeedback(final View viewToPerformHapticFeedbackOn) {
-         if (!mSettingsValues.mVibrateOn) {
-             return;
 diff --git a/java/src/com/android/inputmethod/latin/LatinIME.java b/java/src/com/android/inputmethod/latin/LatinIME.java
-index dd13879ed..b4085a812 100644
+index dd13879ed..0f002718b 100644
 --- a/java/src/com/android/inputmethod/latin/LatinIME.java
 +++ b/java/src/com/android/inputmethod/latin/LatinIME.java
 @@ -63,6 +63,7 @@ import android.view.inputmethod.CompletionInfo;
@@ -1150,8 +1197,8 @@ index dd13879ed..b4085a812 100644
      public void onReleaseKey(final int primaryCode, final boolean withSliding) {
          mKeyboardSwitcher.onReleaseKey(primaryCode, withSliding, getCurrentAutoCapsState(),
                  getCurrentRecapitalizeState());
-+        // N9: a key clicks in when pressed and out when released (holding it plays only the first).
-+        AudioAndHapticFeedbackManager.getInstance().performReleaseAudioFeedback();
++        // N9: the release click is played by PointerTracker when the finger lifts (not here: this is skipped
++        // after a long press, a repeating key or a slide, and the user heard no release then).
      }
  
      private HardwareEventDecoder getHardwareKeyEventDecoder(final int deviceId) {

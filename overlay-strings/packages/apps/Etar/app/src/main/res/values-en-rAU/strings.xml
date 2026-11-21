@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Etesian: the menu says what it does (LineageOS's translations, vendor/crowdin, say "Go to…" for every English). -->
+<resources>
+    <string name="goto_date">Go to date</string>
+</resources>

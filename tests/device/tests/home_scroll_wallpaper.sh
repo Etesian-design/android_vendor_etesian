@@ -21,7 +21,7 @@ im.save('$f')"
 sh_ mkdir -p /sdcard/Pictures; adb push "$f" /sdcard/Pictures/hdtest-pano.png >/dev/null; rm -f "$f"
 sh_ am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/hdtest-pano.png >/dev/null; sleep 2
 sh_ am force-stop $P; sleep 1; home
-sh_ am start -n $P/.SettingsActivity --es section wallpapers >/dev/null; sleep 2.5
+sh_ am start -n $P/.SettingsActivity --activity-clear-task --es section wallpapers >/dev/null; sleep 2.5
 tap_text "Home screen"; sleep 1.5; tap_text "One wallpaper, scrolling with the views"; sleep 3
 check "choosing it opens the picture picker" 'top_activity | grep -q documentsui'
 tap_text "hdtest-pano.png"; sleep 5

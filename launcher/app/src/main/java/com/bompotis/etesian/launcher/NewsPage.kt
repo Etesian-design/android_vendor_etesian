@@ -29,16 +29,75 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
     private var observer: ContentObserver? = null
     private val io = Executors.newSingleThreadExecutor()
 
-    private val searchBar = TextView(context).apply {
-        text = "Search your phone and the web"
-        setTextColor(N9.TEXT_SECONDARY)
+    // Searching from this page happens here (2026-11-20, user: "when tapping the search bar, the actual glance app
+    // opens instead of getting the keyboard"): the stories make way for Glance's results, each source as it answers.
+    private val searchBar = android.widget.EditText(context).apply {
+        hint = "Search your phone and the web"
+        setHintTextColor(N9.TEXT_SECONDARY)
+        setTextColor(N9.TEXT)
         textSize = 17f
         typeface = N9.FONT
         gravity = Gravity.CENTER_VERTICAL
+        isSingleLine = true
+        imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
         setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
         background = FieldDrawable(intArrayOf(0xFF262626.toInt()), 0xFF393839.toInt(), resources.displayMetrics.density)
         contentDescription = "news:search"
-        setOnClickListener { Glance.launch(context, search = true) }
+        addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) = search(s?.toString().orEmpty().trim())
+        })
+        setOnEditorActionListener { _, _, _ -> hideKeyboard(); true }
+    }
+    private var query = ""
+    private var results: List<Glance.Result> = emptyList()
+    private var searchSeq = 0
+    private val searchIo = Executors.newCachedThreadPool()
+
+    /** Each of Glance's sources on its own, all at once; sections keep a fixed order, so nothing jumps. */
+    private fun search(q: String) {
+        val seq = ++searchSeq
+        query = q
+        results = emptyList()
+        refreshRows()
+        if (q.isEmpty()) return
+        val ctx = context.applicationContext
+        val kinds = listOf("APP") + Glance.KINDS
+        val got = HashMap<String, List<Glance.Result>>()
+        postDelayed({
+            if (seq != searchSeq) return@postDelayed
+            kinds.forEach { kind ->
+                searchIo.execute {
+                    if (seq != searchSeq) return@execute
+                    val answer = Glance.search(ctx, q, kinds = listOf(kind), apps = true)
+                    post {
+                        if (seq != searchSeq) return@post
+                        if (answer.all) { if (got.isNotEmpty()) return@post; kinds.forEach { got[it] = emptyList() } }
+                        got[kind] = answer.results
+                        results = kinds.flatMap { got[it].orEmpty() }
+                        refreshRows()
+                    }
+                }
+            }
+        }, 120)
+    }
+
+    private fun refreshRows() {
+        @SuppressLint("NotifyDataSetChanged")
+        adapter.notifyDataSetChanged()
+    }
+
+    private fun hideKeyboard() {
+        context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+            ?.hideSoftInputFromWindow(searchBar.windowToken, 0)
+    }
+
+    /** Leaves the search: the stories again, the keyboard down. */
+    private fun closeSearch() {
+        hideKeyboard()
+        searchBar.setText("")
+        searchBar.clearFocus()
     }
 
     init {
@@ -92,10 +151,20 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         list.setPadding(left, top + dp(60f), right, bottom + dp(16f))
     }
 
-    override fun exitModes() = false
+    override fun exitModes(): Boolean {
+        if (query.isEmpty() && !searchBar.hasFocus()) return false
+        closeSearch()
+        return true
+    }
 
     /** Rows: a heading where the section changes, then the stories. */
-    private val rows: List<Any> get() = buildList {
+    private val rows: List<Any> get() = if (query.isNotEmpty()) buildList {
+        var section = ""
+        results.forEach { r ->
+            if (r.section != section) { section = r.section; add(section.uppercase()) }
+            add(r)
+        }
+    } else buildList {
         if (stories.isEmpty()) add("Getting the news…")
         var section = ""
         stories.forEach { s ->
@@ -107,7 +176,8 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         }
     }
 
-    private class Holder(val root: LinearLayout, val picture: Picture, val title: TextView, val meta: TextView) : RecyclerView.ViewHolder(root)
+    private class Holder(val root: LinearLayout, val picture: Picture, val icon: ImageView, val title: TextView, val meta: TextView) :
+        RecyclerView.ViewHolder(root)
 
     private inner class Adapter : RecyclerView.Adapter<Holder>() {
         override fun getItemCount() = rows.size
@@ -116,14 +186,22 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
             val title = TextView(context).apply { setTextColor(N9.TEXT); typeface = N9.FONT_BOLD; maxLines = 4; ellipsize = TextUtils.TruncateAt.END }
             val meta = TextView(context).apply { setTextColor(N9.TEXT_SECONDARY); textSize = 13f; typeface = N9.FONT }
             val picture = Picture(context)
+            val icon = ImageView(context)
             val root = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(picture, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-                addView(title); addView(meta)
+                addView(icon, LinearLayout.LayoutParams(dp(40f), dp(40f)))
+                addView(LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; addView(title); addView(meta) },
+                    LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
                 layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             }
-            val h = Holder(root, picture, title, meta)
-            root.setOnClickListener { (rows.getOrNull(h.bindingAdapterPosition) as? Glance.Story)?.let { Glance.open(context, it.open) } }
+            val h = Holder(root, picture, icon, title, meta)
+            root.setOnClickListener {
+                when (val r = rows.getOrNull(h.bindingAdapterPosition)) {
+                    is Glance.Story -> Glance.open(context, r.open)
+                    is Glance.Result -> if (Glance.open(context, r.open)) closeSearch()
+                }
+            }
             root.setOnLongClickListener { v ->
                 val s = rows.getOrNull(h.bindingAdapterPosition) as? Glance.Story ?: return@setOnLongClickListener false
                 N9Sounds.longPress(v)
@@ -138,8 +216,31 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         }
 
         override fun onBindViewHolder(h: Holder, position: Int) {
-            when (val r = rows[position]) {
+            val r = rows[position]
+            // A search result is one row: the icon beside its title and subtitle; stories and headings stack.
+            h.root.orientation = if (r is Glance.Result) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+            h.icon.visibility = if (r is Glance.Result) View.VISIBLE else View.GONE
+            when (r) {
+                is Glance.Result -> {
+                    h.picture.visibility = View.GONE
+                    h.icon.setImageDrawable(r.pkg.takeIf { it.isNotEmpty() }
+                        ?.let { runCatching { context.packageManager.getApplicationIcon(it) }.getOrNull() }
+                        ?: context.getDrawable(android.R.drawable.ic_menu_search))
+                    (h.icon.layoutParams as LinearLayout.LayoutParams).marginEnd = dp(14f)
+                    h.title.text = r.title
+                    h.title.setTextColor(N9.TEXT)
+                    h.title.textSize = 16f
+                    h.title.setPadding(0, 0, 0, 0)
+                    h.meta.text = r.subtitle
+                    h.meta.visibility = if (r.subtitle.isEmpty()) View.GONE else View.VISIBLE
+                    h.meta.setPadding(0, dp(2f), 0, 0)
+                    h.root.gravity = Gravity.CENTER_VERTICAL
+                    h.root.setPadding(dp(18f), dp(8f), dp(18f), dp(8f))
+                    h.root.isClickable = true
+                    h.root.contentDescription = "glance:${r.kind.lowercase()}:${r.title}"
+                }
                 is String -> {
+                    h.root.gravity = Gravity.NO_GRAVITY
                     h.title.text = r
                     h.title.setTextColor(N9.ACCENT)
                     h.title.textSize = 13f
@@ -151,6 +252,7 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
                     h.root.contentDescription = null
                 }
                 is Glance.Story -> {
+                    h.root.gravity = Gravity.NO_GRAVITY
                     val first = position == 1
                     // As in Google News: the picture edge to edge, the headline and where it's from under it.
                     h.picture.visibility = View.VISIBLE

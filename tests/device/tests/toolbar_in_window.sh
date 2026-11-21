@@ -23,9 +23,9 @@ check "Messaging: its bar is in its own window (New message at y=$(new_msg))" '[
 back_xy() { dump | tr '>' '\n' | grep 'content-desc="Back"' | head -1 | grep -o 'bounds="[^"]*"' | grep -o '[0-9]*' | tr '\n' ' '; }
 sh_ input tap 540 400; sleep 3
 before=$(top_activity)
-set -- $(back_xy)
+set -- $(back_xy); bk=$1  # named: inside check, $1.. are check's own
 if [ -n "$1" ]; then sh_ input tap $((($1 + $3) / 2)) $((($2 + $4) / 2)); sleep 2; fi
-check "Messaging: Back in the bar goes back ($before -> $(top_activity))" '[ -n "$1" ] && [ "$(top_activity)" != "$before" ]'
+check "Messaging: Back in the bar goes back ($before -> $(top_activity))" '[ -n "$bk" ] && [ "$(top_activity)" != "$before" ]'
 # 2026-11-04 (user): in landscape the end buttons sat ~200 px in from the edges.
 sh_ settings put system accelerometer_rotation 0; sh_ settings put system user_rotation 1; sleep 2
 sh_ am start -a android.settings.WIFI_SETTINGS >/dev/null; sleep 3

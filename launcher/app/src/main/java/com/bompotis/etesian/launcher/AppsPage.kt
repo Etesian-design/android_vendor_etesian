@@ -78,7 +78,8 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
     /** Glance's results for the query below the applications (headings and rows), when it is installed. */
     private var everything: List<Any> = emptyList()
     private var everythingSeq = 0
-    private val glanceIo = java.util.concurrent.Executors.newSingleThreadExecutor()
+    // Several at once: a search still waiting on the web never queues the next letter's.
+    private val glanceIo = java.util.concurrent.Executors.newCachedThreadPool()
     private class GlanceHeading(val title: String)
 
     /** The adapter's rows: [shown], with the open folder's panel after the folder's row. */
@@ -449,20 +450,34 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         val ctx = context.applicationContext
         postDelayed({
             if (seq != everythingSeq) return@postDelayed
-            glanceIo.execute {
-                if (seq != everythingSeq) return@execute
-                val results = Glance.search(ctx, q)
-                post {
-                    if (seq != everythingSeq || !searching) return@post
-                    everything = buildList {
-                        var section = ""
-                        results.forEach { r ->
-                            if (r.section != section) { section = r.section; add(GlanceHeading(section)) }
-                            add(r)
-                        }
+            // Each of Glance's sources on its own, all at once, each section showing as it answers: a busy phone's
+            // messages or a slow connection never hold up the rest. Sections keep a fixed order, so nothing jumps.
+            val got = HashMap<String, List<Glance.Result>>()
+            val t0 = android.os.SystemClock.uptimeMillis()
+            fun show() {
+                everything = buildList {
+                    var section = ""
+                    Glance.KINDS.flatMap { got[it].orEmpty() }.forEach { r ->
+                        if (r.section != section) { section = r.section; add(GlanceHeading(section)) }
+                        add(r)
                     }
-                    @SuppressLint("NotifyDataSetChanged")
-                    adapter.notifyDataSetChanged()
+                }
+                @SuppressLint("NotifyDataSetChanged")
+                adapter.notifyDataSetChanged()
+            }
+            Glance.KINDS.forEach { kind ->
+                glanceIo.execute {
+                    if (seq != everythingSeq) return@execute
+                    val answer = Glance.search(ctx, q, kinds = listOf(kind))
+                    post {
+                        if (seq != everythingSeq || !searching) return@post
+                        // An older Glance answers every source each time: that one answer is the whole list.
+                        if (answer.all) { if (got.isNotEmpty()) return@post; Glance.KINDS.forEach { got[it] = emptyList() }; got[kind] = answer.results }
+                        else got[kind] = answer.results
+                        show()
+                        // Read by the device test glance_search_fast.
+                        android.util.Log.d("EtesianSearch", "$kind ${answer.results.size} after ${android.os.SystemClock.uptimeMillis() - t0}ms")
+                    }
                 }
             }
         }, 150)

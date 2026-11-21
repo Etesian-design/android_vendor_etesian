@@ -1,0 +1,23 @@
+diff --git a/core/proguard.flags b/core/proguard.flags
+index 76655ca6aa..38d7618804 100644
+--- a/core/proguard.flags
++++ b/core/proguard.flags
+@@ -69,3 +69,18 @@
+ 
+ -include proguard_basic_keeps.flags
+ -include proguard/kotlin.flags
++
++# Etesian: every switch is the N9's (com.android.internal.widget.EtesianSwitchLook restyles it through these public
++# setters, by name). Keep them in every app, whatever the app's shrinker would drop.
++-keepclassmembers class androidx.appcompat.widget.SwitchCompat {
++    public void setThumbDrawable(android.graphics.drawable.Drawable);
++    public void setTrackDrawable(android.graphics.drawable.Drawable);
++    public void setThumbTintList(android.content.res.ColorStateList);
++    public void setTrackTintList(android.content.res.ColorStateList);
++    public void setShowText(boolean);
++    public void setSwitchMinWidth(int);
++}
++-keepclassmembers class com.google.android.material.materialswitch.MaterialSwitch {
++    public void setThumbIconDrawable(android.graphics.drawable.Drawable);
++    public void setTrackDecorationDrawable(android.graphics.drawable.Drawable);
++}

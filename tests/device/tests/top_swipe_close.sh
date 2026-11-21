@@ -6,7 +6,7 @@ open_settings() { sh_ am start -a android.settings.WIFI_SETTINGS >/dev/null; sle
 # What the user sees: Open applications must not keep a card for it (2026-11-04: the task was gone
 # but its card stayed, so it looked as if nothing had closed).
 settings_card() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.xml | tr '>' '\n' | grep 'package="com.bompotis.etesian.launcher"' | grep -c 'text="Settings"'; }
-settings_tasks() { sh_ dumpsys activity recents | grep -c 'A=1000:com.android.settings[} ]'; }
+settings_tasks() { sh_ dumpsys activity recents | grep -v mHiddenTasks | grep -c 'A=1000:com.android.settings[} ]'; } # mHiddenTasks lists tasks already removed
 drag_down() { # from y, slowly, as a thumb does
     sh_ "input motionevent DOWN 540 $1; for y in \$(seq $1 60 1900); do input motionevent MOVE 540 \$y; done; sleep 0.3; input motionevent UP 540 1900"; sleep 3; }
 for y in 15 90; do
@@ -21,7 +21,7 @@ id=$(sh_ content query --uri content://media/external/images/media --projection 
 if [ -n "$id" ]; then
     sh_ am start -a android.intent.action.VIEW -t image/jpeg -d content://media/external/images/media/$id org.lineageos.glimpse >/dev/null; sleep 3
     drag_down 15
-    check "full screen Gallery photo: swipe down closes it" '[ "$(sh_ dumpsys activity recents | grep -c "A=.*:org.lineageos.glimpse")" = 0 ]'
+    check "full screen Gallery photo: swipe down closes it" '[ "$(sh_ dumpsys activity recents | grep -v mHiddenTasks | grep -c "A=.*:org.lineageos.glimpse")" = 0 ]'
 fi
 # 2026-11-04 (user, again): with the phone in landscape nothing closed. Home is portrait-only and
 # its process kept a portrait size: the swipe never passed half of 2160 px.

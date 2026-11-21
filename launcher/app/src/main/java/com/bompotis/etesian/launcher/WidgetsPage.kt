@@ -108,7 +108,28 @@ class WidgetsPage(private val activity: Activity, private val screen: Int = 0, p
     /** Scrolls as a list; a fixed screen scrolls only if it still holds more than fits (its last screen). */
     private inner class Scroller(ctx: Context) : ScrollView(ctx) {
         private fun can() = !fixed || overflowing
-        override fun onInterceptTouchEvent(ev: MotionEvent) = can() && super.onInterceptTouchEvent(ev)
+        /** A scrolling list inside a widget (a feed, the agenda) under the finger: it keeps the drag while it can still move. */
+        private var inner: View? = null
+        private var downY = 0f
+        private fun scrollableAt(v: View, x: Int, y: Int): View? {
+            if (v is ViewGroup) for (i in v.childCount - 1 downTo 0) {
+                val c = v.getChildAt(i)
+                if (c.visibility != VISIBLE) continue
+                val r = android.graphics.Rect(); c.getGlobalVisibleRect(r)
+                if (r.contains(x, y)) scrollableAt(c, x, y)?.let { return it }
+            }
+            return if (v !== this && (v.canScrollVertically(1) || v.canScrollVertically(-1))) v else null
+        }
+        override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+            if (!can()) return false
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> { downY = ev.rawY; inner = getChildAt(0)?.let { scrollableAt(it, ev.rawX.toInt(), ev.rawY.toInt()) } }
+                MotionEvent.ACTION_MOVE -> inner?.let { // finger up = content moves down the list
+                    if (it.canScrollVertically(if (ev.rawY < downY) 1 else -1)) return false
+                }
+            }
+            return super.onInterceptTouchEvent(ev)
+        }
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouchEvent(ev: MotionEvent) = can() && super.onTouchEvent(ev)
     }

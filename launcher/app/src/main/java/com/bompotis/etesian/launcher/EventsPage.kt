@@ -272,7 +272,10 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
             N9Sheet.Item("Mark all as read", item.feedTitle) { Feeds.markAllRead(context, item.feedUrl) },
             N9Sheet.Item("Feed settings", "How often feeds update, apps shown as feeds") {
                 context.startActivity(Intent(context, SettingsActivity::class.java)
-                    .putExtra(SettingsActivity.EXTRA_SECTION, "feeds").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    .putExtra(SettingsActivity.EXTRA_SECTION, "feeds")
+                    // A fresh task: an Etesian settings task left in Recents would be brought back as it was,
+                    // without this page (Android doesn't deliver the new intent to it).
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             },
         ), title = item.feedTitle, label = "Feed actions")
     }
@@ -544,18 +547,18 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
             text = "Clear"
             setTextColor(N9.TEXT)
             textSize = 14f
-            typeface = N9.FONT
-            setPadding(dp(18f), dp(6f), dp(18f), dp(6f))
-            background = N9.button(context)
+            typeface = N9.FONT_BOLD
+            setPadding(dp(18f), dp(5f), dp(18f), dp(5f))
+            background = N9.sectionButton(context)
         }
         private var section = EventsClassifier.Section.NOTIFICATIONS
         private val refreshButton = TextView(ctx).apply {
             text = "Refresh"
             setTextColor(N9.TEXT)
             textSize = 14f
-            typeface = N9.FONT
-            setPadding(dp(18f), dp(6f), dp(18f), dp(6f))
-            background = N9.button(context)
+            typeface = N9.FONT_BOLD
+            setPadding(dp(18f), dp(5f), dp(18f), dp(5f))
+            background = N9.sectionButton(context)
             setOnClickListener { Feeds.refresh(context, force = true) }
         }
 
@@ -1151,6 +1154,13 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         fun bind(g: Row.PriorityGroup) {
             name.text = g.person.name
             contentDescription = "Priority: ${g.person.name}"
+            // The name and photo answer too, not only the lines under them: the newest message, or in edit mode its
+            // menu (all of them when there are several).
+            setOnClickListener {
+                val es = g.items
+                if (dismissMode && es.size > 1) groupMenu(es) else es.firstOrNull()?.let { e -> onTap(e) { open(e) } }
+            }
+            setOnLongClickListener { onLongPress(); true }
             avatar.setImageBitmap(avatarFor(g.person))
             lines.removeAllViews()
             g.items.take(5).forEach { e ->

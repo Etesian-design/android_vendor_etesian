@@ -57,11 +57,15 @@ endif
 PRODUCT_PACKAGES += \
     default-permissions_com.android.deskclock.xml
 
-# Glance: news and search across the phone (prebuilt from vendor/etesian/glance/build-glance.sh)
-ifneq ($(wildcard vendor/etesian/glance/EtesianGlance.apk),)
+# Build-time string fixes, above LineageOS's translations (vendor/crowdin/overlay): the first overlay in the list wins,
+# and this file is read after LineageOS's common.mk added crowdin's, so ours goes in front.
+PRODUCT_PACKAGE_OVERLAYS := vendor/etesian/overlay-strings $(PRODUCT_PACKAGE_OVERLAYS)
+# Built into the apps, like crowdin's (a runtime overlay would lose to the built-in translation).
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += vendor/etesian/overlay-strings
+
+# Glance: news and search across the phone, built from its own repo (manifest/etesian.xml fetches it)
 PRODUCT_PACKAGES += \
     EtesianGlance
-endif
 
 # N9 Mail (prebuilt from vendor/etesian/mail/build-mail.sh)
 ifneq ($(wildcard vendor/etesian/mail/EtesianMail.apk),)

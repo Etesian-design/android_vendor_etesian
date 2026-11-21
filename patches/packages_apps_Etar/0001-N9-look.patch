@@ -44,7 +44,7 @@ index 55386dc6..a92195ff 100644
          <receiver android:name="com.android.calendar.alerts.AlertReceiver"
              android:exported="true">
 diff --git a/app/src/main/java/com/android/calendar/AllInOneActivity.java b/app/src/main/java/com/android/calendar/AllInOneActivity.java
-index f55d7948..4e63c4b2 100644
+index f55d7948..604239b6 100644
 --- a/app/src/main/java/com/android/calendar/AllInOneActivity.java
 +++ b/app/src/main/java/com/android/calendar/AllInOneActivity.java
 @@ -17,6 +17,7 @@
@@ -64,7 +64,15 @@ index f55d7948..4e63c4b2 100644
  import android.graphics.drawable.LayerDrawable;
  import android.net.Uri;
  import android.os.Build;
-@@ -110,6 +113,9 @@ import ws.xsoh.etar.databinding.DateRangeTitleBinding;
+@@ -56,6 +59,7 @@ import android.util.Log;
+ import android.view.Menu;
+ import android.view.MenuItem;
+ import android.view.View;
++import android.view.ViewGroup;
+ import android.view.accessibility.AccessibilityEvent;
+ import android.widget.LinearLayout;
+ import android.widget.RelativeLayout;
+@@ -110,6 +114,9 @@ import ws.xsoh.etar.databinding.DateRangeTitleBinding;
  
  public class AllInOneActivity extends AbstractCalendarActivity implements EventHandler,
          OnSharedPreferenceChangeListener, SearchView.OnQueryTextListener, SearchView.OnSuggestionListener, NavigationView.OnNavigationItemSelectedListener {
@@ -74,7 +82,7 @@ index f55d7948..4e63c4b2 100644
      private static final String TAG = "AllInOneActivity";
      private static final boolean DEBUG = false;
      private static final String EVENT_INFO_FRAGMENT_TAG = "EventInfoFragment";
-@@ -349,6 +355,7 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -349,6 +356,7 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
          // setContentView must be called before configureActionBar
          binding = AllInOneMaterialBinding.inflate(getLayoutInflater());
          setContentView(binding.getRoot());
@@ -82,7 +90,7 @@ index f55d7948..4e63c4b2 100644
  
  
          mDrawerLayout = binding.drawerLayout;
-@@ -366,6 +373,7 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -366,6 +374,7 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
          setupToolbar(viewType);
          setupNavDrawer();
          setupFloatingActionButton();
@@ -90,7 +98,7 @@ index f55d7948..4e63c4b2 100644
  
          mHomeTime = binding.include.homeTime;
          mMiniMonth = binding.include.miniMonth;
-@@ -503,12 +511,96 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -503,12 +512,158 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
          }
          setSupportActionBar(mToolbar);
  
@@ -158,11 +166,7 @@ index f55d7948..4e63c4b2 100644
 +                case "month": goToN9View(ViewType.MONTH); break;
 +                case "week": goToN9View(mCurrentView == ViewType.DAY ? ViewType.WEEK : ViewType.DAY); break;
 +                case "agenda": goToN9View(ViewType.AGENDA); break;
-+                case "menu":
-+                    if (mToolbar == null || !mToolbar.showOverflowMenu()) {
-+                        openOptionsMenu();
-+                    }
-+                    break;
++                case "menu": showN9Menu(); break;
 +            }
 +        },
 +                com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("add", R.drawable.n9_tb_add,
@@ -179,7 +183,73 @@ index f55d7948..4e63c4b2 100644
 +        return true;
 +    }
 +
++    /**
++     * N9: the ≡ button opens the N9 menu (a light card rising over the toolbar), not Android's overflow list:
++     * Today, Go to date, Search, Refresh, Import, then Settings and About. The arrows are not menu items (the
++     * date bar above the toolbar has them).
++     */
++    private void showN9Menu() {
++        com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.all_in_one_title_bar, menu -> {
++            for (int id : new int[] {R.id.action_previous, R.id.action_next, R.id.action_view_settings}) {
++                MenuItem m = menu.findItem(id);
++                if (m != null) m.setVisible(false);
++            }
++            MenuItem info = menu.findItem(R.id.action_info);
++            if (info != null && (dozeDisabled() || Utils.getSharedPreference(getApplicationContext(),
++                    GeneralPreferences.KEY_DO_NOT_CHECK_BATTERY_OPTIMIZATION, false))) {
++                info.setVisible(false);
++            }
++            menu.add(0, R.id.action_settings, 100, R.string.preferences_title);
++            menu.add(0, R.id.action_about, 101, R.string.preferences_menu_about_lineage);
++        }, item -> {
++            if (item.getItemId() == R.id.action_search) {
++                startActivity(new Intent(this, SearchActivity.class));
++                return true;
++            }
++            return onOptionsItemSelected(item);
++        });
++    }
++
++    /**
++     * N9 (user 2026-11-19): the N9 calendar has no date header at the top. In Etesian mode the date bar (the date,
++     * its subtitle and the arrows) sits at the bottom, just above the toolbar, as tall as its text (at the top it
++     * was a fixed bar height and cut the subtitle off). Agenda has none: its first row is today's orange bar.
++     */
++    private void placeN9DateBar(int viewType) {
++        if (!com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this) || mToolbar == null) return;
++        final View appBar = (View) mToolbar.getParent();
++        if (!(appBar.getParent() instanceof androidx.coordinatorlayout.widget.CoordinatorLayout)
++                && appBar.getTag() == null) {
++            return;
++        }
++        if (appBar.getTag() == null) {
++            appBar.setTag("n9-bottom");
++            final ViewGroup coordinator = (ViewGroup) appBar.getParent();
++            final ViewGroup column = (ViewGroup) coordinator.getParent();
++            coordinator.removeView(appBar);
++            column.addView(appBar, column.indexOfChild(coordinator) + 1, new android.widget.LinearLayout.LayoutParams(
++                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
++            if (appBar instanceof com.google.android.material.appbar.AppBarLayout) {
++                ((com.google.android.material.appbar.AppBarLayout) appBar).setElevation(0f);
++            }
++            ViewGroup.LayoutParams lp = mToolbar.getLayoutParams();
++            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
++            mToolbar.setLayoutParams(lp);
++            // The content no longer slides under a bar at the top.
++            View content = findViewById(R.id.include);
++            if (content != null && content.getLayoutParams()
++                    instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
++                ((androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) content.getLayoutParams())
++                        .setBehavior(null);
++                content.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
++                content.requestLayout();
++            }
++        }
++        appBar.setVisibility(viewType == ViewType.AGENDA ? View.GONE : View.VISIBLE);
++    }
++
 +    private void updateN9BottomBar(int viewType) {
++        placeN9DateBar(viewType);
 +        if (updateSystemToolbar(viewType)) return;
 +        View month = findViewById(R.id.n9_tb_month);
 +        View week = findViewById(R.id.n9_tb_week);
@@ -190,7 +260,7 @@ index f55d7948..4e63c4b2 100644
      }
  
      public void openDrawer() {
-@@ -583,6 +675,9 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -583,6 +738,9 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
      @Override
      protected void onResume() {
          super.onResume();
@@ -200,7 +270,7 @@ index f55d7948..4e63c4b2 100644
  
          // Check if the upgrade code has ever been run. If not, force a sync just this one time.
          Utils.trySyncAndDisableUpgradeReceiver(this);
-@@ -832,6 +927,14 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -832,6 +990,14 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
              item.setVisible(true);
          }
  
@@ -215,7 +285,7 @@ index f55d7948..4e63c4b2 100644
          mSearchMenu = menu.findItem(R.id.action_search);
          mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
          if (mSearchView != null) {
-@@ -892,6 +995,26 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -892,6 +1058,26 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
          if (itemId == R.id.action_refresh) {
              mController.refreshCalendars();
              return true;
@@ -242,7 +312,7 @@ index f55d7948..4e63c4b2 100644
          } else if (itemId == R.id.action_today) {
              t = new Time(mTimeZone);
              t.set(System.currentTimeMillis());
-@@ -932,6 +1055,8 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -932,6 +1118,8 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
              startActivity(intent);
          } else if (itemId == R.id.action_info) {
              checkAndRequestDisablingDoze();
@@ -251,7 +321,7 @@ index f55d7948..4e63c4b2 100644
          } else {
                  return mExtensions.handleItemSelected(item, this);
          }
-@@ -1084,6 +1209,8 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
+@@ -1084,6 +1272,8 @@ public class AllInOneActivity extends AbstractCalendarActivity implements EventH
                  }
                  break;
          }
@@ -607,6 +677,22 @@ index e4082016..891bb600 100644
  
          updateAdaptiveTextAndIconColors();
  
+diff --git a/app/src/main/java/com/android/calendar/Utils.java b/app/src/main/java/com/android/calendar/Utils.java
+index 3c188947..a2f13127 100644
+--- a/app/src/main/java/com/android/calendar/Utils.java
++++ b/app/src/main/java/com/android/calendar/Utils.java
+@@ -281,6 +281,11 @@ public class Utils {
+             }
+         }
+ 
++        // Etesian: phones that had Etar before keep its old "last view" start; move them once to the month (the N9's).
++        if (!prefs.getBoolean("etesian_start_month", false)) {
++            prefs.edit().putString(GeneralPreferences.KEY_DEFAULT_START, GeneralPreferences.DEFAULT_DEFAULT_START)
++                    .putBoolean("etesian_start_month", true).apply();
++        }
+         // Check if the user wants the last view or the default startup view
+         int defaultStart = Integer.parseInt(prefs.getString(GeneralPreferences.KEY_DEFAULT_START,
+                 GeneralPreferences.DEFAULT_DEFAULT_START));
 diff --git a/app/src/main/java/com/android/calendar/agenda/AgendaAdapter.java b/app/src/main/java/com/android/calendar/agenda/AgendaAdapter.java
 index 7534835d..c2a0bd2d 100644
 --- a/app/src/main/java/com/android/calendar/agenda/AgendaAdapter.java
@@ -629,7 +715,7 @@ index 7534835d..c2a0bd2d 100644
          // Deal with exchange events that the owner cannot respond to
          int canRespond = cursor.getInt(AgendaWindowAdapter.INDEX_CAN_ORGANIZER_RESPOND);
 diff --git a/app/src/main/java/com/android/calendar/agenda/AgendaByDayAdapter.java b/app/src/main/java/com/android/calendar/agenda/AgendaByDayAdapter.java
-index f1ef8651..1688a411 100644
+index f1ef8651..4525813f 100644
 --- a/app/src/main/java/com/android/calendar/agenda/AgendaByDayAdapter.java
 +++ b/app/src/main/java/com/android/calendar/agenda/AgendaByDayAdapter.java
 @@ -18,6 +18,7 @@ package com.android.calendar.agenda;
@@ -666,7 +752,7 @@ index f1ef8651..1688a411 100644
  
              if (AgendaWindowAdapter.BASICLOG) {
                  dayViewText += " P:" + position;
-@@ -235,14 +244,12 @@ public class AgendaByDayAdapter extends BaseAdapter {
+@@ -235,14 +244,18 @@ public class AgendaByDayAdapter extends BaseAdapter {
              holder.dayView.setText(dayViewText);
              holder.dateView.setText(dateViewText);
  
@@ -680,14 +766,20 @@ index f1ef8651..1688a411 100644
 -            }
 +            // N9: light grey header bars, today's header solid orange with white text
 +            holder.grayed = row.mDay <= mTodayJulianDay;
-+            agendaDayView.setBackgroundColor(ContextCompat.getColor(mContext,
++            agendaDayView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.n9_window_bg));
++            agendaDayView.findViewById(R.id.n9_day_bar).setBackgroundColor(ContextCompat.getColor(mContext,
 +                    isToday ? R.color.n9_orange : R.color.n9_header_grey));
++            // N9: today's bar is always the first; when today has nothing, a grey line says so under it.
++            final boolean todayEmpty = isToday && !(position + 1 < mRowInfo.size()
++                    && mRowInfo.get(position + 1).mType == TYPE_MEETING
++                    && mRowInfo.get(position + 1).mDay == mTodayJulianDay);
++            agendaDayView.findViewById(R.id.n9_no_events).setVisibility(todayEmpty ? View.VISIBLE : View.GONE);
 +            holder.dateView.setTextColor(isToday ? Color.WHITE
 +                    : ContextCompat.getColor(mContext, R.color.n9_text));
              return agendaDayView;
          } else if (row.mType == TYPE_MEETING) {
              View itemView = mAgendaAdapter.getView(row.mPosition, convertView, parent);
-@@ -260,16 +267,11 @@ public class AgendaByDayAdapter extends BaseAdapter {
+@@ -260,16 +273,11 @@ public class AgendaByDayAdapter extends BaseAdapter {
              }
  
              // if event in the past or started already, un-bold the title and set the background
@@ -760,16 +852,54 @@ index e9b3d43c..9abdaed5 100644
  
      // Sets a thread to run every EVENT_UPDATE_TIME in order to update the list
 diff --git a/app/src/main/java/com/android/calendar/agenda/AgendaWindowAdapter.java b/app/src/main/java/com/android/calendar/agenda/AgendaWindowAdapter.java
-index 2a8f068a..185cf130 100644
+index 2a8f068a..da7d6a31 100644
 --- a/app/src/main/java/com/android/calendar/agenda/AgendaWindowAdapter.java
 +++ b/app/src/main/java/com/android/calendar/agenda/AgendaWindowAdapter.java
-@@ -450,6 +450,13 @@ public class AgendaWindowAdapter extends BaseAdapter
+@@ -121,12 +121,25 @@ public class AgendaWindowAdapter extends BaseAdapter
+             Instances.EVENT_TIMEZONE, // 17
+     };
+     // Listview may have a bug where the index/position is not consistent when there's a header.
+-    // position == positionInListView - OFF_BY_ONE_BUG
++    // position == positionInListView - offByOne()
+     // TODO Need to look into this.
+-    private static final int OFF_BY_ONE_BUG = 1;
++    private static final int OFF_BY_ONE_BUG_LEGACY = 1;
++
++    /** The list positions before the adapter's (the header row; none in the N9 agenda, which removes it). */
++    private int offByOne() {
++        return mAgendaListView != null ? mAgendaListView.getHeaderViewsCount() : OFF_BY_ONE_BUG_LEGACY;
++    }
+     private static final int MAX_NUM_OF_ADAPTERS = 5;
+     private static final int IDEAL_NUM_OF_EVENTS = 50;
+     private static final int MIN_QUERY_DURATION = 7; // days
++    /**
++     * N9 (user 2026-11-19): the agenda's first row is today's orange bar, then today's events or "No events for
++     * today", then the next day with events (a grey bar and its events), however far ahead. No "Touch to view
++     * events before / after" rows: older events are not shown, newer ones load as the list scrolls.
++     */
++    private static final boolean N9_FROM_TODAY = true;
++    /** The first load reaches a year ahead, so even a quiet calendar shows its next event. */
++    private static final int N9_FIRST_QUERY_DURATION = 366; // days
+     private static final int MAX_QUERY_DURATION = 60; // days
+     private static final int PREFETCH_BOUNDARY = 1;
+     /** Times to auto-expand/retry query after getting no data */
+@@ -350,7 +363,8 @@ public class AgendaWindowAdapter extends BaseAdapter
+             queueQuery(new QuerySpec(QUERY_TYPE_NEWER));
+         }
+ 
+-        if (position < PREFETCH_BOUNDARY
++        // N9: the agenda starts at today (or the day gone to) and never reaches back (no older events).
++        if (!N9_FROM_TODAY && position < PREFETCH_BOUNDARY
+                 && mOlderRequests <= mOlderRequestsProcessed) {
+             if (DEBUGLOG) Log.e(TAG, "queryForOlderEvents: ");
+             mOlderRequests++;
+@@ -450,6 +464,13 @@ public class AgendaWindowAdapter extends BaseAdapter
          return null;
      }
  
 +    /** N9 quick scroll: the Julian day of a list position, or 0 when it isn't loaded. */
 +    public int julianDayAt(int positionInListView) {
-+        final int position = positionInListView - OFF_BY_ONE_BUG;
++        final int position = positionInListView - offByOne();
 +        final DayAdapterInfo info = getAdapterInfoByPosition(position);
 +        return info == null ? 0 : info.dayAdapter.findJulianDayFromPosition(position - info.offset);
 +    }
@@ -777,6 +907,82 @@ index 2a8f068a..185cf130 100644
      private DayAdapterInfo getAdapterInfoByTime(Time time) {
          if (DEBUGLOG) Log.e(TAG, "getAdapterInfoByTime " + time.toString());
  
+@@ -486,7 +507,7 @@ public class AgendaWindowAdapter extends BaseAdapter
+             return null;
+         }
+ 
+-        final int positionInAdapter = positionInListView - OFF_BY_ONE_BUG;
++        final int positionInAdapter = positionInListView - offByOne();
+         DayAdapterInfo info = getAdapterInfoByPosition(positionInAdapter);
+         if (info == null) {
+             return null;
+@@ -596,7 +617,7 @@ public class AgendaWindowAdapter extends BaseAdapter
+                 int gotoPosition = findEventPositionNearestTime(goToTime, id);
+                 if (gotoPosition > 0) {
+                     mAgendaListView.setSelectionFromTop(gotoPosition +
+-                            OFF_BY_ONE_BUG, mStickyHeaderSize);
++                            offByOne(), mStickyHeaderSize);
+                     if (mListViewScrollState == OnScrollListener.SCROLL_STATE_FLING) {
+                         mAgendaListView.smoothScrollBy(0, 0);
+                     }
+@@ -629,8 +650,9 @@ public class AgendaWindowAdapter extends BaseAdapter
+ 
+         // If AllInOneActivity is sending a second GOTO event(in OnResume), ignore it.
+         if (!mCleanQueryInitiated || searchQuery != null) {
+-            // Query for a total of MIN_QUERY_DURATION days
+-            int endDay = startDay + MIN_QUERY_DURATION;
++            // Query for a total of MIN_QUERY_DURATION days (N9: a year, for the next event however far)
++            int endDay = startDay + (N9_FROM_TODAY && searchQuery == null
++                    ? N9_FIRST_QUERY_DURATION : MIN_QUERY_DURATION);
+ 
+             mSelectedInstanceId = -1;
+             mCleanQueryInitiated = true;
+@@ -639,8 +661,10 @@ public class AgendaWindowAdapter extends BaseAdapter
+             // Pre-fetch more data to overcome a race condition in AgendaListView.shiftSelection
+             // Queuing more data with the goToTime set to the selected time skips the call to
+             // shiftSelection on refresh.
+-            mOlderRequests++;
+-            queueQuery(0, 0, goToTime, searchQuery, QUERY_TYPE_OLDER, id);
++            if (!N9_FROM_TODAY || searchQuery != null) {
++                mOlderRequests++;
++                queueQuery(0, 0, goToTime, searchQuery, QUERY_TYPE_OLDER, id);
++            }
+             mNewerRequests++;
+             queueQuery(0, 0, goToTime, searchQuery, QUERY_TYPE_NEWER, id);
+         }
+@@ -1121,7 +1145,7 @@ public class AgendaWindowAdapter extends BaseAdapter
+                         if (mListViewScrollState == OnScrollListener.SCROLL_STATE_FLING) {
+                             mAgendaListView.smoothScrollBy(0, 0);
+                         }
+-                        mAgendaListView.setSelectionFromTop(newPosition + OFF_BY_ONE_BUG,
++                        mAgendaListView.setSelectionFromTop(newPosition + offByOne(),
+                                 mStickyHeaderSize);
+                         Time actualTime = new Time(mTimeZone);
+                         actualTime.set(goToTime);
+@@ -1134,7 +1158,7 @@ public class AgendaWindowAdapter extends BaseAdapter
+                     }
+                     if (DEBUGLOG) {
+                         Log.e(TAG, "Setting listview to " +
+-                                "findEventPositionNearestTime: " + (newPosition + OFF_BY_ONE_BUG));
++                                "findEventPositionNearestTime: " + (newPosition + offByOne()));
+                     }
+                 }
+ 
+@@ -1214,7 +1238,13 @@ public class AgendaWindowAdapter extends BaseAdapter
+                     }};
+                 mHeaderView.setOnClickListener(headerFooterOnClickListener);
+                 mFooterView.setOnClickListener(headerFooterOnClickListener);
+-                mAgendaListView.addFooterView(mFooterView);
++                if (N9_FROM_TODAY) {
++                    // No "Touch to view events before / after" rows (the list loads newer ones by itself).
++                    // Out of the list altogether: a hidden header row would still take its height.
++                    mAgendaListView.removeHeaderView(mHeaderView);
++                } else {
++                    mAgendaListView.addFooterView(mFooterView);
++                }
+                 mDoneSettingUpHeaderFooter = true;
+             }
+             synchronized (mQueryQueue) {
 diff --git a/app/src/main/java/com/android/calendar/chips/CircularImageView.java b/app/src/main/java/com/android/calendar/chips/CircularImageView.java
 index 80ecf3f1..5a91bb32 100644
 --- a/app/src/main/java/com/android/calendar/chips/CircularImageView.java
@@ -2209,19 +2415,21 @@ index 00000000..060cd4bc
 +    </FrameLayout>
 +</LinearLayout>
 diff --git a/app/src/main/res/layout/agenda_day.xml b/app/src/main/res/layout/agenda_day.xml
-index 5dfa8c95..f0ad5f1a 100644
+index 5dfa8c95..a305b87b 100644
 --- a/app/src/main/res/layout/agenda_day.xml
 +++ b/app/src/main/res/layout/agenda_day.xml
-@@ -31,25 +31,31 @@
+@@ -31,25 +31,45 @@
          android:visibility="gone"
          android:layout_height="2dip"
          android:layout_width="match_parent" />
 +    <!-- N9: single bold right-aligned date line; the weekday is folded into it -->
      <LinearLayout
++        android:id="@+id/n9_day_bar"
          android:orientation="vertical"
          android:layout_width="match_parent"
-         android:layout_marginLeft="16dip"
-+        android:layout_marginRight="16dip"
+-        android:layout_marginLeft="16dip"
++        android:paddingLeft="16dip"
++        android:paddingRight="16dip"
 +        android:gravity="center_vertical"
          android:layout_height="wrap_content"
 -        android:minHeight="48dip">
@@ -2247,6 +2455,19 @@ index 5dfa8c95..f0ad5f1a 100644
 +            android:textColor="@color/n9_text"
 +            android:textSize="16sp" />
      </LinearLayout>
++    <!-- N9: under today's bar when today has nothing: grey "No events for today" -->
++    <TextView
++        android:id="@+id/n9_no_events"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:paddingLeft="16dip"
++        android:paddingRight="16dip"
++        android:paddingTop="14dip"
++        android:paddingBottom="14dip"
++        android:visibility="gone"
++        android:text="@string/n9_no_events_today"
++        android:textColor="@color/n9_text_secondary"
++        android:textSize="16sp" />
  </LinearLayout>
 diff --git a/app/src/main/res/layout/agenda_header_footer.xml b/app/src/main/res/layout/agenda_header_footer.xml
 index e4dad166..ffdd7bc7 100644
@@ -2476,15 +2697,18 @@ index 5493dc8d..42f7b895 100644
      <com.google.android.material.navigation.NavigationView
          android:id="@+id/navigation_view"
 diff --git a/app/src/main/res/layout/day_activity.xml b/app/src/main/res/layout/day_activity.xml
-index 05faef58..f8018f40 100644
+index 05faef58..7f7b568f 100644
 --- a/app/src/main/res/layout/day_activity.xml
 +++ b/app/src/main/res/layout/day_activity.xml
-@@ -21,8 +21,25 @@
+@@ -19,10 +19,26 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
      android:background="@color/day_past_background_color"
-     android:foregroundGravity="fill_horizontal|top"
-     android:paddingTop="1dip">
+-    android:foregroundGravity="fill_horizontal|top"
+-    android:paddingTop="1dip">
 -    <ViewSwitcher
 -        android:id="@+id/switcher"
++    android:foregroundGravity="fill_horizontal|top">
 +    <!-- N9: dark week strip above the day/week grid (text set by DayView.updateTitle) -->
 +    <LinearLayout
          android:layout_width="match_parent"
@@ -3214,6 +3438,19 @@ index 1901acd0..1fcba1c4 100644
      <item
          android:id="@+id/action_goto"
          android:alphabeticShortcut="g"
+diff --git a/app/src/main/res/values-en-rGB/strings.xml b/app/src/main/res/values-en-rGB/strings.xml
+index 98022f39..140228c9 100644
+--- a/app/src/main/res/values-en-rGB/strings.xml
++++ b/app/src/main/res/values-en-rGB/strings.xml
+@@ -326,7 +326,7 @@
+     <string name="rsvp_tentative">Responded maybe.</string>
+     <string name="rsvp_accepted">Responded yes.</string>
+     <string name="view_settings">View settings</string>
+-    <string name="goto_date">Go to…</string>
++    <string name="goto_date">Go to date</string>
+     <string name="seven_days">7 days</string>
+     <string name="six_days">6 days</string>
+     <string name="five_days">5 days</string>
 diff --git a/app/src/main/res/values-land/dimens.xml b/app/src/main/res/values-land/dimens.xml
 index efabbf1c..943e0eea 100644
 --- a/app/src/main/res/values-land/dimens.xml
@@ -3782,7 +4019,7 @@ index b3e44ce0..b26fba2f 100644
 +    <dimen name="n9_month_grid_height">276dp</dimen>
  </resources>
 diff --git a/app/src/main/res/values/lineage_strings.xml b/app/src/main/res/values/lineage_strings.xml
-index 3aa0343b..2f2f7d86 100644
+index 3aa0343b..9b6cc689 100644
 --- a/app/src/main/res/values/lineage_strings.xml
 +++ b/app/src/main/res/values/lineage_strings.xml
 @@ -7,4 +7,23 @@
@@ -3806,9 +4043,22 @@ index 3aa0343b..2f2f7d86 100644
 +    <string name="n9_no_events">No events</string>
 +    <string name="n9_more_options">More options</string>
 +    <string name="n9_week_day_view">Week and day view</string>
-+    <string name="n9_agenda_today">Today - <xliff:g id="date">%1$s</xliff:g></string>
 +    <string name="n9_no_events_today">No events for today</string>
++    <string name="n9_agenda_today">Today - <xliff:g id="date">%1$s</xliff:g></string>
  </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 7bd47cfa..3a164d12 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -138,7 +138,7 @@
+     <string name="goto_today">"Today"</string>
+     <!-- This is a label on a menu item. Pressing this menu
+          item opens new dialog shown the date that the user wants to go. -->
+-    <string name="goto_date">Go to\u2026</string>
++    <string name="goto_date">Go to date</string>
+     <!-- This is a label on a menu item. Pressing this menu item allows the
+          user to view and edit his Settings (or Preferences) -->
+     <string name="menu_preferences">"Settings"</string>
 diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
 index 1478fe14..c41d4122 100644
 --- a/app/src/main/res/values/styles.xml
