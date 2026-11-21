@@ -10,8 +10,14 @@ side=$(sh_ settings get secure etesian_toolbar_back_side)
 open_reader() {
   sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 3
   for _ in $(seq 20); do xmlw | grep -q 'content-desc="story:' && break; sleep 2; done
-  set -- $(xmlw | grep -o 'content-desc="story:[^"]*"[^>]*bounds="[^"]*"' | head -1 | grep -o 'bounds="[^"]*"' | tr -cs '0-9' ' ')
-  [ -n "$4" ] && sh_ input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); sleep 4
+  # The list can still be filling in (pictures, more stories) and move under the tap: tap the first story where it is
+  # now, wait for the reader, and tap again if it did not open.
+  for _ in 1 2 3; do
+    set -- $(xmlw | grep -o 'content-desc="story:[^"]*"[^>]*bounds="[^"]*"' | head -1 | grep -o 'bounds="[^"]*"' | tr -cs '0-9' ' ')
+    [ -n "$4" ] && sh_ input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+    for _ in $(seq 10); do top_activity | grep -q "$G/.ReaderActivity" && break 2; sleep 1; done
+  done
+  sleep 2
 }
 for s in 0 1; do
   sh_ settings put secure etesian_toolbar_back_side $s
