@@ -20,6 +20,9 @@ if [ -z "${BUILD_ONLY:-}" ]; then
     [ -n "$PASS" ] || { echo "no passphrase on stdin" >&2; exit 1; }
 fi
 mkdir -p "$OUT" "$W/ccache"; rm -f "$OUT"/*
+# Meeye, the launcher's default icon pack, is never committed (third-party): fetched here, pinned and checksummed, so the
+# release has it as a local build does (etesian.mk leaves it out when it is missing, and the copy below would delete it).
+"$ETESIAN/meeye/fetch.sh"
 
 docker build -q -t etesian-rom-builder "$HERE/../builder" >/dev/null
 # The build needs most of the machine's memory: etesian-vm is stopped for it and started again after, whatever the outcome.
