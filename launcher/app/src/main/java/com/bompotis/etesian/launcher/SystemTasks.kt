@@ -53,11 +53,8 @@ object SystemTasks {
         // An app the phone was turned for (landscape, or the keyboard slid out) is snapshotted at that rotation. The
         // launcher may be at another one (it turns too, since 2026-11-22), so turn the picture by the difference, as
         // Launcher3 does: it fills the card and stands upright the way the phone is held.
-        // Cards keep the portrait shape (2026-11-23): only a picture the turn makes portrait is turned; a portrait app
-        // seen from a landscape home stays upright in its card.
-        val turn = (runCatching { snap.javaClass.getMethod("getRotation").invoke(snap) as Int }.getOrDefault(0) -
+        val rotation = (runCatching { snap.javaClass.getMethod("getRotation").invoke(snap) as Int }.getOrDefault(0) -
             displayRotation + 4) % 4
-        val rotation = if (turn % 2 == 1 && copy.width <= copy.height) 0 else turn
         val soft = if (rotation == 0) copy
             else Bitmap.createBitmap(copy, 0, 0, copy.width, copy.height, android.graphics.Matrix().apply { setRotate(90f * rotation) }, true)
                 .also { copy.recycle() }

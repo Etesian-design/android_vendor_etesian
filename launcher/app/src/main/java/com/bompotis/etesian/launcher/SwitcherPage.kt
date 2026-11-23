@@ -305,23 +305,17 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         return true
     }
 
-    /** Landscape: the cards keep their portrait size and shape, as on the N9, where turning the phone only turns what is
-     *  around them; more of them fit across (2026-11-23, user: the view zoomed out further than portrait ever does). */
+    /** Landscape (2026-11-23, user): a card is the screen as it is now, turned with it, at the same scale as in portrait:
+     *  the same columns, each card a landscape copy of the screen, so the view zooms out no further than portrait does. */
     private val wide get() = width > height && height > 0
-    /** The screen's width in portrait, which every card size is taken from. */
-    private val portraitW get() = resources.displayMetrics.let { minOf(it.widthPixels, it.heightPixels) }
-    private fun cols(span: Int): Int {
-        if (!wide) return span
-        val (l, _, r, _) = insets.toList()
-        val card = (portraitW - dp(20f)) / span.toFloat()
-        return ((width - l - r - dp(20f)) / card).toInt().coerceAtLeast(span)
-    }
+    private fun cols(span: Int) = span
     private fun currentSpan() = if (carousel) 1 else prefs.getInt("span", 2).coerceIn(2, 3)
-    /** The carousel's card width: 78% of the portrait screen, lower in landscape so the card fits the height. */
+    /** The carousel's card width: 78% of the screen, lower in landscape so the (landscape) card fits the height. */
     private fun carouselW(): Int {
-        val w = portraitW * 0.78f
+        val m = resources.displayMetrics
+        val w = m.widthPixels * 0.78f
         if (!wide) return w.toInt().coerceAtLeast(1)
-        val m = resources.displayMetrics; val ratio = maxOf(m.widthPixels, m.heightPixels) / portraitW.toFloat()
+        val ratio = m.heightPixels / m.widthPixels.toFloat().coerceAtLeast(1f)
         val room = list.height - list.paddingTop - list.paddingBottom - dp(40f)
         return (if (room > 0) minOf(w, room / ratio) else w).toInt().coerceAtLeast(1)
     }
@@ -949,9 +943,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
                 context.getSystemService(android.view.WindowManager::class.java).maximumWindowMetrics.bounds
                     .let { it.width() to it.height() }
             } else resources.displayMetrics.let { it.widthPixels to it.heightPixels }
-            // Always the portrait shape, so a card is the same size either way (2026-11-23); a landscape snapshot fills it
-            // from the top, as the N9's cards keep their shape when the phone turns.
-            val ratio = maxOf(sw, sh).toFloat() / minOf(sw, sh).coerceAtLeast(1)
+            // The screen as it is now: portrait cards in portrait, landscape ones in landscape (2026-11-23, user).
+            val ratio = sh.toFloat() / sw.coerceAtLeast(1)
             super.onMeasure(w, MeasureSpec.makeMeasureSpec((width * ratio).toInt(), MeasureSpec.EXACTLY))
         }
     }
