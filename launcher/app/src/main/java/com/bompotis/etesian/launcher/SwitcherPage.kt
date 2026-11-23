@@ -224,7 +224,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
     /** In the carousel the first and last cards sit centred, so the sides get extra room. */
     private fun applyListPadding() {
         val (l, t, r, b) = insets.toList()
-        val side = if (carousel) (resources.displayMetrics.widthPixels * 0.11f).toInt() else dp(10f)
+        val side = if (!carousel) dp(10f) else if (wide) ((width - l - r - carouselW()) / 2).coerceAtLeast(0)
+            else (resources.displayMetrics.widthPixels * 0.11f).toInt()
         val bars = (if (bottomBar.visibility == VISIBLE) dp(68f) else 0) + (if (actionRow.visibility == VISIBLE) dp(56f) else 0)
         list.setPadding(l + side, t, r + side, b + dp(24f) + bars)
     }
@@ -304,10 +305,26 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         return true
     }
 
-    /** Landscape (2026-11-22): twice the columns, so the cards keep their size instead of growing past the screen. */
+    /** Landscape: the cards keep their portrait size and shape, as on the N9, where turning the phone only turns what is
+     *  around them; more of them fit across (2026-11-23, user: the view zoomed out further than portrait ever does). */
     private val wide get() = width > height && height > 0
-    private fun cols(span: Int) = if (wide) span * 2 else span
-    private fun currentSpan() = if (carousel) 1 else (if (wide) grid.spanCount / 2 else grid.spanCount)
+    /** The screen's width in portrait, which every card size is taken from. */
+    private val portraitW get() = resources.displayMetrics.let { minOf(it.widthPixels, it.heightPixels) }
+    private fun cols(span: Int): Int {
+        if (!wide) return span
+        val (l, _, r, _) = insets.toList()
+        val card = (portraitW - dp(20f)) / span.toFloat()
+        return ((width - l - r - dp(20f)) / card).toInt().coerceAtLeast(span)
+    }
+    private fun currentSpan() = if (carousel) 1 else prefs.getInt("span", 2).coerceIn(2, 3)
+    /** The carousel's card width: 78% of the portrait screen, lower in landscape so the card fits the height. */
+    private fun carouselW(): Int {
+        val w = portraitW * 0.78f
+        if (!wide) return w.toInt().coerceAtLeast(1)
+        val m = resources.displayMetrics; val ratio = maxOf(m.widthPixels, m.heightPixels) / portraitW.toFloat()
+        val room = list.height - list.paddingTop - list.paddingBottom - dp(40f)
+        return (if (room > 0) minOf(w, room / ratio) else w).toInt().coerceAtLeast(1)
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun refreshAll() = adapter.notifyDataSetChanged()
@@ -317,7 +334,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         if ((w > h) == (ow > oh) && ow != 0) return
         val span = prefs.getInt("span", 2).coerceIn(2, 3)
         post {
-            if (!carousel && grid.spanCount != cols(span)) { grid.spanCount = cols(span); refreshAll() }
+            if (!carousel && grid.spanCount != cols(span)) grid.spanCount = cols(span)
+            applyListPadding(); refreshAll()
             // The snapshots were turned for the old orientation: take them again.
             RunningApps.sync(context)
         }
@@ -677,7 +695,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             val listW = width.toFloat()
             if (span == 1) {
                 val side = resources.displayMetrics.widthPixels * 0.11f
-                val itemW = ((listW - l - r - 2 * side) * 0.78f)
+                val itemW = if (wide) carouselW().toFloat() else ((listW - l - r - 2 * side) * 0.78f)
                 val itemH = itemW * aspect
                 val x0 = (listW - itemW) / 2f
                 for ((v, p) in positions) {
@@ -918,7 +936,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             val d = drawable ?: return
             if (width == 0 || d.intrinsicWidth <= 0) return
             val s = maxOf(width.toFloat() / d.intrinsicWidth, height.toFloat() / d.intrinsicHeight)
-            imageMatrix = Matrix().apply { setScale(s, s) }
+            // From the top, centred across (a landscape snapshot in a portrait card shows its middle).
+            imageMatrix = Matrix().apply { setScale(s, s); postTranslate((width - d.intrinsicWidth * s) / 2f, 0f) }
         }
     }
 
@@ -930,8 +949,9 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
                 context.getSystemService(android.view.WindowManager::class.java).maximumWindowMetrics.bounds
                     .let { it.width() to it.height() }
             } else resources.displayMetrics.let { it.widthPixels to it.heightPixels }
-            // The screen as it is now: portrait cards in portrait, landscape ones in landscape (2026-11-22).
-            val ratio = sh.toFloat() / sw.coerceAtLeast(1)
+            // Always the portrait shape, so a card is the same size either way (2026-11-23); a landscape snapshot fills it
+            // from the top, as the N9's cards keep their shape when the phone turns.
+            val ratio = maxOf(sw, sh).toFloat() / minOf(sw, sh).coerceAtLeast(1)
             super.onMeasure(w, MeasureSpec.makeMeasureSpec((width * ratio).toInt(), MeasureSpec.EXACTLY))
         }
     }
@@ -1009,7 +1029,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             h.label.textSize = if (carousel) 16f else if (currentSpan() == 3) 11f else 13f
             // Carousel: one large card per page, with its neighbours peeking in.
             h.itemView.layoutParams = (h.itemView.layoutParams as RecyclerView.LayoutParams).apply {
-                width = if (carousel) (resources.displayMetrics.widthPixels * 0.78f).toInt().coerceAtLeast(1)
+                width = if (carousel) carouselW()
                     else ViewGroup.LayoutParams.MATCH_PARENT
             }
             if (e.second != null) {

@@ -52,6 +52,20 @@ object EventsStore {
     /** Something else shown in Events changed (kept dismissed notifications). */
     fun changed() = listeners.toList().forEach { it() }
 
+    /** Opens a notification as a tap on it would (Events, the status menu), and clears it if it asks to be. */
+    fun open(ctx: android.content.Context, item: EventItem) {
+        val pi = item.intent ?: return
+        val opts = android.app.ActivityOptions.makeBasic()
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            opts.setPendingIntentBackgroundActivityStartMode(
+                if (android.os.Build.VERSION.SDK_INT >= 36) android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS
+                else @Suppress("DEPRECATION") android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+            )
+        }
+        runCatching { pi.send(ctx, 0, null, null, null, null, opts.toBundle()) }
+        if (item.autoCancel) service?.cancelNotification(item.key)
+    }
+
     fun addListener(l: () -> Unit) { listeners += l }
     fun removeListener(l: () -> Unit) { listeners -= l }
 

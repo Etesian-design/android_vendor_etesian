@@ -24,6 +24,48 @@ object N9 {
     const val BUTTON = 0xFF3A3A3A.toInt()
 
     /**
+     * A segmented control (button group used as tabs), as the design system defines it from the N9 camera settings
+     * (etesian-design docs/05-shape.md, tests/button-groups.test.ts): the text field's shape, squircle-half caps at
+     * both ends and flat between; unselected segments lit #434343 to #181818, the selected one flat selection blue;
+     * a groove between segments (a dark gap, then a light line on the next one's leading edge); 32dp tall, bold
+     * 14sp labels, the width shared equally. [onPick] gets the tapped segment's index.
+     */
+    fun segmented(context: Context, labels: List<String>, selected: Int, onPick: (Int) -> Unit): android.widget.LinearLayout {
+        val d = context.resources.displayMetrics.density
+        val shape = FieldDrawable(intArrayOf(0xFF000000.toInt()), 0, d, shade = false)
+        return android.widget.LinearLayout(context).apply {
+            background = shape
+            // Clipped to the field shape: the end segments take the caps, the middle ones stay square.
+            outlineProvider = object : android.view.ViewOutlineProvider() {
+                override fun getOutline(v: android.view.View, o: android.graphics.Outline) { shape.setBounds(0, 0, v.width, v.height); shape.getOutline(o) }
+            }
+            clipToOutline = true
+            minimumHeight = (32 * d).toInt()
+            labels.forEachIndexed { i, label ->
+                val on = i == selected
+                addView(android.widget.TextView(context).apply {
+                    text = label; gravity = android.view.Gravity.CENTER; setTextColor(TEXT); textSize = 14f; typeface = FONT_BOLD
+                    setPadding((11 * d).toInt(), 0, (11 * d).toInt(), 0)
+                    val face = if (on) android.graphics.drawable.ColorDrawable(SELECTED)
+                        else android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                            intArrayOf(0xFF434343.toInt(), 0xFF181818.toInt()))
+                    background = if (i == 0) face else android.graphics.drawable.LayerDrawable(arrayOf<android.graphics.drawable.Drawable>(face,
+                        android.graphics.drawable.ColorDrawable(RIM_TOP))).apply {
+                        setLayerGravity(1, android.view.Gravity.START or android.view.Gravity.FILL_VERTICAL); setLayerWidth(1, maxOf(1, d.toInt())) }
+                    isSelected = on; contentDescription = label
+                    setOnClickListener { onPick(i) }
+                }, android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                    if (i > 0) marginStart = maxOf(1, d.toInt())  // the groove's dark gap
+                })
+            }
+        }
+    }
+    /** The selection blue of segments and tabs (#268CE1, the design system's selected accent). */
+    const val SELECTED = 0xFF268CE1.toInt()
+    /** The light leading line of a groove. */
+    const val RIM_TOP = 0x40FFFFFF
+
+    /**
      * A dark N9 button, lit from the top like its icons (measured): a fill from #181818 at the
      * top to #080808 at the bottom, a 1px #393839 rim, squircle-half ends (not a pill).
      */

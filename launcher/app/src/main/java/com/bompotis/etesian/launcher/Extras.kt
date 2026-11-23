@@ -38,6 +38,8 @@ object Extras {
     const val PRIVATE = "private_space"
     const val SPLIT_MERGE = "split_merge"
     const val CARD_ACTIONS = "card_actions"
+    const val ANDROID_SHADE = "android_shade"
+    const val STATUS_NOTIFICATIONS = "status_notifications"
 
     val ALL = listOf(
         Extra(STATUS_MENU, "Status menu: toggle strip, sliders and hidden rows", "Your own toggles and sliders, fewer rows"),
@@ -61,6 +63,8 @@ object Extras {
         Extra(COPIED, "“Copied” bubble", "A short bubble when something is copied, instead of the clipboard overlay"),
         Extra(EMERGENCY, "Emergency information on the lock screen", "Owner and essentials beside the clock; tap for the full card"),
         Extra(GHOST_ROWS, "Keep dismissed notifications", "Faded rows at the end of Notifications; tap for Earlier"),
+        Extra(ANDROID_SHADE, "Android’s notification shade", "Swiping down from the top pulls down Android’s notifications and quick settings, as on other phones; no swipe down to close apps"),
+        Extra(STATUS_NOTIFICATIONS, "Notifications in the status menu", "A Notifications block to add to the status menu, from all apps or the ones you pick"),
     )
 
     fun key(name: String) = ALL.first { it.name == name }.key

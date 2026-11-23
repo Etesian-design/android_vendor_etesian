@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -19,6 +18,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
+import com.bompotis.etesian.launcher.FieldDrawable
 import com.bompotis.etesian.launcher.N9
 import com.bompotis.etesian.launcher.N9Sheet
 import com.bompotis.etesian.launcher.R
@@ -27,7 +27,7 @@ import com.bompotis.etesian.launcher.dp
 
 /**
  * Etesian settings → Standby screen. The live preview first (rule 20), then the lines: each a row of items (blue
- * squircles) and the user's own words; a tap opens the line's sheet (add an item or words, what to show when empty,
+ * squircles) and the user's own words; a tap opens the line's sheet (add an item, the words before and after each, what to show when empty,
  * move, remove). + on the toolbar adds a line, the menu holds the presets. Then the appearance: colour, size,
  * alignment, and whether the clock, the battery glyph and the notification icons show. Every change saves at once.
  */
@@ -86,7 +86,7 @@ class StandbySettingsActivity : Activity() {
         })
         header("Preview")
         content.addView(FrameLayout(this).apply {
-            background = GradientDrawable().apply { setColor(0xFF000000.toInt()); cornerRadius = dp(14f).toFloat(); setStroke(dp(1f), 0xFF2E2E2E.toInt()) }
+            background = FieldDrawable(intArrayOf(0xFF000000.toInt()), 0xFF2E2E2E.toInt(), resources.displayMetrics.density, corner = dp(28f).toFloat(), shade = false)
             // build() runs again on every change: the preview leaves its old frame first.
             (preview.parent as? android.view.ViewGroup)?.removeView(preview)
             addView(preview, FrameLayout.LayoutParams(-1, -1))
@@ -122,23 +122,31 @@ class StandbySettingsActivity : Activity() {
                 override fun onStopTrackingTouch(b: SeekBar) { build() }
             })
         })
-        content.addView(LinearLayout(this).apply {
-            setPadding(0, dp(12f), 0, dp(8f))
-            StandbyConfig.Align.entries.forEach { a ->
-                val on = a == config.align
-                addView(TextView(this@StandbySettingsActivity).apply {
-                    text = a.name.lowercase().replaceFirstChar { it.uppercase() }; gravity = Gravity.CENTER
-                    setTextColor(N9.TEXT); typeface = N9.FONT; textSize = 15f; setPadding(0, dp(10f), 0, dp(10f))
-                    setBackgroundColor(if (on) 0xFF268CE1.toInt() else 0xFF2A2A2A.toInt())
-                    isSelected = on; contentDescription = "Align $text"
-                    setOnClickListener { change(config.copy(align = a)) }
-                }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(1f) })
-            }
-        })
+        // Alignment: the design system's segmented control (2026-11-23, user: the plain row of boxes matched nothing).
+        content.addView(N9.segmented(this, StandbyConfig.Align.entries.map { a -> a.name.lowercase().replaceFirstChar { it.uppercase() } },
+            config.align.ordinal) { change(config.copy(align = StandbyConfig.Align.entries[it])) }.apply {
+            contentDescription = "Alignment"
+            for (k in 0 until childCount) getChildAt(k).contentDescription = "Align ${(getChildAt(k) as TextView).text}"
+        }, LinearLayout.LayoutParams(-1, dp(32f)).apply { topMargin = dp(12f); bottomMargin = dp(8f) })
         content.addView(toggle("Clock", config.clock) { change(config.copy(clock = it)) })
         content.addView(toggle("Battery above the clock", config.battery) { change(config.copy(battery = it)) })
         content.addView(toggle("Notification icons", config.icons) { change(config.copy(icons = it)) })
+
+        // Battery (2026-11-23): the clock turns every minute; everything else waits for the user's interval, so the
+        // device sleeps in between.
+        header("Battery")
+        content.addView(row("Update the other items", refreshLabel(config.refresh)) { null }.apply {
+            contentDescription = "Update the other items"
+            setOnClickListener {
+                N9Sheet.choose(this@StandbySettingsActivity, "Update the other items", StandbyConfig.REFRESH.map { refreshLabel(it) },
+                    StandbyConfig.REFRESH.indexOf(config.refresh)) { change(config.copy(refresh = StandbyConfig.REFRESH[it])) }
+            }
+        })
+        content.addView(note("The clock changes every minute. Everything else (weather, battery, songs, network…) keeps its last value until then."))
+        if (config.icons) content.addView(toggle("New notifications at once", config.liveIcons) { change(config.copy(liveIcons = it)) })
     }
+
+    private fun refreshLabel(min: Int) = when (min) { 0 -> "Only when the screen goes off"; 1 -> "Every minute"; 60 -> "Every hour"; else -> "Every $min minutes" }
 
     private fun lineRow(i: Int, l: StandbyConfig.Line): View {
         val chips = Flow(this)
@@ -147,9 +155,13 @@ class StandbySettingsActivity : Activity() {
                 typeface = N9.FONT; textSize = 15f; setTextColor(N9.TEXT)
                 when (p) {
                     is StandbyConfig.Part.Text -> text = p.text.replace(" ", " ")
+                    // An item: a blue chip with squircle ends (as N9 buttons; a squircle stretched wide is no squircle), its
+                    // words before and after it in quotes.
                     is StandbyConfig.Part.Item -> {
-                        text = StandbyItems.label(p.id); background = Sq(0xFF1F5A9E.toInt(), 0, 0)
-                        setPadding(dp(10f), dp(5f), dp(10f), dp(5f))
+                        text = listOfNotNull(p.prefix.takeIf { it.isNotEmpty() }?.let { "“$it”" }, StandbyItems.label(p.id),
+                            p.suffix.takeIf { it.isNotEmpty() }?.let { "“$it”" }).joinToString(" ")
+                        background = FieldDrawable(intArrayOf(0xFF1F5A9E.toInt()), 0, resources.displayMetrics.density, shade = false)
+                        setPadding(dp(14f), dp(6f), dp(14f), dp(6f))
                     }
                 }
             })
@@ -170,9 +182,18 @@ class StandbySettingsActivity : Activity() {
     private fun lineSheet(i: Int) {
         val l = config.lines[i]
         fun set(n: StandbyConfig.Line?) = change(config.copy(lines = config.lines.toMutableList().apply { if (n == null) removeAt(i) else this[i] = n }))
-        val items = mutableListOf(
-            N9Sheet.Item("Add an item") { pickItem { set(l.copy(parts = l.parts + it)) } },
-            N9Sheet.Item("Add words") { ask("Words", "") { set(l.copy(parts = l.parts + StandbyConfig.Part.Text(it))) } },
+        val items = mutableListOf(N9Sheet.Item("Add an item") { pickItem { set(l.copy(parts = l.parts + it)) } })
+        // Words go before or after an item and show only with it (2026-11-23, in place of loose words).
+        l.parts.forEachIndexed { k, p ->
+            if (p !is StandbyConfig.Part.Item) return@forEachIndexed
+            val around = listOf(p.prefix, p.suffix).filter { it.isNotEmpty() }.joinToString(" … ") { "“$it”" }
+            items += N9Sheet.Item("Words around ${StandbyItems.label(p.id)}", around.ifEmpty { "None" }) {
+                words(StandbyItems.label(p.id), p.prefix, p.suffix) { pre, post ->
+                    set(l.copy(parts = l.parts.toMutableList().apply { this[k] = p.copy(prefix = pre, suffix = post) }))
+                }
+            }
+        }
+        items += listOf(
             N9Sheet.Item("When empty", l.empty.ifBlank { "Hide the line" }) { ask("When its items are empty, show", l.empty) { set(l.copy(empty = it)) } },
         )
         if (l.parts.size > 1) items += N9Sheet.Item("Remove the last piece") { set(l.copy(parts = l.parts.dropLast(1))) }
@@ -184,6 +205,15 @@ class StandbySettingsActivity : Activity() {
 
     private fun pickItem(done: (StandbyConfig.Part) -> Unit) =
         N9Sheet.choose(this, "Add an item", StandbyItems.ALL.map { it.label }, -1) { done(StandbyConfig.Part.Item(StandbyItems.ALL[it].id)) }
+
+    /** The words before and after an item. Spaces count: "Battery: " then the level. */
+    private fun words(item: String, pre: String, post: String, done: (String, String) -> Unit) {
+        fun field(hint: String, v: String) = EditText(this).apply { this.hint = hint; setText(v); isSingleLine = true; contentDescription = hint }
+        val before = field("Before", pre); val after = field("After", post)
+        AlertDialog.Builder(this).setTitle(item).setView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(20f), dp(8f), dp(20f), 0); addView(before); addView(after)
+        }).setPositiveButton("Done") { _, _ -> done(before.text.toString(), after.text.toString()) }.setNegativeButton("Cancel", null).show()
+    }
 
     private fun ask(title: String, value: String, done: (String) -> Unit) {
         val f = EditText(this).apply { setText(value); setSelection(value.length); isSingleLine = true }

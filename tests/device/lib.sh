@@ -213,3 +213,5 @@ set_zen() { adb shell cmd notification set_dnd $(echo "$1" | sed 's/^1$/priority
 # for their duration. The runner's silent ringer and the test channel's lack of sound keep it quiet.
 peeks_on() { _zen_peek=$(sh_ settings get global zen_mode); set_zen 0; }
 peeks_off() { set_zen "${_zen_peek:-2}"; }
+# Puts a secure setting back as a test found it: deleted again when it was not there (a new extra's key).
+put_back() { if [ "$2" = null ] || [ -z "$2" ]; then sh_ settings delete secure "$1" >/dev/null; else sh_ settings put secure "$1" "$2"; fi; }

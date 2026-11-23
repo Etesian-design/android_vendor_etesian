@@ -19,7 +19,7 @@ for x in iio.imiter('/tmp/claude-1000/dm.mp4'):
   for i in range(m.shape[0]):
     st=np.flatnonzero(d[i]==1); en=np.flatnonzero(d[i]==-1)
     if len(st) and (en-st).max()>=w//4: rows.append(i)
-  ys.append(int(np.mean(rows)) if rows else -1)
+  ys.append(max(rows) if rows else -1)  # the lowest blue band: Brightness (the selected Silent segment is blue too)
 # Only the menu's own bar: from its first frame until it has left the screen.
 s=next((i for i,y in enumerate(ys) if y>=0), len(ys)); e=next((i for i in range(s,len(ys)) if ys[i]<0), len(ys))
 seen=ys[s:e]

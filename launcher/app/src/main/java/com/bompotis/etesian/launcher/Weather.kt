@@ -155,12 +155,13 @@ object Weather {
     }
 
     /** WMO weather interpretation codes, as Open-Meteo reports them. */
-    /** For the optional lock screen weather line (SystemUI KeyguardSliceViewSection): "code|day|temp|unit|place". */
+    /** For the optional lock screen weather line (SystemUI KeyguardSliceViewSection, which reads the first five) and the
+     *  standby screen: "code|day|temp|unit|place|description". */
     const val SETTING_NOW = "etesian_weather_now"
     const val SETTING_LOCK = "etesian_lock_weather"
 
     private fun publish(ctx: Context, now: Now) {
-        val v = "${now.code}|${if (now.day) 1 else 0}|${now.temperature}|${now.unit}|${now.place.orEmpty()}"
+        val v = "${now.code}|${if (now.day) 1 else 0}|${now.temperature}|${now.unit}|${now.place.orEmpty().replace('|', ' ')}|${now.description}"
         runCatching {
             val cr = ctx.contentResolver
             if (android.provider.Settings.Secure.getString(cr, SETTING_NOW) != v) android.provider.Settings.Secure.putString(cr, SETTING_NOW, v)

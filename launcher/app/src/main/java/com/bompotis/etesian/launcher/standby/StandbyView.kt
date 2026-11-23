@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import com.bompotis.etesian.launcher.WeatherIcon
 import android.view.View
 import com.bompotis.etesian.launcher.N9
 
@@ -41,6 +42,10 @@ class StandbyView(ctx: Context) : View(ctx) {
     private class BarRow(val pct: Int, override val w: Float, override val h: Float) : Row()
     private class GlyphRow(override val w: Float, override val h: Float) : Row()
     private class IconsRow(override val w: Float, override val h: Float) : Row()
+    /** A line with the weather in it: the Events view's weather picture, then the line's text. */
+    private class WeatherRow(val icon: Drawable, val text: String, val paint: Paint, val size: Float, override val h: Float) : Row() {
+        override val w = size + size * 0.3f + paint.measureText(text)
+    }
     private class Gap(override val h: Float) : Row() { override val w = 0f }
 
     private fun rows(): List<Row> {
@@ -65,8 +70,16 @@ class StandbyView(ctx: Context) : View(ctx) {
                 if (pct != null) { out += BarRow(pct, 113 * d, lineH) } else if (l.empty.isNotBlank()) out += TextRow(l.empty, linePaint, lineH)
                 continue
             }
-            val text = StandbyItems.text(l, values) ?: l.empty
-            if (text.isNotBlank()) out += TextRow(text, linePaint, lineH)
+            val text = StandbyItems.text(l, values)
+            val sky = values[StandbyItems.WEATHER]?.split('|')
+            if (text != null && sky != null && sky.size >= 3 && l.parts.any { (it as? StandbyConfig.Part.Item)?.id == StandbyItems.WEATHER }) {
+                val size = linePaint.textSize * 1.9f
+                val icon = WeatherIcon(sky[0].toIntOrNull() ?: -1, sky[1] != "0").apply {
+                    colorFilter = android.graphics.PorterDuffColorFilter(c.color, android.graphics.PorterDuff.Mode.SRC_IN) }
+                out += WeatherRow(icon, text, linePaint, size, maxOf(lineH, size * 1.15f))
+                continue
+            }
+            (text ?: l.empty).takeIf { it.isNotBlank() }?.let { out += TextRow(it, linePaint, lineH) }
         }
         if (c.icons && icons.isNotEmpty()) { out += Gap(12 * d); out += IconsRow(iconsWidth(), 22 * d) }
         return out
@@ -98,6 +111,11 @@ class StandbyView(ctx: Context) : View(ctx) {
                     c.drawRect(x, top, x + r.w * r.pct / 100f, top + 6 * d, fill)
                 }
                 is GlyphRow -> drawBattery(c, x, y, r.w, r.h)
+                is WeatherRow -> {
+                    val top = (y + (r.h - r.size) / 2).toInt()
+                    r.icon.setBounds(x.toInt(), top, (x + r.size).toInt(), top + r.size.toInt()); r.icon.draw(c)
+                    c.drawText(r.text, x + r.size * 1.3f, y + r.h * 0.5f - (r.paint.ascent() + r.paint.descent()) / 2, r.paint)
+                }
                 is IconsRow -> {
                     var ix = x
                     for ((icon, n) in icons) {

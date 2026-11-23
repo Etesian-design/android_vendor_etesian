@@ -72,12 +72,14 @@ class LoadingRing private constructor(private val view: View) : Drawable() {
         private const val ARC = 0.3f
         private const val TIMEOUT = 10_000L
 
-        fun start(on: View): LoadingRing = LoadingRing(on).also { ring ->
+        /** [color]: the arc's (white on icons); [timeout]: how long it runs at most, 0 for until [stop]. */
+        fun start(on: View, color: Int = 0xFFFFFFFF.toInt(), timeout: Long = TIMEOUT): LoadingRing = LoadingRing(on).also { ring ->
             // On the icon's own edge: the overlay is clipped to the view.
+            ring.paint.color = color
             ring.setBounds(0, 0, on.width, on.height)
             on.overlay.add(ring)
             ring.animator.start()
-            on.postDelayed(ring.timeout, TIMEOUT)
+            if (timeout > 0) on.postDelayed(ring.timeout, timeout)
         }
     }
 }

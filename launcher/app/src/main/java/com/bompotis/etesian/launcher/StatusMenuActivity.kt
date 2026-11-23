@@ -132,6 +132,8 @@ class StatusMenuActivity : Activity() {
         "icon-m-image-edit-rotate-right" -> R.drawable.tb_rotate
         "icon-m-etesian-record" -> R.drawable.bc_glyph_record
         "icon-m-common-location" -> R.drawable.bc_glyph_location
+        "icon-m-energy-management-battery" -> R.drawable.bc_glyph_battery
+        "icon-m-etesian-hotspot" -> R.drawable.bc_glyph_hotspot
         "icon-m-status-menu-settings" -> R.drawable.ic_set_system
         "icon-m-status-menu-profile-silent" -> R.drawable.bc_glyph_silent
         "icon-m-status-menu-profile-beep", "icon-m-status-menu-profile-loud" -> R.drawable.tb_volume
@@ -158,7 +160,7 @@ class StatusMenuActivity : Activity() {
         if (Extras.on(this, Extras.PRIVACY)) privacyRow()?.let { panel.addView(it) }
         recordingRow()?.let { panel.addView(it) }
         ongoingRows().forEach { panel.addView(it) }
-        listOf("wifi", "data", "bt", "flight", "torch", "rotate").forEach { addRow(it) }
+        listOf("wifi", "data", "bt", "flight", "rotate").forEach { addRow(it) }
         panel.addView(BrightnessBar(this))
         // No Settings button: the N9 status menu never had one (Settings is an app).
     }
@@ -188,7 +190,7 @@ class StatusMenuActivity : Activity() {
         "bt" -> Toggle("icon-m-bluetooth", "bt", "Bluetooth", { if (btOn()) "On" else "Off" }, ::btOn, {
             @Suppress("DEPRECATION", "MissingPermission")
             getSystemService(BluetoothManager::class.java).adapter?.let { if (it.isEnabled) it.disable() else it.enable() }
-        }, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+        }, Intent("android.settings.BLUETOOTH_DASHBOARD_SETTINGS"))
         "flight" -> Toggle("icon-m-status-menu-flight-mode", "flight", "Flight mode", { if (flight()) "On" else "Off" }, ::flight, {
             runCatching {
                 val cm = getSystemService(android.net.ConnectivityManager::class.java)
@@ -200,7 +202,12 @@ class StatusMenuActivity : Activity() {
         })
         "rotate" -> Toggle("icon-m-image-edit-rotate-right", "rotate", "Auto-rotate", { if (rotate()) "On" else "Off" }, ::rotate, {
             Settings.System.putInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, if (rotate()) 0 else 1)
-        }, Intent(Settings.ACTION_DISPLAY_SETTINGS))
+        }, settingsOr("android.settings.AUTO_ROTATE_SETTINGS", Settings.ACTION_DISPLAY_SETTINGS))
+        // Rows only (no tile): shortcuts to their pages.
+        "battery" -> Toggle("icon-m-energy-management-battery", "battery", "Battery", ::batteryStatus, { false }, {},
+            Intent(Intent.ACTION_POWER_USAGE_SUMMARY))
+        "hotspot" -> Toggle("icon-m-etesian-hotspot", "hotspot", "Hotspot", { if (hotspotOn()) "On" else "Off" }, ::hotspotOn, {},
+            Intent("android.settings.TETHER_SETTINGS"))
         // Screen recorder (mock 1a): SystemUI records the whole screen, no audio; tap again stops.
         "record" -> Toggle("icon-m-etesian-record", "record", "Screen recorder", {
             if (Recorder.on(this)) "Recording \u00b7 tap to stop" else "Off"
@@ -217,6 +224,21 @@ class StatusMenuActivity : Activity() {
         }, Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
         else -> null
     }
+
+    /** [action]'s page, or [fallback]'s where this Settings has no such page. */
+    private fun settingsOr(action: String, fallback: String) =
+        Intent(action).takeIf { it.resolveActivity(packageManager) != null } ?: Intent(fallback)
+
+    private fun batteryStatus(): String {
+        val i = registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return ""
+        val pct = i.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) * 100 / i.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
+        val charging = i.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0) != 0
+        return if (charging) "$pct% \u00b7 Charging" else "$pct%"
+    }
+
+    private fun hotspotOn() = runCatching {
+        getSystemService(WifiManager::class.java).let { it.javaClass.getMethod("isWifiApEnabled").invoke(it) as Boolean }
+    }.getOrDefault(false)
 
     private fun locationOn() = runCatching { getSystemService(android.location.LocationManager::class.java).isLocationEnabled }.getOrDefault(false)
 
@@ -399,6 +421,8 @@ class StatusMenuActivity : Activity() {
 
     private companion object {
         const val MOCK = 1.36f; const val DIM = 0xA6000000.toInt(); const val ADD_GREEN = 0xFF5CA834.toInt(); const val SEL = 0xFF4A9BFF.toInt(); const val UNSEL = 0xFF23436E.toInt(); const val UNSEL_TEXT = 0xFF8A9BB4.toInt()
+        /** The status menu's notifications: the newest few; the rest are in Events. */
+        const val MAX_NOTIFICATIONS = 5
     }
 
     /** Screen brightness: the same flat bar as Volume, N9 Settings blue (mock 1a). */
@@ -506,6 +530,7 @@ class StatusMenuActivity : Activity() {
         id == StatusLayout.VOLUME -> VolumeBar(this, showProfile = false, showVolume = true)
         id == StatusLayout.STRIP -> strip()
         id == StatusLayout.MUSIC -> if (Extras.on(this, Extras.MUSIC)) SmallMusic(this) else null
+        id == StatusLayout.NOTIFICATIONS -> if (Extras.on(this, Extras.STATUS_NOTIFICATIONS)) NotificationsBlock() else null
         id == "brightness" -> SliderBlock("Brightness", N9.ACCENT, {
             Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128) / 255f
         }) { f ->
@@ -532,6 +557,72 @@ class StatusMenuActivity : Activity() {
         }
         else -> null
     }
+
+    /**
+     * The notifications (Android extras → Notifications in the status menu): the newest few of the apps chosen for it
+     * (all apps when none are), each as Events shows one: the app's squircle, title and text; a tap opens it. In edit
+     * mode a tap on the block picks its apps, apart from Events' own settings.
+     */
+    private inner class NotificationsBlock : LinearLayout(this@StatusMenuActivity) {
+        private val list = LinearLayout(context).apply { orientation = VERTICAL }
+        private val listener: () -> Unit = { post { fill() } }
+        init {
+            orientation = VERTICAL
+            contentDescription = "Notifications"
+            addView(sectionLabel("Notifications"))
+            addView(list)
+            if (editing) setOnClickListener { pickApps() }
+            fill()
+        }
+        override fun onAttachedToWindow() { super.onAttachedToWindow(); if (!editing) EventsStore.addListener(listener) }
+        override fun onDetachedFromWindow() { EventsStore.removeListener(listener); super.onDetachedFromWindow() }
+
+        private fun fill() {
+            list.removeAllViews()
+            val apps = StatusLayout.notificationApps(context)
+            if (editing) {
+                list.addView(note(if (apps.isEmpty()) "All apps \u00b7 tap to choose" else "${apps.size} apps \u00b7 tap to choose"))
+                return
+            }
+            val shown = StatusLayout.notifications(EventsStore.items, apps)
+            if (shown.isEmpty()) { list.addView(note("No notifications")); return }
+            shown.take(MAX_NOTIFICATIONS).forEach { e -> list.addView(notificationRow(e)) }
+            if (shown.size > MAX_NOTIFICATIONS) list.addView(note("${shown.size - MAX_NOTIFICATIONS} more in Events"))
+        }
+
+        /** One notification, the size of the other rows: the app's own (squircle) icon, its title and text. */
+        private fun notificationRow(e: EventItem) = LinearLayout(context).apply {
+            gravity = Gravity.CENTER_VERTICAL; minimumHeight = mp(60f)
+            setPadding(mp(8f), 0, 0, 0)
+            contentDescription = "Notification ${e.title}"
+            addView(ImageView(context).apply { AppRepository.iconFor(context, e.pkg)?.let { setImageBitmap(it) } },
+                LinearLayout.LayoutParams(mp(46f), mp(46f)).apply { marginEnd = mp(14f) })
+            addView(LinearLayout(context).apply {
+                orientation = VERTICAL
+                addView(TextView(context).apply { text = e.title.ifBlank { appLabel(e.pkg) }; setTextColor(N9.TEXT); textSize = ms(18f)
+                    typeface = N9.FONT_BOLD; includeFontPadding = false; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
+                if (e.text.isNotBlank()) addView(TextView(context).apply { text = e.text; setTextColor(0xFFA0A0A0.toInt()); textSize = ms(15f)
+                    typeface = N9.FONT; includeFontPadding = false; setPadding(0, mp(3f), 0, 0); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
+            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            setOnClickListener { EventsStore.open(context, e); close() }
+        }
+
+        private fun note(t: String) = TextView(context).apply {
+            text = t; setTextColor(0xFFA0A0A0.toInt()); textSize = ms(15f); typeface = N9.FONT; setPadding(mp(8f), mp(4f), 0, mp(8f))
+        }
+    }
+
+    /** The apps the status menu's notifications come from: those with notifications now, and those picked before. */
+    private fun pickApps() {
+        val chosen = StatusLayout.notificationApps(this)
+        val pkgs = (EventsStore.items.map { it.pkg } + chosen).distinct().sortedBy { appLabel(it).lowercase() }
+        if (pkgs.isEmpty()) { android.widget.Toast.makeText(this, "No app has notifications yet", android.widget.Toast.LENGTH_SHORT).show(); return }
+        N9Sheet.chooseMany(this, "Notifications from", pkgs.map { appLabel(it) }, pkgs.indices.filter { pkgs[it] in chosen }.toSet()) { picked ->
+            StatusLayout.setNotificationApps(this, picked.map { pkgs[it] }.toSet()); build()
+        }
+    }
+
+    private fun appLabel(pkg: String) = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
 
     /** A flat N9 slider block: label above, a filled bar, no knob; drag or tap anywhere. */
     private inner class SliderBlock(label: String, color: Int, level: () -> Float, set: (Float) -> Unit) : LinearLayout(this@StatusMenuActivity) {
@@ -866,9 +957,11 @@ class StatusMenuActivity : Activity() {
     private fun available(): List<Pair<String, String>> {
         val have = StatusLayout.blocks(this)
         val avail = mutableListOf<Pair<String, String>>()
+        if (Extras.on(this, Extras.STATUS_NOTIFICATIONS) && StatusLayout.NOTIFICATIONS !in have)
+            avail += StatusLayout.NOTIFICATIONS to "List"
         listOf(StatusLayout.PROFILE, StatusLayout.VOLUME).filter { it !in have }.forEach { avail += it to "Slider" }
         StatusLayout.SLIDERS.filter { it !in have }.forEach { avail += it to "Slider" }
-        StatusLayout.TOGGLES.map { "row:$it" }.filter { it !in have }.forEach { avail += it to "Row" }
+        StatusLayout.ROWS.map { "row:$it" }.filter { it !in have }.forEach { avail += it to "Shortcut" }
         return avail
     }
 

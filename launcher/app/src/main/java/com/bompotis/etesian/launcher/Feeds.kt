@@ -99,7 +99,16 @@ object Feeds {
     fun items(ctx: Context): List<Item> { init(ctx); return items }
 
     /** What the Events view lists: only the unread ones (read ones leave it; the widgets keep them). */
-    fun forEvents(items: List<Item>): List<Item> = items.filter { !it.read }
+    fun forEvents(items: List<Item>, hidden: Set<String> = emptySet()): List<Item> = items.filter { !it.read && it.feedUrl !in hidden }
+
+    /** The feeds the user keeps out of Events (still followed, and read in the Feeds app), as on the N9: Events →
+     *  long press a feed post → Feed settings → which sites show (2026-11-23). */
+    const val HIDDEN_IN_EVENTS = "events_hidden_feeds"
+    fun hiddenInEvents(ctx: Context): Set<String> = Prefs.of(ctx).getStringSet(HIDDEN_IN_EVENTS, null).orEmpty()
+    fun setShownInEvents(ctx: Context, url: String, shown: Boolean) {
+        val now = hiddenInEvents(ctx).toMutableSet().apply { if (shown) remove(url) else add(url) }
+        Prefs.of(ctx).edit().putStringSet(HIDDEN_IN_EVENTS, now).apply()
+    }
 
     /** Asks the app to refresh; with [force] false only if its last refresh is old. */
     fun refresh(ctx: Context, force: Boolean, done: (() -> Unit)? = null) {

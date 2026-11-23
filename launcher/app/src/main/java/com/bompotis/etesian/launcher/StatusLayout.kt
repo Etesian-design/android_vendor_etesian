@@ -9,13 +9,27 @@ import androidx.preference.PreferenceManager
  * stay visible and how the hidden ones are revealed. Only used while the extra is on.
  */
 object StatusLayout {
-    /** Rows and strip tiles share these ids. */
+    /** The strip's tiles: switches. */
     val TOGGLES = listOf("wifi", "data", "bt", "flight", "torch", "rotate", "location", "record")
+    /** Rows: as on the N9, each a shortcut to its own settings page, its title saying which, never a switch (the strip
+     *  switches). Flashlight and the recorder have no page, so they are tiles only (2026-11-23 audit). */
+    val ROWS = listOf("wifi", "data", "bt", "flight", "rotate", "location", "battery", "hotspot")
     val SLIDERS = listOf("brightness", "alarm")
     const val STRIP = "strip"
     const val PROFILE = "profile"
     const val VOLUME = "volume"
     const val MODES = "modes"
+    /** The notifications themselves (Android extras → Notifications in the status menu), for people who look for them
+     *  under the status bar; its own choice of apps, apart from Events (2026-11-23). Off unless added. */
+    const val NOTIFICATIONS = "notifications"
+    private const val NOTIFICATION_APPS = "status_notification_apps"
+    /** The apps whose notifications the block shows; empty: every app. */
+    fun notificationApps(ctx: Context): Set<String> = sp(ctx).getStringSet(NOTIFICATION_APPS, null).orEmpty()
+    fun setNotificationApps(ctx: Context, apps: Set<String>) = sp(ctx).edit().putStringSet(NOTIFICATION_APPS, apps).apply()
+    /** What the block lists: newest first, only the chosen apps' when some are chosen. */
+    fun notifications(items: List<EventItem>, apps: Set<String>): List<EventItem> =
+        items.filter { apps.isEmpty() || it.pkg in apps }.sortedByDescending { it.time }
+
     /** The small music widget (Music extra); first by default, as in mock 07. */
     const val MUSIC = "music"
 
@@ -35,7 +49,7 @@ object StatusLayout {
 
     fun blocks(ctx: Context): List<String> = list(ctx, BLOCKS, DEFAULT_BLOCKS).let { b ->
         // The strip is never removed (its ✎ brings toggles back), only moved.
-        val s = if (STRIP in b) b else b + STRIP
+        val s = (if (STRIP in b) b else b + STRIP).filter { !it.startsWith("row:") || it.removePrefix("row:") in ROWS }
         // The music widget follows its extra: always in the list, so it can be moved like any block.
         if (MUSIC in s) s else listOf(MUSIC) + s
     }
@@ -50,10 +64,11 @@ object StatusLayout {
     fun reveal(ctx: Context) = sp(ctx).getString(REVEAL, "both")!!
 
     fun title(id: String): String = when (id) {
-        PROFILE -> "Profile"; VOLUME -> "Volume"; STRIP -> "Toggles"; MUSIC -> "Music"; MODES -> "Mode strip"
+        NOTIFICATIONS -> "Notifications"; PROFILE -> "Profile"; VOLUME -> "Volume"; STRIP -> "Toggles"; MUSIC -> "Music"; MODES -> "Mode strip"
         "brightness" -> "Brightness"; "alarm" -> "Alarm volume"
         "wifi" -> "Internet connection"; "data" -> "Mobile data"; "bt" -> "Bluetooth"; "flight" -> "Flight mode"
         "torch" -> "Flashlight"; "rotate" -> "Auto-rotate"; "location" -> "Location"; "record" -> "Screen recorder"
+        "battery" -> "Battery"; "hotspot" -> "Hotspot"
         else -> if (id.startsWith("row:")) title(id.removePrefix("row:")) else id
     }
 }

@@ -32,7 +32,12 @@ class StandbyDream : DreamService() {
         runCatching { update(move = true) }.onFailure { Log.w(TAG, "update failed", it) }
         main.postDelayed({ if (wake.isHeld) wake.release() }, 500)
     }
-    private val events: () -> Unit = { main.post { if (::view.isInitialized) runCatching { update(move = false) } } }
+    // New notifications' icons as they come, unless the user keeps them for the slower updates.
+    private val events: () -> Unit = { main.post { if (::view.isInitialized) runCatching { view.icons = icons() } } }
+
+    /** Everything but the clock, as last read, and when (the user's interval keeps the device asleep in between). */
+    private var data: Map<String, String> = emptyMap()
+    private var dataAt = 0L
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -49,12 +54,13 @@ class StandbyDream : DreamService() {
     override fun onDreamingStarted() {
         super.onDreamingStarted()
         schedule()
+        dataAt = 0L
         runCatching { update(move = true) }.onFailure { Log.w(TAG, "update failed", it) }
         runCatching {
             setDozeScreenState(Display.STATE_DOZE)
             startDozing()
         }.onFailure { Log.w(TAG, "could not doze", it) }
-        EventsStore.addListener(events)
+        if (StandbyConfig.load(this).liveIcons) EventsStore.addListener(events)
         Log.i(TAG, "standby on")
     }
 
@@ -71,10 +77,15 @@ class StandbyDream : DreamService() {
         alarms?.setExact(AlarmManager.RTC_WAKEUP, now - now % 60_000 + 60_000, "etesian:standby", tick, main)
     }
 
+    /** The clock every minute; the rest (and the notification icons, unless live) at the user's interval, so most
+     *  minutes only format the time: no media, network, battery or system reads. */
     private fun update(move: Boolean) {
-        view.config = StandbyConfig.load(this)
-        view.values = StandbyItems.values(this)
-        view.icons = icons()
+        val c = StandbyConfig.load(this)
+        view.config = c
+        val now = System.currentTimeMillis()
+        val due = dataAt == 0L || (c.refresh > 0 && now - dataAt >= c.refresh * 60_000L - 5_000)
+        if (due) { data = StandbyItems.values(this, now); dataAt = now; view.icons = icons() }
+        view.values = data + StandbyItems.clock(this, now)
         if (move) { view.fx = Random.nextFloat(); view.fy = Random.nextFloat() }
         view.invalidate()
     }

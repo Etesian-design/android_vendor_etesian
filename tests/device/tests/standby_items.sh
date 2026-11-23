@@ -4,13 +4,17 @@
 # removes it.
 unlock
 old=$(sh_ settings get secure etesian_standby); ring=$(sh_ settings get global mode_ringer | sed 's/0/SILENT/;s/1/VIBRATE/;s/2/NORMAL/')
-ITEMS="time date_compact date_full song_artist song_title song network connection ip battery battery_bar battery_state profile alarm uptime ram load storage"
+ITEMS="time date_compact date_full song_artist song_title song network connection ip battery battery_bar battery_state profile alarm uptime ram load storage weather temperature conditions place"
+# Weather items (2026-11-23) read the Events view's last reading; a known one stands in for the test.
+wnow=$(sh_ settings get secure etesian_weather_now)
+sh_ "settings put secure etesian_weather_now '61|0|12|°C|Testville|Rain'"
 parts=$(for i in $ITEMS; do printf '{"empty":"","parts":[{"t":"%s: "},{"i":"%s"}]},' $i $i; done)
 sh_ "settings put secure etesian_standby '{\"lines\":[${parts%,}]}'"
 dump() { command adb logcat -c; sh_ am broadcast -n $LAUNCHER/.TestNotifyReceiver --es kind standby >/dev/null; sleep 2
   command adb logcat -d -s EtesianStandbyTest:I | sed -E 's/.*EtesianStandbyTest: //' | tr -d '\r'; }
 out=$(dump); echo "$out" | sed 's/^/       /'
-check "the receiver logged every item and line" 'echo "$out" | grep -q "^done$" && [ $(echo "$out" | grep -c "^item ") = 18 ] && [ $(echo "$out" | grep -c "^line ") = 18 ]'
+check "the receiver logged every item and line" 'echo "$out" | grep -q "^done$" && [ $(echo "$out" | grep -c "^item ") = 22 ] && [ $(echo "$out" | grep -c "^line ") = 22 ]'
+check "weather items from the Events view's reading" 'echo "$out" | grep -q "^item temperature=12°C$" && echo "$out" | grep -q "^item conditions=Rain$" && echo "$out" | grep -q "^item place=Testville$"'
 # Song and alarm are empty with nothing playing / no alarm set; the network name with no SIM.
 for i in $ITEMS; do
   case $i in song*|alarm|network) continue;; esac
@@ -18,6 +22,12 @@ for i in $ITEMS; do
   check "item $i has a value (\"$v\")" '[ -n "$v" ]'
 done
 check "a line with a value reads as the words then the value (time)" 'echo "$out" | grep -q "^line 0=time: [0-9]"'
+# Words before and after an item (2026-11-23): shown with the item, gone with it.
+sh_ "settings put secure etesian_standby '{\"lines\":[{\"parts\":[{\"i\":\"battery\",\"pre\":\"Battery: \",\"post\":\"%\"}]},{\"parts\":[{\"i\":\"battery\"},{\"i\":\"alarm\",\"pre\":\" · alarm \"}]},{\"parts\":[{\"i\":\"weather\",\"pre\":\"Now \"}]}]}'"
+out=$(dump)
+check "an item's words go round it ($(echo "$out" | grep '^line 0='))" 'echo "$out" | grep -qE "^line 0=Battery: [0-9]+%$"'
+check "an empty item takes its words with it ($(echo "$out" | grep '^line 1='))" 'echo "$out" | grep -qE "^line 1=[0-9]+( · alarm .+)?$"'
+check "the weather reads as its temperature in text ($(echo "$out" | grep '^line 2='))" 'echo "$out" | grep -q "^line 2=Now 12°C$"'
 for m in SILENT:Silent VIBRATE:Beep NORMAL:Ringing; do
   sh_ cmd audio set-ringer-mode ${m%%:*} >/dev/null 2>&1; sleep 1
   p=$(dump | grep "^item profile=" | cut -d= -f2-)
@@ -41,6 +51,22 @@ check "+ and an item add a line ($n1 lines; saved: $(echo "$cfg" | grep -o '"i":
 tapd "Line 2"; sleep 1.2; tap_text "Remove the line"; sleep 1.5
 n2=$(lines); cfg=$(sh_ settings get secure etesian_standby)
 check "the line's sheet removes it ($n2 lines)" '[ "$n2" = 1 ] && ! echo "$cfg" | grep -q "\"i\":\"battery\""'
+# The line's sheet sets the words around an item (no loose words any more).
+tapd "Line 1"; sleep 1.2
+check "no loose words in the line's sheet" '! xmlw | grep -q "text=\"Add words\""'
+tap_text "Words around Time"; sleep 1.2
+set -- $(xmlw | tr '>' '\n' | grep 'content-desc="Before"' | grep -o 'bounds="[^"]*"' | head -1 | tr -cs '0-9' ' ')
+sh_ input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); sleep 0.5; sh_ input text "At%s"; sleep 0.5
+tap_text DONE; sleep 1.5; cfg=$(sh_ settings get secure etesian_standby)
+check "the words before an item are saved ($cfg)" 'echo "$cfg" | grep -q "\"pre\":\"At \""'
+check "and shown on its chip" 'xmlw | grep -q "text=\"“At ” Time\""'
+# Battery: the other items' interval.
+for _ in 1 2 3; do xmlw | grep -q 'content-desc="Update the other items"' && break; sh_ input swipe 540 1700 540 500 300; sleep 0.8; done
+tapd "Update the other items"; sleep 1.2; tap_text "Every 15 minutes"; sleep 1.5; shot standby_battery
+cfg=$(sh_ settings get secure etesian_standby)
+check "the update interval is saved ($cfg)" 'echo "$cfg" | grep -q "\"refresh\":15"'
+check "and shown" 'xmlw | grep -q "text=\"Every 15 minutes\""'
 check "launcher did not crash" '! crashed $LAUNCHER'
+if [ "$wnow" = null ]; then sh_ settings delete secure etesian_weather_now >/dev/null; else sh_ "settings put secure etesian_weather_now '$wnow'"; fi
 if [ "$old" = null ]; then sh_ settings delete secure etesian_standby >/dev/null; else sh_ "settings put secure etesian_standby '$old'"; fi
 home

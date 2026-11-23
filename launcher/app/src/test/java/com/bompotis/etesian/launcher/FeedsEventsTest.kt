@@ -15,6 +15,13 @@ class FeedsEventsTest {
     }
 
     @Test
+    fun feedsTheUserHidFromEventsStayOut() {
+        val other = Feeds.Item("https://other.org/feed", "Other", "Post 4", "", "https://other.org/4", 0L, "4")
+        val all = listOf(item("1", false), other)
+        assertEquals(listOf("4"), Feeds.forEvents(all, hidden = setOf("https://example.org/feed")).map { it.id })
+    }
+
+    @Test
     fun itemsDefaultToUnread() {
         // An older Feeds app without the "read" column: everything still shows.
         val old = Feeds.Item("u", "t", "title", "", "", 0L, "x")

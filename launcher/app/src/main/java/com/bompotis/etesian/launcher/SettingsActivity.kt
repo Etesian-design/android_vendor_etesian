@@ -464,7 +464,7 @@ class SettingsActivity : AppCompatActivity() {
                 "Private space" to "apps", "Under the clock" to "lock", "Emergency information" to "emergency",
                 "Medical details" to "emergency", "Emergency contacts" to "emergency", "Share sheet" to "sharing",
                 "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed",
-                "Feeds" to "feeds", "Notifications shown as feeds" to "feeds")
+                "Feeds" to "feeds", "Feeds shown in Events" to "feeds", "Notifications shown as feeds" to "feeds")
             if (section in PREVIEWS) screen.addPreference(SettingsPreview.Row(ctx, section!!))
             val hidden = preferenceManager.createPreferenceScreen(ctx)
             fun category(title: String) = PreferenceCategory(ctx).apply {
@@ -945,6 +945,22 @@ class SettingsActivity : AppCompatActivity() {
                 setOnPreferenceChangeListener { _, v -> Feeds.setInterval(ctx, (v as String).toInt()); true }
                 feeds.addPreference(this)
             }
+            // Which of the followed sites Events shows; the rest stay in the Feeds app.
+            val shownFeeds = category("Feeds shown in Events")
+            if (section == "feeds") {
+                val all = Feeds.feeds(ctx)
+                val off = Feeds.hiddenInEvents(ctx)
+                if (all.isEmpty()) shownFeeds.addPreference(Preference(ctx).apply {
+                    title = "None"; summary = "Feeds you follow in the Feeds app are listed here"; isSelectable = false; isIconSpaceReserved = false
+                })
+                all.forEach { f ->
+                    shownFeeds.addPreference(SwitchPreferenceCompat(ctx).apply {
+                        title = f.title.ifBlank { f.url }; summary = android.net.Uri.parse(f.url).host ?: f.url
+                        isIconSpaceReserved = false; isPersistent = false; isChecked = f.url !in off
+                        setOnPreferenceChangeListener { _, v -> Feeds.setShownInEvents(ctx, f.url, v as Boolean); true }
+                    })
+                }
+            }
             val asFeeds = category("Notifications shown as feeds")
             if (section == "feeds") {
                 val sections = setOf(EventsClassifier.Section.FEED, EventsClassifier.Section.HIDDEN)
@@ -1004,6 +1020,8 @@ class SettingsActivity : AppCompatActivity() {
                 status.addPreference(this)
             }
             extra(status, Extras.MUSIC, "Music", "The small music player at the top")
+            extra(status, Extras.STATUS_NOTIFICATIONS, "Notifications", "A Notifications block to add in edit mode; tap it there to pick its apps, apart from Events")
+            extra(status, Extras.ANDROID_SHADE, "Android’s notification shade", "Swiping down from the top opens Android’s notifications and quick settings instead; no swipe down to close apps")
             extra(status, Extras.MODES, "Do Not Disturb and Modes", "A Mode strip under Profile")
             extra(status, Extras.PRIVACY, "Privacy indicators", "Camera and microphone in use, in the status bar")
 

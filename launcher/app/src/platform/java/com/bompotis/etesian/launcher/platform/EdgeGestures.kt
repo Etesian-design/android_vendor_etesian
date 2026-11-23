@@ -204,7 +204,11 @@ class EdgeGestures(private val ctx: Context) {
         val x = e.rawX
         val y = e.rawY
         val n9 = n9Mode()
+        // Android extras → Android's notification shade: the top edge is Android's again, on the lock screen too: no
+        // status menu tap, no swipe down to close (2026-11-23, for people used to pulling their notifications down).
+        val shade = n9 && com.bompotis.etesian.launcher.Extras.on(ctx, com.bompotis.etesian.launcher.Extras.ANDROID_SHADE)
         val candidate = when {
+            shade && y < statusBarHeight + topBand && x >= edgeWidth && x <= w - edgeWidth -> return
             // N9: the whole status bar belongs to Etesian; no notification shade.
             n9 && y < statusBarHeight -> Edge.TOP
             // A thumb coming in from the top bezel is often first seen just under the status

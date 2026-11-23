@@ -20,13 +20,18 @@ data class StandbyConfig(
     val clock: Boolean = true,
     val battery: Boolean = false,
     val icons: Boolean = true,
+    /** Minutes between updates of everything but the clock (which turns every minute); 0: only as the screen goes off. */
+    val refresh: Int = 1,
+    /** New notifications' icons as they arrive (wakes the device for each), or only with the other items. */
+    val liveIcons: Boolean = true,
 ) {
     enum class Align { LEFT, CENTRE, RIGHT }
 
-    /** One piece of a line: the user's words, or an item (its id in [StandbyItems]). */
+    /** One piece of a line: an item (its id in [StandbyItems]) with the user's words before and after it, shown only
+     *  with the item; or words on their own (older settings, still shown). */
     sealed class Part {
         data class Text(val text: String) : Part()
-        data class Item(val id: String) : Part()
+        data class Item(val id: String, val prefix: String = "", val suffix: String = "") : Part()
     }
 
     /** A line; when every item in it is empty, [empty] shows instead (the line hides when that is blank too). */
@@ -34,10 +39,14 @@ data class StandbyConfig(
 
     fun toJson(): String = JSONObject()
         .put("color", color).put("size", size).put("align", align.name)
-        .put("clock", clock).put("battery", battery).put("icons", icons)
+        .put("clock", clock).put("battery", battery).put("icons", icons).put("refresh", refresh).put("liveIcons", liveIcons)
         .put("lines", JSONArray(lines.map { l ->
             JSONObject().put("empty", l.empty).put("parts", JSONArray(l.parts.map { p ->
-                when (p) { is Part.Text -> JSONObject().put("t", p.text); is Part.Item -> JSONObject().put("i", p.id) }
+                when (p) {
+                    is Part.Text -> JSONObject().put("t", p.text)
+                    is Part.Item -> JSONObject().put("i", p.id).apply {
+                        if (p.prefix.isNotEmpty()) put("pre", p.prefix); if (p.suffix.isNotEmpty()) put("post", p.suffix) }
+                }
             }))
         })).toString()
 
@@ -46,6 +55,8 @@ data class StandbyConfig(
         const val KEY_ON = "etesian_standby_on"
         const val WHITE = 0xFFFFFFFF.toInt()
         /** The colours offered: white, N9 blue, green, amber, red (red is the kindest at night). */
+        /** The update intervals offered, minutes (0: only as the screen goes off). */
+        val REFRESH = intArrayOf(1, 5, 15, 30, 60, 0)
         val COLOURS = intArrayOf(WHITE, 0xFF3D9BF0.toInt(), 0xFF33C46B.toInt(), 0xFFF2A33A.toInt(), 0xFFE5484D.toInt())
 
         fun fromJson(s: String?): StandbyConfig {
@@ -58,13 +69,15 @@ data class StandbyConfig(
                         val l = ls.getJSONObject(i); val ps = l.optJSONArray("parts") ?: JSONArray()
                         Line((0 until ps.length()).map { j ->
                             val p = ps.getJSONObject(j)
-                            if (p.has("i")) Part.Item(p.getString("i")) else Part.Text(p.optString("t"))
+                            if (p.has("i")) Part.Item(p.getString("i"), p.optString("pre"), p.optString("post")) else Part.Text(p.optString("t"))
                         }, l.optString("empty"))
                     },
                     color = o.optInt("color", WHITE), size = o.optInt("size", 15).coerceIn(10, 28),
                     align = runCatching { Align.valueOf(o.optString("align")) }.getOrDefault(Align.CENTRE),
                     clock = o.optBoolean("clock", true), battery = o.optBoolean("battery", false),
                     icons = o.optBoolean("icons", true),
+                    refresh = o.optInt("refresh", 1).let { r -> if (r in REFRESH) r else 1 },
+                    liveIcons = o.optBoolean("liveIcons", true),
                 )
             }.getOrDefault(StandbyConfig())
         }
@@ -80,29 +93,29 @@ data class StandbyConfig(
             Settings.Secure.putInt(ctx.contentResolver, "doze_always_on", if (on) 1 else 0)
         }
 
-        private fun t(s: String) = Part.Text(s)
-        private fun i(s: String) = Part.Item(s)
+        private fun i(s: String, pre: String = "", post: String = "") = Part.Item(s, pre, post)
 
         /** One tap fills the lines. */
         val PRESETS: List<Pair<String, StandbyConfig>> = listOf(
             "The N9" to StandbyConfig(lines = listOf(Line(listOf(i("date_compact")))), align = Align.CENTRE),
+            "Weather" to StandbyConfig(lines = listOf(Line(listOf(i("date_compact"))), Line(listOf(i("weather"))))),
             "Billboard" to StandbyConfig(
                 lines = listOf(
                     Line(listOf(i("date_full"))), Line(listOf(i("ip"))),
-                    Line(listOf(t("Battery: "), i("battery"), t("%"))), Line(listOf(i("battery_bar"))),
+                    Line(listOf(i("battery", "Battery: ", "%"))), Line(listOf(i("battery_bar"))),
                     Line(listOf(i("song")), empty = "No media"),
                 ),
                 align = Align.RIGHT, battery = true, icons = false,
             ),
             "Everything" to StandbyConfig(
                 lines = listOf(
-                    Line(listOf(i("date_full"))), Line(listOf(i("song")), empty = "No media"),
-                    Line(listOf(i("network"), t(" · "), i("connection"))), Line(listOf(i("battery"), t("% "), i("battery_state"))),
-                    Line(listOf(t("Profile: "), i("profile"))), Line(listOf(t("Next alarm: "), i("alarm"))),
-                    Line(listOf(t("Up "), i("uptime"), t(" · load "), i("load"))),
-                    Line(listOf(t("Memory "), i("ram"), t(" · storage "), i("storage"))),
+                    Line(listOf(i("date_full"))), Line(listOf(i("weather"))), Line(listOf(i("song")), empty = "No media"),
+                    Line(listOf(i("network", post = " · "), i("connection"))), Line(listOf(i("battery", post = "% "), i("battery_state"))),
+                    Line(listOf(i("profile", "Profile: "))), Line(listOf(i("alarm", "Next alarm: "))),
+                    Line(listOf(i("uptime", "Up "), i("load", " · load "))),
+                    Line(listOf(i("ram", "Memory "), i("storage", " · storage "))),
                 ),
-                align = Align.CENTRE, battery = true,
+                align = Align.CENTRE, battery = true, refresh = 5,
             ),
         )
     }

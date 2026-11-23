@@ -98,6 +98,15 @@ object Glance {
         if (available(ctx)) runCatching { ctx.contentResolver.call(ROOT, "refresh", if (force) "force" else null, null) }
     }
 
+    /** Whether Glance is fetching the news now. */
+    fun refreshing(ctx: Context): Boolean = available(ctx) &&
+        runCatching { ctx.contentResolver.call(ROOT, "state", null, null)?.getBoolean("refreshing") == true }.getOrDefault(false)
+
+    /** Glance's own settings (its activity takes the read permission, which only Etesian's apps hold). */
+    fun settings(ctx: Context) = runCatching {
+        ctx.startActivity(Intent().setClassName(PACKAGE, "$PACKAGE.SettingsActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }.onFailure { android.util.Log.w("EtesianGlance", "settings", it) }.isSuccess
+
     fun fewerLike(ctx: Context, link: String) {
         if (available(ctx)) runCatching { ctx.contentResolver.call(ROOT, "fewer", link, null) }
     }

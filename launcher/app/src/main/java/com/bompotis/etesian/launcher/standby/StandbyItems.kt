@@ -39,18 +39,33 @@ object StandbyItems {
         Item("battery", "Battery %"), Item("battery_bar", "Battery bar"), Item("battery_state", "Battery state"),
         Item("profile", "Profile"), Item("alarm", "Next alarm"), Item("uptime", "Uptime"),
         Item("ram", "Memory used"), Item("load", "System load (1, 5, 15 min)"), Item("storage", "Storage used"),
+        Item("weather", "Weather (picture and temperature)"), Item("temperature", "Temperature"),
+        Item("conditions", "Weather conditions"), Item("place", "Weather place"),
     )
     const val BAR = "battery_bar"
+    /** Drawn, not text: the weather picture and the temperature. Its value is "code|day|temperature". */
+    const val WEATHER = "weather"
+    /** The items that change with the minute; the others update at the standby screen's slower interval. */
+    val CLOCK = setOf("time", "date_compact", "date_full")
+    /** The Events view's last reading (Settings.Secure, "code|day|temp|unit|place|description"); never fetched here. */
+    const val WEATHER_NOW = "etesian_weather_now"
 
     fun label(id: String) = ALL.firstOrNull { it.id == id }?.label ?: id
 
+    /** The clock and dates alone (the minute tick between slower updates). */
+    fun clock(ctx: Context, now: Long = System.currentTimeMillis()): Map<String, String> {
+        val d = Date(now)
+        return mapOf(
+            "time" to DateFormat.getTimeFormat(ctx).format(d),
+            "date_compact" to DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEdMMM"), d).toString(),
+            "date_full" to DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEEdMMMMyyyy"), d).toString(),
+        )
+    }
+
     /** Every item's value now; [now] for the clock and dates (the preview and the minute tick share it). */
     fun values(ctx: Context, now: Long = System.currentTimeMillis()): Map<String, String> {
-        val v = HashMap<String, String>()
-        val d = Date(now)
-        v["time"] = DateFormat.getTimeFormat(ctx).format(d)
-        v["date_compact"] = DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEdMMM"), d).toString()
-        v["date_full"] = DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEEdMMMMyyyy"), d).toString()
+        val v = HashMap<String, String>(clock(ctx, now))
+        weather(android.provider.Settings.Secure.getString(ctx.contentResolver, WEATHER_NOW), v)
         song(ctx, v)
         net(ctx, v)
         battery(ctx, v)
@@ -75,6 +90,18 @@ object StandbyItems {
         }
         v["load"] = load()
         return v
+    }
+
+    /** The weather items from the Events view's reading; all empty when there is none (weather off, no fix yet). */
+    fun weather(reading: String?, v: MutableMap<String, String>) {
+        val p = reading?.split('|').orEmpty()
+        val temp = p.getOrNull(2)?.toIntOrNull()
+        if (temp == null) { listOf(WEATHER, "temperature", "conditions", "place").forEach { v[it] = "" }; return }
+        val t = "$temp${p.getOrNull(3).orEmpty()}"
+        v[WEATHER] = "${p[0].toIntOrNull() ?: -1}|${p.getOrNull(1) ?: "1"}|$t"
+        v["temperature"] = t
+        v["conditions"] = p.getOrNull(5).orEmpty()
+        v["place"] = p.getOrNull(4).orEmpty()
     }
 
     /** "3 d 4 h", "4 h 12 min", "12 min". */
@@ -158,12 +185,19 @@ object StandbyItems {
         first?.removePrefix("Load:")?.trim()?.replace(" / ", " ").orEmpty()
     }.getOrDefault("")
 
+    /** An item's value as text: the weather picture's reading reads as its temperature where text is wanted. */
+    private fun display(id: String, value: String) = if (id == WEATHER) value.substringAfterLast('|') else value
+
     /** A line's text: its parts with the items' values; null when every item in it is empty (the line's "when empty"). */
     fun text(line: StandbyConfig.Line, v: Map<String, String>): String? {
         val items = line.parts.filterIsInstance<StandbyConfig.Part.Item>()
         if (items.isNotEmpty() && items.all { v[it.id].isNullOrBlank() }) return null
         return line.parts.joinToString("") { p ->
-            when (p) { is StandbyConfig.Part.Text -> p.text; is StandbyConfig.Part.Item -> v[p.id].orEmpty() }
+            when (p) {
+                is StandbyConfig.Part.Text -> p.text
+                // The words around an item come and go with it ("Next alarm: " only when one is set).
+                is StandbyConfig.Part.Item -> v[p.id].orEmpty().let { if (it.isBlank()) "" else p.prefix + display(p.id, it) + p.suffix }
+            }
         }
     }
 }

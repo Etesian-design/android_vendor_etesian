@@ -27,6 +27,9 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
     private val pull = PullRefresh(context) { android.util.Log.i("EtesianNews", "refresh: pulled"); refreshNow() }
     private val top = android.widget.LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL }
     private val adapter = Adapter()
+    private val refreshButton = topButton(R.drawable.tb_refresh, "Refresh") {
+        android.util.Log.i("EtesianNews", "refresh: button"); refreshNow()
+    }
     private var stories: List<Glance.Story> = emptyList()
     private var observer: ContentObserver? = null
     private val io = Executors.newSingleThreadExecutor()
@@ -111,13 +114,9 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         addView(pull.apply { setContent(list) }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         // Refresh and Settings beside the search bar, as in the Glance app's story list (which has no bottom bar).
         top.addView(searchBar, android.widget.LinearLayout.LayoutParams(0, dp(48f), 1f))
-        top.addView(topButton(R.drawable.tb_refresh, "Refresh") {
-            android.util.Log.i("EtesianNews", "refresh: button"); refreshNow()
-        }, android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)).apply { marginStart = dp(6f) })
-        top.addView(topButton(R.drawable.tb_settings, "Settings") {
-            runCatching { context.startActivity(android.content.Intent().setClassName(Glance.PACKAGE, "${Glance.PACKAGE}.SettingsActivity")
-                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-        }, android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)))
+        top.addView(refreshButton, android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)).apply { marginStart = dp(6f) })
+        top.addView(topButton(R.drawable.tb_settings, "Settings") { Glance.settings(context) },
+            android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)))
         addView(top, LayoutParams(LayoutParams.MATCH_PARENT, dp(48f)))
         contentDescription = "news"
     }
@@ -133,7 +132,20 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         setOnClickListener { onTap() }
     }
 
-    private fun refreshNow() { io.execute { Glance.refresh(context, force = true) } }
+    /** While Glance fetches, the N9 loading arc runs round the Refresh button's squircle (2026-11-23, user: a refresh
+     *  showed nothing). Glance says when it starts and ends (its news changes both times); [load] asks it then. */
+    private var ring: LoadingRing? = null
+    private fun showRefreshing(on: Boolean) {
+        if (on == (ring != null)) return
+        ring?.stop(); ring = null
+        if (on) ring = LoadingRing.start(refreshButton, N9.TEXT, timeout = 60_000).also { refreshButton.contentDescription = "Refreshing" }
+        else refreshButton.contentDescription = "Refresh"
+    }
+
+    private fun refreshNow() {
+        showRefreshing(true)
+        io.execute { Glance.refresh(context, force = true); val busy = Glance.refreshing(context); post { showRefreshing(busy) } }
+    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -143,6 +155,7 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        showRefreshing(false)
         observer?.let { context.contentResolver.unregisterContentObserver(it) }
         observer = null
     }
@@ -156,7 +169,9 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         val ctx = context.applicationContext
         io.execute {
             val s = Glance.stories(ctx)
+            val busy = Glance.refreshing(ctx)
             post {
+                showRefreshing(busy)
                 stories = s
                 @SuppressLint("NotifyDataSetChanged")
                 adapter.notifyDataSetChanged()

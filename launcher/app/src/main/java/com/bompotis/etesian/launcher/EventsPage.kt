@@ -225,18 +225,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     @SuppressLint("NotifyDataSetChanged")
     private fun refresh() = adapter.notifyDataSetChanged()
 
-    private fun open(item: EventItem) {
-        val pi = item.intent ?: return
-        val opts = ActivityOptions.makeBasic()
-        if (Build.VERSION.SDK_INT >= 34) {
-            opts.setPendingIntentBackgroundActivityStartMode(
-                if (Build.VERSION.SDK_INT >= 36) ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS
-                else @Suppress("DEPRECATION") ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
-            )
-        }
-        runCatching { pi.send(context, 0, null, null, null, null, opts.toBundle()) }
-        if (item.autoCancel) EventsStore.service?.cancelNotification(item.key)
-    }
+    private fun open(item: EventItem) = EventsStore.open(context, item)
 
     /** File this app, or only this kind of its notifications, under another section (N9 menus, as Snooze). */
     private fun reclassify(e: EventItem) {
@@ -270,7 +259,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     private fun feedMenu(item: Feeds.Item) {
         N9Sheet.show(context, listOf(
             N9Sheet.Item("Mark all as read", item.feedTitle) { Feeds.markAllRead(context, item.feedUrl) },
-            N9Sheet.Item("Feed settings", "How often feeds update, apps shown as feeds") {
+            N9Sheet.Item("Feed settings", "Feeds shown here, how often they update, apps shown as feeds") {
                 context.startActivity(Intent(context, SettingsActivity::class.java)
                     .putExtra(SettingsActivity.EXTRA_SECTION, "feeds")
                     // A fresh task: an Etesian settings task left in Recents would be brought back as it was,
@@ -368,7 +357,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         // Feed: the user's RSS feeds alongside apps filed under Feed.
         // Nothing to read means no Feed section at all, as with Notifications (2026-11-22, user).
         val feedRows = if (Feeds.feeds(context).isEmpty()) emptyList()
-            else Feeds.forEvents(Feeds.items(context)).filter { it.id !in swipedFeeds }.take(FEED_ROWS).map { Row.FeedEntry(it) }
+            else Feeds.forEvents(Feeds.items(context), Feeds.hiddenInEvents(context)).filter { it.id !in swipedFeeds }.take(FEED_ROWS).map { Row.FeedEntry(it) }
         section(EventsClassifier.Section.FEED, feedRows)
         val low = bySection[EventsClassifier.Section.LOW].orEmpty()
         if (low.isNotEmpty()) {
