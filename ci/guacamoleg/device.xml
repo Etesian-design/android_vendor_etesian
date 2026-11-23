@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Local manifest for ci/release.sh: the OnePlus 7 Pro 5G's device tree (not a LineageOS device). Its own manifest
+     (manifest/guacamoleg.xml in it) brings the OnePlus 7 Pro trees and blobs it builds on. -->
+<manifest>
+  <project name="memphisx/android_device_oneplus_guacamoleg" path="device/oneplus/guacamoleg" remote="github" revision="lineage-24.0" />
+</manifest>

@@ -2,7 +2,7 @@
 # Releases, as in Cloud Companion: go-semantic-release reads the Conventional Commits since the last tag (feat = minor, fix = patch,
 # breaking = major; with allow-initial-development-versions a breaking change is only a minor bump below 1.0; docs, chore, ci, ...
 # release nothing; the first release is v0.1.0). The ROM is built and signed on the DeskMini first (a dry run gives the version),
-# and only a finished build makes the tag and the release, with the package and its SHA-256.
+# and only finished builds make the tag and the release, with each phone's package and its SHA-256.
 # Only main and manual runs reach the self-hosted runner, never a pull request (ci/runner/README.md).
 name: Release
 on:
@@ -14,7 +14,7 @@ permissions:
   contents: read
 # one release at a time, in push order: each works out its version from the tags the previous one made
 concurrency:
-  group: pro1x-release
+  group: rom-release
   cancel-in-progress: false
 
 jobs:
@@ -42,11 +42,17 @@ jobs:
           bin: ${{ runner.temp }}/semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and sign
+      # Every phone, one after the other (they share the DeskMini); a release has all of them or none.
+      - name: Build and sign, Pro1-X
         if: steps.next.outputs.version != ''
         env:
           ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
-        run: printf %s "$ETESIAN_KEYS_PASS" | ci/pro1x/release.sh "${{ steps.next.outputs.version }}"
+        run: printf %s "$ETESIAN_KEYS_PASS" | ci/release.sh pro1x "${{ steps.next.outputs.version }}"
+      - name: Build and sign, OnePlus 7 Pro 5G
+        if: steps.next.outputs.version != ''
+        env:
+          ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
+        run: printf %s "$ETESIAN_KEYS_PASS" | ci/release.sh guacamoleg "${{ steps.next.outputs.version }}"
       - name: Release
         id: semrel
         if: steps.next.outputs.version != ''
