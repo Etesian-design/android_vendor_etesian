@@ -160,7 +160,7 @@ new file mode 100644
 index 000000000000..e680d4c9c529
 --- /dev/null
 +++ b/core/java/com/android/internal/widget/EtesianSwitchLook.java
-@@ -0,0 +1,204 @@
+@@ -0,0 +1,207 @@
 +/*
 + * SPDX-FileCopyrightText: 2026 Etesian
 + * SPDX-License-Identifier: Apache-2.0
@@ -221,6 +221,8 @@ index 000000000000..e680d4c9c529
 +            s.setThumbDrawable(new Knob(d));
 +            s.setTrackDrawable(new Track(d));
 +            s.setSwitchMinWidth(Math.round(TRACK_W * d));
++            // The new drawables start blank: give them the switch's state now, or one already on shows off.
++            s.refreshDrawableState();
 +            return;
 +        }
 +        Class<?> k = b.getClass();
@@ -235,6 +237,7 @@ index 000000000000..e680d4c9c529
 +            call(b, "setThumbDrawable", Drawable.class, new Knob(d));
 +            call(b, "setTrackDrawable", Drawable.class, new Track(d));
 +            call(b, "setSwitchMinWidth", int.class, Math.round(TRACK_W * d));
++            b.refreshDrawableState();
 +            b.requestLayout();
 +        } catch (RuntimeException e) {
 +            Log.w(TAG, "could not restyle " + b.getClass().getName(), e);
