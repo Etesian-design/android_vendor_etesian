@@ -6,7 +6,9 @@
 # Writes release/etesian-<version>-<device>.zip and its .sha256 in this checkout, next to the other phones' files.
 #
 # ci/<device>/device.sh says what differs per phone: LUNCH (how the product is chosen), and optionally PREPARE (shell run in the
-# tree after repo sync, before Etesian's own patches) and MANIFEST (a local manifest put in place before the sync).
+# tree after repo sync, before Etesian's own patches), MANIFEST (a local manifest put in place before the sync) and TREE (another
+# phone's tree to build in, when the two share their sources: each run resets the tree first, so one phone's patches never
+# reach the other's build).
 # ${CI_DIR}/<device>/src is a LineageOS tree (repo) kept between runs, ${CI_DIR}/<device>/ccache its compiler cache; each run only
 # fetches what changed upstream. ${CI_DIR}/keys/etesian-keys.tar.gpg holds the release keys (gpg, symmetric); they are unpacked
 # into memory for the signing step only.
@@ -17,11 +19,11 @@ VERSION="${2:?usage: release.sh <device> <version>, the passphrase on stdin}"
 CI="${CI_DIR:?CI_DIR: ~/ci of the host, as the runner sees it}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; ETESIAN="$(cd "$HERE/.." && pwd)"
 [ -f "$HERE/$DEVICE/device.sh" ] || { echo "no ci/$DEVICE/device.sh" >&2; exit 1; }
-LUNCH=""; PREPARE=""; MANIFEST=""
+LUNCH=""; PREPARE=""; MANIFEST=""; TREE=""
 # shellcheck source=/dev/null
 . "$HERE/$DEVICE/device.sh"
 [ -n "$LUNCH" ] || { echo "ci/$DEVICE/device.sh sets no LUNCH" >&2; exit 1; }
-W="$CI/$DEVICE"; KEYS="$CI/keys/etesian-keys.tar.gpg"; OUT="$ETESIAN/release"
+W="$CI/${TREE:-$DEVICE}"; KEYS="$CI/keys/etesian-keys.tar.gpg"; OUT="$ETESIAN/release"
 [ -d "$W/src/.repo" ] || { echo "no LineageOS tree at $W/src (repo init + sync it once, ci/runner/README.md)" >&2; exit 1; }
 if [ -z "${BUILD_ONLY:-}" ]; then
     [ -f "$KEYS" ] || { echo "no release keys at $KEYS" >&2; exit 1; }

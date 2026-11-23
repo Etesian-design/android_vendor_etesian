@@ -53,6 +53,12 @@ jobs:
         env:
           ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
         run: printf %s "$ETESIAN_KEYS_PASS" | ci/release.sh guacamoleg "${{ steps.next.outputs.version }}"
+      # Not tried on a phone yet (README): the same trees as the 5G model, without its modem.
+      - name: Build and sign, OnePlus 7 Pro
+        if: steps.next.outputs.version != ''
+        env:
+          ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
+        run: printf %s "$ETESIAN_KEYS_PASS" | ci/release.sh guacamole "${{ steps.next.outputs.version }}"
       - name: Release
         id: semrel
         if: steps.next.outputs.version != ''

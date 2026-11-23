@@ -40,7 +40,8 @@ mock contacts, messages and calendar entries.</sub></p>
 
 The Swipe UI shipped on a single phone and then disappeared. **Etesian re-envisions it** on top of LineageOS (it is
 not a copy of the N9), so it can run on any phone LineageOS supports. It's developed and tested on the F(x)tec Pro1-X; another phone on the same LineageOS version
-needs only its own build.
+needs only its own build. Releases are built for the Pro1-X, the OnePlus 7 Pro 5G and the OnePlus 7 Pro; the OnePlus 7 Pro
+build has not been tried on a phone yet.
 
 ## What you get
 
