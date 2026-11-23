@@ -38,7 +38,7 @@ object SystemTasks {
     }
 
     /** The system's own snapshot of the task, scaled to [width] pixels wide. */
-    fun snapshot(taskId: Int, width: Int): Bitmap? = runCatching {
+    fun snapshot(taskId: Int, width: Int, displayRotation: Int = 0): Bitmap? = runCatching {
         val cls = Class.forName("android.window.TaskSnapshotManager")
         val mgr = cls.getMethod("getInstance").invoke(null)
         // TaskSnapshotManager.RESOLUTION_HIGH, else ANY: ANY hands back the half-size copy when there is one, and its
@@ -51,9 +51,10 @@ object SystemTasks {
         val copy = hw.copy(Bitmap.Config.ARGB_8888, false)
         hw.recycle()
         // An app the phone was turned for (landscape, or the keyboard slid out) is snapshotted at that rotation. The
-        // launcher stays at the natural, portrait one, so turn the picture back by the difference, as Launcher3
-        // does: it fills the portrait card and stands upright the way the phone is held.
-        val rotation = runCatching { snap.javaClass.getMethod("getRotation").invoke(snap) as Int }.getOrDefault(0)
+        // launcher may be at another one (it turns too, since 2026-11-22), so turn the picture by the difference, as
+        // Launcher3 does: it fills the card and stands upright the way the phone is held.
+        val rotation = (runCatching { snap.javaClass.getMethod("getRotation").invoke(snap) as Int }.getOrDefault(0) -
+            displayRotation + 4) % 4
         val soft = if (rotation == 0) copy
             else Bitmap.createBitmap(copy, 0, 0, copy.width, copy.height, android.graphics.Matrix().apply { setRotate(90f * rotation) }, true)
                 .also { copy.recycle() }

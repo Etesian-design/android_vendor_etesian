@@ -34,6 +34,7 @@
     <uses-permission android:name="android.permission.DEVICE_POWER" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.DUMP" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" tools:ignore="ProtectedPermissions" />
@@ -111,7 +112,6 @@
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
             android:resumeWhilePausing="true"
-            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
@@ -140,8 +140,8 @@
             android:exported="true"
             android:taskAffinity="com.bompotis.etesian.launcher.settings"
             android:label="Etesian settings"
-            android:icon="@mipmap/ic_settings"
-            android:roundIcon="@mipmap/ic_settings"
+            android:icon="@drawable/etesian_icon_deep"
+            android:roundIcon="@drawable/etesian_icon_deep"
             android:theme="@style/Theme.EtesianSettings">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -313,9 +313,7 @@
             android:noHistory="true"
             android:launchMode="singleInstance"
             android:taskAffinity="com.bompotis.etesian.launcher.statusmenu"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:screenOrientation="portrait"
-            tools:ignore="LockedOrientationActivity" />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <!-- Exact Symbian Belle widgets (BelleClassic.kt). -->
         <receiver
             android:name=".BelleFlipClockWidget"

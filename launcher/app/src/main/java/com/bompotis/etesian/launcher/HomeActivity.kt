@@ -45,12 +45,20 @@ class HomeActivity : ComponentActivity() {
             Prefs.LEAVE_EVENTS -> PAGE_EVENTS
             Prefs.LEAVE_APPS -> PAGE_APPS
             Prefs.LEAVE_WIDGETS -> PAGE_WIDGETS
+            Prefs.LEAVE_NEWS -> PAGE_NEWS
             Prefs.LEAVE_LAST -> lastPage
             else -> PAGE_SWITCHER
         }
 
         /** The view home showed when it was last left (for "Where you were"). */
         @Volatile var lastPage = PAGE_APPS
+
+        /** A swipe in from [edge] on the home screen: its own view comes in, or goes back if it is showing. */
+        fun toggleEdgeView(ctx: android.content.Context, edge: String) {
+            val home = live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed } ?: return
+            val id = home.edgeViews.entries.firstOrNull { it.value.second == edge }?.key ?: return
+            if (home.sheetPage == id) home.closeSheet() else home.openSheet(id, animate = true)
+        }
 
         /** [showSwitcherStill] for any view: home already in front, switch its pane in place. */
         fun showStill(ctx: android.content.Context, page: Int) {
@@ -71,6 +79,11 @@ class HomeActivity : ComponentActivity() {
 
     /** Visible views in swipe order, as (page id, view). */
     private var pages: List<Pair<Int, HomePage>> = emptyList()
+    /** Views taken out of the row ("Only by this swipe"): page id → (view, the edge it comes in from). */
+    private var edgeViews: Map<Int, Pair<HomePage, String>> = emptyMap()
+    /** Holds an edge view while it is shown, over the row. */
+    private lateinit var sheet: android.widget.FrameLayout
+    private var sheetPage = -1
     private var layoutKey = ""
     private var bars = Insets.NONE
     private var resumed = false
@@ -96,7 +109,10 @@ class HomeActivity : ComponentActivity() {
             pages.getOrNull(index)?.second?.onShown()
             eventsShowing(resumed)
         }
-        setContentView(pager)
+        sheet = android.widget.FrameLayout(this).apply { visibility = View.GONE; setBackgroundColor(android.graphics.Color.BLACK) }
+        setContentView(android.widget.FrameLayout(this).apply {
+            addView(pager); addView(sheet)
+        })
         Platform.homeContent = pager
 
         ViewCompat.setOnApplyWindowInsetsListener(pager) { _, insets ->
@@ -109,7 +125,12 @@ class HomeActivity : ComponentActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             // A launcher never finishes on back; it only leaves edit/close/search modes.
-            override fun handleOnBackPressed() { pages.forEach { it.second.exitModes() } }
+            override fun handleOnBackPressed() {
+                // An edge view leaves its own modes first, then goes back the way it came.
+                val shown = edgeViews[sheetPage]?.first
+                if (shown != null) { if (!shown.exitModes()) closeSheet(); return }
+                pages.forEach { it.second.exitModes() }
+            }
         })
 
         buildPages()
@@ -120,6 +141,7 @@ class HomeActivity : ComponentActivity() {
     private fun applyInsets() {
         val top = bars.top + dp(28f)
         pages.forEach { it.second.applyInsets(bars.left, top, bars.right, bars.bottom) }
+        edgeViews.values.forEach { it.first.applyInsets(bars.left, top, bars.right, bars.bottom) }
     }
 
     /** (Re)creates the view list from settings: [Widgets] [Events] Applications, Open applications. */
@@ -130,7 +152,8 @@ class HomeActivity : ComponentActivity() {
         val screens = if (fixed) Prefs.widgetScreens(this) else 1
         val wKey = if (wantWidgets) "$fixed/$screens" else ""
         val wantNews = Prefs.newsPage(this)
-        val key = "$wKey/$wantEvents/$wantNews"
+        val only = Prefs.edgeOnlyViews(this)
+        val key = "$wKey/$wantEvents/$wantNews/$only"
         if (key == layoutKey) return
         layoutKey = key
         val current = pages.getOrNull(pager.currentPage)?.first ?: PAGE_APPS
@@ -151,7 +174,7 @@ class HomeActivity : ComponentActivity() {
         if (wantNews && news == null) news = NewsPage(this)
         if (!wantNews) news = null
 
-        pages = buildList {
+        val all = buildList {
             news?.let { add(PAGE_NEWS to it) }
             // Screen 1 sits next to Events; further screens are further left.
             widgets.asReversed().forEach { add(PAGE_WIDGETS to it) }
@@ -159,13 +182,67 @@ class HomeActivity : ComponentActivity() {
             add(PAGE_APPS to apps)
             add(PAGE_SWITCHER to switcher)
         }
+        // "Only by this swipe": a view the user gave to an edge leaves the row (widget screens: the first one).
+        val leave = mapOf(Prefs.LEAVE_APPS to PAGE_APPS, Prefs.LEAVE_EVENTS to PAGE_EVENTS,
+            Prefs.LEAVE_WIDGETS to PAGE_WIDGETS, Prefs.LEAVE_NEWS to PAGE_NEWS)
+        if (sheetPage >= 0) closeSheet(animate = false)
+        edgeViews = only.mapNotNull { (view, edge) ->
+            val id = leave[view] ?: return@mapNotNull null
+            all.lastOrNull { it.first == id }?.let { id to (it.second to edge) }
+        }.toMap()
+        pages = all.filter { p -> edgeViews[p.first]?.first !== p.second }
         pager.removeAllViews()
         pages.forEach { pager.addView(it.second as View) }
         applyInsets()
-        showPage(if (pages.any { it.first == current }) current else PAGE_APPS, animate = false)
+        showPage(if (pages.any { it.first == current }) current else pages.firstOrNull { it.first == PAGE_APPS }?.first
+            ?: PAGE_SWITCHER, animate = false)
+    }
+
+    /** Brings an edge view in from its edge, over the row (it stays until Back, Home or leaving home). */
+    private fun openSheet(id: Int, animate: Boolean) {
+        val (page, edge) = edgeViews[id] ?: return
+        if (sheetPage == id) return
+        if (sheetPage >= 0) closeSheet(animate = false)
+        pages.forEach { it.second.exitModes() }
+        val v = page as View
+        (v.parent as? android.view.ViewGroup)?.removeView(v)
+        // The pager hides the pages it is not showing; out of it, the view must be shown again or the sheet is black.
+        v.visibility = View.VISIBLE
+        sheet.addView(v, android.widget.FrameLayout.LayoutParams(-1, -1))
+        sheetPage = id
+        sheet.visibility = View.VISIBLE
+        sheet.animate().cancel()
+        val (dx, dy) = offscreen(edge)
+        if (animate) {
+            sheet.translationX = dx; sheet.translationY = dy
+            sheet.animate().translationX(0f).translationY(0f).setDuration(250)
+                .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+        } else { sheet.translationX = 0f; sheet.translationY = 0f }
+        sheet.contentDescription = "pane:" + paneName(id)
+        page.onShown()
+    }
+
+    private fun closeSheet(animate: Boolean = true) {
+        val id = sheetPage.takeIf { it >= 0 } ?: return
+        sheetPage = -1
+        val done = { sheet.removeAllViews(); sheet.visibility = View.GONE }
+        // Never left open with no view in it (a view no longer on an edge): that would toggle the next swipe shut.
+        val (page, edge) = edgeViews[id] ?: run { sheet.animate().cancel(); done(); return }
+        page.exitModes()
+        if (!animate) { sheet.animate().cancel(); done(); return }
+        val (dx, dy) = offscreen(edge)
+        sheet.animate().translationX(dx).translationY(dy).setDuration(200).withEndAction(done).start()
+    }
+
+    /** Where a view coming in from [edge] starts (and goes back to). */
+    private fun offscreen(edge: String): Pair<Float, Float> {
+        val w = window.decorView.width.toFloat(); val h = window.decorView.height.toFloat()
+        return when (edge) { "left" -> -w to 0f; "right" -> w to 0f; else -> 0f to h }
     }
 
     private fun showPage(id: Int, animate: Boolean = true) {
+        if (id in edgeViews) { openSheet(id, animate); return }
+        if (sheetPage >= 0) closeSheet(animate)
         // indexOfLast: of the widget screens, the first one (next to Events).
         val index = pages.indexOfLast { it.first == id }
         if (index >= 0) pager.showPage(index, animate)
@@ -174,12 +251,14 @@ class HomeActivity : ComponentActivity() {
 
     /** Names the pane showing ("pane:events"...), for accessibility and the device tests. */
     private fun describePane(index: Int) {
-        val name = when (pages.getOrNull(index)?.first) {
-            PAGE_EVENTS -> "events"; PAGE_APPS -> "apps"; PAGE_SWITCHER -> "switcher"; PAGE_WIDGETS -> "widgets"
-            PAGE_NEWS -> "news"
-            else -> return
-        }
+        val name = paneName(pages.getOrNull(index)?.first ?: return) ?: return
         pager.contentDescription = "pane:$name"
+    }
+
+    private fun paneName(id: Int) = when (id) {
+        PAGE_EVENTS -> "events"; PAGE_APPS -> "apps"; PAGE_SWITCHER -> "switcher"; PAGE_WIDGETS -> "widgets"
+        PAGE_NEWS -> "news"
+        else -> null
     }
 
     private fun showMinimised(page: Int = PAGE_SWITCHER) {
@@ -199,15 +278,50 @@ class HomeActivity : ComponentActivity() {
             // Home pressed while already home: back to Applications, scrolled to the top. Android
             // pauses us before delivering the intent, so "already home" is the window's focus, not
             // [resumed] (2026-11-04: Home on Open applications or Events did nothing).
-            resumed || focused -> { showPage(PAGE_APPS); apps.scrollToTop() }
+            resumed || focused -> if (sheetPage >= 0) closeSheet() else { showPage(PAGE_APPS); apps.scrollToTop() }
             // Leaving an application minimises it into Open applications, as on the N9.
             RunningApps.entries.isNotEmpty() -> showPage(PAGE_SWITCHER, animate = false)
         }
     }
 
+    /** A swipe in from an edge that has an edge view, on the home screen itself: (edge, down x, down y). */
+    private var edgeSwipe: Triple<String, Float, Float>? = null
+
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         if (Platform.edgeGestureActive) return true
+        if (edgeViews.isNotEmpty() && edgeSwipeOnHome(ev)) return true
         return super.dispatchTouchEvent(ev)
+    }
+
+    /**
+     * On the home screen an edge with a view of its own brings that view in (in an application the edge swipe does it,
+     * through [pageAfterLeaving]); the same edge again sends it back. True once the swipe is taken.
+     */
+    private fun edgeSwipeOnHome(ev: android.view.MotionEvent): Boolean {
+        val d = resources.displayMetrics.density
+        val w = window.decorView.width; val h = window.decorView.height
+        when (ev.actionMasked) {
+            android.view.MotionEvent.ACTION_DOWN -> {
+                val zone = 18 * d
+                val edge = when {
+                    ev.rawX < zone -> "left"; ev.rawX > w - zone -> "right"; ev.rawY > h - zone -> "bottom"; else -> null
+                }
+                edgeSwipe = edge?.takeIf { e -> edgeViews.values.any { it.second == e } }?.let { Triple(it, ev.rawX, ev.rawY) }
+            }
+            android.view.MotionEvent.ACTION_MOVE -> {
+                val (edge, x0, y0) = edgeSwipe ?: return false
+                val inward = when (edge) { "left" -> ev.rawX - x0; "right" -> x0 - ev.rawX; else -> y0 - ev.rawY }
+                if (inward > 48 * d) {
+                    edgeSwipe = null
+                    val id = edgeViews.entries.first { it.value.second == edge }.key
+                    super.dispatchTouchEvent(android.view.MotionEvent.obtain(ev).apply { action = android.view.MotionEvent.ACTION_CANCEL })
+                    if (sheetPage == id) closeSheet() else openSheet(id, animate = true)
+                    return true
+                }
+            }
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> edgeSwipe = null
+        }
+        return false
     }
 
     override fun onDestroy() {
@@ -223,6 +337,9 @@ class HomeActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        // An edge view is a moment's visit: home comes back to the row (an application left from that edge brings it
+        // back in, through pageAfterLeaving).
+        closeSheet(animate = false)
         widgets.forEach { it.stopListening() }
         super.onStop()
     }

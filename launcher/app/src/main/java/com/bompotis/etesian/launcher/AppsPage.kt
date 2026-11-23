@@ -58,6 +58,28 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
     private var rowsPerScreen = Prefs.gridRows(context)
     private var iconDp = Prefs.iconSizeDp(context)
     private var lastListHeight = 0
+    /** The grid the settings ask for, in portrait; landscape fits more columns and fewer rows to the same cells. */
+    private var baseCols = Prefs.gridColumns(context)
+    private var baseRows = Prefs.gridRows(context)
+    private var landscape = false
+
+    /** Landscape (2026-11-22): the same cell size turned sideways, so icons keep their size and nothing stretches. */
+    @SuppressLint("NotifyDataSetChanged")
+    private fun fitGrid() {
+        val w = width; val h = height
+        landscape = w > h && h > 0
+        val cols = if (landscape) (baseCols * w.toFloat() / h).toInt().coerceIn(baseCols, 12) else baseCols
+        val rows = if (landscape && baseRows > 0) (baseRows * h.toFloat() / w).toInt().coerceAtLeast(2) else baseRows
+        if (cols != grid.spanCount || rows != rowsPerScreen) {
+            grid.spanCount = cols; rowsPerScreen = rows; lastListHeight = 0
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+        super.onSizeChanged(w, h, ow, oh)
+        if ((w > h) != (ow > oh) || ow == 0) post { fitGrid() }
+    }
 
     /** Fixed row height when a rows-per-screen count is set, else wrap content. */
     private fun rowHeight(): Int {
@@ -316,12 +338,12 @@ class AppsPage(context: Context) : FrameLayout(context), HomePage {
         val cols = Prefs.gridColumns(context)
         val rows = Prefs.gridRows(context)
         val icon = Prefs.iconSizeDp(context)
-        if (cols != grid.spanCount || rows != rowsPerScreen || icon != iconDp) {
-            grid.spanCount = cols
-            rowsPerScreen = rows
+        if (cols != baseCols || rows != baseRows || icon != iconDp) {
+            baseCols = cols; baseRows = rows
             iconDp = icon
             lastListHeight = 0
             adapter.notifyDataSetChanged()
+            fitGrid()
         }
         searchEnabled = Prefs.searchEnabled(context)
         val top = Prefs.searchAtTop(context)

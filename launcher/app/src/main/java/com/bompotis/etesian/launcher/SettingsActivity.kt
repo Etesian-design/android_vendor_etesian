@@ -692,9 +692,30 @@ class SettingsActivity : AppCompatActivity() {
                 val leaveValues = mutableListOf(Prefs.LEAVE_SWITCHER, Prefs.LEAVE_LAST, Prefs.LEAVE_APPS)
                 if (Prefs.eventsPage(ctx)) { leaveNames += "Events"; leaveValues += Prefs.LEAVE_EVENTS }
                 if (Prefs.widgetsPage(ctx)) { leaveNames += "Widgets"; leaveValues += Prefs.LEAVE_WIDGETS }
+                if (Prefs.newsPage(ctx)) { leaveNames += "News"; leaveValues += Prefs.LEAVE_NEWS }
+                // "Only by this swipe" (2026-11-22): the edge's view leaves the row of views and comes in from that edge
+                // only, from an application or the home screen (e.g. the bottom always brings Applications, as on
+                // Sailfish). The bottom and one side only, so the row always keeps views to swipe between.
+                val only = mutableMapOf<String, SwitchPreferenceCompat>()
+                fun refreshOnly() = android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    only.forEach { (edge, sw) ->
+                        sw.isEnabled = Prefs.edgeOnlyAllowed(ctx, edge)
+                        sw.summary = when {
+                            sw.isEnabled -> "Takes this view out of the home screen's views; it comes in from this edge"
+                            Prefs.leaveTo(ctx, edge) !in setOf(Prefs.LEAVE_APPS, Prefs.LEAVE_EVENTS, Prefs.LEAVE_WIDGETS,
+                                Prefs.LEAVE_NEWS) -> "For a view: Applications, Events, Widgets or News"
+                            else -> "One side only: the left side already has its own view"
+                        }
+                    }
+                }
                 for ((edge, t) in listOf("left" to "From the left side", "right" to "From the right side", "bottom" to "From the bottom")) {
                     list(leave, Prefs.LEAVE_TO + edge, t, leaveNames.toTypedArray(), leaveValues.toTypedArray(), Prefs.LEAVE_SWITCHER)
+                        .setOnPreferenceChangeListener { _, _ -> refreshOnly(); true }
+                    only[edge] = switch(leave, Prefs.EDGE_ONLY + edge, "Only " + t.replaceFirst("From", "from"), "", false).apply {
+                        setOnPreferenceChangeListener { _, _ -> refreshOnly(); true }
+                    }
                 }
+                refreshOnly()
                 val barActions = arrayOf("Back", "Minimise", "Close", "Open applications", "Breeze menu",
                     "Single hand mode", "Nothing")
                 val barValues = arrayOf(Prefs.ACTION_BACK, Prefs.ACTION_MINIMISE, Prefs.ACTION_CLOSE,

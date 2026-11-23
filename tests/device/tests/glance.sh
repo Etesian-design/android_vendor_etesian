@@ -60,17 +60,18 @@ tap_desc "Open in browser"; sleep 3
 check "and Open in browser leaves for the browser ($(top_activity))" '! top_activity | grep -q "$G"'
 sh_ input keyevent BACK; sleep 1
 
-# User 2026-11-19: buttons on the bottom bar, never on top (N9; closer to the thumb). On another phone (no Etesian
-# bar) Glance draws the same bar itself, at the bottom.
-bottom_of() { dumpx | grep -o "content-desc=\"$1\"[^>]*bounds=\"[^\"]*\"" | head -1 | grep -o '\]\[[0-9]*,[0-9]*\]' | tr -dc '0-9,' | cut -d, -f2; }
+# User 2026-11-22: the story list has no bottom bar; Refresh and Settings sit beside the search bar at the top right,
+# as on the home screen's Glance page (the reader and Settings keep the bar). Pull down refreshes (N9 style text).
 H=$(adb shell wm size | grep -o '[0-9]*$' | tail -1)
+top_of() { dumpx | grep -o "content-desc=\"$1\"[^>]*bounds=\"[^\"]*\"" | head -1 | grep -o 'bounds="\[[0-9]*,[0-9]*' | grep -o '[0-9]*$'; }
 sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 2.5
-check "no Settings button on top any more" '! dumpx | grep -q "content-desc=\"Settings\"[^>]*bounds=\"\[[0-9]*,[0-9]\{1,3\}\]"'
-bb=$(sh_ settings get secure etesian_bottom_bar)
-sh_ settings put secure etesian_bottom_bar 0; sh_ am force-stop $G; sh_ am start -W -n $G/.MainActivity >/dev/null; sleep 2.5
-y=$(bottom_of Settings); shot glance_own_bar
-check "without the Etesian bar Glance draws its own, at the bottom (Settings ends at $y of $H)" '[ -n "$y" ] && [ "$y" -gt $((H * 85 / 100)) ]'
-sh_ settings put secure etesian_bottom_bar "${bb/null/1}"; sh_ am force-stop $G
+r=$(top_of Refresh); s=$(top_of Settings)
+check "Refresh and Settings at the top, beside the search bar ($r, $s)" '[ -n "$r" ] && [ -n "$s" ] && [ "$r" -lt 400 ] && [ "$s" -lt 400 ]'
+check "no bottom bar on the story list" '! dumpx | grep -q "package=\"com.android.systemui\"[^>]*content-desc=\"Back\""'
+shot glance_top_actions
+command adb logcat -c
+sh_ input swipe 540 700 540 1700 900; sleep 1
+check "pulling the list down refreshes" 'command adb logcat -d -s Glance:I | grep -q "refresh: pulled"'
 
 # Notifications: the setup card's button switches Glance's access on itself (platform key), when the user asks.
 L=$(sh_ settings get secure enabled_notification_listeners)

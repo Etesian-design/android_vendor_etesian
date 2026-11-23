@@ -52,7 +52,9 @@ class AppPeek(private val ctx: Context) {
             icon.animate().translationY(0f).scaleX(1f).scaleY(1f).alpha(1f)
                 .setStartDelay(i * 30L).setDuration(220).setInterpolator(DecelerateInterpolator()).start()
         }
+        // On black, as the N9's (2026-11-22: it was see-through).
         val frame = FrameLayout(ctx).apply {
+            setBackgroundColor(android.graphics.Color.BLACK)
             addView(row, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, size, Gravity.BOTTOM)
                 .apply { bottomMargin = (rowHeight - size) / 2 })
         }

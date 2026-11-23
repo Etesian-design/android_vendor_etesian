@@ -272,7 +272,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
 
     /** Carousel action: saves the application's current screen to Pictures/Screenshots. */
     private fun saveScreenshot(e: RunningApps.Entry) {
-        val bmp = (if (e.taskId >= 0) SystemTasks.snapshot(e.taskId, resources.displayMetrics.widthPixels) else null) ?: e.thumb
+        val bmp = (if (e.taskId >= 0) SystemTasks.snapshot(e.taskId, resources.displayMetrics.widthPixels, display?.rotation ?: 0) else null) ?: e.thumb
         if (bmp == null) { android.widget.Toast.makeText(context, "No screenshot available", android.widget.Toast.LENGTH_SHORT).show(); return }
         val values = android.content.ContentValues().apply {
             put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "Screenshot_${System.currentTimeMillis()}_${e.pkg}.png")
@@ -304,7 +304,24 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
         return true
     }
 
-    private fun currentSpan() = if (carousel) 1 else grid.spanCount
+    /** Landscape (2026-11-22): twice the columns, so the cards keep their size instead of growing past the screen. */
+    private val wide get() = width > height && height > 0
+    private fun cols(span: Int) = if (wide) span * 2 else span
+    private fun currentSpan() = if (carousel) 1 else (if (wide) grid.spanCount / 2 else grid.spanCount)
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun refreshAll() = adapter.notifyDataSetChanged()
+
+    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+        super.onSizeChanged(w, h, ow, oh)
+        if ((w > h) == (ow > oh) && ow != 0) return
+        val span = prefs.getInt("span", 2).coerceIn(2, 3)
+        post {
+            if (!carousel && grid.spanCount != cols(span)) { grid.spanCount = cols(span); refreshAll() }
+            // The snapshots were turned for the old orientation: take them again.
+            RunningApps.sync(context)
+        }
+    }
 
     private fun setSpan(span: Int, animate: Boolean = true) {
         if (currentSpan() == span) return
@@ -317,7 +334,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             applyListPadding()
             updateClearAll()
         }
-        if (!carousel) grid.spanCount = span
+        if (!carousel) grid.spanCount = cols(span)
         prefs.edit().putInt("span", span).apply()
         @SuppressLint("NotifyDataSetChanged")
         adapter.notifyDataSetChanged()
@@ -670,15 +687,16 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             } else {
                 val padL = l + dp(10f).toFloat()
                 val innerW = listW - padL - (r + dp(10f))
-                val cw = innerW / span
+                val n = cols(span)
+                val cw = innerW / n
                 val rowH = cw * aspect
                 var anchorTop = (starts.entries.firstOrNull { positions[it.key] == anchor }?.value?.top ?: t.toFloat())
                 // Don't leave a gap above the first row.
-                val firstTop = anchorTop - (anchor / span) * rowH
+                val firstTop = anchorTop - (anchor / n) * rowH
                 if (firstTop > t) anchorTop -= firstTop - t
                 for ((v, p) in positions) {
-                    val x = padL + (p % span) * cw
-                    val y = anchorTop + (p / span - anchor / span) * rowH
+                    val x = padL + (p % n) * cw
+                    val y = anchorTop + (p / n - anchor / n) * rowH
                     out[v] = android.graphics.RectF(x, y, x + cw, y + rowH)
                 }
             }
@@ -912,7 +930,8 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
                 context.getSystemService(android.view.WindowManager::class.java).maximumWindowMetrics.bounds
                     .let { it.width() to it.height() }
             } else resources.displayMetrics.let { it.widthPixels to it.heightPixels }
-            val ratio = maxOf(sw, sh).toFloat() / minOf(sw, sh)
+            // The screen as it is now: portrait cards in portrait, landscape ones in landscape (2026-11-22).
+            val ratio = sh.toFloat() / sw.coerceAtLeast(1)
             super.onMeasure(w, MeasureSpec.makeMeasureSpec((width * ratio).toInt(), MeasureSpec.EXACTLY))
         }
     }
@@ -987,7 +1006,7 @@ class SwitcherPage(context: Context) : FrameLayout(context), HomePage {
             val e = RunningApps.entries[position]
             h.label.text = e.title
             h.itemView.contentDescription = e.title
-            h.label.textSize = if (carousel) 16f else if (grid.spanCount == 3) 11f else 13f
+            h.label.textSize = if (carousel) 16f else if (currentSpan() == 3) 11f else 13f
             // Carousel: one large card per page, with its neighbours peeking in.
             h.itemView.layoutParams = (h.itemView.layoutParams as RecyclerView.LayoutParams).apply {
                 width = if (carousel) (resources.displayMetrics.widthPixels * 0.78f).toInt().coerceAtLeast(1)

@@ -123,7 +123,8 @@ class WidgetsPage(private val activity: Activity, private val screen: Int = 0, p
         override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
             if (!can()) return false
             when (ev.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { downY = ev.rawY; inner = getChildAt(0)?.let { scrollableAt(it, ev.rawX.toInt(), ev.rawY.toInt()) } }
+                // Editing, a widget's content is inert: its list doesn't keep the drag, the page scrolls.
+                MotionEvent.ACTION_DOWN -> { downY = ev.rawY; inner = if (editMode) null else getChildAt(0)?.let { scrollableAt(it, ev.rawX.toInt(), ev.rawY.toInt()) } }
                 MotionEvent.ACTION_MOVE -> inner?.let { // finger up = content moves down the list
                     if (it.canScrollVertically(if (ev.rawY < downY) 1 else -1)) return false
                 }

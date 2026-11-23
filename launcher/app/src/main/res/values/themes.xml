@@ -1,4 +1,15 @@
 <resources>
+    <!-- The N9 slider (HdSlider): squircle knob, thin dark groove, accent fill. -->
+    <style name="Widget.Etesian.SeekBar" parent="android:Widget.Material.SeekBar">
+        <item name="android:thumb">@drawable/n9_slider_thumb</item>
+        <item name="android:thumbTint">@null</item>
+        <item name="android:progressDrawable">@drawable/n9_slider_track</item>
+        <item name="android:progressTint">@null</item>
+        <item name="android:progressBackgroundTint">@null</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:minHeight">31dp</item>
+        <item name="android:maxHeight">31dp</item>
+    </style>
     <style name="Theme.EtesianLauncher" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorBackground">@android:color/black</item>
@@ -7,6 +18,7 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowShowWallpaper">false</item>
         <item name="android:colorAccent">#FF00A5E5</item>
+        <item name="android:seekBarStyle">@style/Widget.Etesian.SeekBar</item>
     </style>
     <style name="Theme.EtesianSettings" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowBackground">@android:color/black</item>
@@ -18,5 +30,8 @@
         <!-- No Android splash: N9 applications slide straight in. -->
         <item name="android:windowSplashScreenBackground">@android:color/black</item>
         <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <!-- AndroidX SeekBarPreference inflates an AppCompatSeekBar, which reads the AppCompat attribute, not android:'s. -->
+        <item name="seekBarStyle">@style/Widget.Etesian.SeekBar</item>
+        <item name="android:seekBarStyle">@style/Widget.Etesian.SeekBar</item>
     </style>
 </resources>

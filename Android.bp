@@ -6,6 +6,14 @@ prebuilt_etc {
     system_ext_specific: true,
 }
 
+// The standby screen's minute alarm runs in deep Doze (power-save allowlist).
+prebuilt_etc {
+    name: "sysconfig_com.bompotis.etesian.launcher.xml",
+    src: "permissions/sysconfig_com.bompotis.etesian.launcher.xml",
+    sub_dir: "sysconfig",
+    system_ext_specific: true,
+}
+
 prebuilt_etc {
     name: "default-permissions_com.bompotis.etesian.launcher.xml",
     src: "permissions/default-permissions_com.bompotis.etesian.launcher.xml",

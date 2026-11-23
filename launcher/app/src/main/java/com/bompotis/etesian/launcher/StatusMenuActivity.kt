@@ -163,9 +163,13 @@ class StatusMenuActivity : Activity() {
         // No Settings button: the N9 status menu never had one (Settings is an app).
     }
 
-    /** A status-menu connection toggle: its N9 row icon, strip glyph, title, state and action. */
+    /**
+     * A status-menu connection: its N9 row icon, strip glyph, title, state, the strip toggle's action and the
+     * settings its row opens. N9: the rows were shortcuts to their settings, not switches (2026-11-22); the
+     * toggles strip switches. A row with no settings (torch, recorder) does its action.
+     */
     private class Toggle(val icon: String, val glyph: String, val title: String, val status: () -> String,
-                         val isOn: () -> Boolean, val flip: () -> Unit, val longPress: (() -> Unit)? = null)
+                         val isOn: () -> Boolean, val flip: () -> Unit, val settings: Intent? = null)
 
     private fun def(id: String): Toggle? = when (id) {
         "wifi" -> Toggle("icon-m-common-wlan", "wifi", "Internet connection", {
@@ -174,29 +178,29 @@ class StatusMenuActivity : Activity() {
             else wifi.connectionInfo?.ssid?.trim('"')?.takeIf { it.isNotEmpty() && it != "<unknown ssid>" } ?: "Not connected"
         }, { getSystemService(WifiManager::class.java).isWifiEnabled }, {
             @Suppress("DEPRECATION") getSystemService(WifiManager::class.java).let { it.isWifiEnabled = !it.isWifiEnabled }
-        }, longPress = { startActivity(Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY)) })
+        }, Intent(Settings.ACTION_WIFI_SETTINGS))
         "data" -> Toggle("icon-m-common-cellular", "data", "Mobile data", { if (dataOn()) "On" else "Off" }, ::dataOn, {
             runCatching {
                 getSystemService(TelephonyManager::class.java).javaClass
                     .getMethod("setDataEnabled", Boolean::class.java).invoke(getSystemService(TelephonyManager::class.java), !dataOn())
             }
-        })
+        }, Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS))
         "bt" -> Toggle("icon-m-bluetooth", "bt", "Bluetooth", { if (btOn()) "On" else "Off" }, ::btOn, {
             @Suppress("DEPRECATION", "MissingPermission")
             getSystemService(BluetoothManager::class.java).adapter?.let { if (it.isEnabled) it.disable() else it.enable() }
-        }, longPress = { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) })
+        }, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
         "flight" -> Toggle("icon-m-status-menu-flight-mode", "flight", "Flight mode", { if (flight()) "On" else "Off" }, ::flight, {
             runCatching {
                 val cm = getSystemService(android.net.ConnectivityManager::class.java)
                 cm.javaClass.getMethod("setAirplaneMode", Boolean::class.java).invoke(cm, !flight())
             }
-        })
+        }, Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS))
         "torch" -> Toggle("icon-m-camera-torch-on", "torch", "Flashlight", { if (torchOn) "On" else "Off" }, { torchOn }, {
             torchId?.let { id -> runCatching { getSystemService(CameraManager::class.java).setTorchMode(id, !torchOn) } }
         })
         "rotate" -> Toggle("icon-m-image-edit-rotate-right", "rotate", "Auto-rotate", { if (rotate()) "On" else "Off" }, ::rotate, {
             Settings.System.putInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, if (rotate()) 0 else 1)
-        })
+        }, Intent(Settings.ACTION_DISPLAY_SETTINGS))
         // Screen recorder (mock 1a): SystemUI records the whole screen, no audio; tap again stops.
         "record" -> Toggle("icon-m-etesian-record", "record", "Screen recorder", {
             if (Recorder.on(this)) "Recording \u00b7 tap to stop" else "Off"
@@ -210,7 +214,7 @@ class StatusMenuActivity : Activity() {
                 lm.javaClass.getMethod("setLocationEnabledForUser", Boolean::class.java, android.os.UserHandle::class.java)
                     .invoke(lm, !locationOn(), android.os.Process.myUserHandle())
             }
-        }, longPress = { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) })
+        }, Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
         else -> null
     }
 
@@ -219,7 +223,9 @@ class StatusMenuActivity : Activity() {
     /** The N9 row for toggle [id]. */
     private fun addRow(id: String, into: ViewGroup? = null, longPress: (() -> Unit)? = null): View? {
         val t = def(id) ?: return null
-        return toggle(t.icon, t.title, t.status, t.isOn, t.flip, longPress ?: t.longPress, into)
+        val tap: () -> Unit = t.settings?.let { i -> { startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); close() } }
+            ?: { t.flip(); panel.postDelayed({ refresh() }, 600); Unit }
+        return toggle(t.icon, t.title, t.status, t.isOn, tap, longPress, into)
     }
 
     private fun dataOn() = runCatching { getSystemService(TelephonyManager::class.java).isDataEnabled }.getOrDefault(false)
@@ -235,8 +241,8 @@ class StatusMenuActivity : Activity() {
         }
     }
 
-    /** One N9-style row: icon, title and status line (state is the subtitle; icon dims when off). Tap toggles. */
-    private fun toggle(icon: String, title: String, status: () -> String, isOn: () -> Boolean, flip: () -> Unit,
+    /** One N9-style row: icon, title and status line (state is the subtitle; icon dims when off). */
+    private fun toggle(icon: String, title: String, status: () -> String, isOn: () -> Boolean, tap: () -> Unit,
                        longPress: (() -> Unit)? = null, into: ViewGroup? = null): View {
         val bmp = n9Icon(icon)
         val iv = ImageView(this).apply {
@@ -262,7 +268,7 @@ class StatusMenuActivity : Activity() {
                 orientation = LinearLayout.VERTICAL
                 addView(name); addView(sub)
             }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            setOnClickListener { flip(); postDelayed({ refresh() }, 600) }
+            setOnClickListener { tap() }
             longPress?.let { lp -> setOnLongClickListener { lp(); true } }
         }
         (into ?: panel).addView(row)
@@ -568,24 +574,37 @@ class StatusMenuActivity : Activity() {
             chunk.forEachIndexed { i, id ->
                 val t = def(id) ?: return@forEachIndexed
                 if (i > 0) line.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-                val tile = LitSquircle(this, 0xFF3A3A3A.toInt(), t.glyph).apply {
+                // Belle's toggle caps (2026-11-22): the cap moves the moment it is tapped; the system catches up
+                // (Wi-Fi or Bluetooth take a few seconds), so for a while only a state that agrees moves it again.
+                var tappedAt = 0L
+                val tile = BelleCap(this, t.glyph).apply {
                     contentDescription = t.title
                     if (!editing) {
-                        setOnClickListener { t.flip(); postDelayed({ refresh() }, 600) }
+                        setOnClickListener {
+                            tappedAt = android.os.SystemClock.uptimeMillis()
+                            set(!on, animate = true); stateDescription = if (on) "On" else "Off"
+                            // Once it has settled, the real state again (a flip the system refused goes back).
+                            t.flip(); postDelayed({ refresh() }, 600); postDelayed({ refresh() }, 5100)
+                        }
                         setOnLongClickListener { startEdit(); true }
                     }
                 }
-                line.addView(tile, LinearLayout.LayoutParams(dp(size), dp(size)))
+                line.addView(tile, LinearLayout.LayoutParams(dp(size), ViewGroup.LayoutParams.WRAP_CONTENT))
+                var first = true
                 rows += {
                     val on = t.isOn()
-                    tile.set(if (on) 0xFF1C6BC8.toInt() else 0xFF3A3A3A.toInt())
-                    tile.stateDescription = if (on) "On" else "Off"
+                    val settling = android.os.SystemClock.uptimeMillis() - tappedAt < 5000
+                    if (!settling || on == tile.on) {
+                        tile.set(on, animate = !first)
+                        tile.stateDescription = if (on) "On" else "Off"
+                    }
+                    first = false
                 }
             }
             // A short last line keeps the same spacing as a full one.
             if (chunk.size < 6 && ids.size > 6) repeat(6 - chunk.size) {
                 line.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-                line.addView(View(this), LinearLayout.LayoutParams(dp(size), dp(size)))
+                line.addView(View(this), LinearLayout.LayoutParams(dp(size), 1))
             }
             box.addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
                 if (box.childCount > 0) topMargin = mp(10f)

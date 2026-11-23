@@ -11,7 +11,8 @@ card() { local b; b=$(dump | grep -o '<node[^>]*\(text\|content-desc\)="Calculat
 unlock
 for side in left right; do
   sh_ am start -n com.android.calculator2/.Calculator >/dev/null 2>&1; sleep 2
-  if [ $side = left ]; then sh_ input swipe 2 1000 700 1000 250; want=right; else sh_ input swipe 1077 1000 380 1000 250; want=left; fi
+  # High on the side: Breeze's handle (on by the user's choice, flick in = Back) sits mid-side.
+  if [ $side = left ]; then sh_ input swipe 2 600 700 600 250; want=right; else sh_ input swipe 1077 600 380 600 250; want=left; fi
   sleep 2.5; sh_ logcat -c; card; sleep 2
   got=$(sh_ logcat -d -s EtesianRestore | grep -o "enter from [a-z]*" | tail -1)
   check "swiped out from the $side edge: next comes in from the $want ($got)" '[ "$got" = "enter from $want" ]'

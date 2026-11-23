@@ -123,15 +123,33 @@ object Prefs {
     const val LEAVE_EVENTS = "events"
     const val LEAVE_APPS = "apps"
     const val LEAVE_WIDGETS = "widgets"
+    const val LEAVE_NEWS = "news"
     /** Open applications unless the user picked another view for that edge (one that is turned on). */
     fun leaveTo(ctx: Context, edge: String): String {
         val v = of(ctx).getString(LEAVE_TO + edge, LEAVE_SWITCHER) ?: LEAVE_SWITCHER
         return when {
             v == LEAVE_EVENTS && !eventsPage(ctx) -> LEAVE_SWITCHER
             v == LEAVE_WIDGETS && !widgetsPage(ctx) -> LEAVE_SWITCHER
+            v == LEAVE_NEWS && !newsPage(ctx) -> LEAVE_SWITCHER
             else -> v
         }
     }
+
+    /**
+     * "Only by this swipe" ("edge_only_" + edge): the edge's view leaves the home screen's row of views and comes in
+     * only from that edge, over the others (2026-11-22, user: e.g. Sailfish, where the bottom always brings the
+     * applications). Off by default (the N9). Only for a view (not Open applications or "Where you were"), and only the
+     * bottom and one side, so the row can never lose all its views: with both sides on, the right one gives way.
+     */
+    const val EDGE_ONLY = "edge_only_"
+    private val EDGE_PAGES = setOf(LEAVE_APPS, LEAVE_EVENTS, LEAVE_WIDGETS, LEAVE_NEWS)
+    fun edgeOnlyAllowed(ctx: Context, edge: String): Boolean = leaveTo(ctx, edge) in EDGE_PAGES &&
+        when (edge) { "right" -> !of(ctx).getBoolean(EDGE_ONLY + "left", false); else -> true }
+    fun edgeOnly(ctx: Context, edge: String): Boolean = of(ctx).getBoolean(EDGE_ONLY + edge, false) && edgeOnlyAllowed(ctx, edge)
+    /** The views taken out of the row, each with the edge it comes in from. */
+    fun edgeOnlyViews(ctx: Context): Map<String, String> =
+        // The same view on two edges: the first (the bottom) keeps it.
+        listOf("bottom", "left", "right").filter { edgeOnly(ctx, it) }.reversed().associateBy { leaveTo(ctx, it) }
 
     fun eventsPage(ctx: Context) = of(ctx).getBoolean(PAGE_EVENTS, true)
     fun pageDots(ctx: Context) = of(ctx).getString(PAGE_DOTS, DOTS_HIDDEN) ?: DOTS_HIDDEN

@@ -17,6 +17,7 @@ android_app {
     required: [
         "privapp_allowlist_com.bompotis.etesian.launcher.xml",
         "default-permissions_com.bompotis.etesian.launcher.xml",
+        "sysconfig_com.bompotis.etesian.launcher.xml",
     ],
     overrides: ["Launcher3QuickStep", "TrebuchetQuickStep"],
     static_libs: [

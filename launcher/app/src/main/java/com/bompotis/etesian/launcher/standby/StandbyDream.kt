@@ -20,8 +20,19 @@ class StandbyDream : DreamService() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var view: StandbyView
     private val alarms by lazy { getSystemService(AlarmManager::class.java) }
-    private val tick = AlarmManager.OnAlarmListener { update(move = true); schedule() }
-    private val events: () -> Unit = { main.post { if (::view.isInitialized) update(move = false) } }
+    // Awake until the frame is drawn: the alarm's own wakelock ends when onAlarm returns, before the draw.
+    private val wake by lazy {
+        getSystemService(android.os.PowerManager::class.java)
+            .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "etesian:standby")
+    }
+    // Rescheduled first, so a failing update can never end the minute updates (2026-11-22: the clock stuck).
+    private val tick = AlarmManager.OnAlarmListener {
+        wake.acquire(3_000)
+        schedule()
+        runCatching { update(move = true) }.onFailure { Log.w(TAG, "update failed", it) }
+        main.postDelayed({ if (wake.isHeld) wake.release() }, 500)
+    }
+    private val events: () -> Unit = { main.post { if (::view.isInitialized) runCatching { update(move = false) } } }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -30,22 +41,26 @@ class StandbyDream : DreamService() {
         isScreenBright = false
         view = StandbyView(this).apply { setBackgroundColor(android.graphics.Color.BLACK) }
         setContentView(view)
+        // The standby screen doesn't turn with the phone.
+        window?.let { w -> w.attributes = w.attributes.apply {
+            screenOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT } }
     }
 
     override fun onDreamingStarted() {
         super.onDreamingStarted()
-        update(move = true)
+        schedule()
+        runCatching { update(move = true) }.onFailure { Log.w(TAG, "update failed", it) }
         runCatching {
             setDozeScreenState(Display.STATE_DOZE)
             startDozing()
         }.onFailure { Log.w(TAG, "could not doze", it) }
         EventsStore.addListener(events)
-        schedule()
         Log.i(TAG, "standby on")
     }
 
     override fun onDreamingStopped() {
         alarms?.cancel(tick)
+        if (wake.isHeld) wake.release()
         EventsStore.removeListener(events)
         super.onDreamingStopped()
     }

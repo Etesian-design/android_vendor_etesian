@@ -366,10 +366,9 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         val agendaRows = if (Today.on(context) && "upcoming" in Today.shown(context)) emptyList() else agenda.map { Row.AgendaRow(it) }
         section(EventsClassifier.Section.CALENDAR, agendaRows)
         // Feed: the user's RSS feeds alongside apps filed under Feed.
+        // Nothing to read means no Feed section at all, as with Notifications (2026-11-22, user).
         val feedRows = if (Feeds.feeds(context).isEmpty()) emptyList()
             else Feeds.forEvents(Feeds.items(context)).filter { it.id !in swipedFeeds }.take(FEED_ROWS).map { Row.FeedEntry(it) }
-                .ifEmpty { listOf(Row.Message(if (Feeds.refreshing) "Refreshing\u2026"
-                    else if (Feeds.items(context).isNotEmpty()) "No unread feed items" else "No feed items yet")) }
         section(EventsClassifier.Section.FEED, feedRows)
         val low = bySection[EventsClassifier.Section.LOW].orEmpty()
         if (low.isNotEmpty()) {
@@ -470,6 +469,8 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         }
 
         override fun onBindViewHolder(h: RecyclerView.ViewHolder, position: Int) {
+            // A recycled row never keeps a slide's clip or offset from its last item.
+            if (h.itemView.getTag(R.id.events_slide) == null) { h.itemView.clipBounds = null; h.itemView.translationY = 0f }
             when (val row = rows[position]) {
                 Row.Top -> (h.itemView as TopRow).bind()
                 is Row.Message -> (h.itemView as TextView).text = row.text
@@ -1050,7 +1051,10 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
             // Hidden in its place until the rows under it have moved down to make room.
             v.clipBounds = android.graphics.Rect(0, 0, 0, 0)
             v.post {
-                val h = v.height.coerceAtLeast(1)
+                // Not on screen any more (the page rebuilt, the row recycled): show it where it is. Left clipped, it
+                // stayed an empty gap under its header until the launcher restarted (2026-11-22).
+                if (!v.isAttachedToWindow || v.height == 0 || holder !in sliding) { slid(holder); v.clipBounds = null; return@post }
+                val h = v.height
                 android.animation.ValueAnimator.ofFloat(-h.toFloat(), 0f).apply {
                     startDelay = moveDuration
                     duration = 420

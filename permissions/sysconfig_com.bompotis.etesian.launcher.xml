@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The standby screen's minute alarm must fire in deep Doze, as SystemUI's doze clock does: without
+     this the clock stopped at whatever time the phone went idle. -->
+<config>
+    <allow-in-power-save package="com.bompotis.etesian.launcher" />
+</config>

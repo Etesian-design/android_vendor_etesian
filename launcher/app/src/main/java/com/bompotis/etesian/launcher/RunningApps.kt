@@ -61,9 +61,11 @@ object RunningApps {
         entries += arrange(ctx, cards, fresh.firstOrNull())
         notifyChanged()
         // Snapshots change whenever an app is left, so refresh them all off the main thread.
+        val rot = runCatching { ctx.getSystemService(android.hardware.display.DisplayManager::class.java)
+            .getDisplay(android.view.Display.DEFAULT_DISPLAY).rotation }.getOrDefault(0)
         io.execute {
             fresh.forEach { e ->
-                val bmp = SystemTasks.snapshot(e.taskId, THUMB_WIDTH) ?: return@forEach
+                val bmp = SystemTasks.snapshot(e.taskId, THUMB_WIDTH, rot) ?: return@forEach
                 main.post { e.thumb = bmp; notifyChanged() }
             }
         }

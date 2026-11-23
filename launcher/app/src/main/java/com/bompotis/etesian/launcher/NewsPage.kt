@@ -24,6 +24,8 @@ import java.util.concurrent.Executors
 class NewsPage(context: Context) : FrameLayout(context), HomePage {
 
     private val list = RecyclerView(context)
+    private val pull = PullRefresh(context) { android.util.Log.i("EtesianNews", "refresh: pulled"); refreshNow() }
+    private val top = android.widget.LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL }
     private val adapter = Adapter()
     private var stories: List<Glance.Story> = emptyList()
     private var observer: ContentObserver? = null
@@ -105,12 +107,33 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
         list.adapter = adapter
         list.clipToPadding = false
         list.overScrollMode = OVER_SCROLL_NEVER
-        addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-        addView(searchBar, LayoutParams(LayoutParams.MATCH_PARENT, dp(48f)))
+        // Pull down to refresh, as in the Glance app (2026-11-22).
+        addView(pull.apply { setContent(list) }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        // Refresh and Settings beside the search bar, as in the Glance app's story list (which has no bottom bar).
+        top.addView(searchBar, android.widget.LinearLayout.LayoutParams(0, dp(48f), 1f))
+        top.addView(topButton(R.drawable.tb_refresh, "Refresh") {
+            android.util.Log.i("EtesianNews", "refresh: button"); refreshNow()
+        }, android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)).apply { marginStart = dp(6f) })
+        top.addView(topButton(R.drawable.tb_settings, "Settings") {
+            runCatching { context.startActivity(android.content.Intent().setClassName(Glance.PACKAGE, "${Glance.PACKAGE}.SettingsActivity")
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }, android.widget.LinearLayout.LayoutParams(dp(44f), dp(44f)))
+        addView(top, LayoutParams(LayoutParams.MATCH_PARENT, dp(48f)))
         contentDescription = "news"
     }
 
     private fun dp(v: Float) = (v * resources.displayMetrics.density).toInt()
+
+
+    private fun topButton(icon: Int, label: String, onTap: () -> Unit) = android.widget.ImageButton(context).apply {
+        background = null
+        setImageResource(icon)
+        imageTintList = android.content.res.ColorStateList.valueOf(N9.TEXT)
+        contentDescription = label
+        setOnClickListener { onTap() }
+    }
+
+    private fun refreshNow() { io.execute { Glance.refresh(context, force = true) } }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -142,13 +165,14 @@ class NewsPage(context: Context) : FrameLayout(context), HomePage {
     }
 
     override fun applyInsets(left: Int, top: Int, right: Int, bottom: Int) {
-        (searchBar.layoutParams as LayoutParams).apply {
+        (this.top.layoutParams as LayoutParams).apply {
             topMargin = top
             leftMargin = left + dp(16f)
-            rightMargin = right + dp(16f)
+            rightMargin = right + dp(8f)
         }
-        searchBar.requestLayout()
+        this.top.requestLayout()
         list.setPadding(left, top + dp(60f), right, bottom + dp(16f))
+        pull.labelTop = (top + dp(60f)).toFloat()
     }
 
     override fun exitModes(): Boolean {

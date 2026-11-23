@@ -17,6 +17,8 @@ acc0=$(sh_ settings get system accelerometer_rotation | tr -d '\r'); rot0=$(sh_ 
 # simulated: only `wm user-rotation lock` turns the display (writing the settings leaves rotation free)
 sh_ wm user-rotation lock 1
 sh_ monkey -p com.android.calculator2 -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 4
+# Home turns with the phone since 2026-11-22: turn back to portrait first, so a portrait home shows the landscape app.
+sh_ wm user-rotation lock 0; sleep 1
 home; sleep 2
 for _ in 1 2 3 4; do [ "$(home_pane)" = switcher ] && break; sh_ input swipe 100 1700 1000 1700 300; sleep 1.5; done; sleep 2
 home; sleep 1  # and back: the system may still be storing the snapshot on the first visit

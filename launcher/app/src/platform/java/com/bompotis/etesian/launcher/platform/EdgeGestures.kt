@@ -225,8 +225,11 @@ class EdgeGestures(private val ctx: Context) {
         }
         val top = runCatching { ActivityTaskManager.getService().focusedRootTaskInfo }.getOrNull()
         onHome = top == null || top.activityType == WindowConfiguration.ACTIVITY_TYPE_HOME
-        // Nothing to minimise on the home screen itself; only the status bar still matters there.
-        if (onHome && (candidate != Edge.TOP || y >= statusBarHeight)) return
+        // On the home screen, an edge with a view of its own ("Only from …") brings that view in; the touch is seen here
+        // because the bottom bar's window covers the bottom edge, so the home screen never gets it (2026-11-22).
+        homeEdgeView = onHome && candidate != Edge.TOP && Prefs.edgeOnly(ctx, candidate.name.lowercase())
+        // Nothing else to do on the home screen itself; only the status bar still matters there.
+        if (onHome && !homeEdgeView && (candidate != Edge.TOP || y >= statusBarHeight)) return
         taskId = top?.childTaskIds?.lastOrNull() ?: top?.taskId ?: -1
         edge = candidate
         // Under the status bar the touch stays the app's (a tap, a sideways scroll) until it
@@ -285,6 +288,13 @@ class EdgeGestures(private val ctx: Context) {
         if (statusTap && (abs(d) > slop || abs(across(e)) > slop)) statusTap = false
         if (!started) {
             if (d > slop && d > abs(across(e))) {
+                if (onHome && homeEdgeView) {
+                    monitor?.pilferPointers()
+                    started = true
+                    val name = edge!!.name.lowercase()
+                    main.post { com.bompotis.etesian.launcher.HomeActivity.toggleEdgeView(ctx, name) }
+                    return
+                }
                 if (onHome) {
                     // Swallow it so the shade doesn't open; there's no application to close.
                     monitor?.pilferPointers()
@@ -391,7 +401,11 @@ class EdgeGestures(private val ctx: Context) {
         reset()
     }
 
+    /** The swipe started on the home screen at an edge with its own view. */
+    private var homeEdgeView = false
+
     private fun reset() {
+        homeEdgeView = false
         main.removeCallbacks(peekHold)
         Platform.edgeGestureActive = false
         statusTap = false

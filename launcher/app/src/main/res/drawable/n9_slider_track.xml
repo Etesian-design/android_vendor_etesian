@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The N9 slider groove (HdSlider): 4 dp, dark, the accent-filled part up to the value. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background" android:gravity="center_vertical|fill_horizontal">
+        <shape><size android:height="4dp"/><corners android:radius="1dp"/><solid android:color="#FF3A3A3A"/></shape>
+    </item>
+    <item android:id="@android:id/progress" android:gravity="center_vertical|fill_horizontal">
+        <clip><shape><size android:height="4dp"/><corners android:radius="1dp"/>
+            <gradient android:angle="270" android:startColor="#FF4195DE" android:endColor="#FF1885DE"/></shape></clip>
+    </item>
+</layer-list>

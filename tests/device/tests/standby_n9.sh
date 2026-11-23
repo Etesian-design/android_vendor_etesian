@@ -39,6 +39,18 @@ A exec-out screencap -p > "$SHOTS/standby_2.png"
 read p2 l2 t2 r2 b2 <<<"$(lit "$SHOTS/standby_2.png")"; b="$l2 $t2 $r2 $b2"
 check "a minute later the block has moved ($a -> $b)" '[ -n "$b2" ] && [ "$a" != "$b" ]'
 check "and it is still inside the screen" '[ "$l2" -ge 0 ] && [ "$r2" -le $SW ] && [ "$b2" -le $SH ]'
+# 2026-11-22 (user): after a while the clock stopped at an old time. In deep Doze (the phone still, long enough) only
+# alarms allowed while idle go off: the launcher is on the power-save allowlist, so its minute still comes.
+check "the launcher is on the power-save allowlist" 'sh_ dumpsys deviceidle whitelist | grep -q "$L"'
+sh_ dumpsys deviceidle force-idle >/dev/null
+check "the phone is in deep Doze" 'sh_ dumpsys deviceidle get deep | grep -q IDLE'
+sleep $(( 66 - $(date +%s) % 60 ))
+A exec-out screencap -p > "$SHOTS/standby_3.png"
+read p3 l3 t3 r3 b3 <<<"$(lit "$SHOTS/standby_3.png")"; c="$l3 $t3 $r3 $b3"
+check "in deep Doze the block still moves every minute ($b -> $c)" '[ -n "$b3" ] && [ "$b" != "$c" ]'
+sh_ dumpsys deviceidle unforce >/dev/null
+# No turning with the phone: the rotation sensor is off while asleep, so no rotation suggestion either.
+check "the rotation sensor is off on the standby screen" '! sh_ dumpsys window displays | grep -q "mOrientationListener.*mEnabled=true\|OrientationListener.*enabled=true"'
 check "the standby screen did not crash" '! crashed $L'
 sh_ input keyevent WAKEUP; sleep 1; unlock
 
