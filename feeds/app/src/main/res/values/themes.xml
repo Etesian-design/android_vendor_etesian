@@ -11,12 +11,17 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:forceDarkAllowed">false</item>
     </style>
-    <!-- Nothing but its dialogs, over the page that opened it (ConnectionsActivity). -->
-    <style name="Theme.EtesianFeeds.Translucent">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
-        <item name="android:windowAnimationStyle">@null</item>
+    <!-- The pages Feeds shows over Etesian settings (ConnectionsActivity, IgnoredActivity): black, as Settings is. -->
+    <style name="Theme.EtesianFeeds.Dark" parent="android:Theme.Material.NoActionBar">
+        <item name="android:fontFamily">etesian-text</item>
+        <item name="android:colorPrimary">#FF00A5E5</item>
+        <item name="android:colorAccent">#FF00A5E5</item>
+        <item name="android:colorControlActivated">#FF00A5E5</item>
+        <item name="android:textCursorDrawable">@null</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 </resources>

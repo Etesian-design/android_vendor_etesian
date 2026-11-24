@@ -47,15 +47,16 @@
         <activity
             android:name=".IgnoredActivity"
             android:exported="true"
+            android:theme="@style/Theme.EtesianFeeds.Dark"
             android:permission="com.bompotis.etesian.feeds.permission.READ" />
 
-        <!-- The sync account and Linkwarden, managed from Etesian settings: a dialog over the settings page. -->
+        <!-- The sync account and Linkwarden, managed from Etesian settings: dark pages in the settings' look. -->
         <activity
             android:name=".ConnectionsActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:permission="com.bompotis.etesian.feeds.permission.READ"
-            android:theme="@style/Theme.EtesianFeeds.Translucent"
+            android:theme="@style/Theme.EtesianFeeds.Dark"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
