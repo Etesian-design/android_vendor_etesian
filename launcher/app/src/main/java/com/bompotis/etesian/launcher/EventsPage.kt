@@ -30,7 +30,14 @@ private const val FEED_ROWS = 20
  * Long-press anything to file that app, or just that kind of its notifications, elsewhere.
  */
 @SuppressLint("ViewConstructor")
-class EventsPage(context: Context) : FrameLayout(context), HomePage {
+/**
+ * The Events view. [notificationsFrom] set: only its Notifications section, from those apps (empty: all), for the status
+ * menu (2026-11-24, user: the same styling and behaviour as Events), sized to its rows inside the menu's scroll;
+ * [onOpened] runs after a notification is opened.
+ */
+class EventsPage(context: Context, private val notificationsFrom: Set<String>? = null,
+                 private val onOpened: (() -> Unit)? = null) : FrameLayout(context), HomePage {
+    private val embedded get() = notificationsFrom != null
 
     /** Apps (per section) whose grouped notifications are expanded. */
     private val expanded = mutableSetOf<String>()
@@ -60,7 +67,10 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
                 out.bottom = if (g.half && rv.getChildAdapterPosition(v) < adapter.itemCount - 1) -dp(10f) else 0
             }
         })
-        addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        if (notificationsFrom != null) {
+            list.isNestedScrollingEnabled = false
+            addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        } else addView(list, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
     /**
@@ -110,6 +120,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
         super.onDetachedFromWindow()
     }
     override fun onShown() {
+        if (embedded) { refresh(); return }
         agenda = Agenda.today(context)
         if (Extras.on(context, Extras.GLANCE)) Agenda.publishGlance(context, agenda)
         Weather.refresh(context) { refresh() }
@@ -225,7 +236,7 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     @SuppressLint("NotifyDataSetChanged")
     private fun refresh() = adapter.notifyDataSetChanged()
 
-    private fun open(item: EventItem) = EventsStore.open(context, item)
+    private fun open(item: EventItem) { EventsStore.open(context, item); onOpened?.invoke() }
 
     /** File this app, or only this kind of its notifications, under another section (N9 menus, as Snooze). */
     private fun reclassify(e: EventItem) {
@@ -312,6 +323,14 @@ class EventsPage(context: Context) : FrameLayout(context), HomePage {
     }
 
     private fun rows(): List<Row> {
+        notificationsFrom?.let { apps ->
+            val out = mutableListOf<Row>()
+            if (dismissMode) out += Row.DismissHint
+            val items = EventsStore.items.filter { (apps.isEmpty() || it.pkg in apps) &&
+                EventsClassifier.classify(context, it) == EventsClassifier.Section.NOTIFICATIONS }
+            if (items.isNotEmpty()) layout(EventsClassifier.Section.NOTIFICATIONS, items, out)
+            return out
+        }
         val out = mutableListOf<Row>(Row.Top)
         if (dismissMode) out += Row.DismissHint
         if (!EventsStore.isEnabled(context)) { out += Row.Permission; return out }

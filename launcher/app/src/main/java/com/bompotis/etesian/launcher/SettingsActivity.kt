@@ -1021,7 +1021,7 @@ class SettingsActivity : AppCompatActivity() {
             }
             extra(status, Extras.MUSIC, "Music", "The small music player at the top")
             extra(status, Extras.STATUS_NOTIFICATIONS, "Notifications", "A Notifications block to add in edit mode; tap it there to pick its apps, apart from Events")
-            extra(status, Extras.ANDROID_SHADE, "Android’s notification shade", "Swiping down from the top opens Android’s notifications and quick settings instead; no swipe down to close apps")
+            extra(status, Extras.STATUS_SWIPE, "Swipe down for the status menu", "The status menu comes down with a swipe from the top instead of a tap on the status bar; the swipe no longer closes apps")
             extra(status, Extras.MODES, "Do Not Disturb and Modes", "A Mode strip under Profile")
             extra(status, Extras.PRIVACY, "Privacy indicators", "Camera and microphone in use, in the status bar")
 

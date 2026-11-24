@@ -54,7 +54,7 @@ class StatusMenuActivity : Activity() {
         // N9: the menu leaves the way it came, up. Back must run close() (targetSdk 37 never calls
         // onBackPressed), and no system close animation may slide the window down after it.
         onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
-            if (editing) endEdit() else close()
+            if (editing) endEdit() else if (notificationsBlock?.events?.exitModes() != true) close()
         }
         overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
         // N9: the status menu drops over the dimmed screen with no toolbar under it (mock: n9-status-menu.png).
@@ -421,8 +421,6 @@ class StatusMenuActivity : Activity() {
 
     private companion object {
         const val MOCK = 1.36f; const val DIM = 0xA6000000.toInt(); const val ADD_GREEN = 0xFF5CA834.toInt(); const val SEL = 0xFF4A9BFF.toInt(); const val UNSEL = 0xFF23436E.toInt(); const val UNSEL_TEXT = 0xFF8A9BB4.toInt()
-        /** The status menu's notifications: the newest few; the rest are in Events. */
-        const val MAX_NOTIFICATIONS = 5
     }
 
     /** Screen brightness: the same flat bar as Volume, N9 Settings blue (mock 1a). */
@@ -530,7 +528,7 @@ class StatusMenuActivity : Activity() {
         id == StatusLayout.VOLUME -> VolumeBar(this, showProfile = false, showVolume = true)
         id == StatusLayout.STRIP -> strip()
         id == StatusLayout.MUSIC -> if (Extras.on(this, Extras.MUSIC)) SmallMusic(this) else null
-        id == StatusLayout.NOTIFICATIONS -> if (Extras.on(this, Extras.STATUS_NOTIFICATIONS)) NotificationsBlock() else null
+        id == StatusLayout.NOTIFICATIONS -> if (Extras.on(this, Extras.STATUS_NOTIFICATIONS)) NotificationsBlock().also { notificationsBlock = it } else null
         id == "brightness" -> SliderBlock("Brightness", N9.ACCENT, {
             Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128) / 255f
         }) { f ->
@@ -559,56 +557,30 @@ class StatusMenuActivity : Activity() {
     }
 
     /**
-     * The notifications (Android extras → Notifications in the status menu): the newest few of the apps chosen for it
-     * (all apps when none are), each as Events shows one: the app's squircle, title and text; a tap opens it. In edit
-     * mode a tap on the block picks its apps, apart from Events' own settings.
+     * The notifications (Android extras → Notifications in the status menu): Events' own Notifications section (the same
+     * rows, styles, grouping, swipe to dismiss, long press and menus: 2026-11-24, user), from the apps chosen for the
+     * status menu (all when none are), apart from what Events shows. In edit mode a tap on the block picks its apps.
      */
+    private var notificationsBlock: NotificationsBlock? = null
     private inner class NotificationsBlock : LinearLayout(this@StatusMenuActivity) {
-        private val list = LinearLayout(context).apply { orientation = VERTICAL }
-        private val listener: () -> Unit = { post { fill() } }
+        var events: EventsPage? = null
         init {
             orientation = VERTICAL
             contentDescription = "Notifications"
             addView(sectionLabel("Notifications"))
-            addView(list)
-            if (editing) setOnClickListener { pickApps() }
-            fill()
-        }
-        override fun onAttachedToWindow() { super.onAttachedToWindow(); if (!editing) EventsStore.addListener(listener) }
-        override fun onDetachedFromWindow() { EventsStore.removeListener(listener); super.onDetachedFromWindow() }
-
-        private fun fill() {
-            list.removeAllViews()
             val apps = StatusLayout.notificationApps(context)
             if (editing) {
-                list.addView(note(if (apps.isEmpty()) "All apps \u00b7 tap to choose" else "${apps.size} apps \u00b7 tap to choose"))
-                return
+                setOnClickListener { pickApps() }
+                addView(TextView(context).apply {
+                    text = if (apps.isEmpty()) "All apps \u00b7 tap to choose" else "${apps.size} apps \u00b7 tap to choose"
+                    setTextColor(0xFFA0A0A0.toInt()); textSize = ms(15f); typeface = N9.FONT; setPadding(mp(8f), mp(4f), 0, mp(8f))
+                })
+            } else {
+                events = EventsPage(context, apps) { close() }.also {
+                    addView(it, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                    it.onShown()
+                }
             }
-            val shown = StatusLayout.notifications(EventsStore.items, apps)
-            if (shown.isEmpty()) { list.addView(note("No notifications")); return }
-            shown.take(MAX_NOTIFICATIONS).forEach { e -> list.addView(notificationRow(e)) }
-            if (shown.size > MAX_NOTIFICATIONS) list.addView(note("${shown.size - MAX_NOTIFICATIONS} more in Events"))
-        }
-
-        /** One notification, the size of the other rows: the app's own (squircle) icon, its title and text. */
-        private fun notificationRow(e: EventItem) = LinearLayout(context).apply {
-            gravity = Gravity.CENTER_VERTICAL; minimumHeight = mp(60f)
-            setPadding(mp(8f), 0, 0, 0)
-            contentDescription = "Notification ${e.title}"
-            addView(ImageView(context).apply { AppRepository.iconFor(context, e.pkg)?.let { setImageBitmap(it) } },
-                LinearLayout.LayoutParams(mp(46f), mp(46f)).apply { marginEnd = mp(14f) })
-            addView(LinearLayout(context).apply {
-                orientation = VERTICAL
-                addView(TextView(context).apply { text = e.title.ifBlank { appLabel(e.pkg) }; setTextColor(N9.TEXT); textSize = ms(18f)
-                    typeface = N9.FONT_BOLD; includeFontPadding = false; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
-                if (e.text.isNotBlank()) addView(TextView(context).apply { text = e.text; setTextColor(0xFFA0A0A0.toInt()); textSize = ms(15f)
-                    typeface = N9.FONT; includeFontPadding = false; setPadding(0, mp(3f), 0, 0); maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END })
-            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            setOnClickListener { EventsStore.open(context, e); close() }
-        }
-
-        private fun note(t: String) = TextView(context).apply {
-            text = t; setTextColor(0xFFA0A0A0.toInt()); textSize = ms(15f); typeface = N9.FONT; setPadding(mp(8f), mp(4f), 0, mp(8f))
         }
     }
 

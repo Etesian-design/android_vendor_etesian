@@ -204,11 +204,11 @@ class EdgeGestures(private val ctx: Context) {
         val x = e.rawX
         val y = e.rawY
         val n9 = n9Mode()
-        // Android extras → Android's notification shade: the top edge is Android's again, on the lock screen too: no
-        // status menu tap, no swipe down to close (2026-11-23, for people used to pulling their notifications down).
-        val shade = n9 && com.bompotis.etesian.launcher.Extras.on(ctx, com.bompotis.etesian.launcher.Extras.ANDROID_SHADE)
+        // "Swipe down for the status menu" (2026-11-24, user): for people used to pulling their status down, Etesian's own
+        // status menu comes with a swipe down from the top instead of a tap, and the top swipe no longer closes the app.
+        // Never Android's shade.
+        statusSwipe = n9 && com.bompotis.etesian.launcher.Extras.on(ctx, com.bompotis.etesian.launcher.Extras.STATUS_SWIPE)
         val candidate = when {
-            shade && y < statusBarHeight + topBand && x >= edgeWidth && x <= w - edgeWidth -> return
             // N9: the whole status bar belongs to Etesian; no notification shade.
             n9 && y < statusBarHeight -> Edge.TOP
             // A thumb coming in from the top bezel is often first seen just under the status
@@ -239,7 +239,7 @@ class EdgeGestures(private val ctx: Context) {
         // Under the status bar the touch stays the app's (a tap, a sideways scroll) until it
         // turns out to be a swipe down (onMove).
         belowBar = candidate == Edge.TOP && y >= statusBarHeight
-        statusTap = candidate == Edge.TOP && !belowBar
+        statusTap = candidate == Edge.TOP && !belowBar && !statusSwipe
         // N9: nothing on the status bar reaches Android's shade, not even a long press.
         if (candidate == Edge.TOP && !belowBar) monitor?.pilferPointers()
         downTime = e.eventTime
@@ -292,6 +292,12 @@ class EdgeGestures(private val ctx: Context) {
         if (statusTap && (abs(d) > slop || abs(across(e)) > slop)) statusTap = false
         if (!started) {
             if (d > slop && d > abs(across(e))) {
+                if (edge == Edge.TOP && statusSwipe) {
+                    monitor?.pilferPointers()
+                    started = true
+                    main.post { openStatusMenu() }
+                    return
+                }
                 if (onHome && homeEdgeView) {
                     monitor?.pilferPointers()
                     started = true
@@ -369,7 +375,7 @@ class EdgeGestures(private val ctx: Context) {
             if (!cancelled && statusTap && e.eventTime - downTime < ViewConfiguration.getLongPressTimeout()) openStatusMenu()
             reset(); return
         }
-        if (onHome) { reset(); return }
+        if (onHome || (edge == Edge.TOP && statusSwipe)) { reset(); return }
         val v = inwardVelocity()
         val d = inward(e)
         val hint = backHint
@@ -407,9 +413,12 @@ class EdgeGestures(private val ctx: Context) {
 
     /** The swipe started on the home screen at an edge with its own view. */
     private var homeEdgeView = false
+    /** The top edge opens the status menu with a swipe down (setting), not a tap; it closes nothing. */
+    private var statusSwipe = false
 
     private fun reset() {
         homeEdgeView = false
+        statusSwipe = false
         main.removeCallbacks(peekHold)
         Platform.edgeGestureActive = false
         statusTap = false
