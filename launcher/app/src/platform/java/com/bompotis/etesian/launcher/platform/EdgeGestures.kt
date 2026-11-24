@@ -231,7 +231,7 @@ class EdgeGestures(private val ctx: Context) {
         onHome = top == null || top.activityType == WindowConfiguration.ACTIVITY_TYPE_HOME
         // On the home screen, an edge with a view of its own ("Only from …") brings that view in; the touch is seen here
         // because the bottom bar's window covers the bottom edge, so the home screen never gets it (2026-11-22).
-        // While such a view is in, every other edge leads back too (HomeActivity.edgeOnHome).
+        // While such a view is in, every other edge leads back too (HomeActivity.dragBegin).
         homeEdgeView = onHome && candidate != Edge.TOP &&
             (Prefs.edgeOnly(ctx, candidate.name.lowercase()) || com.bompotis.etesian.launcher.HomeActivity.sheetShowing())
         // Nothing else to do on the home screen itself; only the status bar still matters there.
@@ -310,10 +310,11 @@ class EdgeGestures(private val ctx: Context) {
                     return
                 }
                 if (onHome && homeEdgeView) {
+                    // The edge view moves with the finger, in or out, as an application window does (2026-11-24, user).
                     monitor?.pilferPointers()
                     started = true
                     val name = edge!!.name.lowercase()
-                    main.post { com.bompotis.etesian.launcher.HomeActivity.toggleEdgeView(ctx, name) }
+                    main.post { com.bompotis.etesian.launcher.HomeActivity.edgeDragBegin(name) }
                     return
                 }
                 if (onHome) {
@@ -328,9 +329,12 @@ class EdgeGestures(private val ctx: Context) {
                 Platform.edgeGestureActive = true
                 // From here on the gesture is ours: the app gets a cancel.
                 monitor?.pilferPointers()
+                // An edge with a view of its own brings that view in over the application, with the finger, instead
+                // of minimising it first and switching views afterwards (2026-11-24, user).
+                viewIn = action != Action.BACK && action != Action.CLOSE && Prefs.edgeOnly(ctx, edge!!.name.lowercase())
                 if (action == Action.BACK) backHint = BackHint(ctx, edge!!).also { it.show(downX, downY) }
-                else drag = WindowDrag(ctx, edge!!, taskId, closing = action == Action.CLOSE).also { it.begin() }
-                if (action == Action.PEEK) { stillX = e.rawX; stillY = e.rawY; main.postDelayed(peekHold, PEEK_HOLD_MS) }
+                else drag = WindowDrag(ctx, edge!!, taskId, closing = action == Action.CLOSE, viewIn = viewIn).also { it.begin() }
+                if (action == Action.PEEK && !viewIn) { stillX = e.rawX; stillY = e.rawY; main.postDelayed(peekHold, PEEK_HOLD_MS) }
             } else if (abs(across(e)) > slop * 2 && (edge != Edge.TOP || belowBar)) {
                 reset()
             }
@@ -338,7 +342,9 @@ class EdgeGestures(private val ctx: Context) {
         }
         val travel = if (edge == Edge.LEFT || edge == Edge.RIGHT) screenW else screenH
         val progress = (d / travel).coerceIn(0f, 1f)
+        if (onHome && homeEdgeView) { main.post { com.bompotis.etesian.launcher.HomeActivity.edgeDragMove(progress) }; return }
         drag?.update(progress, across(e))
+        if (viewIn) return
         // Curved back: in from the side, then down.
         if (Prefs.backGesture(ctx) == Prefs.BACK_CURVED && (edge == Edge.LEFT || edge == Edge.RIGHT)) {
             // A curve is a short move in and then mostly down. The drift of a long, slow minimise
@@ -391,6 +397,11 @@ class EdgeGestures(private val ctx: Context) {
             main.post { com.bompotis.etesian.launcher.StatusMenuActivity.release(v) }
             reset(); return
         }
+        if (onHome && homeEdgeView) {
+            val v = if (cancelled) -Float.MAX_VALUE else inwardVelocity() / density
+            main.post { com.bompotis.etesian.launcher.HomeActivity.edgeDragEnd(v) }
+            reset(); return
+        }
         if (onHome) { reset(); return }
         val v = inwardVelocity()
         val d = inward(e)
@@ -429,11 +440,14 @@ class EdgeGestures(private val ctx: Context) {
 
     /** The swipe started on the home screen at an edge with its own view. */
     private var homeEdgeView = false
+    /** In an application, from an edge with its own view: that view comes in over it (WindowDrag.viewIn). */
+    private var viewIn = false
     /** The top edge opens the status menu with a swipe down (setting), not a tap; it closes nothing. */
     private var statusSwipe = false
 
     private fun reset() {
         homeEdgeView = false
+        viewIn = false
         statusSwipe = false
         main.removeCallbacks(peekHold)
         Platform.edgeGestureActive = false

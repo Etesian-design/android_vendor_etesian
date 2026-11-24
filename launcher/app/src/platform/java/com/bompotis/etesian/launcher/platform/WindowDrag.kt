@@ -35,6 +35,12 @@ class WindowDrag(
     private val edge: Edge,
     private val taskId: Int,
     private val closing: Boolean,
+    /**
+     * The edge has a view of its own (Settings → Gestures, "Only by this swipe"): instead of the application leaving, home
+     * comes in over it with that view, from the edge, following the finger, and the application goes back into the dark
+     * behind it, as home does behind a leaving application (2026-11-24, user: the old minimise ran first, the view later).
+     */
+    private val viewIn: Boolean = false,
 ) {
     companion object {
         private const val TAG = "EtesianDrag"
@@ -73,7 +79,12 @@ class WindowDrag(
 
     fun begin() {
         val tasks = ProxyService.recentTasks ?: return
-        val intent = HomeActivity.switcherIntent(ctx)
+        if (viewIn) HomeActivity.prepareEdgeView(edge.name.lowercase())
+        // Home is started (re-delivered) with this: it must ask for the edge's own view, or home switches back to Open
+        // applications under the finger.
+        val intent = HomeActivity.switcherIntent(ctx).apply {
+            if (viewIn) putExtra(HomeActivity.EXTRA_PAGE, HomeActivity.pageAfterLeaving(ctx, edge.name.lowercase()))
+        }
         val pending = PendingIntent.getActivity(ctx, 0, Intent().setPackage(ctx.packageName),
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT or
                 Intent.FILL_IN_COMPONENT or PendingIntent.FLAG_CANCEL_CURRENT,
@@ -141,6 +152,7 @@ class WindowDrag(
      */
     private fun apply(p: Float = progress) {
         val t = SurfaceControl.Transaction()
+        if (viewIn) { applyViewIn(t, p); t.apply(); return }
         apps.forEach { target ->
             val b = target.screenSpaceBounds
             // The screen's own rounded corners, which the window keeps while it moves. The radius
@@ -169,6 +181,34 @@ class WindowDrag(
             t.setAlpha(target.leash, HOME_LIGHT + (1 - HOME_LIGHT) * p)
         }
         t.apply()
+    }
+
+    /** [viewIn]: home, with the edge's view, slides in over the application, which falls back into the dark. */
+    private fun applyViewIn(t: SurfaceControl.Transaction, p: Float) {
+        val behind = 1 - (1 - HOME_SCALE) * p
+        apps.forEach { target ->
+            val b = target.screenSpaceBounds
+            t.setLayer(target.leash, 0)
+            t.setWindowCrop(target.leash, b.width(), b.height())
+            t.setScale(target.leash, behind, behind)
+            t.setPosition(target.leash, b.left + b.width() * (1 - behind) / 2, b.top + b.height() * (1 - behind) / 2)
+            t.setCornerRadius(target.leash, cornerRadius / behind)
+            dim(t, target, (1 - HOME_LIGHT) * p)
+        }
+        homes.forEach { target ->
+            val b = target.screenSpaceBounds
+            val out = 1 - p
+            t.setLayer(target.leash, Int.MAX_VALUE)
+            t.setScale(target.leash, 1f, 1f)
+            t.setAlpha(target.leash, 1f)
+            t.setWindowCrop(target.leash, b.width(), b.height())
+            t.setCornerRadius(target.leash, cornerRadius)
+            when (edge) {
+                Edge.LEFT -> t.setPosition(target.leash, b.left - b.width() * out, b.top.toFloat())
+                Edge.RIGHT -> t.setPosition(target.leash, b.left + b.width() * out, b.top.toFloat())
+                else -> t.setPosition(target.leash, b.left.toFloat(), b.top + b.height() * out)
+            }
+        }
     }
 
     /** Lets go past the threshold: the window slides on off screen, home comes fully into the light. */

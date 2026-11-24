@@ -50,12 +50,31 @@ class HomeActivity : ComponentActivity() {
             else -> PAGE_SWITCHER
         }
 
+        /** How home looks behind a window on top of it: platform WindowDrag.HOME_SCALE and HOME_LIGHT, the same. */
+        private const val BEHIND_SCALE = 0.9f
+        private const val BEHIND_LIGHT = 0.25f
+
         /** The view home showed when it was last left (for "Where you were"). */
         @Volatile var lastPage = PAGE_APPS
 
-        /** A swipe in from [edge] on the home screen: its own view comes in, or goes back if it is showing. */
-        fun toggleEdgeView(ctx: android.content.Context, edge: String) {
-            live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }?.edgeOnHome(edge)
+
+        /**
+         * The edge view under the finger (2026-11-24, user: it must move with the finger as an application does, never
+         * jump in or drop away on its own). [edgeDragBegin] at the swipe's start, [edgeDragMove] with how far in it is
+         * (0..1 of the screen), [edgeDragEnd] with the inward speed (dp/s) when it lets go. False: nothing to drag.
+         */
+        fun edgeDragBegin(edge: String): Boolean = live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }?.takeOver(edge) == true
+        fun edgeDragMove(progress: Float) { live?.get()?.dragMove(progress) }
+        fun edgeDragEnd(velocityDp: Float) { live?.get()?.dragEnd(velocityDp) }
+
+        /**
+         * An application is being swiped away from [edge], which has a view of its own: that view is put in, settled,
+         * before home's window comes over the application (WindowDrag), so it arrives with the finger (2026-11-24).
+         */
+        fun prepareEdgeView(edge: String) {
+            live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }?.let { h ->
+                h.edgeViews.entries.firstOrNull { it.value.second == edge }?.key?.let { h.openSheet(it, animate = false) }
+            }
         }
 
         /** A view of an edge's own is in front: every other edge must still lead somewhere (EdgeGestures asks). */
@@ -290,6 +309,114 @@ class HomeActivity : ComponentActivity() {
 
     /** A swipe in from an edge that has an edge view, on the home screen itself: (edge, down x, down y). */
     private var edgeSwipe: Triple<String, Float, Float>? = null
+    private var swipeVelocity: android.view.VelocityTracker? = null
+    private var swipeDragging = false
+
+    /**
+     * An edge view moved by the finger. [opening]: it comes in from its edge over the row, which goes back into the dark
+     * (as home does behind an application coming up). Otherwise it leaves as an application does: it slides along with
+     * the finger, out the opposite side, while the view it leaves to (Settings → Gestures) comes out of the dark behind
+     * it, zooming in from [WindowDrag]'s scale. [toPage]: the row's view to end on; [backTo]: the row's view before.
+     */
+    private class SheetDrag(val edge: String, val opening: Boolean, val backTo: Int) {
+        var progress = 0f
+        /** The system's edge gestures took the touch over from home's own (they cancel it here): theirs from then on. */
+        var bySystem = false
+        var animator: android.animation.ValueAnimator? = null
+    }
+    private var sheetDrag: SheetDrag? = null
+
+    /**
+     * The system's edge gestures (platform EdgeGestures) start a swipe. Home may already be moving the view for the same
+     * touch, before they took it over: they carry on with that drag, never a second one from the start.
+     */
+    private fun takeOver(edge: String): Boolean {
+        val running = sheetDrag?.takeIf { it.edge == edge && it.animator == null }
+        if (running != null) {
+            running.bySystem = true
+            edgeSwipe = null; swipeDragging = false; swipeVelocity?.recycle(); swipeVelocity = null
+            return true
+        }
+        return dragBegin(edge)?.also { it.bySystem = true } != null
+    }
+
+    private fun dragBegin(edge: String): SheetDrag? {
+        sheetDrag?.animator?.end()
+        val own = edgeViews.entries.firstOrNull { it.value.second == edge }?.key
+        val before = pager.currentPage
+        val drag = when {
+            sheetPage >= 0 -> {
+                // Leaving: the same edge back to the row as it was; any other edge to its view (Settings → Gestures).
+                if (own != sheetPage) {
+                    val page = pageAfterLeaving(this, edge).let { if (it in edgeViews) PAGE_SWITCHER else it }
+                    pages.indexOfLast { it.first == page }.takeIf { it >= 0 }?.let { pager.showPage(it, animate = false) }
+                }
+                SheetDrag(edge, opening = false, backTo = before)
+            }
+            own != null -> {
+                openSheet(own, animate = false)
+                SheetDrag(edge, opening = true, backTo = before)
+            }
+            else -> return null
+        }
+        sheetDrag = drag
+        placeSheet(drag, 0f)
+        return drag
+    }
+
+    private fun dragMove(progress: Float) {
+        val drag = sheetDrag ?: return
+        if (drag.animator != null) return
+        drag.progress = progress.coerceIn(0f, 1f)
+        placeSheet(drag, drag.progress)
+    }
+
+    /** Lets go: on past [Prefs.closeDistance] or with a flick in, as an application does; back otherwise. */
+    private fun dragEnd(velocityDp: Float) {
+        val drag = sheetDrag ?: return
+        val p = drag.progress
+        val commit = when {
+            velocityDp < -900f / 3 -> false
+            velocityDp > 900f -> p > 0.08f
+            else -> p > Prefs.closeDistance(this)
+        }
+        val to = if (commit) 1f else 0f
+        drag.animator = android.animation.ValueAnimator.ofFloat(p, to).apply {
+            duration = (220 + 180 * kotlin.math.abs(to - p)).toLong()
+            interpolator = android.view.animation.DecelerateInterpolator(1.6f)
+            addUpdateListener { placeSheet(drag, it.animatedValue as Float) }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(a: android.animation.Animator) = settleDrag(drag, commit)
+            })
+            start()
+        }
+    }
+
+    private fun settleDrag(drag: SheetDrag, commit: Boolean) {
+        if (sheetDrag !== drag) return
+        sheetDrag = null
+        pager.scaleX = 1f; pager.scaleY = 1f; pager.alpha = 1f
+        // Gone: an opening let go early, or a leaving carried through. Otherwise the view stays and the row is put back.
+        if (drag.opening != commit) closeSheet(animate = false)
+        sheet.animate().cancel(); sheet.translationX = 0f; sheet.translationY = 0f
+        if (drag.opening || !commit) pager.showPage(drag.backTo, animate = false)
+        if (sheetPage < 0) describePane(pager.currentPage)
+    }
+
+    /** Everything for [p] (0..1). */
+    private fun placeSheet(drag: SheetDrag, p: Float) {
+        val w = window.decorView.width.toFloat(); val h = window.decorView.height.toFloat()
+        // The edge view is the window on top: how far it is out of place, and where it goes.
+        val out = if (drag.opening) 1 - p else p
+        val (dx, dy) = if (drag.opening) offscreen(drag.edge).let { it.first * out to it.second * out }
+            else when (drag.edge) { "left" -> w * out to 0f; "right" -> -w * out to 0f; else -> 0f to -h * out }
+        sheet.translationX = dx; sheet.translationY = dy
+        // The row behind it: in the dark and a little small while the view covers it, as home behind an application.
+        val light = if (drag.opening) 1 - p else p
+        val scale = BEHIND_SCALE + (1 - BEHIND_SCALE) * light
+        pager.scaleX = scale; pager.scaleY = scale
+        pager.alpha = BEHIND_LIGHT + (1 - BEHIND_LIGHT) * light
+    }
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         if (Platform.edgeGestureActive) return true
@@ -298,28 +425,9 @@ class HomeActivity : ComponentActivity() {
     }
 
     /**
-     * An edge swiped on the home screen: its own view comes in (or, already in, goes back). Any other edge, while a view
-     * is in, sends it away and does what that edge does in the row (2026-11-24, user: with Applications on the bottom,
-     * the other sides did nothing and the user was stuck in it until opening an app).
-     */
-    private fun edgeOnHome(edge: String) {
-        val own = edgeViews.entries.firstOrNull { it.value.second == edge }?.key
-        when {
-            own != null -> if (sheetPage == own) closeSheet() else openSheet(own, animate = true)
-            sheetPage >= 0 -> {
-                val page = when (Prefs.leaveTo(this, edge)) {
-                    Prefs.LEAVE_EVENTS -> PAGE_EVENTS; Prefs.LEAVE_APPS -> PAGE_APPS; Prefs.LEAVE_WIDGETS -> PAGE_WIDGETS
-                    Prefs.LEAVE_NEWS -> PAGE_NEWS; else -> PAGE_SWITCHER
-                }
-                closeSheet()
-                if (pages.any { it.first == page }) showPage(page)
-            }
-        }
-    }
-
-    /**
-     * On the home screen an edge with a view of its own brings that view in (in an application the edge swipe does it,
-     * through [pageAfterLeaving]); the same edge again sends it back. True once the swipe is taken.
+     * On the home screen an edge with a view of its own brings that view in, with the finger ([dragBegin]); the same edge
+     * sends it back, and any other edge, while it is in, leaves it for that edge's view (2026-11-24, user: the other sides
+     * did nothing and the user was stuck in it). True once the swipe is taken.
      */
     private fun edgeSwipeOnHome(ev: android.view.MotionEvent): Boolean {
         val d = resources.displayMetrics.density
@@ -331,18 +439,42 @@ class HomeActivity : ComponentActivity() {
                     ev.rawX < zone -> "left"; ev.rawX > w - zone -> "right"; ev.rawY > h - zone -> "bottom"; else -> null
                 }
                 edgeSwipe = edge?.takeIf { e -> sheetPage >= 0 || edgeViews.values.any { it.second == e } }?.let { Triple(it, ev.rawX, ev.rawY) }
+                swipeVelocity?.recycle(); swipeVelocity = android.view.VelocityTracker.obtain().also { it.addMovement(ev) }
             }
             android.view.MotionEvent.ACTION_MOVE -> {
                 val (edge, x0, y0) = edgeSwipe ?: return false
+                swipeVelocity?.addMovement(ev)
                 val inward = when (edge) { "left" -> ev.rawX - x0; "right" -> x0 - ev.rawX; else -> y0 - ev.rawY }
-                if (inward > 48 * d) {
-                    edgeSwipe = null
-                    super.dispatchTouchEvent(android.view.MotionEvent.obtain(ev).apply { action = android.view.MotionEvent.ACTION_CANCEL })
-                    edgeOnHome(edge)
-                    return true
+                val across = if (edge == "bottom") ev.rawX - x0 else ev.rawY - y0
+                if (!swipeDragging) {
+                    val slop = android.view.ViewConfiguration.get(this).scaledTouchSlop
+                    if (inward > slop && inward > kotlin.math.abs(across)) {
+                        super.dispatchTouchEvent(android.view.MotionEvent.obtain(ev).apply { action = android.view.MotionEvent.ACTION_CANCEL })
+                        swipeDragging = dragBegin(edge) != null
+                        if (!swipeDragging) { edgeSwipe = null; return true }
+                    } else if (kotlin.math.abs(across) > slop * 2) { edgeSwipe = null; return false }
+                    else return false
                 }
+                dragMove(inward / (if (edge == "bottom") h else w).toFloat())
+                return true
             }
-            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> edgeSwipe = null
+            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                val (edge, _, _) = edgeSwipe ?: return false
+                edgeSwipe = null
+                if (!swipeDragging) return false
+                swipeDragging = false
+                val vt = swipeVelocity ?: return true
+                swipeVelocity = null
+                vt.addMovement(ev); vt.computeCurrentVelocity(1000)
+                val v = when (edge) { "left" -> vt.xVelocity; "right" -> -vt.xVelocity; else -> -vt.yVelocity }
+                vt.recycle()
+                if (ev.actionMasked != android.view.MotionEvent.ACTION_CANCEL) { dragEnd(v / d); return true }
+                // A cancel is mostly the system's edge gestures taking the touch over (they carry the drag on, takeOver);
+                // only if they don't, shortly, does it go back.
+                val drag = sheetDrag
+                window.decorView.postDelayed({ if (drag != null && sheetDrag === drag && !drag.bySystem) dragEnd(-Float.MAX_VALUE) }, 200)
+                return true
+            }
         }
         return false
     }
