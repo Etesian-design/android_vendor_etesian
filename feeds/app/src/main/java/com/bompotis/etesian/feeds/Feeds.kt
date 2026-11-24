@@ -216,8 +216,10 @@ object Feeds {
             items = r.items.sortedByDescending { it.time }
             writeCache(ctx)
         }
-        prefs(ctx).edit().putStringSet(KEY_READ, r.read).putStringSet(KEY_STARRED, r.starred)
-            .putLong(KEY_REFRESHED, System.currentTimeMillis()).apply()
+        prefs(ctx).edit().apply {
+            r.read?.let { putStringSet(KEY_READ, it) }
+            r.starred?.let { putStringSet(KEY_STARRED, it) }
+        }.putLong(KEY_REFRESHED, System.currentTimeMillis()).apply()
         changed()
     }
 

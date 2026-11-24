@@ -170,7 +170,9 @@ class MainActivity : Activity() {
     private fun accountDialog() {
         val a = Sync.account(this)
         if (a != null) {
-            Ui.dialog(this).setTitle(a.name).setMessage("Signed in as ${a.user}\n${a.server}\n\nYour feeds, posts, and what you have read or starred are kept on this server.")
+            Ui.dialog(this).setTitle(a.name).setMessage(
+                if (a.service == Sync.CLOUD) "Following ${a.server}\n\nThe feeds and posts come from Cloud Companion, where its owner changes the list. What you read or star stays on this phone."
+                else "Signed in as ${a.user}\n${a.server}\n\nYour feeds, posts, and what you have read or starred are kept on this server.")
                 .setPositiveButton("Sign out") { _, _ -> Sync.signOut(this); Feeds.switchPlace(this, toAccount = false); Feeds.refresh(this, force = true) }
                 .setNegativeButton(android.R.string.cancel, null).show()
             return
@@ -220,9 +222,13 @@ class MainActivity : Activity() {
         }
         val form = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(server); addView(user); addView(password)
+            addView(server)
+            if (service != Sync.CLOUD) { addView(user); addView(password) }
+            else server.hint = "Feeds address from Cloud Companion"
             if (service == Sync.FRESHRSS) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
                 text = "Use the API password set in FreshRSS under Profile."; setPadding(0, dp(6f), 0, 0) })
+            if (service == Sync.CLOUD) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
+                text = "In Cloud Companion, open Feeds, then Share, and copy the Etesian Feeds address. Read and starred stay on this phone."; setPadding(0, dp(6f), 0, 0) })
             if (service == Sync.TTRSS) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
                 text = "Turn on \"Enable API\" in Tiny Tiny RSS's preferences first."; setPadding(0, dp(6f), 0, 0) })
             if (service == Sync.NEXTCLOUD) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
@@ -285,13 +291,14 @@ class MainActivity : Activity() {
          */
         fun removeDialog(a: Activity, url: String, title: String, removed: () -> Unit) {
             val account = Sync.account(a)
-            val box = account?.let {
+            val box = account?.takeIf { Sync.canEditFeeds(a) }?.let {
                 android.widget.CheckBox(a).apply {
                     text = "Also remove it from ${it.name}"; contentDescription = "Also remove it from the server"
                     textSize = 17f; setTextColor(Ui.INK); typeface = Ui.FONT
                 }
             }
             val d = Ui.dialog(a).setTitle("Remove $title?")
+            if (account != null && box == null) d.setMessage("It stays in ${account.name} and this phone stops syncing it. You can resume it from Ignored feeds.")
             if (box != null) d.setView(Ui.wrap(a, LinearLayout(a).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(box)

@@ -20,15 +20,20 @@ object Sync {
     const val FRESHRSS = "freshrss"
     const val NEXTCLOUD = "nextcloud"
     const val TTRSS = "ttrss"
+    const val CLOUD = "cloud"
 
     /** The services, in the order the account dialog lists them. */
-    val SERVICES = listOf(FRESHRSS to "FreshRSS", NEXTCLOUD to "Nextcloud News", TTRSS to "Tiny Tiny RSS")
+    val SERVICES = listOf(FRESHRSS to "FreshRSS", NEXTCLOUD to "Nextcloud News", TTRSS to "Tiny Tiny RSS", CLOUD to "Cloud Companion")
 
     class Account(val service: String, val server: String, val user: String, val password: String) {
         val name get() = SERVICES.firstOrNull { it.first == service }?.second ?: service
     }
 
-    class Remote(val feeds: List<Feeds.Feed>, val items: List<Feeds.Item>, val read: Set<String>, val starred: Set<String>)
+    /** [read] and [starred] null: the server keeps no such state, so the phone's own stays (Cloud Companion). */
+    class Remote(val feeds: List<Feeds.Feed>, val items: List<Feeds.Item>, val read: Set<String>?, val starred: Set<String>?)
+
+    /** Whether the account can change its feed list from the phone (Cloud Companion's is the owner's alone). */
+    fun canEditFeeds(ctx: Context) = account(ctx)?.service != CLOUD
 
     private const val PREFS = "sync"
     private const val KEY_PENDING = "pending"
@@ -111,6 +116,7 @@ object Sync {
         FRESHRSS -> GReader(a)
         NEXTCLOUD -> NextcloudNews(a)
         TTRSS -> TinyTinyRss(a)
+        CLOUD -> CloudCompanion(a)
         else -> error("Unknown service")
     }
 
@@ -326,5 +332,43 @@ object Sync {
         override fun subscribe(url: String) { call("subscribeToFeed", "feed_url" to url) }
 
         override fun unsubscribe(id: String) { call("unsubscribeFeed", "feed_id" to id.toLong()) }
+    }
+
+    // --- Cloud Companion: the owner's feeds, shared with feed readers (its docs/feeds.md) ---------------------------------------
+
+    /**
+     * Read only: the share's address (public, or private with the token in it) gives the feeds and their posts. The list is the
+     * owner's, changed in Cloud Companion; read and starred stay on this phone.
+     */
+    private class CloudCompanion(val a: Account) : Service {
+        val index = a.server.trim().trimEnd('/').let { if (it.endsWith("/index.json")) it else "$it/index.json" }
+        var cached: JSONObject? = null
+        fun doc() = cached ?: JSONObject(http("GET", index, emptyMap()).also {
+            if (!it.trimStart().startsWith("{")) error("That is not a Cloud Companion feeds address")
+        }).also { cached = it }
+
+        override fun login() { cached = null }
+
+        override fun feeds(): List<Pair<String, Feeds.Feed>> {
+            val arr = doc().optJSONArray("feeds") ?: error("That is not a Cloud Companion feeds address")
+            return (0 until arr.length()).map { arr.getJSONObject(it) }.map {
+                it.getString("url") to Feeds.Feed(it.getString("url"), it.optString("title").ifEmpty { it.getString("url") })
+            }
+        }
+
+        override fun items(feeds: List<Feeds.Feed>): Remote {
+            val arr = doc().optJSONArray("posts") ?: JSONArray()
+            val items = (0 until arr.length()).map { arr.getJSONObject(it) }.map { o ->
+                val html = o.optString("html")
+                val time = runCatching { java.time.OffsetDateTime.parse(o.optString("published")).toInstant().toEpochMilli() }.getOrDefault(0L)
+                Feeds.Item(o.optString("feedURL"), o.optString("feed"), o.optString("title"), o.optString("summary").ifEmpty { excerpt(html) },
+                    html, o.optString("link"), time, "cc:" + o.getString("id"))
+            }
+            return Remote(feeds, items, null, null)
+        }
+
+        override fun mark(op: String, ids: List<String>) {}
+        override fun subscribe(url: String) = error("Add feeds on Cloud Companion's Feeds page; only its owner changes the list")
+        override fun unsubscribe(id: String) = error("Only Cloud Companion's owner changes the list")
     }
 }

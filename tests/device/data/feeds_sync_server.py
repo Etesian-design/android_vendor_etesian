@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A fake FreshRSS (Google Reader API) and Nextcloud News (v1-3) server for the Feeds sync tests.
 
-Also a fake Linkwarden (/api/v1/..., Bearer "lw-token"): /_lw_add?url= registers a preserved link (readable copy and
+Also Cloud Companion's shared feeds (/feeds/cc-token/index.json) and a fake Linkwarden (/api/v1/..., Bearer "lw-token"): /_lw_add?url= registers a preserved link (readable copy and
 PDF); saved links are kept and listed at /_state.
 
 Two feeds with three posts; one post read, one starred. It keeps what the phone changes and shows it at /_state.
@@ -85,6 +85,15 @@ class H(BaseHTTPRequestHandler):
                     return self.send(200, {"title": "Linkwarden copy", "content": "<p>LINKWARDEN-COPY The article as Linkwarden preserved it.</p>"})
                 if q.get("format") == ["2"]:
                     return self.send(200, "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n", "application/pdf")
+        if u.path == "/feeds/cc-token/index.json":
+            # Cloud Companion's share (private, the token in the address): the owner's feeds and posts, no read state
+            from datetime import datetime, timezone
+            return self.send(200, {"title": "Cloud Companion feeds",
+                                   "feeds": [{"url": f["url"], "title": f["title"]} for f in FEEDS.values()],
+                                   "posts": [{"id": "p%d" % i, "feed": FEEDS[it["feed"]]["title"], "feedURL": FEEDS[it["feed"]]["url"],
+                                              "title": it["title"], "link": "https://example.test/%d" % i, "html": it["body"],
+                                              "published": datetime.fromtimestamp(it["t"], timezone.utc).isoformat().replace("+00:00", "Z")}
+                                             for i, it in ITEMS.items() if it["feed"] in FEEDS]})
         if u.path == "/_state":
             return self.send(200, {"items": ITEMS, "feeds": FEEDS, **STATE})
         if u.path.startswith("/api/greader.php/"):
