@@ -85,23 +85,34 @@ index 0000000..970b78a
 +    </item>
 +    <item><color android:color="@android:color/transparent" /></item>
 +</selector>
-diff --git a/res/drawable/n9_tb_menu.xml b/res/drawable/n9_tb_menu.xml
-new file mode 100644
-index 0000000..eb6af69
---- /dev/null
-+++ b/res/drawable/n9_tb_menu.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<!-- N9 bottom toolbar icon: menu -->
-+<vector xmlns:android="http://schemas.android.com/apk/res/android"
-+    android:width="32dp"
-+    android:height="32dp"
-+    android:viewportWidth="32"
-+    android:viewportHeight="32">
-+    <path
-+        android:fillColor="#FF282828"
-+        android:pathData="M6,8h20v3H6zM6,14.5h20v3H6zM6,21h20v3H6z" />
-+</vector>
+diff --git a/res/layout/toolbar.xml b/res/layout/toolbar.xml
+index afc6770..1d1792c 100644
+--- a/res/layout/toolbar.xml
++++ b/res/layout/toolbar.xml
+@@ -18,4 +18,23 @@
+         android:textAllCaps="true"
+         android:textSize="16sp" />
+ 
++    <!-- Etesian: as on the N9, no menu and no toolbar. What the menu held are bare buttons in the display's top
++         row, like the keys: History always, Full result and Fraction only while a result shows them. -->
++    <LinearLayout
++        android:layout_width="wrap_content"
++        android:layout_height="match_parent"
++        android:layout_gravity="end"
++        android:orientation="horizontal">
++
++        <TextView android:id="@+id/n9_full" style="@style/N9DisplayButton"
++            android:text="@string/n9_full_result" android:visibility="gone" />
++
++        <TextView android:id="@+id/n9_fraction" style="@style/N9DisplayButton"
++            android:text="@string/n9_fraction" android:visibility="gone" />
++
++        <TextView android:id="@+id/n9_history" style="@style/N9DisplayButton"
++            android:text="@string/menu_history" />
++
++    </LinearLayout>
++
+ </androidx.appcompat.widget.Toolbar>
 diff --git a/res/values-night-v34/color.xml b/res/values-night-v34/color.xml
 deleted file mode 100644
 index 71f9f31..0000000
@@ -234,18 +245,19 @@ index 0fd3098..00393fe 100644
      <!-- Dimens for display formula. -->
      <dimen name="formula_padding_top">16dip</dimen>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index 39c91c5..aa2a621 100644
+index 39c91c5..8ecf635 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -295,4 +295,6 @@
+@@ -295,4 +295,7 @@
      <!-- Placeholder string when there is no history to be shown. [CHAR_LIMIT=40] -->
      <string name="no_history">No History</string>
  
-+    <!-- Etesian: the bottom toolbar's menu button. -->
-+    <string name="n9_menu">Menu</string>
++    <!-- Etesian: the display's buttons in place of the menu (short, they share the top row with RAD/DEG). -->
++    <string name="n9_full_result">Full result</string>
++    <string name="n9_fraction">Fraction</string>
  </resources>
 diff --git a/res/values/styles.xml b/res/values/styles.xml
-index 3855c43..fca263d 100644
+index 3855c43..dea41b3 100644
 --- a/res/values/styles.xml
 +++ b/res/values/styles.xml
 @@ -7,7 +7,8 @@
@@ -284,6 +296,28 @@ index 3855c43..fca263d 100644
      </style>
  
      <style name="PadButtonStyle.Caps">
+@@ -90,4 +103,21 @@
+         <item name="android:paddingEnd">@dimen/pads_horizontal_edge_padding</item>
+     </style>
+ 
++
++    <!-- Etesian: a bare text button in the display's top row, grey like the RAD/DEG mode, pressed like the keys. -->
++    <style name="N9DisplayButton">
++        <item name="android:layout_width">wrap_content</item>
++        <item name="android:layout_height">match_parent</item>
++        <item name="android:gravity">center</item>
++        <item name="android:paddingStart">14dp</item>
++        <item name="android:paddingEnd">14dp</item>
++        <item name="android:background">@drawable/n9_key_function</item>
++        <item name="android:textColor">@color/n9_text_secondary</item>
++        <item name="android:textSize">16sp</item>
++        <item name="android:fontFamily">sans-serif-medium</item>
++        <item name="android:maxLines">1</item>
++        <item name="android:clickable">true</item>
++        <item name="android:focusable">true</item>
++    </style>
++
+ </resources>
 diff --git a/res/values/themes.xml b/res/values/themes.xml
 index 6fbc2af..d4507b9 100644
 --- a/res/values/themes.xml
@@ -385,47 +419,69 @@ index 6fbc2af..d4507b9 100644
  
  </resources>
 diff --git a/src/com/android/calculator2/Calculator.java b/src/com/android/calculator2/Calculator.java
-index 6551570..50aa3b7 100644
+index 6551570..2908110 100644
 --- a/src/com/android/calculator2/Calculator.java
 +++ b/src/com/android/calculator2/Calculator.java
-@@ -302,6 +302,9 @@ public class Calculator extends AppCompatActivity
+@@ -302,6 +302,33 @@ public class Calculator extends AppCompatActivity
          }
      }
  
-+    /** Etesian: the menu lives on the system bottom toolbar instead of the top bar. */
-+    private boolean mEtesianToolbar;
++    /** Etesian: the menu's actions as buttons in the display's top row. */
++    private TextView mN9Full, mN9Fraction;
++
++    private void setupN9Buttons() {
++        mN9Full = findViewById(R.id.n9_full);
++        mN9Fraction = findViewById(R.id.n9_fraction);
++        findViewById(R.id.n9_history).setOnClickListener(v -> mMainCalculator.transitionToEnd());
++        mN9Full.setOnClickListener(v -> displayFull());
++        mN9Fraction.setOnClickListener(v -> displayFraction());
++    }
++
++    /** Full result and Fraction show when the menu would have offered them. */
++    private void updateN9Buttons() {
++        if (mN9Full == null || mEvaluator == null) return;
++        final boolean result = mCurrentState == CalculatorState.RESULT;
++        final UnifiedReal mainResult = mEvaluator.getResult(Evaluator.MAIN_INDEX);
++        mN9Full.setVisibility(result ? View.VISIBLE : View.GONE);
++        mN9Fraction.setVisibility(result && mainResult != null && mainResult.exactlyDisplayable()
++                ? View.VISIBLE : View.GONE);
++    }
++
++    @Override
++    public void invalidateOptionsMenu() {
++        super.invalidateOptionsMenu();
++        updateN9Buttons();
++    }
 +
      @Override
      protected void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
-@@ -312,6 +315,18 @@ public class Calculator extends AppCompatActivity
+@@ -312,9 +339,14 @@ public class Calculator extends AppCompatActivity
  
          // Hide all default options in the ActionBar.
          getSupportActionBar().setDisplayOptions(0);
-+        // Etesian: as on the N9, nothing on top. The menu (history, full result, fraction, licences) is on the
-+        // bottom toolbar, as the N9 menu sheet. The app's only screen: no Back (rule 2).
+-
++        // Etesian: as on the N9, no menu and no toolbar: history, full result and fraction are bare buttons in the
++        // display's top row (setupN9Buttons). The system toolbar is hidden here.
 +        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this)) {
-+            mEtesianToolbar = true;
-+            com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setBack(false).setItems(id -> {
-+                if ("menu".equals(id)) {
-+                    com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.activity_calculator,
-+                            this::onPrepareOptionsMenu, this::onOptionsItemSelected);
-+                }
-+            }, com.bompotis.etesian.toolbar.EtesianToolbar.Item.action("menu", R.drawable.n9_tb_menu,
-+                    getString(R.string.n9_menu)));
++            com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setHidden(true).setItems(java.util.Collections.emptyList(), id -> { });
 +        }
- 
          mMainCalculator = findViewById(R.id.main_calculator);
          mModeView = findViewById(R.id.mode);
-@@ -1041,6 +1056,7 @@ public class Calculator extends AppCompatActivity
++        setupN9Buttons();
+         mFormulaText = findViewById(R.id.formula);
+         mDeleteButton = findViewById(R.id.del);
+         mResultText = findViewById(R.id.result);
+@@ -1041,14 +1073,14 @@ public class Calculator extends AppCompatActivity
      @Override
      public boolean onCreateOptionsMenu(Menu menu) {
          super.onCreateOptionsMenu(menu);
-+        if (mEtesianToolbar) return true; // the menu is on the bottom toolbar
+-
+-        getMenuInflater().inflate(R.menu.activity_calculator, menu);
+-        return true;
++        return true; // Etesian: no menu; its actions are buttons in the display (setupN9Buttons)
+     }
  
-         getMenuInflater().inflate(R.menu.activity_calculator, menu);
-         return true;
-@@ -1049,6 +1065,8 @@ public class Calculator extends AppCompatActivity
      @Override
      public boolean onPrepareOptionsMenu(Menu menu) {
          super.onPrepareOptionsMenu(menu);

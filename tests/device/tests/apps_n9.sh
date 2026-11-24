@@ -1,7 +1,7 @@
 # 2026-11-19 (user): the apps as on the N9 (compared with real N9 screens). Each opened fresh from the home screen:
 # - Clock opens on its one N9 page, the clock over the alarms, and never asks for permissions;
 # - Calendar opens on the month (its day's events under it);
-# - Calculator is black with an orange result, keys without boxes, and nothing on top (its menu is on the bar);
+# - Calculator is black with an orange result, keys without boxes, no menu and no bar (History, Full result, Fraction are buttons);
 # - Contacts has no drawer button on top; its menu (with Labels and accounts) is the N9 sheet;
 # - Files opens on every document on the phone as the N9's one list, newest first, grouped by age, under an orange title;
 # - Clock's world page has Add city on the bar, not a floating pill;
@@ -32,12 +32,18 @@ open_app com.android.calculator2; u=$(dump); A exec-out screencap -p > "$SHOTS/a
 set -- $(px 40 700); cr=$1 cg=$2 cb=$3
 check "Calculator is black ($cr $cg $cb)" '[ $cr -lt 30 ] && [ $cg -lt 30 ] && [ $cb -lt 30 ]'
 check "Calculator has nothing on top (no overflow menu)" '! echo "$u" | grep -q "content-desc=\"More options\""'
-check "Calculator's menu is on the bar" 'echo "$u" | grep -q "content-desc=\"Menu\""'
+# 2026-11-24 (owner): as the N9 calculator, no menu and no bottom bar; the menu's items are buttons on the display.
+check "Calculator has no menu and no bottom bar" '! echo "$u" | grep -qE "content-desc=\"(Menu|Back)\""'
+check "Calculator has a History button" 'echo "$u" | grep -q "resource-id=\"com.android.calculator2:id/n9_history\""'
+check "Full result and Fraction wait for a result" '! echo "$u" | grep -qE "text=\"(Full result|Fraction)\""'
 sh_ input keyevent 8; sh_ input keyevent 9; sleep 1
 c=$(A shell uiautomator dump /sdcard/u.xml >/dev/null; A shell cat /sdcard/u.xml | grep -o 'resource-id="com.android.calculator2:id/formula"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | tr '[],' '   ')
 if [ -n "$c" ]; then set -- $c; A exec-out screencap -p > /tmp/hd-calc.png
   orange=$(python3 -c "from PIL import Image;im=Image.open('/tmp/hd-calc.png').convert('RGB').crop(($1,$2,$3,$4));print(sum(1 for r,g,b in im.getdata() if r>200 and 110<g<170 and b<60))"); fi
 check "the number is orange (${orange:-?} px)" '[ "${orange:-0}" -gt 50 ]'
+sh_ input keyevent KEYCODE_NUMPAD_DIVIDE; sh_ input keyevent 10; sh_ input keyevent KEYCODE_EQUALS; sleep 1.2
+check "after 12÷3 = there is Full result" 'dump | grep -q "text=\"Full result\""'
+check "and Fraction (an exact result)" 'dump | grep -q "text=\"Fraction\""'
 
 open_app com.android.contacts; u=$(dump); A exec-out screencap -p > "$SHOTS/apps_contacts.png"
 check "Contacts has no drawer button on top" '! echo "$u" | grep -qi "content-desc=\"Open navigation drawer\""'
