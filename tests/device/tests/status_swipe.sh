@@ -11,6 +11,7 @@ sh_ am start -n com.android.settings/.Settings >/dev/null; sleep 2
 # Lowest drawn edge of the status menu's views (bounds are where they are drawn, so they follow the panel).
 edge() { raw_sh uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb shell cat /sdcard/u.xml | tr '>' '\n' | grep 'package="com.bompotis' |
   grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | grep -o '[0-9]*' | paste - - - - | awk '$4-$2 < 2000 {if ($4>m) m=$4} END {print m+0}'; }
+A logcat -c
 sh_ input motionevent DOWN 540 5; sh_ input motionevent MOVE 540 120; sh_ input motionevent MOVE 540 350; sleep 1.2
 e1=$(edge); shot status_swipe_follow
 sh_ input motionevent MOVE 540 650; sleep 0.8
@@ -18,6 +19,8 @@ e2=$(edge)
 check "while held, the menu's lower edge is under the finger (350 → $e1)" '[ "$e1" -ge 300 ] && [ "$e1" -le 400 ]'
 check "and comes down with it (650 → $e2)" '[ "$e2" -ge 600 ] && [ "$e2" -le 700 ]'
 check "it is our status menu" 'menu_up'
+# 2026-11-24 (user): the finger carries it, so the tap's press sound does not belong.
+check "the swipe makes no press sound" '! A logcat -d -s Etesian | grep -q "sound "'
 sh_ input motionevent MOVE 540 120; sleep 0.8; sh_ input motionevent UP 540 120; sleep 1.5
 check "pushed back up and let go, it goes away" '! menu_up'
 sh_ input swipe 540 5 540 900 600; sleep 1.5
@@ -33,8 +36,9 @@ check "from the home screen too" 'menu_up'
 sh_ input keyevent BACK; sleep 1
 sh_ settings put secure etesian_extra_status_swipe 0; sleep 1
 sh_ am start -n com.android.settings/.Settings >/dev/null; sleep 2
-sh_ input tap 540 30; sleep 1.5
+A logcat -c; sh_ input tap 540 30; sleep 1.5
 check "off: a tap opens the status menu again" 'menu_up'
+check "with its press sound" 'A logcat -d -s Etesian | grep -q "sound "'
 sh_ input keyevent BACK; sleep 1.5
 put_back etesian_extra_status_swipe "$old"; put_back etesian_extra_status_menu "$oldm"
 check "launcher did not crash" '! crashed $LAUNCHER'

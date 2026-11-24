@@ -35,6 +35,8 @@ object N9Sounds {
     private val ids = HashMap<String, Int>()
 
     fun play(ctx: Context, name: String) {
+        // For the device tests: which action asked for a sound (a swipe the finger carries must not).
+        android.util.Log.d("Etesian", "sound $name")
         // One action can reach here twice (a long press that also enters edit mode): play it once.
         val now = android.os.SystemClock.uptimeMillis()
         if (name == last && now - lastAt < 400) return

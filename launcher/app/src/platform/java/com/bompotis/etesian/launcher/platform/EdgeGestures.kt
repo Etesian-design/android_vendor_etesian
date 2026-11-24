@@ -231,7 +231,9 @@ class EdgeGestures(private val ctx: Context) {
         onHome = top == null || top.activityType == WindowConfiguration.ACTIVITY_TYPE_HOME
         // On the home screen, an edge with a view of its own ("Only from …") brings that view in; the touch is seen here
         // because the bottom bar's window covers the bottom edge, so the home screen never gets it (2026-11-22).
-        homeEdgeView = onHome && candidate != Edge.TOP && Prefs.edgeOnly(ctx, candidate.name.lowercase())
+        // While such a view is in, every other edge leads back too (HomeActivity.edgeOnHome).
+        homeEdgeView = onHome && candidate != Edge.TOP &&
+            (Prefs.edgeOnly(ctx, candidate.name.lowercase()) || com.bompotis.etesian.launcher.HomeActivity.sheetShowing())
         // Nothing else to do on the home screen itself; only the status bar still matters there.
         if (onHome && !homeEdgeView && (candidate != Edge.TOP || y >= statusBarHeight)) return
         taskId = top?.childTaskIds?.lastOrNull() ?: top?.taskId ?: -1
@@ -250,7 +252,8 @@ class EdgeGestures(private val ctx: Context) {
 
     /** N9 status menu: a tap on the status bar opens Etesian's status menu, never notifications. */
     private fun openStatusMenu(drag: Boolean = false) {
-        com.bompotis.etesian.launcher.N9Sounds.play(ctx, com.bompotis.etesian.launcher.N9Sounds.PRESS)
+        // A tap is a press and sounds like one; a swipe the finger carries makes no sound (2026-11-24, user).
+        if (!drag) com.bompotis.etesian.launcher.N9Sounds.play(ctx, com.bompotis.etesian.launcher.N9Sounds.PRESS)
         // While recording, the red dot sits on the right of the status bar (with the system
         // icons): a tap there asks "Stop recording?" instead (approved "Recording dot").
         if (!drag && com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > screenW / 2f) {
