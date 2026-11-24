@@ -32,11 +32,15 @@ class MainActivity : Activity() {
         val bar = Ui.toolbar(this, root, back = false, actions = listOf(
             Ui.Action("add", R.drawable.tb_add, "Add feed"),
             Ui.Action("refresh", R.drawable.tb_refresh, "Refresh"),
-            Ui.Action("search", R.drawable.tb_search, "Search"))) { id ->
+            Ui.Action("search", R.drawable.tb_search, "Search"),
+            Ui.Action("menu", R.drawable.tb_menu, "Menu"))) { id ->
             when (id) {
                 "add" -> addDialog()
                 "refresh" -> refresh()
                 "search" -> startActivity(Intent(this, PostsActivity::class.java).putExtra(PostsActivity.EXTRA_SEARCH, true))
+                "menu" -> com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.main, { m ->
+                    m.findItem(R.id.account).title = Sync.account(this)?.let { "Account: ${it.name}" } ?: "Sync with an account"
+                }) { mi -> if (mi.itemId == R.id.account) accountDialog(); true }
             }
         }
         setContentView(root)
@@ -150,6 +154,53 @@ class MainActivity : Activity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    /** Signed in: who and where, and Sign out. Not: the services, then the server, user name and password. */
+    private fun accountDialog() {
+        val a = Sync.account(this)
+        if (a != null) {
+            Ui.dialog(this).setTitle(a.name).setMessage("Signed in as ${a.user}\n${a.server}\n\nYour feeds, posts, and what you have read or starred are kept on this server.")
+                .setPositiveButton("Sign out") { _, _ -> Sync.signOut(this); Feeds.switchPlace(this, toAccount = false); Feeds.refresh(this, force = true) }
+                .setNegativeButton(android.R.string.cancel, null).show()
+            return
+        }
+        Ui.dialog(this).setTitle("Sync with").setItems(Sync.SERVICES.map { it.second }.toTypedArray()) { _, i ->
+            signInDialog(Sync.SERVICES[i].first, Sync.SERVICES[i].second)
+        }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun signInDialog(service: String, name: String) {
+        val server = Ui.field(this, "Server address").apply { contentDescription = "Server address" }
+        val user = Ui.field(this, "User name", uri = false).apply { contentDescription = "User name" }
+        val password = Ui.field(this, "Password", uri = false).apply {
+            contentDescription = "Password"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(server); addView(user); addView(password)
+            if (service == Sync.FRESHRSS) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
+                text = "Use the API password set in FreshRSS under Profile."; setPadding(0, dp(6f), 0, 0) })
+            if (service == Sync.NEXTCLOUD) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
+                text = "An app password from Nextcloud's Security settings is best."; setPadding(0, dp(6f), 0, 0) })
+        }
+        Ui.dialog(this).setTitle(name).setView(Ui.wrap(this, form))
+            .setPositiveButton("Sign in") { _, _ ->
+                val acc = Sync.Account(service, server.text.toString().trim().let { if ("://" in it || it.isEmpty()) it else "https://$it" },
+                    user.text.toString().trim(), password.text.toString())
+                Toast.makeText(this, "Signing in…", Toast.LENGTH_SHORT).show()
+                Thread {
+                    val error = Sync.signIn(this, acc)
+                    runOnUiThread {
+                        if (error != null) { Toast.makeText(this, error, Toast.LENGTH_LONG).show(); return@runOnUiThread }
+                        Feeds.switchPlace(this, toAccount = true)
+                        FeedsJob.schedule(this)
+                        Feeds.refresh(this, force = true)
+                    }
+                }.start()
+            }
+            .setNegativeButton(android.R.string.cancel, null).show()
     }
 
     private fun feedMenu(url: String, title: String) {

@@ -81,6 +81,7 @@ object Feeds {
         save(ctx, feeds(ctx).map { if (it.url == url) Feed(url, title) else it })
 
     fun remove(ctx: Context, url: String) {
+        if (Sync.active(ctx)) { val app = ctx.applicationContext; io.execute { runCatching { Sync.unsubscribe(app, url) } } }
         save(ctx, feeds(ctx).filterNot { it.url == url })
         items = items(ctx).filterNot { it.feedUrl == url }
         writeCache(ctx)
@@ -94,6 +95,15 @@ object Feeds {
     fun add(ctx: Context, input: String, done: (String?) -> Unit) {
         val app = ctx.applicationContext
         io.execute {
+            if (Sync.active(app)) {
+                // The account's server fetches and finds the feed; it comes back with the refresh.
+                val error = runCatching {
+                    Sync.subscribe(app, input.trim().let { if ("://" in it) it else "https://$it" })
+                    fetchAll(app); null
+                }.getOrElse { it.message ?: "Couldn't add that feed" }
+                main.post { done(error) }
+                return@execute
+            }
             val error = runCatching {
                 var url = input.trim().let { if ("://" in it) it else "https://$it" }
                 var parsed = runCatching { fetch(url) }.getOrNull()
@@ -137,7 +147,7 @@ object Feeds {
     /** Refreshes all feeds; with [force] false only if the last refresh is old. */
     fun refresh(ctx: Context, force: Boolean, done: (() -> Unit)? = null) {
         val app = ctx.applicationContext
-        if (refreshing || feeds(app).isEmpty() ||
+        if (refreshing || (feeds(app).isEmpty() && !Sync.active(app)) ||
             (!force && System.currentTimeMillis() - lastRefresh(app) < AUTO_REFRESH_MS)) {
             done?.let { main.post(it) }
             return
@@ -164,6 +174,7 @@ object Feeds {
     }
 
     private fun fetchAll(ctx: Context) {
+        if (Sync.active(ctx)) { pullAccount(ctx); return }
         for (f in feeds(ctx)) {
             runCatching { fetch(f.url) }
                 .onSuccess { (_, list) -> merge(ctx, f.url, f.title, list); setFailed(ctx, f.url, false) }
@@ -171,6 +182,44 @@ object Feeds {
         }
         prefs(ctx).edit().putLong(KEY_REFRESHED, System.currentTimeMillis()).apply()
     }
+
+    /**
+     * The account's server has the feeds, posts and states: they replace what is here. Changes made here went to the
+     * server first (Sync.pull). Offline, everything stays as it was and the feeds show "Can't update".
+     */
+    private fun pullAccount(ctx: Context) {
+        val r = runCatching { Sync.pull(ctx) }.getOrElse {
+            feeds(ctx).forEach { f -> setFailed(ctx, f.url, true) }
+            return
+        }
+        save(ctx, r.feeds)
+        r.feeds.forEach { setFailed(ctx, it.url, false) }
+        synchronized(this) {
+            items = r.items.sortedByDescending { it.time }
+            writeCache(ctx)
+        }
+        prefs(ctx).edit().putStringSet(KEY_READ, r.read).putStringSet(KEY_STARRED, r.starred)
+            .putLong(KEY_REFRESHED, System.currentTimeMillis()).apply()
+        changed()
+    }
+
+    /**
+     * Signing in ([toAccount]) or out: the phone's own feeds are put aside while an account has the list, and come back
+     * when it is signed out; the account's posts and states are not kept after it.
+     */
+    fun switchPlace(ctx: Context, toAccount: Boolean) {
+        val p = prefs(ctx)
+        val e = p.edit()
+        if (toAccount) e.putString(KEY_OWN, p.getString(KEY_FEEDS, "[]")).putStringSet(KEY_OWN_READ, set(ctx, KEY_READ))
+            .putStringSet(KEY_OWN_STARRED, set(ctx, KEY_STARRED)).remove(KEY_FEEDS).remove(KEY_READ).remove(KEY_STARRED)
+        else e.putString(KEY_FEEDS, p.getString(KEY_OWN, "[]")).putStringSet(KEY_READ, p.getStringSet(KEY_OWN_READ, emptySet()))
+            .putStringSet(KEY_STARRED, p.getStringSet(KEY_OWN_STARRED, emptySet())).remove(KEY_OWN).remove(KEY_OWN_READ).remove(KEY_OWN_STARRED)
+        e.remove(KEY_FAILED).putLong(KEY_REFRESHED, 0L).apply()
+        items = emptyList(); writeCache(ctx); changed()
+    }
+    private const val KEY_OWN = "own_list"
+    private const val KEY_OWN_READ = "own_read"
+    private const val KEY_OWN_STARRED = "own_starred"
 
     // --- Per-feed state: failures, last update, last seen; read items -----------------------
 
@@ -199,10 +248,14 @@ object Feeds {
 
     fun isRead(ctx: Context, id: String) = id in set(ctx, KEY_READ)
 
-    fun setRead(ctx: Context, id: String, read: Boolean) { edit(ctx, KEY_READ, id, read); changed() }
+    fun setRead(ctx: Context, id: String, read: Boolean) {
+        if (isRead(ctx, id) != read) Sync.queue(ctx, if (read) "read" else "unread", id)
+        edit(ctx, KEY_READ, id, read); changed()
+    }
 
     fun markAllRead(ctx: Context, feedUrl: String?) {
         val ids = items(ctx).filter { feedUrl == null || it.feedUrl == feedUrl }.map { it.id }
+        ids.filterNot { isRead(ctx, it) }.forEach { Sync.queue(ctx, "read", it) }
         // Forget ids that are no longer cached, so the set doesn't grow forever.
         val cached = items(ctx).map { it.id }.toSet()
         prefs(ctx).edit().putStringSet(KEY_READ, (set(ctx, KEY_READ).filter { it in cached } + ids).toSet()).apply()
@@ -248,6 +301,7 @@ object Feeds {
     fun setStarred(ctx: Context, id: String, starred: Boolean) {
         val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val set = prefs.getStringSet(KEY_STARRED, emptySet())!!.toMutableSet()
+        if (starred != (id in set)) Sync.queue(ctx, if (starred) "star" else "unstar", id)
         if (starred) set.add(id) else set.remove(id)
         prefs.edit().putStringSet(KEY_STARRED, set).apply()
     }
