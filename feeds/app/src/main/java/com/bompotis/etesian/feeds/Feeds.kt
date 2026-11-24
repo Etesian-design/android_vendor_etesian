@@ -256,7 +256,7 @@ object Feeds {
 
     // --- Network and parsing -------------------------------------------------------------
 
-    private fun open(url: String): HttpURLConnection {
+    internal fun open(url: String): HttpURLConnection {
         var current = url
         repeat(5) {
             val c = URL(current).openConnection() as HttpURLConnection

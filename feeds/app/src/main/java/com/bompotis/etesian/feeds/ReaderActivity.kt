@@ -16,7 +16,7 @@ import com.bompotis.etesian.toolbar.EtesianMenu
 
 /**
  * Reads one feed item, N9 content-app style: a light page with the title, the source and date,
- * an engraved rule and the text. Toolbar: back · open in browser · ≡ (star, share, unread).
+ * an engraved rule and the text. Toolbar: back · readable version · open in browser · ≡ (star, share, unread).
  * Opening an item marks it read.
  */
 class ReaderActivity : Activity() {
@@ -73,6 +73,27 @@ class ReaderActivity : Activity() {
         body.addView(View(this).apply { setBackgroundColor(RULE) }, LinearLayout.LayoutParams(-1, dp(1f)))
         body.addView(View(this).apply { setBackgroundColor(0xFFFFFFFF.toInt()) }, LinearLayout.LayoutParams(-1, dp(1f)))
         body.addView(text, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16f) })
+        // The readable version (2026-11-24, user): the article from the page itself, in this same page; again, the
+        // feed's own text.
+        val feedText = text.text
+        var readable = false
+        val showReadable = {
+            readable = !readable
+            if (!readable) { text.text = feedText; text.contentDescription = null }
+            else {
+                text.text = "Loading the readable version…"
+                Readable.load(this, item.link) { a ->
+                    if (!readable || isDestroyed) return@load
+                    if (a == null) { text.text = feedText; readable = false
+                        android.widget.Toast.makeText(this, "No readable version of this page", android.widget.Toast.LENGTH_SHORT).show()
+                        return@load }
+                    // Paragraphs keep their gap here: an article is long, and compact mode runs it into one block.
+                    text.text = Html.fromHtml(a.html, Html.FROM_HTML_MODE_LEGACY, { ColorDrawable(0) }, null).trimEnd()
+                    text.contentDescription = "readable"
+                    scroll.scrollTo(0, 0)
+                }
+            }
+        }
         scroll.addView(body)
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         val share = {
@@ -81,9 +102,11 @@ class ReaderActivity : Activity() {
                 .putExtra(Intent.EXTRA_TEXT, item.link.ifEmpty { item.title }), null))
         }
         val bar = Ui.toolbar(this, root, back = true, actions = listOf(
+            Ui.Action("readable", R.drawable.tb_readable, "Readable version"),
             Ui.Action("browser", R.drawable.tb_browser, "Open in browser"),
             Ui.Action("menu", R.drawable.tb_menu, "Menu"))) { id ->
-            if (id == "browser") openInBrowser()
+            if (id == "readable") { if (item.link.isNotEmpty()) showReadable() }
+            else if (id == "browser") openInBrowser()
             else EtesianMenu.show(this, R.menu.reader, { m ->
                 m.findItem(R.id.star).title = if (Feeds.isStarred(this, item.id)) "Unstar" else "Star"
             }) { mi ->
