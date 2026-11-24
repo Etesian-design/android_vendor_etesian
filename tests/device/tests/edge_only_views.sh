@@ -31,6 +31,14 @@ check "a swipe up from the bottom on the home screen brings Applications, its ic
 shot edge_only_apps
 sh_ input keyevent BACK; sleep 1
 check "Back sends it away again" '! sheet | grep -q "pane:apps"'
+# 2026-11-24 (user): with Applications in from the bottom, the other edges did nothing; the user was stuck in it until
+# opening an app. Every other edge sends it away and does what it does in the row (both sides: Open applications).
+pref_list gestures "From the left side" "Open applications" >/dev/null; pref_list gestures "From the right side" "Open applications" >/dev/null
+for side in "5 1200 900 1200" "1075 1200 180 1200"; do
+  home; sheet | grep -q "pane:apps" || { sh_ input swipe 540 2155 540 1400 300; sleep 1; }
+  sh_ input swipe $side 300; sleep 1.2
+  check "a swipe in from the side ($side) sends Applications away to Open applications ($(sheet))" '! sheet | grep -q "pane:apps" && [ "$(home_pane)" = switcher ]'
+done
 sh_ am start -n com.android.calculator2/.Calculator >/dev/null 2>&1; sleep 2
 sh_ input swipe 540 2155 540 900 300; sleep 2
 check "leaving an application from the bottom brings Applications, its icons shown ($(sheet))" 'sheet | grep -q "pane:apps" && icons'

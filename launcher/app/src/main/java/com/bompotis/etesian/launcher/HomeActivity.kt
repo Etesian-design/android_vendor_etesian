@@ -55,10 +55,11 @@ class HomeActivity : ComponentActivity() {
 
         /** A swipe in from [edge] on the home screen: its own view comes in, or goes back if it is showing. */
         fun toggleEdgeView(ctx: android.content.Context, edge: String) {
-            val home = live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed } ?: return
-            val id = home.edgeViews.entries.firstOrNull { it.value.second == edge }?.key ?: return
-            if (home.sheetPage == id) home.closeSheet() else home.openSheet(id, animate = true)
+            live?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }?.edgeOnHome(edge)
         }
+
+        /** A view of an edge's own is in front: every other edge must still lead somewhere (EdgeGestures asks). */
+        fun sheetShowing(): Boolean = live?.get()?.let { it.sheetPage >= 0 } == true
 
         /** [showSwitcherStill] for any view: home already in front, switch its pane in place. */
         fun showStill(ctx: android.content.Context, page: Int) {
@@ -297,6 +298,26 @@ class HomeActivity : ComponentActivity() {
     }
 
     /**
+     * An edge swiped on the home screen: its own view comes in (or, already in, goes back). Any other edge, while a view
+     * is in, sends it away and does what that edge does in the row (2026-11-24, user: with Applications on the bottom,
+     * the other sides did nothing and the user was stuck in it until opening an app).
+     */
+    private fun edgeOnHome(edge: String) {
+        val own = edgeViews.entries.firstOrNull { it.value.second == edge }?.key
+        when {
+            own != null -> if (sheetPage == own) closeSheet() else openSheet(own, animate = true)
+            sheetPage >= 0 -> {
+                val page = when (Prefs.leaveTo(this, edge)) {
+                    Prefs.LEAVE_EVENTS -> PAGE_EVENTS; Prefs.LEAVE_APPS -> PAGE_APPS; Prefs.LEAVE_WIDGETS -> PAGE_WIDGETS
+                    Prefs.LEAVE_NEWS -> PAGE_NEWS; else -> PAGE_SWITCHER
+                }
+                closeSheet()
+                if (pages.any { it.first == page }) showPage(page)
+            }
+        }
+    }
+
+    /**
      * On the home screen an edge with a view of its own brings that view in (in an application the edge swipe does it,
      * through [pageAfterLeaving]); the same edge again sends it back. True once the swipe is taken.
      */
@@ -309,16 +330,15 @@ class HomeActivity : ComponentActivity() {
                 val edge = when {
                     ev.rawX < zone -> "left"; ev.rawX > w - zone -> "right"; ev.rawY > h - zone -> "bottom"; else -> null
                 }
-                edgeSwipe = edge?.takeIf { e -> edgeViews.values.any { it.second == e } }?.let { Triple(it, ev.rawX, ev.rawY) }
+                edgeSwipe = edge?.takeIf { e -> sheetPage >= 0 || edgeViews.values.any { it.second == e } }?.let { Triple(it, ev.rawX, ev.rawY) }
             }
             android.view.MotionEvent.ACTION_MOVE -> {
                 val (edge, x0, y0) = edgeSwipe ?: return false
                 val inward = when (edge) { "left" -> ev.rawX - x0; "right" -> x0 - ev.rawX; else -> y0 - ev.rawY }
                 if (inward > 48 * d) {
                     edgeSwipe = null
-                    val id = edgeViews.entries.first { it.value.second == edge }.key
                     super.dispatchTouchEvent(android.view.MotionEvent.obtain(ev).apply { action = android.view.MotionEvent.ACTION_CANCEL })
-                    if (sheetPage == id) closeSheet() else openSheet(id, animate = true)
+                    edgeOnHome(edge)
                     return true
                 }
             }
