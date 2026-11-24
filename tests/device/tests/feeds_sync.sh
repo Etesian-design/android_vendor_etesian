@@ -1,4 +1,4 @@
-# 2026-11-24 (user): Feeds can sync with the user's own server: FreshRSS (Google Reader API) and Nextcloud News. The
+# 2026-11-24 (user): Feeds can sync with the user's own server: FreshRSS (Google Reader API), Nextcloud News and Tiny Tiny RSS. The
 # server keeps the feeds, the posts and what is read or starred; Feeds shows them and sends its changes back. Never a
 # live server: a fake one on this machine (data/feeds_sync_server.py) through adb reverse. The user's own feeds are put
 # aside while signed in and come back on signing out; everything of theirs is restored exactly at the end.
@@ -35,8 +35,8 @@ sign_in() { # service name, password
   tap_text "Sign in" >/dev/null; sleep 4
 }
 
-for SERVICE in "FreshRSS" "Nextcloud News"; do
-  case $SERVICE in FreshRSS) P=fr; R1="tag:google.com,2005:reader/item/101";; *) P=nc; R1=101;; esac
+for SERVICE in "FreshRSS" "Nextcloud News" "Tiny Tiny RSS"; do
+  case $SERVICE in FreshRSS) P=fr;; "Nextcloud News") P=nc;; *) P=tt;; esac
   python3 "$SRV_PY" $PORT & SRV=$!
   adb reverse tcp:$PORT tcp:$PORT >/dev/null; sleep 1
 

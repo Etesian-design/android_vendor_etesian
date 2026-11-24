@@ -223,6 +223,8 @@ class MainActivity : Activity() {
             addView(server); addView(user); addView(password)
             if (service == Sync.FRESHRSS) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
                 text = "Use the API password set in FreshRSS under Profile."; setPadding(0, dp(6f), 0, 0) })
+            if (service == Sync.TTRSS) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
+                text = "Turn on \"Enable API\" in Tiny Tiny RSS's preferences first."; setPadding(0, dp(6f), 0, 0) })
             if (service == Sync.NEXTCLOUD) addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
                 text = "An app password from Nextcloud's Security settings is best."; setPadding(0, dp(6f), 0, 0) })
         }

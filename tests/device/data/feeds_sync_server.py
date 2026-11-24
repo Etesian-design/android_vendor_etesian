@@ -112,9 +112,47 @@ class H(BaseHTTPRequestHandler):
                                                  for i, it in ITEMS.items() if it["feed"] in FEEDS and (it["starred"] or not only_starred)]})
         self.send(404, {"message": "Not found"})
 
+    def ttrss(self, raw):
+        """Tiny Tiny RSS's JSON API: one POST endpoint, an op and a session id."""
+        d = json.loads(raw or "{}")
+        ok = lambda c: self.send(200, {"seq": 0, "status": 0, "content": c})
+        err = lambda e: self.send(200, {"seq": 0, "status": 1, "content": {"error": e}})
+        if d.get("op") == "login":
+            if d.get("user") == USER and d.get("password") == PASSWORD:
+                STATE["logins"] += 1
+                return ok({"session_id": "tt-session", "api_level": 18})
+            return err("LOGIN_ERROR")
+        if d.get("sid") != "tt-session":
+            return err("NOT_LOGGED_IN")
+        op = d["op"]
+        if op == "getFeeds":
+            return ok([{"id": k, "title": f["title"], "feed_url": f["url"], "unread": 0} for k, f in FEEDS.items()])
+        if op == "getHeadlines":
+            starred_only = d.get("feed_id") == -1
+            return ok([{"id": i, "title": it["title"], "link": "https://example.test/%d" % i, "content": it["body"], "updated": it["t"],
+                        "feed_id": str(it["feed"]), "feed_title": FEEDS[it["feed"]]["title"], "unread": it["unread"], "marked": it["starred"]}
+                       for i, it in ITEMS.items() if it["feed"] in FEEDS and (it["starred"] or not starred_only)])
+        if op == "updateArticle":
+            key = "starred" if d["field"] == 0 else "unread"
+            for n in str(d["article_ids"]).split(","):
+                if int(n) in ITEMS:
+                    ITEMS[int(n)][key] = d["mode"] == 1
+            return ok({"status": "OK", "updated": 1})
+        if op == "subscribeToFeed":
+            k = max(FEEDS) + 1
+            FEEDS[k] = {"url": d["feed_url"], "title": "Added " + d["feed_url"]}
+            STATE["subscribed"].append(d["feed_url"])
+            return ok({"status": {"code": 1}})
+        if op == "unsubscribeFeed":
+            STATE["unsubscribed"].append(FEEDS.pop(int(d["feed_id"]))["url"])
+            return ok({"status": "OK"})
+        return err("UNKNOWN_METHOD")
+
     def do_POST(self):
         u = urlparse(self.path)
         raw = self.body()
+        if u.path == "/api/":
+            return self.ttrss(raw)
         if u.path == "/api/v1/links":
             if self.headers.get("Authorization") != "Bearer " + LW_TOKEN:
                 return self.send(401, {"response": "Unauthorized"})

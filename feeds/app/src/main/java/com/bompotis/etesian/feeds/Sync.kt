@@ -19,9 +19,10 @@ object Sync {
     const val NONE = ""
     const val FRESHRSS = "freshrss"
     const val NEXTCLOUD = "nextcloud"
+    const val TTRSS = "ttrss"
 
     /** The services, in the order the account dialog lists them. */
-    val SERVICES = listOf(FRESHRSS to "FreshRSS", NEXTCLOUD to "Nextcloud News")
+    val SERVICES = listOf(FRESHRSS to "FreshRSS", NEXTCLOUD to "Nextcloud News", TTRSS to "Tiny Tiny RSS")
 
     class Account(val service: String, val server: String, val user: String, val password: String) {
         val name get() = SERVICES.firstOrNull { it.first == service }?.second ?: service
@@ -109,6 +110,7 @@ object Sync {
     private fun service(a: Account): Service = when (a.service) {
         FRESHRSS -> GReader(a)
         NEXTCLOUD -> NextcloudNews(a)
+        TTRSS -> TinyTinyRss(a)
         else -> error("Unknown service")
     }
 
@@ -258,5 +260,71 @@ object Sync {
         }
 
         override fun unsubscribe(id: String) { http("DELETE", "$base/feeds/$id", h) }
+    }
+
+    // --- Tiny Tiny RSS: its JSON API (api/, "Enable API" in its preferences) ------------------------------------------
+
+    private class TinyTinyRss(val a: Account) : Service {
+        val base = a.server.trim().trimEnd('/').let { if (it.endsWith("/api")) "$it/" else "$it/api/" }
+        var sid = ""
+
+        fun call(op: String, vararg p: Pair<String, Any>): Any {
+            val body = JSONObject().put("op", op)
+            if (sid.isNotEmpty()) body.put("sid", sid)
+            p.forEach { body.put(it.first, it.second) }
+            val r = JSONObject(http("POST", base, emptyMap(), body.toString(), "application/json"))
+            if (r.optInt("status") != 0) {
+                val e = r.optJSONObject("content")?.optString("error").orEmpty()
+                error(when (e) {
+                    "LOGIN_ERROR" -> "Wrong user name or password"
+                    "API_DISABLED" -> "The API is off: turn on \"Enable API\" in Tiny Tiny RSS's preferences"
+                    else -> "Tiny Tiny RSS answered ${e.ifEmpty { "an error" }}"
+                })
+            }
+            return r.get("content")
+        }
+
+        override fun login() {
+            sid = (call("login", "user" to a.user, "password" to a.password) as JSONObject).getString("session_id")
+        }
+
+        override fun feeds(): List<Pair<String, Feeds.Feed>> {
+            // -3: every feed, without the special ones (Starred, Fresh...).
+            val arr = call("getFeeds", "cat_id" to -3) as JSONArray
+            return (0 until arr.length()).map { arr.getJSONObject(it) }.map {
+                it.getLong("id").toString() to Feeds.Feed(it.getString("feed_url"), it.optString("title").ifEmpty { it.getString("feed_url") })
+            }
+        }
+
+        override fun items(feeds: List<Feeds.Feed>): Remote {
+            val urls = feeds(); val byId = urls.associate { it.first to it.second }
+            val read = HashSet<String>(); val starred = HashSet<String>()
+            // -4: all articles; -1: the starred ones, which may be older. 200 is the API's limit per call.
+            val all = listOf(-4, -1).flatMap { feed ->
+                val arr = call("getHeadlines", "feed_id" to feed, "limit" to BATCH, "show_content" to true,
+                    "view_mode" to "all_articles", "order_by" to "feed_dates") as JSONArray
+                (0 until arr.length()).map { arr.getJSONObject(it) }
+            }.distinctBy { it.getLong("id") }
+            val items = all.map { o ->
+                val id = "tt:" + o.getLong("id")
+                if (!o.optBoolean("unread", true)) read += id
+                if (o.optBoolean("marked")) starred += id
+                val feed = byId[o.optLong("feed_id").toString()]
+                val html = o.optString("content")
+                Feeds.Item(feed?.url.orEmpty(), feed?.title ?: o.optString("feed_title"), o.optString("title"), excerpt(html), html,
+                    o.optString("link"), o.optLong("updated") * 1000, id)
+            }
+            return Remote(feeds, items, read, starred)
+        }
+
+        override fun mark(op: String, ids: List<String>) {
+            // field 0: starred, 2: unread; mode 1 sets it, 0 clears it.
+            val (field, mode) = when (op) { "read" -> 2 to 0; "unread" -> 2 to 1; "star" -> 0 to 1; else -> 0 to 0 }
+            call("updateArticle", "article_ids" to ids.joinToString(",") { it.removePrefix("tt:") }, "mode" to mode, "field" to field)
+        }
+
+        override fun subscribe(url: String) { call("subscribeToFeed", "feed_url" to url) }
+
+        override fun unsubscribe(id: String) { call("unsubscribeFeed", "feed_id" to id.toLong()) }
     }
 }
