@@ -208,6 +208,9 @@ class HomeActivity : ComponentActivity() {
         (v.parent as? android.view.ViewGroup)?.removeView(v)
         // The pager hides the pages it is not showing; out of it, the view must be shown again or the sheet is black.
         v.visibility = View.VISIBLE
+        // It also keeps the pager's sideways offset (a screen width for a view that was beside the shown one): reset,
+        // or it is drawn off the sheet and the sheet is black (2026-11-24, user: apps on the bottom swipe).
+        v.translationX = 0f; v.translationY = 0f
         sheet.addView(v, android.widget.FrameLayout.LayoutParams(-1, -1))
         sheetPage = id
         sheet.visibility = View.VISIBLE

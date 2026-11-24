@@ -24,13 +24,16 @@ check "Home on the home screen brings Applications, its icons shown ($(sheet))" 
 sh_ input keyevent BACK; sleep 1
 check "Back sends it away ($(sheet))" '! sheet | grep -q "pane:apps"'
 sh_ input swipe 540 2155 540 1400 300; sleep 1
-check "a swipe up from the bottom on the home screen brings Applications ($(sheet))" 'sheet | grep -q "pane:apps"'
+# 2026-11-24 (user): a view that had been beside the shown one kept the row's sideways offset and came in black, the
+# pane named but nothing drawn: its icons must be on screen.
+icons() { sh_ cat /sdcard/u.xml | grep -q 'text="Calculator"'; }
+check "a swipe up from the bottom on the home screen brings Applications, its icons shown ($(sheet))" 'sheet | grep -q "pane:apps" && icons'
 shot edge_only_apps
 sh_ input keyevent BACK; sleep 1
 check "Back sends it away again" '! sheet | grep -q "pane:apps"'
 sh_ am start -n com.android.calculator2/.Calculator >/dev/null 2>&1; sleep 2
 sh_ input swipe 540 2155 540 900 300; sleep 2
-check "leaving an application from the bottom brings Applications ($(sheet))" 'sheet | grep -q "pane:apps"'
+check "leaving an application from the bottom brings Applications, its icons shown ($(sheet))" 'sheet | grep -q "pane:apps" && icons'
 sh_ input keyevent HOME; sleep 1
 # One side only: with the left side's view its own, the right side's switch is off limits.
 pref_list gestures "From the left side" "Events" >/dev/null; pref_switch gestures "Only from the left side" 1 >/dev/null
@@ -44,5 +47,8 @@ u=$(sh_ stat -c %u /data/data/$LAUNCHER); sh_ chown $u:$u $PF; sh_ chmod 660 $PF
 check "the user's settings are back" '[ "$(sh_ md5sum $PF | cut -d" " -f1)" = "$(sh_ md5sum /data/local/tmp/edge_prefs.xml | cut -d" " -f1)" ]'
 sh_ rm /data/local/tmp/edge_prefs.xml
 home; sleep 1
-check "with it off, Applications is back in the row" 'panes | grep -q apps'
+# The row follows the settings put back: Applications is in it unless the user's own settings give it to an edge.
+if sh_ cat $PF | grep -q 'name="edge_only_[a-z]*" value="true"'; then
+  check "with the user's own edge views back, the row follows them" 'panes | grep -q switcher'
+else check "with it off, Applications is back in the row" 'panes | grep -q apps'; fi
 check "launcher did not crash" '! crashed $LAUNCHER'
