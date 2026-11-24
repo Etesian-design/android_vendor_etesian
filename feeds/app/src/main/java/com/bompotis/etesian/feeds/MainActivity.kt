@@ -41,10 +41,12 @@ class MainActivity : Activity() {
                 "menu" -> com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.main, { m ->
                     m.findItem(R.id.account).title = Sync.account(this)?.let { "Account: ${it.name}" } ?: "Sync with an account"
                     m.findItem(R.id.ignored).isVisible = Sync.active(this)
+                    m.findItem(R.id.linkwarden).title = if (Linkwarden.active(this)) "Linkwarden: connected" else "Connect Linkwarden"
                 }) { mi ->
                     when (mi.itemId) {
                         R.id.account -> accountDialog()
                         R.id.find -> startActivity(Intent(this, FindActivity::class.java))
+                        R.id.linkwarden -> linkwardenDialog()
                         R.id.ignored -> startActivity(Intent(this, IgnoredActivity::class.java))
                     }
                     true
@@ -176,6 +178,37 @@ class MainActivity : Activity() {
         Ui.dialog(this).setTitle("Sync with").setItems(Sync.SERVICES.map { it.second }.toTypedArray()) { _, i ->
             signInDialog(Sync.SERVICES[i].first, Sync.SERVICES[i].second)
         }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    /** Linkwarden: articles are saved to it, and their readable copy and PDF read from it. */
+    private fun linkwardenDialog() {
+        if (Linkwarden.active(this)) {
+            Ui.dialog(this).setTitle("Linkwarden").setMessage("Connected to ${Linkwarden.server(this)}\n\nArticles can be saved to it from the reader, and their readable copy and PDF are read from it.")
+                .setPositiveButton("Disconnect") { _, _ -> Linkwarden.signOut(this) }
+                .setNegativeButton(android.R.string.cancel, null).show()
+            return
+        }
+        val server = Ui.field(this, "Server address").apply { contentDescription = "Server address" }
+        val token = Ui.field(this, "Access token", uri = false).apply {
+            contentDescription = "Access token"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(server); addView(token)
+            addView(Ui.text(this@MainActivity, 14f, Ui.SECONDARY).apply {
+                text = "Make an access token in Linkwarden under Settings, Access Tokens."; setPadding(0, dp(6f), 0, 0) })
+        }
+        Ui.dialog(this).setTitle("Connect Linkwarden").setView(Ui.wrap(this, form))
+            .setPositiveButton("Connect") { _, _ ->
+                val s = server.text.toString().trim().let { if ("://" in it || it.isEmpty()) it else "https://$it" }
+                val t = token.text.toString()
+                Thread {
+                    val error = Linkwarden.signIn(this, s, t)
+                    runOnUiThread { Toast.makeText(this, error ?: "Linkwarden connected", Toast.LENGTH_LONG).show() }
+                }.start()
+            }
+            .setNegativeButton(android.R.string.cancel, null).show()
     }
 
     private fun signInDialog(service: String, name: String) {

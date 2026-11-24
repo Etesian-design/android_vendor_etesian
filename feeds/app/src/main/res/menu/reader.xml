@@ -3,4 +3,6 @@
     <item android:id="@+id/star" android:title="Star" />
     <item android:id="@+id/share" android:title="Share" />
     <item android:id="@+id/mark_unread" android:title="Mark as unread" />
+    <item android:id="@+id/lw_save" android:title="Save to Linkwarden" />
+    <item android:id="@+id/lw_pdf" android:title="Open PDF from Linkwarden" />
 </menu>

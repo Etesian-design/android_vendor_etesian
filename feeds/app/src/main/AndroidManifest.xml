@@ -30,6 +30,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Linkwarden PDFs, for the user's PDF viewer (one file at a time, read only). -->
+        <provider
+            android:name=".PdfProvider"
+            android:authorities="com.bompotis.etesian.feeds.pdf"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- Search the feed lists and subscribe. -->
         <activity
             android:name=".FindActivity"

@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import com.bompotis.etesian.toolbar.EtesianMenu
 
 /**
@@ -77,21 +78,36 @@ class ReaderActivity : Activity() {
         // feed's own text.
         val feedText = text.text
         var readable = false
+        // Linkwarden: is this article saved there? Its preserved copies are then read from it.
+        var saved: Linkwarden.Link? = null
+        val lookUp = {
+            if (Linkwarden.active(this) && item.link.isNotEmpty()) Thread {
+                val l = runCatching { Linkwarden.find(this, item.link) }.getOrNull()
+                runOnUiThread { saved = l }
+            }.start()
+        }
+        lookUp()
         val showReadable = {
             readable = !readable
             if (!readable) { text.text = feedText; text.contentDescription = null }
             else {
                 text.text = "Loading the readable version…"
-                Readable.load(this, item.link) { a ->
-                    if (!readable || isDestroyed) return@load
+                val got = got@{ a: Readable.Article? ->
+                    if (!readable || isDestroyed) return@got
                     if (a == null) { text.text = feedText; readable = false
                         android.widget.Toast.makeText(this, "No readable version of this page", android.widget.Toast.LENGTH_SHORT).show()
-                        return@load }
+                        return@got }
                     // Paragraphs keep their gap here: an article is long, and compact mode runs it into one block.
                     text.text = Html.fromHtml(a.html, Html.FROM_HTML_MODE_LEGACY, { ColorDrawable(0) }, null).trimEnd()
-                    text.contentDescription = "readable"
+                    text.contentDescription = if (saved?.readable == true) "readable:linkwarden" else "readable"
                     scroll.scrollTo(0, 0)
                 }
+                val l = saved
+                if (l != null && l.readable) Thread {
+                    val a = runCatching { Linkwarden.readable(this, l) }.getOrNull()
+                    runOnUiThread { if (a != null) got(a) else Readable.load(this, item.link) { b -> got(b) } }
+                }.start()
+                else Readable.load(this, item.link) { a -> got(a) }
             }
         }
         scroll.addView(body)
@@ -109,11 +125,34 @@ class ReaderActivity : Activity() {
             else if (id == "browser") openInBrowser()
             else EtesianMenu.show(this, R.menu.reader, { m ->
                 m.findItem(R.id.star).title = if (Feeds.isStarred(this, item.id)) "Unstar" else "Star"
+                m.findItem(R.id.lw_save).isVisible = Linkwarden.active(this) && saved == null && item.link.isNotEmpty()
+                m.findItem(R.id.lw_pdf).isVisible = saved?.pdf == true
             }) { mi ->
                 when (mi.itemId) {
                     R.id.star -> Feeds.setStarred(this, item.id, !Feeds.isStarred(this, item.id))
                     R.id.share -> share()
                     R.id.mark_unread -> { Feeds.setRead(this, item.id, false); finish() }
+                    R.id.lw_save -> Thread {
+                        val r = runCatching { Linkwarden.save(this, item.link, item.title) }
+                        runOnUiThread {
+                            r.onSuccess { saved = it }
+                            Toast.makeText(this, r.fold({ "Saved to Linkwarden" }, { it.message ?: "Couldn't save" }), Toast.LENGTH_SHORT).show()
+                        }
+                    }.start()
+                    R.id.lw_pdf -> saved?.let { l ->
+                        Toast.makeText(this, "Opening the PDF…", Toast.LENGTH_SHORT).show()
+                        Thread {
+                            val f = runCatching { Linkwarden.pdf(this, l) }.getOrNull()
+                            runOnUiThread {
+                                if (f == null) { Toast.makeText(this, "Couldn't get the PDF from Linkwarden", Toast.LENGTH_LONG).show(); return@runOnUiThread }
+                                android.util.Log.d("Etesian", "pdf ${f.name} ${f.length()}")
+                                runCatching {
+                                    startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(PdfProvider.uri(f), "application/pdf")
+                                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                                }.onFailure { android.util.Log.d("Etesian", "No app on this phone opens PDFs"); Toast.makeText(this, "No app on this phone opens PDFs", Toast.LENGTH_LONG).show() }
+                            }
+                        }.start()
+                    }
                 }
                 true
             }

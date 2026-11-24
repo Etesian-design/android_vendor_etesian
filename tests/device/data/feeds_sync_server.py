@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """A fake FreshRSS (Google Reader API) and Nextcloud News (v1-3) server for the Feeds sync tests.
 
+Also a fake Linkwarden (/api/v1/..., Bearer "lw-token"): /_lw_add?url= registers a preserved link (readable copy and
+PDF); saved links are kept and listed at /_state.
+
 Two feeds with three posts; one post read, one starred. It keeps what the phone changes and shows it at /_state.
 User "etesian", password "secret" (anything else is refused). Run: feeds_sync_server.py PORT
 """
@@ -20,7 +23,12 @@ ITEMS = {
     102: {"feed": 1, "title": "Sync read post", "body": "<p>Already read on the server.</p>", "unread": False, "starred": False, "t": NOW - 120},
     201: {"feed": 2, "title": "Sync starred post", "body": "<p>Starred on the server.</p>", "unread": True, "starred": True, "t": NOW - 180},
 }
-STATE = {"subscribed": [], "unsubscribed": [], "logins": 0}
+STATE = {"subscribed": [], "unsubscribed": [], "logins": 0, "lw_links": []}
+LW_TOKEN = "lw-token"
+
+
+def lw_link(i, l):
+    return {"id": i, "url": l["url"], "name": l.get("name", ""), "readable": l["readable"], "pdf": l["pdf"]}
 GR = "tag:google.com,2005:reader/item/"
 
 
@@ -60,6 +68,23 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/_lw_add":
+            url = parse_qs(u.query)["url"][0]
+            STATE["lw_links"].append({"url": url, "readable": "archives/1/1.json", "pdf": "archives/1/1.pdf"})
+            return self.send(200, {"id": len(STATE["lw_links"])})
+        if u.path.startswith("/api/v1/"):
+            if self.headers.get("Authorization") != "Bearer " + LW_TOKEN:
+                return self.send(401, {"response": "Unauthorized"})
+            q = parse_qs(u.query)
+            if u.path == "/api/v1/links":
+                s = q.get("searchQueryString", [""])[0]
+                return self.send(200, {"response": [lw_link(i + 1, l) for i, l in enumerate(STATE["lw_links"]) if s in l["url"]]})
+            if u.path.startswith("/api/v1/archives/"):
+                i = int(u.path.rsplit("/", 1)[1])
+                if q.get("format") == ["3"]:
+                    return self.send(200, {"title": "Linkwarden copy", "content": "<p>LINKWARDEN-COPY The article as Linkwarden preserved it.</p>"})
+                if q.get("format") == ["2"]:
+                    return self.send(200, "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n", "application/pdf")
         if u.path == "/_state":
             return self.send(200, {"items": ITEMS, "feeds": FEEDS, **STATE})
         if u.path.startswith("/api/greader.php/"):
@@ -90,6 +115,12 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urlparse(self.path)
         raw = self.body()
+        if u.path == "/api/v1/links":
+            if self.headers.get("Authorization") != "Bearer " + LW_TOKEN:
+                return self.send(401, {"response": "Unauthorized"})
+            d = json.loads(raw)
+            STATE["lw_links"].append({"url": d["url"], "name": d.get("name", ""), "readable": "pending", "pdf": "pending"})
+            return self.send(200, {"response": lw_link(len(STATE["lw_links"]), STATE["lw_links"][-1])})
         if u.path == "/api/greader.php/accounts/ClientLogin":
             f = parse_qs(raw)
             if f.get("Email") == [USER] and f.get("Passwd") == [PASSWORD]:
