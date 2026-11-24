@@ -142,6 +142,20 @@ object Feeds {
         io.execute { call(a, "interval", minutes.toString()) }
     }
 
+    /** The app's connections, as Etesian settings shows them: managed there, in the app's own dialogs (2026-11-24, user). */
+    class Connections(val account: String?, val user: String?, val server: String?, val linkwarden: String?, val ignored: Int)
+
+    fun connections(ctx: Context): Connections? = call(ctx, "state", null)?.let {
+        Connections(it.getString("account"), it.getString("accountUser"), it.getString("accountServer"), it.getString("linkwarden"),
+            it.getInt("ignored", 0))
+    }
+
+    /** The sync account's dialog ([what] "account") or Linkwarden's ("linkwarden"), over the settings page. */
+    fun connectionsIntent(what: String): Intent =
+        Intent().setComponent(ComponentName(PACKAGE, "$PACKAGE.ConnectionsActivity")).putExtra("what", what)
+
+    fun ignoredIntent(): Intent = Intent().setComponent(ComponentName(PACKAGE, "$PACKAGE.IgnoredActivity"))
+
     /** The N9's feed icon: from the user's own N9 files, or drawn. */
     fun feedIcon(ctx: Context): android.graphics.drawable.Drawable =
         android.graphics.BitmapFactory.decodeFile("/product/media/etesian/icons/icon-l-rss.png")

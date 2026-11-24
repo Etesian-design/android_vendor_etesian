@@ -43,10 +43,20 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Feeds removed here but kept on the sync account's server: resume syncing them. -->
+        <!-- Feeds removed here but kept on the sync account's server: resume syncing them. Opened from Etesian settings. -->
         <activity
             android:name=".IgnoredActivity"
-            android:exported="false" />
+            android:exported="true"
+            android:permission="com.bompotis.etesian.feeds.permission.READ" />
+
+        <!-- The sync account and Linkwarden, managed from Etesian settings: a dialog over the settings page. -->
+        <activity
+            android:name=".ConnectionsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:permission="com.bompotis.etesian.feeds.permission.READ"
+            android:theme="@style/Theme.EtesianFeeds.Translucent"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".PostsActivity"

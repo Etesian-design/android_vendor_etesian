@@ -56,6 +56,8 @@ adb() {
   else command adb "$@"; fi; }
 fi
 home() { sh_ input keyevent HOME >/dev/null; sleep 1.5; }
+# Etesian settings → Events and notifications → Feeds, where the Feeds app's connections are managed.
+feeds_settings() { sh_ am start -W --activity-clear-task -n $LAUNCHER/.SettingsActivity --es section feeds >/dev/null 2>&1; sleep 1.5; }
 # Just after a boot the lock screen ignores the first dismiss: until it is really gone, try again.
 unlock() { local i; for i in 1 2 3 4 5; do sh_ input keyevent WAKEUP; sleep 1; sh_ wm dismiss-keyguard >/dev/null 2>&1; sleep 1
   sh_ dumpsys window | grep -q "isKeyguardShowing=true" || return 0; sleep 2; done; }

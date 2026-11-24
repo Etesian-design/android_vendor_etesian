@@ -27,8 +27,7 @@ AF=$(sh_ settings get secure autofill_service); sh_ settings put secure autofill
 unlock; home
 
 sign_in() { # service name, password
-  sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1.5
-  tap_desc "Menu"; sleep 1; tap_text "Sync with an account" >/dev/null; sleep 1
+  feeds_settings; tap_text "Sync" >/dev/null; sleep 1
   tap_text "$1" >/dev/null; sleep 1
   fill "Server address" "http://127.0.0.1:$PORT"; fill "User name" "etesian"; fill "Password" "$2"
   sh_ input keyevent BACK; sleep 0.5   # the keyboard
@@ -74,7 +73,7 @@ for SERVICE in "FreshRSS" "Nextcloud News" "Tiny Tiny RSS"; do
   check "$SERVICE: but still on the server" 'server_has https://blog.example/atom'
   refresh
   check "$SERVICE: and a sync leaves it out" '! feeds | grep -q "Example Blog" && ! items | grep -q "Sync starred post"'
-  tap_desc "Menu"; sleep 1; tap_text "Ignored feeds" >/dev/null; sleep 1.5
+  feeds_settings; tap_text "Ignored feeds" >/dev/null; sleep 1.5
   check "$SERVICE: Ignored feeds lists it" 'dump | grep -q "text=\"Example Blog\""'
   shot feeds_ignored_$P
   tap_text "Example Blog" >/dev/null; sleep 1; tap_text "Sync again" >/dev/null; sleep 4
@@ -89,7 +88,7 @@ for SERVICE in "FreshRSS" "Nextcloud News" "Tiny Tiny RSS"; do
   check "$SERVICE: and here" '! feeds | grep -q "Example News"'
 
   # Sign out: the phone's own feeds come back.
-  tap_desc "Menu"; sleep 1; tap_text "Account: $SERVICE" >/dev/null; sleep 1; tap_text "Sign out" >/dev/null; sleep 3
+  feeds_settings; tap_text "Sync" >/dev/null; sleep 1; tap_text "Sign out" >/dev/null; sleep 3
   check "$SERVICE: signed out, the phone's own feeds are back ($OWN)" '[ "$(feeds | grep -c "url=")" = "$OWN" ] && ! feeds | grep -q "Example News"'
   adb reverse --remove tcp:$PORT >/dev/null; kill $SRV; wait $SRV 2>/dev/null
 done

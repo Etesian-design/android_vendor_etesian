@@ -74,6 +74,10 @@ class FeedsProvider : ContentProvider() {
         out.putBoolean("refreshing", Feeds.refreshing)
         out.putLong("lastRefresh", Feeds.lastRefresh(ctx))
         out.putInt("interval", Feeds.interval(ctx))
+        // What Etesian settings shows for the connections (they are managed there): no passwords or tokens.
+        Sync.account(ctx)?.let { out.putString("account", it.name); out.putString("accountUser", it.user); out.putString("accountServer", it.server) }
+        if (Linkwarden.active(ctx)) out.putString("linkwarden", Linkwarden.server(ctx))
+        out.putInt("ignored", Sync.ignored(ctx).size)
         return out
     }
 

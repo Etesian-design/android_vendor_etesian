@@ -17,7 +17,7 @@ feeds() { sh_ content query --uri content://$FEEDS/feeds; }
 main() { sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1.5; }
 refresh() { main; tap_desc "Refresh"; sleep 4; }
 follow() {
-  main; tap_desc "Menu"; sleep 1; tap_text "Sync with an account" >/dev/null; sleep 1; tap_text "Cloud Companion" >/dev/null; sleep 1
+  feeds_settings; tap_text "Sync" >/dev/null; sleep 1; tap_text "Cloud Companion" >/dev/null; sleep 1
   check "Cloud Companion asks only for the feeds address" '! dump | grep -q "text=\"Password\"" && sh_ cat /sdcard/u.xml | grep -q "Feeds address from Cloud Companion"'
   fill "Feeds address from Cloud Companion" "$1"; sh_ input keyevent BACK; sleep 0.5; tap_text "Sign in" >/dev/null; sleep 4
 }
@@ -52,11 +52,19 @@ tap_text "Remove" >/dev/null; sleep 2
 refresh
 check "removed here, and a refresh leaves it out" '! feeds | grep -q "Example Blog" && curl -s $B/_state | grep -q "blog.example"'
 
-main; tap_desc "Menu"; sleep 1; tap_text "Account: Cloud Companion" >/dev/null; sleep 1
+feeds_settings
+check "Etesian settings shows the account under Connections" 'dump | grep -q "text=\"Connections\"" && sh_ cat /sdcard/u.xml | grep -q "Cloud Companion · 127.0.0.1"'
+tap_text "Sync" >/dev/null; sleep 1
 check "the account says read and starred stay on the phone" 'dump | grep -q "stays on this phone"'
 tap_text "Sign out" >/dev/null; sleep 3
 check "signed out, the phone's own feeds are back ($OWN)" '[ "$(feeds | grep -c "url=")" = "$OWN" ] && ! feeds | grep -q "Example News"'
 
+# The app's menu no longer holds the connections; Settings there opens this page (2026-11-24, user).
+main; tap_desc "Menu"; sleep 1
+check "the Feeds menu has Find feeds and Settings, no account or Linkwarden" 'dump | grep -q "text=\"Settings\"" && sh_ cat /sdcard/u.xml | grep -q "text=\"Find feeds\"" && ! sh_ cat /sdcard/u.xml | grep -qE "Sync with an account|Linkwarden|Account:"'
+tap_text "Settings" >/dev/null; sleep 2
+check "Settings opens Etesian settings at Feeds" 'top_activity | grep -q "$LAUNCHER/.SettingsActivity" && dump | grep -q "text=\"Connections\""'
+sh_ input keyevent BACK; sleep 1
 check "Feeds did not crash" '! crashed $FEEDS'
 adb reverse --remove tcp:$PORT >/dev/null; kill $SRV; wait $SRV 2>/dev/null
 [ -n "$AF" ] && [ "$AF" != null ] && sh_ settings put secure autofill_service "$AF"

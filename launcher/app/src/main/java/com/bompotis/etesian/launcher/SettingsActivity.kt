@@ -197,10 +197,28 @@ class SettingsActivity : AppCompatActivity() {
         override fun onResume() {
             super.onResume()
             if (arguments?.getString(EXTRA_SECTION) == "sidesense") fillBreeze()
+            // Back from a Feeds connection dialog (or its sign-in, still going): what is connected now.
+            if (arguments?.getString(EXTRA_SECTION) == "feeds") { describeFeedConnections(); view?.postDelayed({ describeFeedConnections() }, 2500) }
             if (arguments?.getString(EXTRA_SECTION) != null) return
             val now = pins(requireContext())
             if (shownPins != null && shownPins != now) requireActivity().recreate()
             shownPins = now
+        }
+
+        /** The Connections rows of Feeds: who and where, never passwords or tokens. */
+        private fun describeFeedConnections() {
+            val ctx = context ?: return
+            val c = Feeds.connections(ctx) ?: return
+            findPreference<Preference>("feeds_account")?.summary =
+                c.account?.let { a -> listOfNotNull(a, c.user?.takeIf { it.isNotBlank() }, c.server?.let { android.net.Uri.parse(it).host ?: it }).joinToString(" · ") }
+                    ?: "Not syncing. Sync with FreshRSS, Nextcloud News, Tiny Tiny RSS or Cloud Companion"
+            findPreference<Preference>("feeds_linkwarden")?.summary =
+                c.linkwarden?.let { "Connected · " + (android.net.Uri.parse(it).host ?: it) } ?: "Not connected. Save articles and read their preserved copies"
+            findPreference<Preference>("feeds_ignored")?.apply {
+                isVisible = c.account != null
+                summary = if (c.ignored == 0) "None. Feeds removed here but kept on the server are listed here"
+                    else "${c.ignored} skipped when syncing"
+            }
         }
 
         private var breezeShortcuts: PreferenceCategory? = null
@@ -464,7 +482,8 @@ class SettingsActivity : AppCompatActivity() {
                 "Private space" to "apps", "Under the clock" to "lock", "Emergency information" to "emergency",
                 "Medical details" to "emergency", "Emergency contacts" to "emergency", "Share sheet" to "sharing",
                 "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed",
-                "Feeds" to "feeds", "Feeds shown in Events" to "feeds", "Notifications shown as feeds" to "feeds")
+                "Feeds" to "feeds", "Feeds shown in Events" to "feeds", "Notifications shown as feeds" to "feeds",
+                "Connections" to "feeds")
             if (section in PREVIEWS) screen.addPreference(SettingsPreview.Row(ctx, section!!))
             val hidden = preferenceManager.createPreferenceScreen(ctx)
             fun category(title: String) = PreferenceCategory(ctx).apply {
@@ -944,6 +963,20 @@ class SettingsActivity : AppCompatActivity() {
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
                 setOnPreferenceChangeListener { _, v -> Feeds.setInterval(ctx, (v as String).toInt()); true }
                 feeds.addPreference(this)
+            }
+            // The Feeds app's connections, managed here rather than from a menu in the app (2026-11-24, user): the sync
+            // account, Linkwarden, and the feeds a sync skips. Each opens the app's own dialog or page over this one.
+            if (section == "feeds" && every >= 0) {
+                val conn = category("Connections")
+                fun row(key: String, title: String, open: () -> Intent) = Preference(ctx).apply {
+                    this.key = key; this.title = title; isIconSpaceReserved = false; isPersistent = false
+                    setOnPreferenceClickListener { runCatching { startActivity(open()) }; true }
+                    conn.addPreference(this)
+                }
+                row("feeds_account", "Sync") { Feeds.connectionsIntent("account") }
+                row("feeds_linkwarden", "Linkwarden") { Feeds.connectionsIntent("linkwarden") }
+                row("feeds_ignored", "Ignored feeds") { Feeds.ignoredIntent() }
+                describeFeedConnections()
             }
             // Which of the followed sites Events shows; the rest stay in the Feeds app.
             val shownFeeds = category("Feeds shown in Events")

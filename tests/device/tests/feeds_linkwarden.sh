@@ -13,8 +13,7 @@ tap_desc() { dump >/dev/null; set -- $(sh_ cat /sdcard/u.xml | sed 's/<node/\n<n
 fill() { tap_text "$1" >/dev/null; sleep 0.4; sh_ input text "$(printf %s "$2" | sed 's/ /%s/g')"; sleep 0.3; }
 items() { sh_ content query --uri content://$FEEDS/items; }
 connect() {
-  sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1.5
-  tap_desc "Menu"; sleep 1; tap_text "Connect Linkwarden" >/dev/null; sleep 1
+  feeds_settings; tap_text "Linkwarden" >/dev/null; sleep 1
   fill "Server address" "$B"; fill "Access token" "$1"
   sh_ input keyevent BACK; sleep 0.5; tap_text "Connect" >/dev/null; sleep 3
 }
