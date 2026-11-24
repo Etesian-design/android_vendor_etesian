@@ -44,6 +44,7 @@ class MainActivity : Activity() {
                 }) { mi ->
                     when (mi.itemId) {
                         R.id.account -> accountDialog()
+                        R.id.find -> startActivity(Intent(this, FindActivity::class.java))
                         R.id.ignored -> startActivity(Intent(this, IgnoredActivity::class.java))
                     }
                     true
@@ -76,7 +77,7 @@ class MainActivity : Activity() {
         if (feeds.isEmpty()) {
             list.addView(Ui.text(this, 18f, Ui.SECONDARY).apply {
                 maxLines = 6
-                text = "No feeds yet. Tap + to add a feed or website address, or to import an OPML file."
+                text = "No feeds yet. Tap + to add a feed or website address or to import an OPML file, or search the feed lists with Find feeds in the menu."
                 setPadding(dp(16f), dp(24f), dp(16f), dp(24f))
             })
             return

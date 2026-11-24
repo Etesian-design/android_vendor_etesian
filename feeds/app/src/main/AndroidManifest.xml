@@ -30,6 +30,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Search the feed lists and subscribe. -->
+        <activity
+            android:name=".FindActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Feeds removed here but kept on the sync account's server: resume syncing them. -->
         <activity
             android:name=".IgnoredActivity"
