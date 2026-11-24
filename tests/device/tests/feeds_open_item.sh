@@ -13,7 +13,7 @@ events_pane() { home; for _ in 1 2 3 4; do [ "$(home_pane)" = events ] && break;
 check "launcher opens items through OpenActivity" 'grep -q "\$PACKAGE.OpenActivity" $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/Feeds.kt'
 check "widget rows carry their feed" '[ "$(grep -c "Feeds.itemFillIn(item)" $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/BelleWidgets.kt $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt | grep -c ":1")" = 2 ]'
 check "RSS widget dot follows read" 'grep -q "R.id.bc_new, if (item.read)" $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/BelleClassic2.kt'
-check "Events lists unread only" 'grep -q "Feeds.forEvents(Feeds.items(context))" $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/EventsPage.kt'
+check "Events lists unread only" 'grep -q "Feeds.forEvents(Feeds.items(context)" $SRC/launcher/app/src/main/java/com/bompotis/etesian/launcher/EventsPage.kt'
 # dumpsys package lists only activities with intent filters: read the manifest
 check "OpenActivity is exported to the launcher" 'grep -A3 "\.OpenActivity" ~/android/lineage/vendor/etesian/feeds/app/src/main/AndroidManifest.xml | grep -q "exported=\"true\""'
 # Read state is the user's: put it back afterwards.
