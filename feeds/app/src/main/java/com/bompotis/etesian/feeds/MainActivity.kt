@@ -40,7 +40,14 @@ class MainActivity : Activity() {
                 "search" -> startActivity(Intent(this, PostsActivity::class.java).putExtra(PostsActivity.EXTRA_SEARCH, true))
                 "menu" -> com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.main, { m ->
                     m.findItem(R.id.account).title = Sync.account(this)?.let { "Account: ${it.name}" } ?: "Sync with an account"
-                }) { mi -> if (mi.itemId == R.id.account) accountDialog(); true }
+                    m.findItem(R.id.ignored).isVisible = Sync.active(this)
+                }) { mi ->
+                    when (mi.itemId) {
+                        R.id.account -> accountDialog()
+                        R.id.ignored -> startActivity(Intent(this, IgnoredActivity::class.java))
+                    }
+                    true
+                }
             }
         }
         setContentView(root)
@@ -205,7 +212,7 @@ class MainActivity : Activity() {
 
     private fun feedMenu(url: String, title: String) {
         Ui.dialog(this).setTitle(title).setItems(arrayOf("Rename", "Remove")) { _, i ->
-            if (i == 0) renameDialog(this, url, title) else { Feeds.remove(this, url); FeedsJob.schedule(this) }
+            if (i == 0) renameDialog(this, url, title) else removeDialog(this, url, title) {}
         }.show()
     }
 
@@ -234,6 +241,36 @@ class MainActivity : Activity() {
                     input.text.toString().trim().takeIf { it.isNotEmpty() }?.let { Feeds.rename(a, url, it) }
                 }
                 .setNegativeButton(android.R.string.cancel, null).show()
+        }
+
+        /**
+         * Remove a feed. Signed in, the server is never assumed (2026-11-24, user): a box, off by default, also removes
+         * it there; left off, it stays there and this phone skips it (Ignored feeds, where syncing can resume).
+         */
+        fun removeDialog(a: Activity, url: String, title: String, removed: () -> Unit) {
+            val account = Sync.account(a)
+            val box = account?.let {
+                android.widget.CheckBox(a).apply {
+                    text = "Also remove it from ${it.name}"; contentDescription = "Also remove it from the server"
+                    textSize = 17f; setTextColor(Ui.INK); typeface = Ui.FONT
+                }
+            }
+            val d = Ui.dialog(a).setTitle("Remove $title?")
+            if (box != null) d.setView(Ui.wrap(a, LinearLayout(a).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(box)
+                addView(Ui.text(a, 14f, Ui.SECONDARY).apply {
+                    text = "Left off, it stays on the server and this phone stops syncing it. You can resume it from Ignored feeds."
+                    setPadding(0, a.dp(4f), 0, 0)
+                })
+            }))
+            d.setPositiveButton("Remove") { _, _ ->
+                Feeds.remove(a, url, onServer = box?.isChecked == true) { msg ->
+                    if (msg != null) Toast.makeText(a, msg, Toast.LENGTH_LONG).show()
+                }
+                FeedsJob.schedule(a)
+                removed()
+            }.setNegativeButton(android.R.string.cancel, null).show()
         }
     }
 }

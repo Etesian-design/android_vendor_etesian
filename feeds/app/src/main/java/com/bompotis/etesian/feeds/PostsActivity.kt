@@ -78,7 +78,7 @@ class PostsActivity : Activity() {
             when (item.itemId) {
                 R.id.mark_all_read -> Feeds.markAllRead(this, url)
                 R.id.rename -> if (url != null) MainActivity.renameDialog(this, url, title.text.toString())
-                R.id.remove -> if (url != null) { Feeds.remove(this, url); FeedsJob.schedule(this); finish() }
+                R.id.remove -> if (url != null) MainActivity.removeDialog(this, url, title.text.toString()) { finish() }
             }
             true
         }

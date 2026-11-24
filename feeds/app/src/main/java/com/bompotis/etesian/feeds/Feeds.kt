@@ -80,8 +80,26 @@ object Feeds {
     fun rename(ctx: Context, url: String, title: String) =
         save(ctx, feeds(ctx).map { if (it.url == url) Feed(url, title) else it })
 
-    fun remove(ctx: Context, url: String) {
-        if (Sync.active(ctx)) { val app = ctx.applicationContext; io.execute { runCatching { Sync.unsubscribe(app, url) } } }
+    /**
+     * Removes [url] here. Signed in to an account: with [onServer] it is unsubscribed there too; otherwise (or if the
+     * server can't) it stays on the server and every sync skips it ([Sync.ignored]). [done] gets a message for the user
+     * when the server could not remove it, or null.
+     */
+    fun remove(ctx: Context, url: String, onServer: Boolean = false, done: (String?) -> Unit = {}) {
+        val app = ctx.applicationContext
+        if (Sync.active(app)) {
+            val title = feeds(app).firstOrNull { it.url == url }?.title ?: url
+            if (!onServer) Sync.ignore(app, url, title)
+            else io.execute {
+                val error = runCatching { Sync.unsubscribe(app, url) }.exceptionOrNull()
+                if (error != null) Sync.ignore(app, url, title)
+                main.post { done(error?.let { "Couldn't remove it on the server (${it.message}). It won't sync to this phone." }) }
+            }
+        }
+        dropLocal(ctx, url)
+    }
+
+    private fun dropLocal(ctx: Context, url: String) {
         save(ctx, feeds(ctx).filterNot { it.url == url })
         items = items(ctx).filterNot { it.feedUrl == url }
         writeCache(ctx)

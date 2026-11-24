@@ -30,6 +30,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Feeds removed here but kept on the sync account's server: resume syncing them. -->
+        <activity
+            android:name=".IgnoredActivity"
+            android:exported="false" />
+
         <activity
             android:name=".PostsActivity"
             android:exported="false"

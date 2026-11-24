@@ -13,6 +13,10 @@ state() { curl -s http://127.0.0.1:$PORT/_state; }
 items() { sh_ content query --uri content://$FEEDS/items; }
 feeds() { sh_ content query --uri content://$FEEDS/feeds; }
 # Fill a dialog's field (found by its hint) with text.
+# Long press on the element with text $1.
+hold_text() { dump >/dev/null; set -- $(sh_ cat /sdcard/u.xml | grep -o "text=\"$1\"[^>]*bounds=\"[^\"]*\"" | grep -o 'bounds="[^"]*"' | head -1 | grep -o '[0-9]\+'); [ -n "$4" ] && sh_ input swipe $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) 900; }
+server_has() { state | python3 -c "import json,sys; sys.exit(0 if any(f['url']==sys.argv[1] for f in json.load(sys.stdin)['feeds'].values()) else 1)" "$1"; }
+refresh() { sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1; tap_desc "Refresh"; sleep 4; }
 fill() { tap_text "$1" >/dev/null; sleep 0.4; sh_ input text "$(printf %s "$2" | sed 's/ /%s/g')"; sleep 0.3; }
 
 sh_ "am force-stop $FEEDS; rm -rf /data/local/tmp/feeds_backup; mkdir -p /data/local/tmp/feeds_backup; cp -a $D/shared_prefs $D/files /data/local/tmp/feeds_backup/ 2>/dev/null"
@@ -60,6 +64,29 @@ for SERVICE in "FreshRSS" "Nextcloud News"; do
   sh_ input keyevent BACK; sleep 0.5; tap_text "Add" >/dev/null; sleep 4
   check "$SERVICE: adding a feed adds it on the server" 'state | grep -q "added.example/rss"'
   check "$SERVICE: and it is in the list" 'feeds | grep -q "added.example/rss"'
+
+  # 2026-11-24 (user): removing never assumes the server. Box left off: gone here, kept there, skipped by every sync.
+  sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1
+  hold_text "Example Blog"; sleep 1; tap_text "Remove" >/dev/null; sleep 1
+  check "$SERVICE: removing asks, the server box off" 'dump | grep -q "content-desc=\"Also remove it from the server\"" && sh_ cat /sdcard/u.xml | grep "Also remove it from the server" | grep -q "checked=\"false\""'
+  tap_text "Remove" >/dev/null; sleep 2
+  check "$SERVICE: box off: gone from the phone" '! feeds | grep -q "Example Blog"'
+  check "$SERVICE: but still on the server" 'server_has https://blog.example/atom'
+  refresh
+  check "$SERVICE: and a sync leaves it out" '! feeds | grep -q "Example Blog" && ! items | grep -q "Sync starred post"'
+  tap_desc "Menu"; sleep 1; tap_text "Ignored feeds" >/dev/null; sleep 1.5
+  check "$SERVICE: Ignored feeds lists it" 'dump | grep -q "text=\"Example Blog\""'
+  shot feeds_ignored_$P
+  tap_text "Example Blog" >/dev/null; sleep 1; tap_text "Sync again" >/dev/null; sleep 4
+  check "$SERVICE: synced again, it is back" 'feeds | grep -q "Example Blog"'
+  check "$SERVICE: and no longer ignored" '! dump | grep -q "text=\"Example Blog\""'
+  sh_ input keyevent BACK; sleep 1
+  # Box on: removed on the server too.
+  sh_ am start -W -n $FEEDS/.MainActivity >/dev/null; sleep 1
+  hold_text "Example News"; sleep 1; tap_text "Remove" >/dev/null; sleep 1
+  tap_desc "Also remove it from the server"; sleep 0.5; tap_text "Remove" >/dev/null; sleep 3
+  check "$SERVICE: box on: removed on the server" '! server_has https://news.example/feed.xml'
+  check "$SERVICE: and here" '! feeds | grep -q "Example News"'
 
   # Sign out: the phone's own feeds come back.
   tap_desc "Menu"; sleep 1; tap_text "Account: $SERVICE" >/dev/null; sleep 1; tap_text "Sign out" >/dev/null; sleep 3

@@ -75,9 +75,25 @@ object Sync {
             pending.groupBy({ it.substringBefore(':') }, { it.substringAfter(':') }).forEach { (op, ids) -> s.mark(op, ids) }
             prefs(ctx).edit().remove(KEY_PENDING).apply()
         }
+        val skip = ignored(ctx).keys
         val feeds = s.feeds()
         prefs(ctx).edit().putString("feed_ids", JSONObject(feeds.associate { it.second.url to it.first }).toString()).apply()
-        return s.items(feeds.map { it.second })
+        val r = s.items(feeds.map { it.second }.filter { it.url !in skip })
+        return Remote(r.feeds, r.items.filter { it.feedUrl !in skip }, r.read, r.starred)
+    }
+
+    /**
+     * Feeds removed here but left on the server (2026-11-24, user: removing must not assume the server too): every sync
+     * skips them, until the user resumes them (IgnoredActivity). Per account: signing out forgets them. url → title.
+     */
+    fun ignored(ctx: Context): Map<String, String> = runCatching {
+        JSONObject(prefs(ctx).getString("ignored", "{}")!!).let { o -> o.keys().asSequence().associateWith { o.getString(it) } }
+    }.getOrDefault(emptyMap())
+
+    fun ignore(ctx: Context, url: String, title: String) = putIgnored(ctx, ignored(ctx) + (url to title))
+    fun resume(ctx: Context, url: String) = putIgnored(ctx, ignored(ctx) - url)
+    private fun putIgnored(ctx: Context, m: Map<String, String>) {
+        prefs(ctx).edit().putString("ignored", JSONObject(m).toString()).apply()
     }
 
     /** Blocking: subscribes on the server. */
@@ -85,7 +101,8 @@ object Sync {
 
     /** Blocking: unsubscribes on the server. */
     fun unsubscribe(ctx: Context, url: String) {
-        val id = runCatching { JSONObject(prefs(ctx).getString("feed_ids", "{}")!!).getString(url) }.getOrNull() ?: return
+        val id = runCatching { JSONObject(prefs(ctx).getString("feed_ids", "{}")!!).getString(url) }.getOrNull()
+            ?: error("The server doesn't list this feed")
         service(account(ctx)!!).also { it.login() }.unsubscribe(id)
     }
 
