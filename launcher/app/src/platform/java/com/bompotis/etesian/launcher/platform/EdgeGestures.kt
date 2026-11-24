@@ -249,15 +249,16 @@ class EdgeGestures(private val ctx: Context) {
     }
 
     /** N9 status menu: a tap on the status bar opens Etesian's status menu, never notifications. */
-    private fun openStatusMenu() {
+    private fun openStatusMenu(drag: Boolean = false) {
         com.bompotis.etesian.launcher.N9Sounds.play(ctx, com.bompotis.etesian.launcher.N9Sounds.PRESS)
         // While recording, the red dot sits on the right of the status bar (with the system
         // icons): a tap there asks "Stop recording?" instead (approved "Recording dot").
-        if (com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > screenW / 2f) {
+        if (!drag && com.bompotis.etesian.launcher.Recorder.on(ctx) && downX > screenW / 2f) {
             com.bompotis.etesian.launcher.Recorder.askToStop(ctx)
             return
         }
         ctx.startActivity(android.content.Intent(ctx, com.bompotis.etesian.launcher.StatusMenuActivity::class.java)
+            .putExtra(com.bompotis.etesian.launcher.StatusMenuActivity.EXTRA_DRAG, drag)
             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION))
     }
 
@@ -289,13 +290,20 @@ class EdgeGestures(private val ctx: Context) {
     private fun onMove(e: MotionEvent) {
         velocity?.addMovement(e)
         val d = inward(e)
+        if (started && edge == Edge.TOP && statusSwipe) {
+            val y = e.rawY
+            main.post { com.bompotis.etesian.launcher.StatusMenuActivity.follow(y) }
+            return
+        }
         if (statusTap && (abs(d) > slop || abs(across(e)) > slop)) statusTap = false
         if (!started) {
             if (d > slop && d > abs(across(e))) {
                 if (edge == Edge.TOP && statusSwipe) {
                     monitor?.pilferPointers()
                     started = true
-                    main.post { openStatusMenu() }
+                    // The menu follows the finger down (not a tap's drop): it hangs from it until it lets go.
+                    val y = e.rawY
+                    main.post { com.bompotis.etesian.launcher.StatusMenuActivity.beginDrag(y); openStatusMenu(drag = true) }
                     return
                 }
                 if (onHome && homeEdgeView) {
@@ -375,7 +383,12 @@ class EdgeGestures(private val ctx: Context) {
             if (!cancelled && statusTap && e.eventTime - downTime < ViewConfiguration.getLongPressTimeout()) openStatusMenu()
             reset(); return
         }
-        if (onHome || (edge == Edge.TOP && statusSwipe)) { reset(); return }
+        if (edge == Edge.TOP && statusSwipe) {
+            val v = if (cancelled) -Float.MAX_VALUE else inwardVelocity()
+            main.post { com.bompotis.etesian.launcher.StatusMenuActivity.release(v) }
+            reset(); return
+        }
+        if (onHome) { reset(); return }
         val v = inwardVelocity()
         val d = inward(e)
         val hint = backHint

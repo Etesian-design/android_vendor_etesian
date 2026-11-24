@@ -80,8 +80,61 @@ class StatusMenuActivity : Activity() {
             val cm = getSystemService(CameraManager::class.java)
             cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
         }.getOrNull()
-        panel.translationY = -dp(400f).toFloat()
-        panel.animate().translationY(0f).setDuration(220).start()
+        live = java.lang.ref.WeakReference(this)
+        if (intent.getBooleanExtra(EXTRA_DRAG, false)) {
+            // "Swipe down for the status menu": the menu hangs from the finger until it lets go (follow/release).
+            panel.translationY = -10000f
+            root.background.alpha = 0
+            panel.viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    if (panel.height == 0) return
+                    panel.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    laidOut = true
+                    follow(fingerY)
+                    pendingRelease?.let { pendingRelease = null; release(it) }
+                }
+            })
+        } else {
+            panel.translationY = -dp(400f).toFloat()
+            panel.animate().translationY(0f).setDuration(220).start()
+        }
+    }
+
+    override fun onDestroy() {
+        if (live?.get() === this) live = null
+        super.onDestroy()
+    }
+
+    private var laidOut = false
+    private var released = false
+
+    /** The panel's lower edge is under the finger; the dim deepens as it comes down. */
+    private fun follow(y: Float) {
+        if (!laidOut || released) return
+        val h = panel.height.toFloat()
+        val ty = (y - h).coerceIn(-h, 0f)
+        panel.translationY = ty
+        (panel.parent as View).background?.alpha = (255 * (1f + ty / h)).toInt().coerceIn(0, 255)
+    }
+
+    /** Let go: past a third of the way, or flicked down, it settles open; otherwise it goes back up. */
+    private fun release(velocityY: Float) {
+        if (!laidOut) { pendingRelease = velocityY; return }
+        if (released) return
+        released = true
+        val h = panel.height.toFloat()
+        val root = panel.parent as View
+        val open = velocityY > FLING || (velocityY > -FLING && panel.translationY > -h * 2f / 3f)
+        val from = root.background?.alpha ?: 255
+        val to = if (open) 255 else 0
+        panel.animate().translationY(if (open) 0f else -h).setDuration(200)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .setUpdateListener { a -> root.background?.alpha = (from + (to - from) * a.animatedFraction).toInt() }
+            .withEndAction {
+                panel.animate().setUpdateListener(null)
+                if (!open) { finish(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
+                else root.background?.alpha = 255
+            }.start()
     }
 
     override fun onResume() {
@@ -419,8 +472,22 @@ class StatusMenuActivity : Activity() {
         }
     }
 
-    private companion object {
-        const val MOCK = 1.36f; const val DIM = 0xA6000000.toInt(); const val ADD_GREEN = 0xFF5CA834.toInt(); const val SEL = 0xFF4A9BFF.toInt(); const val UNSEL = 0xFF23436E.toInt(); const val UNSEL_TEXT = 0xFF8A9BB4.toInt()
+    companion object {
+        const val EXTRA_DRAG = "drag"
+        private var live: java.lang.ref.WeakReference<StatusMenuActivity>? = null
+        private var fingerY = 0f
+        private var pendingRelease: Float? = null
+        /** px/s: faster than this the direction of the flick decides, not the distance. */
+        private const val FLING = 1000f
+
+        /** A swipe down from the top is starting: the next activity follows [follow] and [release]. */
+        fun beginDrag(y: Float) { fingerY = y; pendingRelease = null }
+        /** The finger is at [y] (screen px). */
+        fun follow(y: Float) { fingerY = y; live?.get()?.follow(y) }
+        /** The finger let go, moving at [velocityY] px/s (down is positive). */
+        fun release(velocityY: Float) { live?.get()?.release(velocityY) ?: run { pendingRelease = velocityY } }
+
+        private const val MOCK = 1.36f; private const val DIM = 0xA6000000.toInt(); private const val ADD_GREEN = 0xFF5CA834.toInt(); private const val SEL = 0xFF4A9BFF.toInt(); private const val UNSEL = 0xFF23436E.toInt(); private const val UNSEL_TEXT = 0xFF8A9BB4.toInt()
     }
 
     /** Screen brightness: the same flat bar as Volume, N9 Settings blue (mock 1a). */
