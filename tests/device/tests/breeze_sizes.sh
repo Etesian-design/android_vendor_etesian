@@ -10,7 +10,22 @@ unlock
 setp right 20 100 56
 read L T R B <<< "$(frame EtesianBreeze)"
 check "height 100 dp ($((B-T)) px)" '[ $((B-T)) -eq $(px 100) ]'
-check "thickness 20 dp: a wider window ($((R-L)) px)" '[ $((R-L)) -ge $(( $(px 20) + $(px 20) )) ]'
+# 2026-11-24 (owner): a thicker handle grows out towards the curved edge, never in over the app: its inner edge stays
+# where the thinnest one's is. Measured on a black app: the lit columns of the handle at its middle, from the edge.
+edges() { sh_ am start -W -n com.android.calculator2/.Calculator >/dev/null; sleep 1.5; command adb exec-out screencap -p > $SHOTS/bz_$1.png
+  read L T R B <<< "$(frame EtesianBreeze)"
+  python3 -c "
+from PIL import Image; im=Image.open('$SHOTS/bz_$1.png').convert('L'); W,H=im.size; y=($T+$B)//2
+cols=[x for x in range(W-300,W) if im.getpixel((x,y))>120]
+print(W-min(cols), W-max(cols)) if cols else print('0 0')"; }
+setp right 6 140 56; read IN6 OUT6 <<< "$(edges 6)"
+setp right 28 140 56; read IN28 OUT28 <<< "$(edges 28)"
+check "thin handle drawn (inner edge $IN6 px from the edge)" '[ "$IN6" -gt 0 ]'
+check "thick handle: inner edge where the thin one's is ($IN28 vs $IN6)" '[ $((IN28 - IN6)) -le 3 ] && [ $((IN6 - IN28)) -le 3 ]'
+check "thick handle grows out towards the edge (outer $OUT28 < $OUT6)" '[ "$OUT28" -lt "$OUT6" ]'
+check "thick handle is about 28 dp ($((IN28 - OUT28)) px)" '[ $((IN28 - OUT28)) -ge $(( $(px 28) * 8 / 10 )) ]'
+setp right 20 100 56
+read L T R B <<< "$(frame EtesianBreeze)"
 setp right 12 9999 56
 read L T R B <<< "$(frame EtesianBreeze)"
 check "height never past a quarter of the screen ($((B-T)) <= $((RH/4)))" '[ $((B-T)) -le $((RH/4)) ]'

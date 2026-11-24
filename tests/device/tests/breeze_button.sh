@@ -25,11 +25,12 @@ check "Breeze on: the handle is shown" 'has EtesianBreeze'
 read L T R B <<< "$(frame EtesianBreeze)"
 check "handle on the right edge" '[ -n "$R" ] && [ "$R" -ge $((RW - 2)) ]'
 check "handle window thick (over 30 dp)" '[ -n "$L" ] && [ $((R-L)) -ge $(px 30) ]'
-HY=$(( (T+B)/2 )); HX=$((RW - $(px 26)))
-# Drawn 20-32 dp in from the edge: its middle is outside the controller's 60 px grip strip.
+HY=$(( (T+B)/2 )); HX=$((RW - $(px 20)))
+# Drawn 14-26 dp in from the edge (12 dp thick; 2026-11-24, owner: a thicker handle grows out over the curve, its inner
+# edge stays at 26 dp): that inner edge is outside the controller's 60 px grip strip, and the touch area reaches past it.
 # The strip is the OnePlus 7 Pro's (guacamoleg) touch controller's; other phones have none.
 [ "$(sh_ getprop ro.product.device)" = guacamoleg ] && \
-check "handle's middle ($((RW-HX)) px in) outside the 60 px grip strip" '[ $((RW - HX)) -gt 60 ]'
+check "handle's inner edge ($(px 26) px in) outside the 60 px grip strip" '[ $(px 26) -gt 60 ]'
 light=$(grey $HX $HY); setp dark; dark=$(grey $HX $HY)
 check "theme: light handle light ($light), dark handle dark ($dark)" '[ "$light" -gt 180 ] && [ "$dark" -lt 90 ]'
 setp light

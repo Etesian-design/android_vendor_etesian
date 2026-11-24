@@ -74,7 +74,11 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
     private val handleW get() = dp(Prefs.breezeThicknessDp(ctx).toFloat())
     /** Handle's distance from the screen edge: outside the controller's 60 px grip strip. */
     private val handleInset get() = dp(20f)
-    private val barWindow get() = handleInset + handleW + dp(6f)
+    /** The handle's inner edge stays where the thinnest handle's is: a thicker one grows out towards the screen edge,
+     *  over the curve, not in over the app. Only the drawing moves; the touch area ([reach]) is unchanged. */
+    private val handleInner get() = handleInset + dp(6f)
+    private val handleOuter get() = handleInner - handleW   // the thickest runs off the edge, over the curve
+    private val barWindow get() = handleInner + dp(6f)
     private val barH get() = dp(Prefs.breezeHeightDp(ctx).toFloat())
     private val button get() = dp(Prefs.breezeButtonDp(ctx).toFloat())
     /** Touch area of the handle, from the screen edge in. */
@@ -147,10 +151,10 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
         if (appear) v.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(DecelerateInterpolator()).start()
         when {
             free -> { bounds.set(x, y, x + w, y + h); drawn.set(bounds) }
-            onLeft -> { bounds.set(0, y, reach, y + h); drawn.set(handleInset, y, handleInset + handleW, y + h) }
+            onLeft -> { bounds.set(0, y, reach, y + h); drawn.set(handleOuter, y, handleOuter + handleW, y + h) }
             else -> {
                 bounds.set(screenW - reach, y, screenW, y + h)
-                drawn.set(screenW - handleInset - handleW, y, screenW - handleInset, y + h)
+                drawn.set(screenW - handleOuter - handleW, y, screenW - handleOuter, y + h)
             }
         }
     }
@@ -341,7 +345,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
                 drawButton(canvas, RectF(0f, 0f, width.toFloat(), height.toFloat()), active, 1f)
                 return
             }
-            val x = if (onLeft) handleInset.toFloat() else (width - handleInset - handleW).toFloat()
+            val x = if (onLeft) handleOuter.toFloat() else (width - handleOuter - handleW).toFloat()
             drawHandle(canvas, paint, RectF(x, 0f, x + handleW, height.toFloat()), active, 1f)
         }
     }
@@ -404,7 +408,7 @@ class SideBar(private val ctx: Context, private val perform: (String) -> Unit) {
         override fun onDraw(canvas: Canvas) {
             if (edge == 0) edge = if (fingerX < width / 2f) -1 else 1
             // The handle: at its edge, centred on the finger's height.
-            val hx = if (edge < 0) handleInset.toFloat() else (width - handleInset - handleW).toFloat()
+            val hx = if (edge < 0) handleOuter.toFloat() else (width - handleOuter - handleW).toFloat()
             val bar = RectF(hx, fingerY - barH / 2f, hx + handleW, fingerY + barH / 2f)
             // The button: centred on the finger.
             val b = button / 2f
