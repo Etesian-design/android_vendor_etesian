@@ -90,6 +90,13 @@ class SettingsActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1f)).apply {
                     marginStart = dp(16f); marginEnd = dp(16f)
                 })
+            // The page's live miniature stays put under the title while the options scroll under it, so every change
+            // shows as it is made (2026-11-24, owner).
+            intent.getStringExtra(EXTRA_SECTION)?.takeIf { it in PREVIEWS }?.let { sec ->
+                addView(SettingsPreview(context, sec),
+                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                        .apply { topMargin = dp(8f) })
+            }
             addView(container, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         }
         setContentView(root)
@@ -484,7 +491,6 @@ class SettingsActivity : AppCompatActivity() {
                 "Networks" to "sharing", "Priority people" to "priority", "Dismissed notifications" to "dismissed",
                 "Feeds" to "feeds", "Feeds shown in Events" to "feeds", "Notifications shown as feeds" to "feeds",
                 "Connections" to "feeds")
-            if (section in PREVIEWS) screen.addPreference(SettingsPreview.Row(ctx, section!!))
             val hidden = preferenceManager.createPreferenceScreen(ctx)
             fun category(title: String) = PreferenceCategory(ctx).apply {
                 this.title = title

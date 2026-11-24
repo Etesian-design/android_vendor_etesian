@@ -6,7 +6,7 @@ dump() { sh_ uiautomator dump /sdcard/u.xml >/dev/null 2>&1; sh_ cat /sdcard/u.x
 E=~/android/lineage/vendor/etesian/launcher/app/src/main/java/com/bompotis/etesian/launcher
 PY=/home/memphisx/android/.venv-tools/bin/python
 page() { sh_ am start -f 0x10008000 -n $LAUNCHER/.SettingsActivity --es section $1 >/dev/null; sleep 2.5; }
-has() { local i; for i in 1 2 3 4 5 6 7 8; do dump | grep -q "text=\"$1\"" && return 0; sh_ input swipe 540 1700 540 900 300; sleep 0.7; done; return 1; }
+has() { local i; for i in $(seq 1 16); do dump | grep -q "text=\"$1\"" && return 0; sh_ input swipe 540 1800 540 1250 400; sleep 0.7; done; return 1; }
 # The preview's bounds as "l t r b".
 pbounds() { dump | grep -o "content-desc=\"Preview: $1\"[^>]*bounds=\"[^\"]*\"" | grep -o 'bounds="[^"]*"' | grep -o '[0-9]\+' | tr '\n' ' '; }
 # Pixels of the preview area that changed clearly between two shots (a small dot is enough).

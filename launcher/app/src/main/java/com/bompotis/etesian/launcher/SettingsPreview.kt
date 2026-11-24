@@ -180,6 +180,9 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
 
     private fun status(c: Canvas) {
         statusBar(c, on(Extras.PRIVACY))
+        // How the menu comes down: a swipe from the top, or a tap on the status bar.
+        text(c, if (on(Extras.STATUS_SWIPE)) "↓ swipe down" else "tap ↑", x0 + w / 2, y0 + 14 * d, 9f,
+            if (on(Extras.STATUS_SWIPE)) N9.ACCENT else 0xFF8C8C8C.toInt(), align = Paint.Align.CENTER)
         var y = y0 + 22 * d
         val custom = on(Extras.STATUS_MENU)
         if (on(Extras.MUSIC)) {
@@ -206,6 +209,11 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
             }
             y += 32 * d
         }
+        if (on(Extras.STATUS_NOTIFICATIONS)) {
+            header(c, "Notifications", y + 10 * d)
+            card(c, y + 12 * d, 0xFF35B34A.toInt(), "Anna", "Lunch?", small = true)
+            y += 38 * d
+        }
         val rows = listOf("Internet connection", "Bluetooth", "Mobile network", "Battery", "Screen rotation", "Location")
         val max = if (custom) StatusLayout.maxRows(context) else 0
         val shown = if (max == 0) rows else rows.take(max)
@@ -223,6 +231,7 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
 
     private fun events(c: Canvas) {
         text(c, "Events", x0 + 12 * d, y0 + 26 * d, 20f, light = true)
+        if (Prefs.weatherEnabled(context)) text(c, "☀ 18°", x0 + 84 * d, y0 + 25 * d, 11f, 0xFFBDBDBD.toInt())
         var y = y0 + 44 * d
         if (on(Extras.TODAY)) {
             header(c, "Today", y); y += 6 * d
@@ -360,6 +369,8 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
             bar(c, x, y, cw, ch, cols[i].toInt(), 4f)
             text(c, labels[i], x, y + ch + 13 * d, 10f, bold = true)
         }
+        text(c, if (RunningApps.autoArrange(context)) "↑ The last opened moves to the top" else "Cards stay where you put them",
+            x0 + w / 2, y0 + 12 * d + 2 * (ch + 24 * d) + 2 * d, 9f, 0xFF8C8C8C.toInt(), align = Paint.Align.CENTER)
         val acts = buildList {
             if (on(Extras.CARD_ACTIONS)) addAll(listOf("Split", "Pop-up", "Screenshot", "Info"))
             if (on(Extras.PINNING)) add("Pin")
@@ -371,20 +382,38 @@ class SettingsPreview(ctx: Context, private val kind: String) : View(ctx) {
     }
 
     private fun apps(c: Canvas) {
-        val n = 4; val gap = 14 * d; val s = minOf((w - gap * (n + 1)) / n, 48 * d)
+        val n = 4; val gap = 14 * d; val s = minOf((w - gap * (n + 1)) / n, 44 * d)
         val left = x0 + (w - (n * s + (n - 1) * gap)) / 2
+        val lit = Prefs.iconLighting(context)
+        val search = Prefs.searchEnabled(context); val top = Prefs.searchAtTop(context)
+        val keyboard = search && Prefs.searchKeyboard(context)
+        // Pull down to search: the bar where the user put it, its hint naming what it finds.
+        val barY = if (top) y0 + 8 * d else y0 + screen.height() - (if (keyboard) 62 else 28) * d
+        if (search) {
+            ends(c, x0 + 12 * d, barY, x0 + w - 12 * d, 18 * d, 0xFF262626.toInt())
+            text(c, if (Prefs.searchEverything(context)) "Search everything" else "Search applications",
+                x0 + 22 * d, barY + 12.5f * d, 9f, 0xFF8C8C8C.toInt())
+        }
+        val gridTop = y0 + (if (search && top) 32 else 12) * d
         val colors = listOf(0xFF2A86D8, 0xFF35B34A, 0xFFE6007E, 0xFFF07D00, 0xFF8E44AD, 0xFF16A085, 0xFFE0352B, 0xFF2A86D8)
         val names = listOf("Phone", "Messages", "Music", "Maps", "Store", "Clock", "Calendar", "Mail")
         colors.forEachIndexed { i, col ->
-            val x = left + (i % n) * (s + gap); val y = y0 + 12 * d + (i / n) * (s + 22 * d)
-            tile(c, x, y, s, col.toInt())
+            val x = left + (i % n) * (s + gap); val y = gridTop + (i / n) * (s + 22 * d)
+            if (lit) tile(c, x, y, s, col.toInt()) else squircle(c, x, y, s, col.toInt())
             text(c, names[i], x + s / 2, y + s + 12 * d, 9f, align = Paint.Align.CENTER)
         }
         if (on(Extras.PRIVATE)) {
-            val y = y0 + 12 * d + 2 * (s + 22 * d)
-            tile(c, left, y, s, 0xFF3A3A3A.toInt())
+            val y = gridTop + 2 * (s + 22 * d)
+            if (lit) tile(c, left, y, s, 0xFF3A3A3A.toInt()) else squircle(c, left, y, s, 0xFF3A3A3A.toInt())
             text(c, "🔒", left + s / 2, y + s * .64f, 16f, align = Paint.Align.CENTER)
             text(c, "Private", left + s / 2, y + s + 12 * d, 9f, align = Paint.Align.CENTER)
+        }
+        // The keyboard comes up with the bar when it opens by itself: drawn over the grid, as on the phone.
+        if (keyboard) {
+            val ky = y0 + screen.height() - 36 * d
+            bar(c, x0, ky, w, 36 * d, 0xFF1C1C1C.toInt(), 0f)
+            for (r in 0 until 3) for (k in 0 until 10) if (!(r == 2 && (k == 0 || k == 9)))
+                bar(c, x0 + 6 * d + k * (w - 12 * d) / 10, ky + 4 * d + r * 10.5f * d, (w - 12 * d) / 10 - 2 * d, 8.5f * d, 0xFF3A3A3A.toInt(), 1.5f)
         }
     }
 
